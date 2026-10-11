@@ -34,7 +34,8 @@ token has the old value, so Classic looks exactly as before. Code highlighting u
 ## Addendum (2026-10-11)
 
 A fourth theme, **Just black**, was added at the user's request: jet black `#000000` page,
-white text, a vivid blue accent `#2F7BFF` and brighter status colours.
+white text, a vivid blue accent `#2F7BFF` and brighter status colours. It is now the default
+theme when the browser has no saved choice.
 
 ## Consequences
 

@@ -40,7 +40,7 @@ function read(): ThemeId {
   } catch {
     // Private window: fall back to the default.
   }
-  return 'classic';
+  return 'just-black';
 }
 
 let current: ThemeId = read();
