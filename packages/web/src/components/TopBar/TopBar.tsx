@@ -27,6 +27,8 @@ interface TopBarProps {
   right?: ReactNode;
   /** Overrides the health-based state (e.g. working while a turn runs). */
   claude?: ClaudeState;
+  /** Shown just before the Claude Code status (the project's Status pill). */
+  beforeClaude?: ReactNode;
 }
 
 export function useClaudeState(): ClaudeState {
@@ -35,7 +37,7 @@ export function useClaudeState(): ClaudeState {
   return health.data.claude.found && health.data.claude.loggedIn ? 'ok' : 'missing';
 }
 
-export function TopBar({ crumbs, phase, status, right, claude }: TopBarProps) {
+export function TopBar({ crumbs, phase, status, right, claude, beforeClaude }: TopBarProps) {
   const healthState = useClaudeState();
   const socketStatus = useSocketStatus((s) => s.status);
   const openMagnet = useUi((s) => s.openMagnet);
@@ -78,6 +80,7 @@ export function TopBar({ crumbs, phase, status, right, claude }: TopBarProps) {
       <div className={styles.right}>
         {right ?? (
           <>
+            {beforeClaude}
             <ClaudeStatus state={claude ?? healthState} />
             <Link to="/settings/general" className={styles.iconButton} aria-label="Settings">
               <SlidersHorizontal size={16} strokeWidth={1.6} aria-hidden="true" />

@@ -17,11 +17,12 @@ import { ChatTab, NewChatButton, useSessionMeta } from './ChatTab.tsx';
 import { DocsTab } from './DocsTab.tsx';
 import { NotesTab } from './NotesTab.tsx';
 import { ReportTab } from './ReportTab.tsx';
+import { StatusTab, UPDATE_STATUS_PROMPT } from './StatusTab.tsx';
 import { useScanAgents } from '../../api/scans.ts';
 import { SidePanel } from './SidePanel.tsx';
 import styles from './Workspace.module.css';
 
-type Tab = 'chat' | 'docs' | 'notes' | 'file' | 'report';
+type Tab = 'chat' | 'docs' | 'notes' | 'file' | 'report' | 'status';
 
 /** The last file opened per project, so its tab stays while you visit other tabs. */
 const useOpenFiles = create<{
@@ -30,6 +31,15 @@ const useOpenFiles = create<{
 }>((set) => ({
   files: {},
   set: (id, path) => set((s) => ({ files: { ...s.files, [id]: path } })),
+}));
+
+/** Projects whose Status report tab is open (it stays until closed, like a file). */
+const useOpenStatus = create<{
+  open: Record<string, boolean>;
+  set(id: string, open: boolean): void;
+}>((set) => ({
+  open: {},
+  set: (id, open) => set((s) => ({ open: { ...s.open, [id]: open } })),
 }));
 
 /** The last scan agent whose reports were open, per project (`<agentId>` or `<agentId>/<id>`). */
@@ -46,6 +56,7 @@ function parseSplat(splat: string): { tab: Tab; path: string | null } {
   if (splat.startsWith('files/')) return { tab: 'file', path: splat.slice(6) || null };
   if (splat.startsWith('reports/')) return { tab: 'report', path: splat.slice(8) || null };
   if (splat === 'notes') return { tab: 'notes', path: null };
+  if (splat === 'status') return { tab: 'status', path: null };
   return { tab: 'chat', path: null };
 }
 
@@ -76,11 +87,22 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
   useEffect(() => {
     if (tab === 'report' && path) setOpenReport(id, path);
   }, [tab, path, id, setOpenReport]);
+  const statusOpen = useOpenStatus((s) => !!s.open[id]) || tab === 'status';
+  const setStatusOpen = useOpenStatus((s) => s.set);
+  useEffect(() => {
+    if (tab === 'status') setStatusOpen(id, true);
+  }, [tab, id, setStatusOpen]);
   const scans = useScanAgents(id);
   const reportAgent = openReport?.split('/')[0] ?? '';
   const reportName = scans.data?.agents.find((a) => a.id === reportAgent)?.name ?? reportAgent;
 
   const base = `/p/${encodeURIComponent(id)}`;
+  const updateStatus = running
+    ? undefined
+    : () => {
+        void sendChat(id, UPDATE_STATUS_PROMPT, false);
+        void navigate(base);
+      };
 
   if (detail.isError) {
     const gone = detail.error instanceof ApiFailure && detail.error.status === 404;
@@ -110,6 +132,14 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
         crumbs={[{ label: 'Projects', href: '/' }, { label: card?.name ?? id }]}
         phase={card ? card.phase : null}
         claude={running ? 'working' : undefined}
+        beforeClaude={
+          <StatusNotch
+            status={detail.data ? detail.data.status : undefined}
+            updatedAt={detail.data?.statusMtime ?? null}
+            active={tab === 'status'}
+            onOpen={() => void navigate(`${base}/status`)}
+          />
+        }
         status={
           pendingHere.length > 0 ? (
             <Pill tone="warning" dot>
@@ -192,25 +222,26 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
                 </span>
               </>
             )}
-            <span className={styles.tabSpacer} />
-            <StatusNotch
-              status={detail.data ? detail.data.status : undefined}
-              updatedAt={detail.data?.statusMtime ?? null}
-              now={now}
-              onUpdate={
-                running
-                  ? undefined
-                  : () => {
-                      void sendChat(
-                        id,
-                        'Update _project/STATUS.md from what we did in this session: rewrite "Where we left off" and "Next steps", and keep its format and front matter.',
-                        false,
-                      );
-                      void navigate(base);
-                    }
-              }
-              updateDisabledReason="Claude is working; wait for the turn to finish"
-            />
+            {statusOpen && (
+              <>
+                <span className={styles.tabSep} aria-hidden="true" />
+                <span className={styles.fileTab} data-active={tab === 'status' || undefined}>
+                  <Link to={`${base}/status`} aria-current={tab === 'status' ? 'page' : undefined}>
+                    Status
+                  </Link>
+                  <button
+                    type="button"
+                    aria-label="Close Status"
+                    onClick={() => {
+                      setStatusOpen(id, false);
+                      if (tab === 'status') void navigate(base);
+                    }}
+                  >
+                    <X size={12} aria-hidden="true" />
+                  </button>
+                </span>
+              </>
+            )}
             <span className={styles.tabSpacer} />
             {tab === 'chat' && (
               <>
@@ -233,6 +264,15 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
               />
             )}
             {tab === 'notes' && <NotesTab projectId={id} />}
+            {tab === 'status' && (
+              <StatusTab
+                projectId={id}
+                mtime={detail.data ? (detail.data.statusMtime ?? null) : undefined}
+                now={now}
+                onUpdate={updateStatus}
+                updateDisabledReason="Claude is working; wait for the turn to finish"
+              />
+            )}
             {tab === 'file' && path && <FileViewer key={path} projectId={id} path={path} />}
             {tab === 'report' && path && (
               <ReportTab
