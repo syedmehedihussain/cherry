@@ -17,8 +17,8 @@ interface StatusNotchProps {
 const FLASH_MS = 6000;
 
 /**
- * STATUS.md as a small pill in the top bar. The dot tells the state (green ok, blue just
- * updated, red missing); a click opens the Status report in the centre.
+ * STATUS.md as a small pill in the top bar: the word and a document icon. It lights up blue
+ * for a few seconds when STATUS.md changes; a click opens the Status report in the centre.
  */
 export function StatusNotch({ status, updatedAt, active, onOpen }: StatusNotchProps) {
   const [mountedAt] = useState(() => Date.now());
@@ -46,7 +46,6 @@ export function StatusNotch({ status, updatedAt, active, onOpen }: StatusNotchPr
       title={label}
       onClick={onOpen}
     >
-      <span className={styles.dot} aria-hidden="true" />
       <span className={styles.text}>Status</span>
       <FileText size={12} strokeWidth={1.8} aria-hidden="true" className={styles.icon} />
     </button>
