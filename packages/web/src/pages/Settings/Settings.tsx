@@ -17,6 +17,7 @@ import { MagnetAvatar } from '../../components/MagnetAvatar/MagnetAvatar.tsx';
 import { Switch } from '../../components/Switch/Switch.tsx';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
 import { tildify } from '../../lib/paths.ts';
+import { setTheme, THEMES, useTheme } from '../../lib/theme.ts';
 import { useNow } from '../../lib/useNow.ts';
 import styles from './Settings.module.css';
 
@@ -106,12 +107,7 @@ export function Settings() {
             ) : section === 'github' ? (
               <GitHubSection />
             ) : section === 'appearance' ? (
-              <Simple title="Appearance">
-                <p>
-                  Cherry uses one dark theme, built from the design tokens. A light theme comes
-                  after the MVP.
-                </p>
-              </Simple>
+              <AppearanceSection />
             ) : section === 'shortcuts' ? (
               <ShortcutsSection />
             ) : section === 'about' ? (
@@ -123,6 +119,43 @@ export function Settings() {
         </main>
       </div>
     </div>
+  );
+}
+
+function AppearanceSection() {
+  const theme = useTheme();
+  return (
+    <section className={styles.section}>
+      <h1>Appearance</h1>
+      <p className={styles.lead}>
+        Pick a theme. It applies at once and is remembered in this browser.
+      </p>
+      <div className={styles.themes} role="radiogroup" aria-label="Theme">
+        {THEMES.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="radio"
+            aria-checked={theme === t.id}
+            className={styles.theme}
+            onClick={() => setTheme(t.id)}
+          >
+            <span className={styles.themePreview} data-theme={t.id} aria-hidden="true">
+              <span className={styles.themeCard}>
+                <span className={styles.themeLine} />
+                <span className={styles.themeLine} data-short />
+                <span className={styles.themeAccent} />
+              </span>
+            </span>
+            <span className={styles.themeName}>
+              {t.label}
+              {theme === t.id && <Check size={14} />}
+            </span>
+            <span className={styles.themeHint}>{t.hint}</span>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 

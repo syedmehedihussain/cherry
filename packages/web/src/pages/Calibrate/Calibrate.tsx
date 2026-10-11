@@ -106,7 +106,10 @@ export function Calibrate() {
                       data-gap={f.gap || undefined}
                       style={
                         f.gap
-                          ? { color: 'var(--warning)', borderColor: 'rgba(210,153,34,0.35)' }
+                          ? {
+                              color: 'var(--warning)',
+                              borderColor: 'color-mix(in srgb, var(--warning) 35%, transparent)',
+                            }
                           : undefined
                       }
                     >

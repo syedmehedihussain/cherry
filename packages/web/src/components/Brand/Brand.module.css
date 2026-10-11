@@ -47,7 +47,7 @@
   gap: 12px;
 }
 .lockupWord {
-  color: var(--brand-cream);
+  color: var(--wordmark);
 }
 .tagline {
   margin: 0;

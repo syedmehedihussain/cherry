@@ -295,7 +295,7 @@ code {
 }
 .stepList li[aria-current='step'] span {
   background: var(--accent);
-  color: #fff;
+  color: var(--t-on-accent);
 }
 .answers {
   border: 1px solid var(--b);
@@ -436,7 +436,7 @@ code {
 .previewCode {
   flex: 1;
   overflow: auto;
-  background: #0e0e10;
+  background: var(--code-bg-deep);
   font-family: var(--mono);
   font-size: 13px;
   line-height: 22px;
@@ -459,7 +459,7 @@ code {
   flex: none;
   text-align: right;
   padding-right: 12px;
-  color: #5f5f68;
+  color: var(--t-gutter);
   user-select: none;
 }
 .psign {

@@ -83,7 +83,7 @@
   margin-top: 2px;
   flex: none;
   border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  border: 1.5px solid color-mix(in srgb, var(--tint) 28%, transparent);
   display: grid;
   place-items: center;
 }

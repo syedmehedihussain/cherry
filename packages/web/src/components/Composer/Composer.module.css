@@ -24,7 +24,7 @@
   gap: 10px;
 }
 .box:focus-within {
-  border-color: rgba(255, 255, 255, 0.22);
+  border-color: color-mix(in srgb, var(--tint) 22%, transparent);
 }
 .box[data-disabled] {
   opacity: 0.6;
@@ -70,8 +70,8 @@
   color: var(--t1);
 }
 .chip[aria-pressed='true'] {
-  border-color: rgba(91, 141, 239, 0.5);
-  background: rgba(91, 141, 239, 0.14);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   color: var(--accent-text-strong);
 }
 .modelWrap {

@@ -69,7 +69,7 @@
 }
 .git[data-tone='ahead'] {
   color: var(--accent-text);
-  background: rgba(91, 141, 239, 0.12);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 .git[data-tone='behind'],
 .git[data-tone='changes'] {

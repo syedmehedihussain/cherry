@@ -100,7 +100,7 @@
 }
 .action {
   border: 1px solid var(--accent-border);
-  background: rgba(91, 141, 239, 0.06);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
   border-radius: var(--r-xl);
   padding: 14px;
   display: flex;

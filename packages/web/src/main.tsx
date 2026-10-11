@@ -5,6 +5,9 @@ import '@fontsource-variable/geist-mono';
 import '../../../docs/design/tokens.css';
 import './styles/base.css';
 import { App } from './App.tsx';
+import { applyTheme } from './lib/theme.ts';
+
+applyTheme();
 
 const root = document.getElementById('root');
 if (!root) throw new Error('#root is missing from index.html');

@@ -5,6 +5,7 @@ import type { ThemedToken } from 'shiki';
 import type { DiffLine } from '@cherry/shared';
 import { openInEditor, useDiff, useFile } from '../../api/workspace.ts';
 import { highlightLines } from '../../lib/highlight.ts';
+import { themeMode, useTheme } from '../../lib/theme.ts';
 import { Switch } from '../Switch/Switch.tsx';
 import styles from './FileViewer.module.css';
 
@@ -41,9 +42,10 @@ export function FileViewer({ projectId, path }: { projectId: string; path: strin
     ? diff.data!.lines.map((l) => l.text).join('\n')
     : code.replace(/\n$/, '');
   const lang = file.data?.language ?? 'text';
+  const mode = themeMode(useTheme());
   const highlighted = useQuery({
-    queryKey: ['highlight', projectId, path, file.data?.mtime, diffOn, lang],
-    queryFn: () => highlightLines(highlightSource, lang),
+    queryKey: ['highlight', projectId, path, file.data?.mtime, diffOn, lang, mode],
+    queryFn: () => highlightLines(highlightSource, lang, mode),
     enabled: !!file.data,
     staleTime: Infinity,
   });

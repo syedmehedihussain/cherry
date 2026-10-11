@@ -1,7 +1,7 @@
 .md {
   font-size: 14.5px;
   line-height: 1.7;
-  color: #d4d4d8;
+  color: var(--t-code);
   text-wrap: pretty;
 }
 .md h1 {
@@ -116,7 +116,7 @@
   padding: 1px 7px;
   border-radius: var(--r-sm);
   background: var(--accent-fill-weak);
-  border: 1px solid rgba(91, 141, 239, 0.3);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
   color: var(--accent-text);
   white-space: nowrap;
 }

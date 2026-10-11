@@ -10,7 +10,7 @@
   right: 0;
   bottom: 0;
   width: min(420px, 100vw);
-  background: #111113;
+  background: var(--s-float);
   border-left: 1px solid var(--b);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
   z-index: 50;
@@ -43,7 +43,7 @@
   height: 44px;
   flex: none;
   border-radius: 50%;
-  background: #16203a;
+  background: var(--magnet-tile);
   border: 1px solid var(--accent-border);
   display: grid;
   place-items: center;

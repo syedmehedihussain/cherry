@@ -45,7 +45,7 @@
   gap: 8px;
 }
 .box:focus-within {
-  border-color: rgba(255, 255, 255, 0.22);
+  border-color: color-mix(in srgb, var(--tint) 22%, transparent);
 }
 .text {
   resize: none;

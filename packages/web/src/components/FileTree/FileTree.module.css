@@ -178,7 +178,7 @@
   color: var(--success);
 }
 .letter[data-letter='U'] {
-  color: #7fae86;
+  color: var(--git-untracked);
 }
 .letter[data-letter='D'] {
   color: var(--danger);

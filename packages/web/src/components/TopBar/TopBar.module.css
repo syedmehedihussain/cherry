@@ -41,7 +41,7 @@
 .wordmark {
   display: flex;
   align-items: center;
-  color: var(--brand-cream);
+  color: var(--wordmark);
 }
 
 .crumbs {

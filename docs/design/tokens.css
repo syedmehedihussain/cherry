@@ -1,10 +1,14 @@
 /* Cherry design tokens — taken from the design canvas (docs/design/screens/).
-   Dark theme only for the MVP. Import once at the app root; never hard-code hex in components. */
+   Three themes, picked in Settings → Appearance and set as data-theme on <html>:
+   classic (this :root block, the original look), cherry-dark and cherry-light (the overrides at
+   the end, colours from the brand sheet). Import once at the app root; never hard-code hex in
+   components. */
 
 /* Fonts are self-hosted (@fontsource-variable/geist and geist-mono, imported in packages/web/src/main.tsx),
    so nothing is fetched from the internet. */
 
-:root {
+:root,
+[data-theme='classic'] {
   color-scheme: dark;
 
   /* Surfaces */
@@ -13,8 +17,11 @@
   --s2: #1c1c1f;            /* inputs, secondary buttons, inner boxes */
   --s3: #26262a;            /* selected rows, active nav, phase pills (done) */
   --code-bg: #101012;       /* code blocks, file viewer */
+  --code-bg-deep: #0e0e10;  /* file viewer body, calibrate preview */
+  --s-float: #111113;       /* floating panels (Magnet) */
 
   /* Borders */
+  --tint: #ffffff;          /* the colour hairlines and hover borders are mixed from */
   --b: rgba(255, 255, 255, 0.08);   /* default hairline */
   --bs: rgba(255, 255, 255, 0.14);  /* strong: inputs, focused cards, dashed future phase */
   --b-faint: rgba(255, 255, 255, 0.07); /* tree indent guides, timeline rail */
@@ -25,6 +32,11 @@
   --t3: #85858f;            /* hints — raised from #71717a so it passes 4.5:1 on --s1 */
   --t-code: #d4d4d8;        /* code text */
   --t-on-primary: #0b0b0c;  /* text on the white primary pill */
+  --primary-hover: #ffffff; /* primary pill on hover */
+  --t-on-accent: #ffffff;   /* text on an accent fill */
+  --knob: #ffffff;          /* switch knob */
+  --t-gutter: #5f5f68;      /* line numbers */
+  --wordmark: var(--brand-cream); /* the cherry_ wordmark on the page background */
 
   /* Accent (blue) — focus, links, current phase, selection */
   /* Brand (docs/design-system.md → Brand): logo, wordmark and icons only, not UI states */
@@ -69,6 +81,7 @@
   --ft-env: #d6c46a;
   --ft-lock: #85858f;
   --ft-img: #d68fd0;
+  --git-untracked: #7fae86;
 
   /* Scrollbars: thin overlay-style thumb, no track or arrows */
   --scroll-thumb: rgba(255, 255, 255, 0.12);
@@ -163,6 +176,149 @@
   --focus-ring: 0 0 0 2px var(--accent);
   --status-dot-glow-success: 0 0 0 3px rgba(63, 185, 80, 0.18);
   --home-glow: radial-gradient(ellipse 900px 320px at 50% -60px, rgba(91, 141, 239, 0.16), rgba(91, 141, 239, 0) 70%);
+}
+
+/* Cherry dark: the brand sheet's dark card. Ink surfaces, cream text, coral accent. */
+:root[data-theme='cherry-dark'],
+[data-theme='cherry-dark'] {
+  --bg: #160f0f;
+  --s1: #1e1414;
+  --s2: #281b1a;
+  --s3: #342523;
+  --code-bg: #1a1111;
+  --code-bg-deep: #170f0f;
+  --s-float: #1b1212;
+
+  --tint: #f5eee4;
+  --b: rgba(245, 238, 228, 0.08);
+  --bs: rgba(245, 238, 228, 0.14);
+  --b-faint: rgba(245, 238, 228, 0.07);
+
+  --t1: #f5eee4;
+  --t2: #d9cbbe;
+  --t3: #a8958c;
+  --t-code: #e3d6c8;
+  --t-on-primary: #1e1414;
+  --primary-hover: #fffaf3;
+  --t-on-accent: #1e1414;
+  --t-gutter: #6b5a55;
+
+  --accent: #e07a5f;
+  --accent-text: #eb9a82;
+  --accent-text-strong: #f5c2b2;
+  --accent-fill: rgba(224, 122, 95, 0.16);
+  --accent-fill-weak: rgba(224, 122, 95, 0.08);
+  --accent-border: rgba(224, 122, 95, 0.55);
+
+  --neutral-fill: rgba(245, 238, 228, 0.06);
+  --scroll-thumb: rgba(245, 238, 228, 0.12);
+  --scroll-thumb-hover: rgba(245, 238, 228, 0.24);
+
+  --phase-done: #4d3b38;
+  --phase-future: rgba(245, 238, 228, 0.18);
+
+  --heat-0: #281b1a;
+  --heat-1: #4a2620;
+  --heat-2: #7a3a2c;
+  --heat-3: #b45a43;
+  --heat-4: #e07a5f;
+
+  --magnet-head: #f5eee4;
+  --magnet-visor: #1e1414;
+  --magnet-body: #7a1622;
+  --magnet-tile: #2e1c1b;
+
+  --home-glow: radial-gradient(ellipse 900px 320px at 50% -60px, rgba(224, 122, 95, 0.14), rgba(224, 122, 95, 0) 70%);
+}
+
+/* Cherry light: the brand sheet's cream page. Ink text, cherry accent. */
+:root[data-theme='cherry-light'],
+[data-theme='cherry-light'] {
+  color-scheme: light;
+
+  --bg: #f5eee4;
+  --s1: #fbf7f1;
+  --s2: #efe6da;
+  --s3: #e3d6c8;
+  --code-bg: #f0e8dd;
+  --code-bg-deep: #ede4d8;
+  --s-float: #fbf7f1;
+
+  --tint: #1e1414;
+  --b: rgba(30, 20, 20, 0.1);
+  --bs: rgba(30, 20, 20, 0.18);
+  --b-faint: rgba(30, 20, 20, 0.08);
+
+  --t1: #1e1414;
+  --t2: #4f403c;
+  --t3: #6b5a55;
+  --t-code: #2e2220;
+  --t-on-primary: #f5eee4;
+  --primary-hover: #3d2b29;
+  --t-on-accent: #f5eee4;
+  --t-gutter: #9a8a82;
+  --wordmark: var(--brand-cherry);
+
+  --accent: #7a1622;
+  --accent-text: #7a1622;
+  --accent-text-strong: #2e070b;
+  --accent-fill: rgba(122, 22, 34, 0.1);
+  --accent-fill-weak: rgba(122, 22, 34, 0.05);
+  --accent-border: rgba(122, 22, 34, 0.45);
+
+  --success: #1f7a33;
+  --success-fill: rgba(31, 122, 51, 0.12);
+  --warning: #9a6700;
+  --warning-fill: rgba(154, 103, 0, 0.12);
+  --danger: #c4302b;
+  --danger-text: #a1231f;
+  --danger-fill: rgba(196, 48, 43, 0.1);
+  --edited: #7c4dce;
+  --edited-fill: rgba(124, 77, 206, 0.12);
+  --neutral-fill: rgba(30, 20, 20, 0.05);
+
+  --ft-ts: #2f6fc4;
+  --ft-js: #8a7000;
+  --ft-json: #9a6210;
+  --ft-md: #2f73a8;
+  --ft-yml: #b83e3e;
+  --ft-toml: #9a5a30;
+  --ft-css: #7a4fc4;
+  --ft-html: #c4502a;
+  --ft-py: #2f7aa0;
+  --ft-rs: #b0602e;
+  --ft-go: #1a8a98;
+  --ft-sh: #3f8a2e;
+  --ft-sql: #b04a80;
+  --ft-env: #847410;
+  --ft-lock: #6b5a55;
+  --ft-img: #a04a9a;
+  --git-untracked: #3f7a48;
+
+  --scroll-thumb: rgba(30, 20, 20, 0.16);
+  --scroll-thumb-hover: rgba(30, 20, 20, 0.3);
+
+  --diff-add-text: #1f7a33;
+  --diff-add-bg: rgba(31, 122, 51, 0.12);
+  --diff-del-text: #a1231f;
+  --diff-del-bg: rgba(196, 48, 43, 0.1);
+
+  --phase-done: #c9b8a8;
+  --phase-future: rgba(30, 20, 20, 0.2);
+
+  --heat-0: #efe6da;
+  --heat-1: #e8c9bd;
+  --heat-2: #d39a86;
+  --heat-3: #a8483a;
+  --heat-4: #5a0f17;
+
+  --magnet-head: #f5eee4;
+  --magnet-visor: #1e1414;
+  --magnet-body: #5a0f17;
+  --magnet-tile: #e3d6c8;
+
+  --status-dot-glow-success: 0 0 0 3px rgba(31, 122, 51, 0.18);
+  --home-glow: radial-gradient(ellipse 900px 320px at 50% -60px, rgba(122, 22, 34, 0.08), rgba(122, 22, 34, 0) 70%);
 }
 
 * { box-sizing: border-box; }

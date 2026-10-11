@@ -90,7 +90,7 @@ body {
   color: var(--t-on-primary);
 }
 .btn-primary:not(:disabled):hover {
-  background: #ffffff;
+  background: var(--primary-hover);
   color: var(--t-on-primary);
 }
 .btn-secondary {
