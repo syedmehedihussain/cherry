@@ -37,17 +37,19 @@ test('overview box adds a task and opens Tasks', async ({ page }) => {
   const aside = page.getByRole('complementary', { name: 'Repository and agents' });
   await aside.getByRole('tab', { name: 'Overview' }).click();
 
-  await aside.getByLabel('Add as').selectOption('task');
-  await expect(aside.getByLabel('Model')).toHaveCount(0);
-  await aside.getByLabel('Task').fill('Fix the hero section');
+  await aside.getByRole('button', { name: /^Type/ }).click();
+  await aside.getByRole('menuitemradio', { name: /Task/ }).click();
+  await expect(aside.getByRole('button', { name: /^Model/ })).toHaveCount(0);
+  await aside.getByRole('textbox', { name: 'Task' }).fill('Fix the hero section');
   await aside.getByRole('button', { name: 'Add' }).click();
 
   await expect(aside.getByRole('tab', { name: 'Tasks' })).toHaveAttribute('aria-selected', 'true');
   await expect(aside.getByRole('button', { name: /Fix the hero section/ })).toBeVisible();
 
   await aside.getByRole('tab', { name: 'Overview' }).click();
-  await aside.getByLabel('Add as').selectOption('agent');
-  await expect(aside.getByLabel('Model')).toBeVisible();
+  await aside.getByRole('button', { name: /^Type/ }).click();
+  await aside.getByRole('menuitemradio', { name: /Agent/ }).click();
+  await expect(aside.getByRole('button', { name: 'Model: Sonnet' })).toBeVisible();
 });
 
 // The Overview boxes minimize to one line and stay that way after a reload.

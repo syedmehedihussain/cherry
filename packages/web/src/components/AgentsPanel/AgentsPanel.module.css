@@ -71,17 +71,6 @@
   align-items: center;
   gap: 6px;
 }
-.model select {
-  height: 28px;
-  background: var(--s2);
-  color: var(--t2);
-  border: 1px solid var(--b);
-  border-radius: var(--r-pill);
-  padding: 0 10px;
-  font: inherit;
-  font-size: var(--fs-sm);
-  cursor: pointer;
-}
 .spacer {
   flex: 1;
 }

@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { Bot, ListTodo, StickyNote, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import type { Agent } from '@cherry/shared';
@@ -7,6 +7,7 @@ import { startAgent, useAgentDiff, useAgents, useLiveAgents } from '../../api/ag
 import { queryClient } from '../../api/queries.ts';
 import { addTask, organiseNote, wk } from '../../api/workspace.ts';
 import { AgentCard } from '../AgentCard/AgentCard.tsx';
+import { ChipSelect, type ChipOption } from '../ChipSelect/ChipSelect.tsx';
 import { FileDiff } from '../ApprovalCard/ApprovalCard.tsx';
 import { ScanAgents } from '../ScanAgents/ScanAgents.tsx';
 import styles from './AgentsPanel.module.css';
@@ -95,6 +96,18 @@ export function AgentsPanel({
 export type BoxKind = 'task' | 'note' | 'agent';
 
 const KIND_KEY = 'cherry.boxKind';
+
+const KINDS: ChipOption<BoxKind>[] = [
+  { value: 'task', label: 'Task', hint: 'Add it to your task list', icon: ListTodo },
+  { value: 'note', label: 'Note', hint: 'Claude tidies it into your notes', icon: StickyNote },
+  { value: 'agent', label: 'Agent', hint: 'Works on it in its own branch', icon: Bot },
+];
+
+const MODELS: ChipOption<Model>[] = [
+  { value: 'sonnet', label: 'Sonnet', hint: 'Balanced, the usual choice' },
+  { value: 'opus', label: 'Opus', hint: 'Most capable, slower' },
+  { value: 'haiku', label: 'Haiku', hint: 'Fastest, for small tasks' },
+];
 
 function readKind(): BoxKind {
   try {
@@ -217,28 +230,10 @@ function TaskBox({
       {error && <p className={styles.error}>{error}</p>}
       <div className={styles.row}>
         {kinds && (
-          <span className={styles.model}>
-            <select
-              aria-label="Add as"
-              value={kind}
-              disabled={busy}
-              onChange={(e) => choose(e.target.value as BoxKind)}
-            >
-              <option value="task">Task</option>
-              <option value="note">Note</option>
-              <option value="agent">Agent</option>
-            </select>
-          </span>
+          <ChipSelect label="Type" value={kind} options={KINDS} onChange={choose} disabled={busy} />
         )}
         {kind === 'agent' && (
-          <label className={styles.model}>
-            <span className="sr-only">Model</span>
-            <select value={model} onChange={(e) => setModel(e.target.value as Model)}>
-              <option value="sonnet">Sonnet</option>
-              <option value="opus">Opus</option>
-              <option value="haiku">Haiku</option>
-            </select>
-          </label>
+          <ChipSelect label="Model" value={model} options={MODELS} onChange={(m) => setModel(m)} />
         )}
         <span className={styles.spacer} />
         <button type="submit" className={styles.send} disabled={!ready}>
