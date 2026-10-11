@@ -6,6 +6,7 @@ import { createDaemon } from './daemon.ts';
 import pkg from '../package.json' with { type: 'json' };
 import { checkHealth } from './health.ts';
 import { noGitHub } from './survey/service.ts';
+import { noPlanUsage } from './plan-usage.ts';
 import { writeFileAtomic } from './fsutil.ts';
 import { migrateHome } from './migrate.ts';
 import { cherryHome } from './paths.ts';
@@ -26,6 +27,7 @@ const daemon = createDaemon({
     ? {
         runner: fakeRunnerFromFile(fakeClaude),
         github: noGitHub,
+        planUsage: async () => noPlanUsage(),
         healthCheck: async () => {
           const h = await checkHealth(pkg.version, 'claude');
           return { ...h, claude: { found: true, loggedIn: true, version: 'fake' } };

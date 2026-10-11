@@ -64,6 +64,14 @@ export async function testDaemon(
     port: PORT,
     memoryDb: true,
     healthCheck: async () => fakeHealth,
+    // Never ask the real Claude for the plan usage either.
+    planUsage: async () => ({
+      available: true,
+      plan: 'pro',
+      fiveHour: { usedPercent: 56, resetsAt: Date.parse('2026-10-11T01:20:00Z') },
+      week: { usedPercent: 78, resetsAt: Date.parse('2026-10-11T22:00:00Z') },
+      fetchedAt: 0,
+    }),
     // Never fall back to the real Claude in tests.
     runner: opts.runner ?? fakeRunner([{ text: 'No script given.' }]),
     // Never fall back to the real gh either.

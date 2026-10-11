@@ -17,6 +17,7 @@ import type { EventHub } from './events.ts';
 import type { HealthService } from './health-service.ts';
 import { HttpError } from './http.ts';
 import { PathOutsideRoot } from './paths.ts';
+import type { PlanUsageService } from './plan-usage.ts';
 import type { ProjectService } from './projects/service.ts';
 
 export interface ServerDeps {
@@ -25,6 +26,7 @@ export interface ServerDeps {
   auth: AuthStore;
   hub: EventHub;
   health: HealthService;
+  planUsage: PlanUsageService;
   projects: ProjectService;
   /** Secret the CLI sends in `x-cherry-cli` (from run/daemon.json). */
   cliSecret: string;
@@ -160,6 +162,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   // --- System ---
   app.get('/api/health', () => deps.health.get());
   app.post('/api/health/recheck', () => deps.health.recheck());
+  app.get('/api/claude/usage', () => deps.planUsage.get());
   app.get('/api/config', () => ({
     ...deps.config.get(),
     resolvedProjectsDir: deps.config.projectsDir(),

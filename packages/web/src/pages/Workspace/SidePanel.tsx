@@ -4,6 +4,7 @@ import { useTasks } from '../../api/workspace.ts';
 import { AgentsPanel } from '../../components/AgentsPanel/AgentsPanel.tsx';
 import { GitPanel } from '../../components/GitHubBox/GitPanel.tsx';
 import { MagnetChat } from '../../components/MagnetChat/MagnetChat.tsx';
+import { PlanUsage } from '../../components/PlanUsage/PlanUsage.tsx';
 import { NotesTab } from './NotesTab.tsx';
 import styles from './SidePanel.module.css';
 
@@ -76,6 +77,7 @@ export function SidePanel({
           <>
             <div className={styles.pad}>
               <GitPanel key={projectId} projectId={projectId} now={now} />
+              <PlanUsage now={now} />
               <TasksLine projectId={projectId} onOpen={() => setView('notes')} />
             </div>
             <AgentsPanel

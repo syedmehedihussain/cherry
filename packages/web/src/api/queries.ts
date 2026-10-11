@@ -1,6 +1,12 @@
 import { QueryClient, useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { HealthSchema, ProjectListSchema, type Health, type ProjectList } from '@cherry/shared';
+import {
+  HealthSchema,
+  PlanUsageSchema,
+  ProjectListSchema,
+  type Health,
+  type ProjectList,
+} from '@cherry/shared';
 import { api } from './client.ts';
 import { socket } from './socket.ts';
 
@@ -14,6 +20,7 @@ export const keys = {
   projects: ['projects'] as const,
   health: ['health'] as const,
   config: ['config'] as const,
+  planUsage: ['planUsage'] as const,
 };
 
 export function useProjects() {
@@ -34,6 +41,15 @@ export function recheckHealth(): Promise<Health> {
   return api('POST', '/api/health/recheck', undefined, HealthSchema).then((h) => {
     queryClient.setQueryData(keys.health, h);
     return h;
+  });
+}
+
+/** claude.ai plan limits (5-hour and weekly), refreshed every minute. */
+export function usePlanUsage() {
+  return useQuery({
+    queryKey: keys.planUsage,
+    queryFn: () => api('GET', '/api/claude/usage', undefined, PlanUsageSchema),
+    refetchInterval: 60_000,
   });
 }
 

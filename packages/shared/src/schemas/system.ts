@@ -47,3 +47,22 @@ export const ConfigPatchSchema = z.object({
 export type ConfigPatch = z.infer<typeof ConfigPatchSchema>;
 
 export const LoginBodySchema = z.object({ code: z.string().min(1).max(200) });
+
+const PlanWindowSchema = z.object({
+  /** Share of the window used, 0-100. */
+  usedPercent: z.number(),
+  /** When the window resets (epoch ms), if known. */
+  resetsAt: z.number().nullable(),
+});
+export type PlanWindow = z.infer<typeof PlanWindowSchema>;
+
+/** GET /api/claude/usage: the claude.ai plan limits, as on Claude Code's `/usage`. */
+export const PlanUsageSchema = z.object({
+  /** False for API keys, other providers, or when Claude could not be asked. */
+  available: z.boolean(),
+  plan: z.string().nullable(),
+  fiveHour: PlanWindowSchema.nullable(),
+  week: PlanWindowSchema.nullable(),
+  fetchedAt: z.number(),
+});
+export type PlanUsage = z.infer<typeof PlanUsageSchema>;

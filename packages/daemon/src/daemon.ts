@@ -1,12 +1,13 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { FastifyInstance } from 'fastify';
-import type { Health } from '@cherry/shared';
+import type { Health, PlanUsage } from '@cherry/shared';
 import { AuthStore, newCliSecret } from './auth.ts';
 import { ConfigStore } from './config.ts';
 import { openDb, type Db } from './db.ts';
 import { EventHub } from './events.ts';
 import { HealthService } from './health-service.ts';
+import { PlanUsageService } from './plan-usage.ts';
 import { ensureMagnetFiles } from './magnet/files.ts';
 import { GitInfoService } from './projects/github.ts';
 import { ProjectService } from './projects/service.ts';
@@ -49,6 +50,7 @@ export interface Daemon {
   magnet: MagnetService;
   projects: ProjectService;
   health: HealthService;
+  planUsage: PlanUsageService;
   cliSecret: string;
   close(): Promise<void>;
 }
@@ -65,6 +67,8 @@ export interface DaemonOptions {
   memoryDb?: boolean;
   /** Replace the real tool checks (tests). */
   healthCheck?: () => Promise<Health>;
+  /** Replace the claude.ai plan usage lookup (tests). */
+  planUsage?: () => Promise<PlanUsage>;
   /** Replace the Claude runner (tests use the fake Claude). */
   runner?: Runner;
   /** Replace gh for the survey's "Create a private GitHub repository" (tests). */
@@ -83,6 +87,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
   const hub = new EventHub();
   const auth = new AuthStore(opts.home);
   const health = new HealthService(pkg.version, config, hub, opts.healthCheck);
+  const planUsage = new PlanUsageService(opts.planUsage);
   const projects = new ProjectService(config, db, hub, opts.home);
   const cliSecret = newCliSecret();
   const gitInfo = new GitInfoService();
@@ -151,6 +156,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     auth,
     hub,
     health,
+    planUsage,
     projects,
     cliSecret,
     origins: [`http://127.0.0.1:${opts.port}`, ...(opts.extraOrigins ?? [])],
@@ -184,6 +190,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     db,
     projects,
     health,
+    planUsage,
     cliSecret,
     chat,
     approvals,
