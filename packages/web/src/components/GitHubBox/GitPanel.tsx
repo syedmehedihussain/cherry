@@ -5,6 +5,7 @@ import { answerApproval, usePendingApprovals } from '../../api/chat.ts';
 import { socket } from '../../api/socket.ts';
 import { pullProject, pushProject, useGitInfo, usePullRequests } from '../../api/workspace.ts';
 import { ApprovalCard } from '../ApprovalCard/ApprovalCard.tsx';
+import { useCollapsed } from '../../lib/useCollapsed.ts';
 import { GitHubBox } from './GitHubBox.tsx';
 
 /** The GitHub box with working Pull, Push (behind an approval) and the open PR list (M6). */
@@ -13,14 +14,18 @@ export function GitPanel({
   now,
   compact,
   full,
+  collapsible,
 }: {
   projectId: string;
   now: number;
   compact?: boolean;
   /** The GitHub view: commits and pull requests open from the start. */
   full?: boolean;
+  /** Offer the minimize button (the Overview). */
+  collapsible?: boolean;
 }) {
   const git = useGitInfo(projectId);
+  const [collapsed, toggleCollapsed] = useCollapsed('repository');
   const approvals = usePendingApprovals();
   const [pulling, setPulling] = useState(false);
   const [result, setResult] = useState<GitResult | null>(null);
@@ -50,6 +55,8 @@ export function GitPanel({
       now={now}
       compact={compact}
       commitsOpen={full}
+      collapsed={collapsible && collapsed}
+      onToggleCollapse={collapsible ? toggleCollapsed : undefined}
       busy={pulling ? 'pull' : push ? 'push' : null}
       result={result}
       prs={prs.data ?? null}

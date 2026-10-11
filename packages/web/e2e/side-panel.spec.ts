@@ -49,3 +49,19 @@ test('overview box adds a task and opens Tasks', async ({ page }) => {
   await aside.getByLabel('Add as').selectOption('agent');
   await expect(aside.getByLabel('Model')).toBeVisible();
 });
+
+// The Overview boxes minimize to one line and stay that way after a reload.
+test('repository box minimizes and remembers it', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'core', exact: true }).first().click();
+  const aside = page.getByRole('complementary', { name: 'Repository and agents' });
+  await aside.getByRole('tab', { name: 'Overview' }).click();
+  const repo = aside.getByRole('region', { name: 'Repository' });
+
+  await repo.getByRole('button', { name: 'Minimize repository' }).click();
+  await expect(repo.getByRole('button', { name: 'Pull' })).toHaveCount(0);
+  await page.reload();
+  await expect(repo.getByRole('button', { name: 'Expand repository' })).toBeVisible();
+  await repo.getByRole('button', { name: 'Expand repository' }).click();
+  await expect(repo.getByRole('button', { name: 'Pull' })).toBeVisible();
+});

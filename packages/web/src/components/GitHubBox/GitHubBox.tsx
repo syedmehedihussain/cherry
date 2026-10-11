@@ -1,6 +1,7 @@
 import { ArrowUpRight, ChevronRight, GitBranch, GitPullRequest } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { relativeTime, type GitInfo, type GitResult, type PullRequestList } from '@cherry/shared';
+import { CollapseButton } from '../CollapseButton/CollapseButton.tsx';
 import styles from './GitHubBox.module.css';
 
 interface GitHubBoxProps {
@@ -20,6 +21,9 @@ interface GitHubBoxProps {
   onTogglePrs?: () => void;
   /** Shown inside the box under the footer (the push approval). */
   children?: ReactNode;
+  /** Minimized to one line (the Overview); offered when onToggleCollapse is set. */
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export function GitHubBox({
@@ -35,6 +39,8 @@ export function GitHubBox({
   prsOpen,
   onTogglePrs,
   children,
+  collapsed,
+  onToggleCollapse,
 }: GitHubBoxProps) {
   if (!git) {
     return (
@@ -50,6 +56,39 @@ export function GitHubBox({
         <span className={styles.label}>Repository</span>
         <span className={styles.muted}>This folder is not a git repository.</span>
       </div>
+    );
+  }
+  const toggle = onToggleCollapse && (
+    <CollapseButton collapsed={!!collapsed} name="repository" onToggle={onToggleCollapse} />
+  );
+  if (collapsed && toggle) {
+    return (
+      <section className={styles.box} aria-label="Repository" data-collapsed>
+        <div className={styles.mini}>
+          <span className={styles.miniName} title={git.repo ?? undefined}>
+            {git.repo?.split('/').pop() ?? 'Repository'}
+          </span>
+          <span className={styles.miniBranch}>
+            <GitBranch size={12} strokeWidth={2} aria-hidden="true" />
+            <span className="mono">{git.branch ?? 'detached'}</span>
+          </span>
+          {(git.ahead > 0 || git.behind > 0) && (
+            <span
+              className={styles.miniMuted}
+              aria-label={`${git.ahead} ahead, ${git.behind} behind`}
+            >
+              ↑{git.ahead} ↓{git.behind}
+            </span>
+          )}
+          {git.changes > 0 ? (
+            <span className={styles.uncommitted}>{git.changes} uncommitted</span>
+          ) : (
+            <span className={styles.clean}>clean</span>
+          )}
+          {toggle}
+        </div>
+        {children}
+      </section>
     );
   }
   return (
@@ -68,11 +107,14 @@ export function GitHubBox({
             </span>
           )}
         </div>
-        {git.visibility && (
-          <span className={styles.visibility}>
-            {git.visibility[0]?.toUpperCase() + git.visibility.slice(1)}
-          </span>
-        )}
+        <div className={styles.topRight}>
+          {git.visibility && (
+            <span className={styles.visibility}>
+              {git.visibility[0]?.toUpperCase() + git.visibility.slice(1)}
+            </span>
+          )}
+          {toggle}
+        </div>
       </div>
       <div className={styles.branchRow}>
         <span className={styles.branch}>

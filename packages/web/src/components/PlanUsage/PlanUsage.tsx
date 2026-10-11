@@ -1,5 +1,7 @@
 import type { PlanWindow } from '@cherry/shared';
 import { usePlanUsage } from '../../api/queries.ts';
+import { useCollapsed } from '../../lib/useCollapsed.ts';
+import { CollapseButton } from '../CollapseButton/CollapseButton.tsx';
 import styles from './PlanUsage.module.css';
 
 /** "in 1h 12m" for the 5-hour window, "Sun 22:00" for the week. */
@@ -17,9 +19,12 @@ export function resetText(at: number, now: number): string {
   return `resets ${day} ${time}`;
 }
 
+const percent = (w: PlanWindow) => Math.max(0, Math.min(100, Math.round(w.usedPercent)));
+const levelOf = (pct: number) => (pct >= 90 ? 'danger' : pct >= 75 ? 'warning' : 'ok');
+
 function Meter({ label, w, now }: { label: string; w: PlanWindow; now: number }) {
-  const pct = Math.max(0, Math.min(100, Math.round(w.usedPercent)));
-  const level = pct >= 90 ? 'danger' : pct >= 75 ? 'warning' : 'ok';
+  const pct = percent(w);
+  const level = levelOf(pct);
   return (
     <div className={styles.meter}>
       <div className={styles.row}>
@@ -44,13 +49,43 @@ function Meter({ label, w, now }: { label: string; w: PlanWindow; now: number })
 /** Claude Code plan usage on the Overview: the 5-hour and weekly limits as bars. */
 export function PlanUsage({ now }: { now: number }) {
   const usage = usePlanUsage();
+  const [collapsed, toggle] = useCollapsed('usage');
   const u = usage.data;
   if (!u?.available || (!u.fiveHour && !u.week)) return null;
+  const button = (
+    <CollapseButton collapsed={collapsed} name="Claude Code usage" onToggle={toggle} />
+  );
+  if (collapsed) {
+    const windows = [
+      ['5h', u.fiveHour],
+      ['Week', u.week],
+    ] as const;
+    return (
+      <section className={styles.box} aria-label="Claude Code usage" data-collapsed>
+        <div className={styles.top}>
+          <span className={styles.label}>Claude Code usage</span>
+          <span className={styles.mini}>
+            {windows.map(([name, w]) =>
+              w ? (
+                <span key={name}>
+                  {name} <b data-level={levelOf(percent(w))}>{percent(w)}%</b>
+                </span>
+              ) : null,
+            )}
+            {button}
+          </span>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className={styles.box} aria-label="Claude Code usage">
       <div className={styles.top}>
         <span className={styles.label}>Claude Code usage</span>
-        {u.plan && <span className={styles.plan}>{u.plan}</span>}
+        <span className={styles.mini}>
+          {u.plan && <span className={styles.plan}>{u.plan}</span>}
+          {button}
+        </span>
       </div>
       {u.fiveHour && <Meter label="5-hour" w={u.fiveHour} now={now} />}
       {u.week && <Meter label="Week" w={u.week} now={now} />}

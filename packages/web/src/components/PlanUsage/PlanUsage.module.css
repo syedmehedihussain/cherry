@@ -68,3 +68,24 @@
   font-size: var(--fs-xs);
   color: var(--t3);
 }
+.box[data-collapsed] {
+  padding: 8px 8px 8px 14px;
+}
+.mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--fs-sm);
+  color: var(--t2);
+}
+.mini b {
+  font-weight: 500;
+  color: var(--t1);
+  font-variant-numeric: tabular-nums;
+}
+.mini b[data-level='warning'] {
+  color: var(--warning);
+}
+.mini b[data-level='danger'] {
+  color: var(--danger-text);
+}

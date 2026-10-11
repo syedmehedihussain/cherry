@@ -76,7 +76,7 @@ export function SidePanel({
         {view === 'overview' && (
           <>
             <div className={styles.pad}>
-              <GitPanel key={projectId} projectId={projectId} now={now} />
+              <GitPanel key={projectId} projectId={projectId} now={now} collapsible />
               <PlanUsage now={now} />
               <TasksLine projectId={projectId} onOpen={() => setView('tasks')} />
             </div>
