@@ -27,10 +27,6 @@
   color: var(--brand-cream);
   margin-bottom: 18px;
 }
-.greeting {
-  font-size: var(--fs-lg);
-  color: var(--t2);
-}
 .title {
   margin: 0;
   font-size: var(--fs-4xl);

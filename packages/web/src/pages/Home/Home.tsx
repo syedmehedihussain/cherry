@@ -14,13 +14,6 @@ import { useNow } from '../../lib/useNow.ts';
 import { useUi } from '../../state/ui.ts';
 import styles from './Home.module.css';
 
-export function greeting(hour: number): string {
-  if (hour < 5) return 'Working late';
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
-}
-
 type Sort = 'last' | 'name';
 
 export function Home() {
@@ -71,7 +64,6 @@ export function Home() {
             <span className={styles.brand}>
               <Wordmark height={44} centred />
             </span>
-            <span className={styles.greeting}>{greeting(new Date(now).getHours())}</span>
             <h1 className={styles.title}>What are we building?</h1>
           </div>
           <PromptBox

@@ -41,7 +41,7 @@ Status pills use the colour as text on a 12 % fill of the same colour, with a 6 
 - Weights: 400, 500, 600 only.
 - Scale (px): 11 · 11.5 · 12 · 12.5 · 13 · 13.5 · 14 · 16 · 20 · 28 · 32. Base UI is 13.
 - Chat body 14 / 1.65. Docs reader body 14.5 / 1.7, max width 720 px.
-- Titles get `letter-spacing: -0.01em`; the Home greeting `-0.025em`.
+- Titles get `letter-spacing: -0.01em`; the Home title `-0.025em`.
 - Section labels in sidebars: 11 px, 500, uppercase, `0.04em` tracking, `--t3`.
 
 ## Spacing and shape
@@ -147,7 +147,7 @@ and icons, never for UI states.
 | Place | Piece |
 | --- | --- |
 | Top bar, every page | branch cherry icon 22 px + cream wordmark 15 px with cursor |
-| Home, above the greeting | cream wordmark 44 px with cursor, no logo |
+| Home, above "What are we building?" | cream wordmark 44 px with cursor, no logo |
 | Login and "not running" gate | badge 56 px + wordmark + tagline |
 | Browser tab | `favicon.svg`, `favicon-32.png`, `favicon-16.png` |
 | Home screen / installed app | `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `site.webmanifest` |
