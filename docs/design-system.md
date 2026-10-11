@@ -147,6 +147,7 @@ and icons, never for UI states.
 | Place | Piece |
 | --- | --- |
 | Top bar, every page | branch cherry icon 22 px + cream wordmark 15 px with cursor |
+| Home, above the greeting | cream wordmark 44 px with cursor, no logo |
 | Login and "not running" gate | badge 56 px + wordmark + tagline |
 | Browser tab | `favicon.svg`, `favicon-32.png`, `favicon-16.png` |
 | Home screen / installed app | `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `site.webmanifest` |
