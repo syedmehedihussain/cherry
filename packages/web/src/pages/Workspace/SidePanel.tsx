@@ -15,7 +15,6 @@ const VIEWS = [
   ['live', 'Live'],
   ['github', 'GitHub'],
   ['agents', 'Agents'],
-  ['tasks', 'Tasks'],
   ['notes', 'Notes'],
 ] as const;
 
@@ -85,7 +84,7 @@ export function SidePanel({
             <div className={styles.pad}>
               <GitPanel key={projectId} projectId={projectId} now={now} collapsible />
               <PlanUsage now={now} />
-              <TasksLine projectId={projectId} onOpen={() => setView('tasks')} />
+              <TasksLine projectId={projectId} onOpen={() => setView('notes')} />
             </div>
             <AgentsPanel
               projectId={projectId}
@@ -94,9 +93,7 @@ export function SidePanel({
               limit={3}
               onSeeAll={() => setView('agents')}
               kinds
-              onDone={(kind) =>
-                setView(kind === 'task' ? 'tasks' : kind === 'note' ? 'notes' : 'agents')
-              }
+              onDone={(kind) => setView(kind === 'agent' ? 'agents' : 'notes')}
             />
           </>
         )}
@@ -109,13 +106,9 @@ export function SidePanel({
           </div>
         )}
         {view === 'agents' && <AgentsPanel projectId={projectId} branch={branch} now={now} />}
-        {view === 'tasks' && (
-          <div className={ws.notes} data-stacked>
-            <TaskList projectId={projectId} />
-          </div>
-        )}
         {view === 'notes' && (
           <div className={ws.notes} data-stacked>
+            <TaskList projectId={projectId} />
             <NotesEditor projectId={projectId} />
           </div>
         )}
