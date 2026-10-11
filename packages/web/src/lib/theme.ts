@@ -20,6 +20,12 @@ export const THEMES = [
     mode: 'light',
     hint: 'Brand cream with ink text and a cherry accent.',
   },
+  {
+    id: 'just-black',
+    label: 'Just black',
+    mode: 'dark',
+    hint: 'Jet black with white text and a vivid blue accent.',
+  },
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]['id'];

@@ -1,7 +1,7 @@
 /* Cherry design tokens — taken from the design canvas (docs/design/screens/).
-   Three themes, picked in Settings → Appearance and set as data-theme on <html>:
-   classic (this :root block, the original look), cherry-dark and cherry-light (the overrides at
-   the end, colours from the brand sheet). Import once at the app root; never hard-code hex in
+   Four themes, picked in Settings → Appearance and set as data-theme on <html>:
+   classic (this :root block, the original look), cherry-dark and cherry-light (colours from the
+   brand sheet) and just-black (jet black, vivid accent), as overrides at the end. Import once at the app root; never hard-code hex in
    components. */
 
 /* Fonts are self-hosted (@fontsource-variable/geist and geist-mono, imported in packages/web/src/main.tsx),
@@ -323,6 +323,61 @@
 
   --status-dot-glow-success: 0 0 0 3px rgba(31, 122, 51, 0.18);
   --home-glow: radial-gradient(ellipse 900px 320px at 50% -60px, rgba(122, 22, 34, 0.08), rgba(122, 22, 34, 0) 70%);
+}
+
+/* Just black: jet black surfaces, pure white text, a vivid blue accent and punchier status colours. */
+:root[data-theme='just-black'],
+[data-theme='just-black'] {
+  --bg: #000000;
+  --s1: #0a0a0a;
+  --s2: #121212;
+  --s3: #1c1c1c;
+  --code-bg: #050505;
+  --code-bg-deep: #030303;
+  --s-float: #0a0a0a;
+
+  --b: rgba(255, 255, 255, 0.09);
+  --bs: rgba(255, 255, 255, 0.16);
+  --b-faint: rgba(255, 255, 255, 0.07);
+
+  --t1: #ffffff;
+  --t2: #a3a3a3;
+  --t3: #8a8a8a;
+  --t-code: #e5e5e5;
+  --t-on-primary: #000000;
+  --primary-hover: #e6e6e6;
+  --t-gutter: #5c5c5c;
+
+  --accent: #2f7bff;
+  --accent-text: #6aa3ff;
+  --accent-text-strong: #a9caff;
+  --accent-fill: rgba(47, 123, 255, 0.2);
+  --accent-fill-weak: rgba(47, 123, 255, 0.1);
+  --accent-border: rgba(47, 123, 255, 0.7);
+
+  --success: #22c55e;
+  --success-fill: rgba(34, 197, 94, 0.14);
+  --warning: #f5b301;
+  --warning-fill: rgba(245, 179, 1, 0.14);
+  --danger: #ff4d4f;
+  --danger-text: #ff9b9c;
+  --danger-fill: rgba(255, 77, 79, 0.14);
+  --edited: #b07cff;
+  --edited-fill: rgba(176, 124, 255, 0.18);
+
+  --phase-done: #3d3d3d;
+  --phase-future: rgba(255, 255, 255, 0.2);
+
+  --heat-0: #121212;
+  --heat-1: #0f2a5c;
+  --heat-2: #1a4fb0;
+  --heat-3: #2f7bff;
+  --heat-4: #8ab6ff;
+
+  --magnet-tile: #0b1a36;
+
+  --status-dot-glow-success: 0 0 0 3px rgba(34, 197, 94, 0.22);
+  --home-glow: radial-gradient(ellipse 900px 320px at 50% -60px, rgba(47, 123, 255, 0.22), rgba(47, 123, 255, 0) 70%);
 }
 
 * { box-sizing: border-box; }

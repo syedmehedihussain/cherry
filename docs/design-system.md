@@ -10,10 +10,10 @@ borders, lots of breathing room, **one accent colour (blue)**, and colour used o
 
 ## Colour
 
-Three themes, picked in Settings → Appearance (ADR-0019). The table is **Classic**, the original
+Four themes, picked in Settings → Appearance (ADR-0019). The table is **Classic**, the original
 look. **Cherry dark** (ink surfaces, cream text, coral `#E07A5F` accent) and **Cherry light**
-(cream page, ink text, cherry `#7A1622` accent, darker status and file-type colours) override
-the colour tokens at the end of `docs/design/tokens.css`. In the Cherry themes the accent takes
+(cream page, ink text, cherry `#7A1622` accent, darker status and file-type colours) and **Just black** (jet black `#000000`, white text, vivid blue `#2F7BFF` accent,
+brighter status colours) override the colour tokens at the end of `docs/design/tokens.css`. In the Cherry themes the accent takes
 the place of blue in the rules below.
 
 | Role | Token | Value | Use |
