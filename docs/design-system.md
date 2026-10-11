@@ -131,9 +131,9 @@ and icons, never for UI states.
 
 - **Badge**: the user's "CHERRY" lettering in a burgundy cherry (`docs/design/brand/cherry-badge.png`,
   the original). The UI uses a 192 px copy (`packages/web/src/assets/brand/cherry-badge.png`).
-  Use it above 32 px.
+  Use it above 32 px, and in the top bar (28 px; the user chose the badge there).
 - **Branch cherry icon**: a cream branch cherry on a burgundy tile (radius 25 %). At 32 px and
-  below the badge letters blur, so this icon takes over: top bar (22 px), favicon
+  below the badge letters blur, so this icon takes over: favicon
   (`icon-32.svg`, `icon-16.svg`; the 16 px one has thicker strokes). The full-colour branch
   cherry (leaf stems, coral bud) is `branch-cherry.svg`.
 - **Wordmark**: `cherry` in lower case, JetBrains Mono, tracking -0.05 em, then an underscore
@@ -152,8 +152,8 @@ and icons, never for UI states.
 
 | Place | Piece |
 | --- | --- |
-| Top bar, every page | branch cherry icon 22 px + cream wordmark 15 px with cursor |
-| Home, above "What are we building?" | badge 96 px, then the wordmark 44 px with cursor (theme colours) |
+| Top bar, every page | lettered badge 28 px + wordmark 15 px with cursor (theme colours) |
+| Home, above "What are we building?" | cream wordmark 44 px with cursor, no logo |
 | Login and "not running" gate | badge 56 px + wordmark + tagline |
 | Browser tab | `favicon.svg`, `favicon-32.png`, `favicon-16.png` |
 | Home screen / installed app | `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `site.webmanifest` |
