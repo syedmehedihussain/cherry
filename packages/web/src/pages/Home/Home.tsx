@@ -69,7 +69,7 @@ export function Home() {
         <section aria-label="Start" className={styles.start}>
           <div className={styles.hello}>
             <span className={styles.brand}>
-              <Wordmark height={44} />
+              <Wordmark height={44} centred />
             </span>
             <span className={styles.greeting}>{greeting(new Date(now).getHours())}</span>
             <h1 className={styles.title}>What are we building?</h1>

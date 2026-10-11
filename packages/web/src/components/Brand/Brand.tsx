@@ -1,16 +1,35 @@
 import badge from '../../assets/brand/cherry-badge.png';
 import { WORDMARK_CURSOR, WORDMARK_PATH, WORDMARK_VIEWBOX } from './wordmark-path.ts';
+
+/** Ink of the letters runs from x 75 to 3314; the cursor ends at 3890. */
+const [VB_X, VB_Y, VB_W, VB_H] = WORDMARK_VIEWBOX.split(' ').map(Number) as [
+  number,
+  number,
+  number,
+  number,
+];
+const OVERHANG = WORDMARK_CURSOR.x + WORDMARK_CURSOR.width - 3314;
+const WORDMARK_VIEWBOX_CENTRED = `${75 - OVERHANG} ${VB_Y} ${VB_W + VB_X - 75 + OVERHANG} ${VB_H}`;
 import styles from './Brand.module.css';
 
 /**
  * The "cherry_" wordmark: JetBrains Mono outlines with a blinking coral cursor. `height` is the
  * cap-to-descender height in px; the letters take the current text colour.
  */
-export function Wordmark({ height = 16, cursor = true }: { height?: number; cursor?: boolean }) {
+export function Wordmark({
+  height = 16,
+  cursor = true,
+  centred,
+}: {
+  height?: number;
+  cursor?: boolean;
+  /** Pad the left as much as the cursor sticks out, so the letters sit in the middle. */
+  centred?: boolean;
+}) {
   return (
     <svg
       className={styles.wordmark}
-      viewBox={WORDMARK_VIEWBOX}
+      viewBox={centred ? WORDMARK_VIEWBOX_CENTRED : WORDMARK_VIEWBOX}
       height={height}
       role="img"
       aria-label="Cherry"
