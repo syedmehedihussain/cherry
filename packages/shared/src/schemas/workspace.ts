@@ -150,5 +150,19 @@ export const TasksFileSchema = z.object({
 export type TasksFile = z.infer<typeof TasksFileSchema>;
 export type Task = TasksFile['tasks'][number];
 
+/** POST /api/projects/:id/tasks: a task the user typed; it joins the current phase. */
+export const NewTaskSchema = z.object({ title: z.string().trim().min(1).max(300) });
+
+/** POST /api/projects/:id/notes/organise: a rough note for the note-taker. */
+export const NoteBodySchema = z.object({ text: z.string().trim().min(1).max(20_000) });
+
+export const OrganisedNoteSchema = z.object({
+  content: z.string(),
+  mtime: z.number(),
+  /** The `##` section the note went into. */
+  section: z.string(),
+});
+export type OrganisedNote = z.infer<typeof OrganisedNoteSchema>;
+
 export const NotesSchema = z.object({ content: z.string(), mtime: z.number().nullable() });
 export type Notes = z.infer<typeof NotesSchema>;

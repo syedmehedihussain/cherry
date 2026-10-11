@@ -3,16 +3,16 @@ import { create } from 'zustand';
 import { useTasks } from '../../api/workspace.ts';
 import { AgentsPanel } from '../../components/AgentsPanel/AgentsPanel.tsx';
 import { GitPanel } from '../../components/GitHubBox/GitPanel.tsx';
-import { MagnetChat } from '../../components/MagnetChat/MagnetChat.tsx';
 import { PlanUsage } from '../../components/PlanUsage/PlanUsage.tsx';
-import { NotesTab } from './NotesTab.tsx';
+import { NotesEditor, TaskList } from './NotesTab.tsx';
 import styles from './SidePanel.module.css';
+import ws from './Workspace.module.css';
 
 const VIEWS = [
   ['overview', 'Overview'],
   ['github', 'GitHub'],
   ['agents', 'Agents'],
-  ['magnet', 'Magnet'],
+  ['tasks', 'Tasks'],
   ['notes', 'Notes'],
 ] as const;
 
@@ -78,7 +78,7 @@ export function SidePanel({
             <div className={styles.pad}>
               <GitPanel key={projectId} projectId={projectId} now={now} />
               <PlanUsage now={now} />
-              <TasksLine projectId={projectId} onOpen={() => setView('notes')} />
+              <TasksLine projectId={projectId} onOpen={() => setView('tasks')} />
             </div>
             <AgentsPanel
               projectId={projectId}
@@ -86,6 +86,10 @@ export function SidePanel({
               now={now}
               limit={3}
               onSeeAll={() => setView('agents')}
+              kinds
+              onDone={(kind) =>
+                setView(kind === 'task' ? 'tasks' : kind === 'note' ? 'notes' : 'agents')
+              }
             />
           </>
         )}
@@ -95,8 +99,16 @@ export function SidePanel({
           </div>
         )}
         {view === 'agents' && <AgentsPanel projectId={projectId} branch={branch} now={now} />}
-        {view === 'magnet' && <MagnetChat projectId={projectId} />}
-        {view === 'notes' && <NotesTab projectId={projectId} stacked />}
+        {view === 'tasks' && (
+          <div className={ws.notes} data-stacked>
+            <TaskList projectId={projectId} />
+          </div>
+        )}
+        {view === 'notes' && (
+          <div className={ws.notes} data-stacked>
+            <NotesEditor projectId={projectId} />
+          </div>
+        )}
       </div>
     </>
   );

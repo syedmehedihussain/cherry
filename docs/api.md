@@ -41,7 +41,9 @@ the projects folder (see `security.md`).
 | GET | `/api/projects/:id/status` | parsed STATUS.md |
 | GET | `/api/projects/:id/tasks` | tasks.json |
 | PATCH | `/api/projects/:id/tasks/:taskId` | update a task status |
+| POST | `/api/projects/:id/tasks` | `{ title }` → adds a `todo` task in the current phase (first unfinished task's phase); creates tasks.json if missing; returns the tasks file |
 | GET / PUT | `/api/projects/:id/notes` | notes.md (the only file the UI writes directly — it is the user's own notes) |
+| POST | `/api/projects/:id/notes/organise` | `{ text }` → the note-taker (Haiku, no tools but `save_note`) tidies the note and picks a `##` section; the daemon adds it there (additions only). `{ content, mtime, section }`; 502 `note_failed` leaves notes.md untouched (ADR-0016) |
 | POST | `/api/projects/:id/open-in-editor` | `{ path }` → runs `$EDITOR` / `code` |
 
 ## Git and GitHub

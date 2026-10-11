@@ -11,6 +11,7 @@ test('agent: start → approve → review diff → accept → commit on main', a
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
 
   const panel = page.getByRole('region', { name: 'Agents' });
+  await panel.getByLabel('Add as').selectOption('agent');
   await panel.getByLabel('Task').fill('Write tests for the streak service');
   await panel.getByRole('button', { name: 'Start' }).click();
 

@@ -8,6 +8,7 @@ import {
   GitInfoSchema,
   GitResultSchema,
   NotesSchema,
+  OrganisedNoteSchema,
   ProjectDetailSchema,
   PullRequestListSchema,
   TasksFileSchema,
@@ -92,6 +93,12 @@ export const useTasks = (id: string) =>
     queryKey: wk.tasks(id),
     queryFn: () => api('GET', `${base(id)}/tasks`, undefined, TasksFileSchema),
   });
+
+export const addTask = (id: string, title: string) =>
+  api('POST', `${base(id)}/tasks`, { title }, TasksFileSchema);
+
+export const organiseNote = (id: string, text: string) =>
+  api('POST', `${base(id)}/notes/organise`, { text }, OrganisedNoteSchema);
 
 export const setTaskStatus = (id: string, taskId: string, status: string) =>
   api('PATCH', `${base(id)}/tasks/${encodeURIComponent(taskId)}`, { status }, TasksFileSchema);

@@ -8,6 +8,8 @@ import { openDb, type Db } from './db.ts';
 import { EventHub } from './events.ts';
 import { HealthService } from './health-service.ts';
 import { PlanUsageService } from './plan-usage.ts';
+import { NoteService } from './notes/service.ts';
+import { noteRoutes } from './routes/notes.ts';
 import { ensureMagnetFiles } from './magnet/files.ts';
 import { GitInfoService } from './projects/github.ts';
 import { ProjectService } from './projects/service.ts';
@@ -137,6 +139,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     opts.runner ?? sdkRunner,
     opts.home,
   );
+  const notes = new NoteService(config, opts.runner ?? sdkRunner);
   const gitActions = new GitActions(config, hub, approvals, gitInfo, opts.prList);
   const magnet = new MagnetService(
     config,
@@ -170,6 +173,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       agentRoutes(agents),
       scanRoutes(scans),
       magnetRoutes(magnet),
+      noteRoutes(notes),
     ],
   });
 

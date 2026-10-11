@@ -4,6 +4,8 @@ import { useSearchParams } from 'react-router';
 import type { Agent } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
 import { startAgent, useAgentDiff, useAgents, useLiveAgents } from '../../api/agents.ts';
+import { queryClient } from '../../api/queries.ts';
+import { addTask, organiseNote, wk } from '../../api/workspace.ts';
 import { AgentCard } from '../AgentCard/AgentCard.tsx';
 import { FileDiff } from '../ApprovalCard/ApprovalCard.tsx';
 import { ScanAgents } from '../ScanAgents/ScanAgents.tsx';
@@ -18,6 +20,8 @@ export function AgentsPanel({
   now,
   limit,
   onSeeAll,
+  kinds,
+  onDone,
 }: {
   projectId: string;
   branch: string | null;
@@ -25,6 +29,9 @@ export function AgentsPanel({
   /** Show only the newest few (the Overview); the rest are one click away. */
   limit?: number;
   onSeeAll?(): void;
+  /** Offer Task and Note in the box as well as Agent (the Overview). */
+  kinds?: boolean;
+  onDone?(kind: BoxKind): void;
 }) {
   const agents = useAgents(projectId);
   useLiveAgents(projectId);
@@ -51,8 +58,9 @@ export function AgentsPanel({
         )}
         {list.length === 0 ? (
           <p className={styles.empty}>
-            Give an agent a task below. It works on its own branch while you keep chatting, and you
-            review the diff before anything lands.
+            {kinds ? 'Choose Agent in the box below to start one.' : 'Give an agent a task below.'}{' '}
+            It works on its own branch while you keep chatting, and you review the diff before
+            anything lands.
           </p>
         ) : (
           shown.map((a, i) => (
@@ -76,35 +84,99 @@ export function AgentsPanel({
         projectId={projectId}
         branch={branch}
         full={!!agents.data && running >= agents.data.maxRunning}
+        kinds={kinds}
+        onDone={onDone}
       />
       {diffOf && <DiffDialog agent={diffOf} onClose={() => setDiffOf(null)} />}
     </section>
   );
 }
 
+export type BoxKind = 'task' | 'note' | 'agent';
+
+const KIND_KEY = 'cherry.boxKind';
+
+function readKind(): BoxKind {
+  try {
+    const v = localStorage.getItem(KIND_KEY);
+    return v === 'task' || v === 'note' || v === 'agent' ? v : 'task';
+  } catch {
+    return 'task';
+  }
+}
+
+const KIND_TEXT: Record<BoxKind, { placeholder: string; send: string; busy: string }> = {
+  task: { placeholder: 'Add a task…', send: 'Add', busy: 'Adding…' },
+  note: {
+    placeholder: 'Write a note. Claude tidies it into your notes…',
+    send: 'Save',
+    busy: 'Organising…',
+  },
+  agent: { placeholder: 'Give an agent a task…', send: 'Start', busy: 'Starting…' },
+};
+
+/**
+ * The box at the bottom: add a task, save a note (the note-taker files it in notes.md), or
+ * start an agent. `kinds` off means agents only (the Agents view).
+ */
 function TaskBox({
   projectId,
   branch,
   full,
+  kinds,
+  onDone,
 }: {
   projectId: string;
   branch: string | null;
   full: boolean;
+  kinds?: boolean;
+  onDone?(kind: BoxKind): void;
 }) {
-  const [task, setTask] = useState('');
+  const [text, setText] = useState('');
+  const [chosen, setChosen] = useState<BoxKind>(readKind);
+  const kind: BoxKind = kinds ? chosen : 'agent';
   const [model, setModel] = useState<Model>('sonnet');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const ready = task.trim().length >= 3 && !busy;
+  const ready = text.trim().length >= (kind === 'agent' ? 3 : 1) && !busy;
+  const words = KIND_TEXT[kind];
+
+  const choose = (k: BoxKind) => {
+    setChosen(k);
+    setError(null);
+    try {
+      localStorage.setItem(KIND_KEY, k);
+    } catch {
+      // Private window: the choice just isn't remembered.
+    }
+  };
+
   const start = async () => {
     if (!ready) return;
     setBusy(true);
     setError(null);
+    const value = text.trim();
     try {
-      await startAgent(projectId, { task: task.trim(), model });
-      setTask('');
+      if (kind === 'task') {
+        queryClient.setQueryData(wk.tasks(projectId), await addTask(projectId, value));
+      } else if (kind === 'note') {
+        const res = await organiseNote(projectId, value);
+        queryClient.setQueryData(wk.notes(projectId), { content: res.content, mtime: res.mtime });
+      } else {
+        await startAgent(projectId, { task: value, model });
+      }
+      setText('');
+      onDone?.(kind);
     } catch (e) {
-      setError(e instanceof ApiFailure ? e.message : 'Could not start the agent.');
+      setError(
+        e instanceof ApiFailure
+          ? e.message
+          : kind === 'agent'
+            ? 'Could not start the agent.'
+            : kind === 'note'
+              ? 'Could not save the note.'
+              : 'Could not add the task.',
+      );
     } finally {
       setBusy(false);
     }
@@ -112,7 +184,7 @@ function TaskBox({
   return (
     <form
       className={styles.box}
-      aria-label="New agent"
+      aria-label={kinds ? 'Quick add' : 'New agent'}
       onSubmit={(e) => {
         e.preventDefault();
         void start();
@@ -121,11 +193,17 @@ function TaskBox({
       <textarea
         className={styles.text}
         rows={2}
-        value={task}
-        aria-label="Task"
-        placeholder="Give an agent a task…"
-        title={`Starts from your last commit${branch ? ` on ${branch}` : ''}, in its own worktree. Edits there need no approval; commands do.`}
-        onChange={(e) => setTask(e.target.value)}
+        value={text}
+        aria-label={kind === 'note' ? 'Note' : 'Task'}
+        placeholder={words.placeholder}
+        title={
+          kind === 'agent'
+            ? `Starts from your last commit${branch ? ` on ${branch}` : ''}, in its own worktree. Edits there need no approval; commands do.`
+            : kind === 'note'
+              ? 'Claude cleans up the note and adds it under the right heading in _project/notes.md. Your other notes stay as they are.'
+              : 'Adds a task to _project/tasks.json, in the current phase.'
+        }
+        onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
             e.preventDefault();
@@ -133,22 +211,38 @@ function TaskBox({
           }
         }}
       />
-      {full && (
+      {full && kind === 'agent' && (
         <p className={styles.hint}>All agent slots are busy, so it will wait in the queue.</p>
       )}
       {error && <p className={styles.error}>{error}</p>}
       <div className={styles.row}>
-        <label className={styles.model}>
-          <span className="sr-only">Model</span>
-          <select value={model} onChange={(e) => setModel(e.target.value as Model)}>
-            <option value="sonnet">Sonnet</option>
-            <option value="opus">Opus</option>
-            <option value="haiku">Haiku</option>
-          </select>
-        </label>
+        {kinds && (
+          <span className={styles.model}>
+            <select
+              aria-label="Add as"
+              value={kind}
+              disabled={busy}
+              onChange={(e) => choose(e.target.value as BoxKind)}
+            >
+              <option value="task">Task</option>
+              <option value="note">Note</option>
+              <option value="agent">Agent</option>
+            </select>
+          </span>
+        )}
+        {kind === 'agent' && (
+          <label className={styles.model}>
+            <span className="sr-only">Model</span>
+            <select value={model} onChange={(e) => setModel(e.target.value as Model)}>
+              <option value="sonnet">Sonnet</option>
+              <option value="opus">Opus</option>
+              <option value="haiku">Haiku</option>
+            </select>
+          </label>
+        )}
         <span className={styles.spacer} />
         <button type="submit" className={styles.send} disabled={!ready}>
-          {busy ? 'Starting…' : 'Start'}
+          {busy ? words.busy : words.send}
         </button>
       </div>
     </form>

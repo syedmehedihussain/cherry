@@ -3,12 +3,14 @@ import path from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import {
+  NewTaskSchema,
   TaskStatusSchema,
   TasksFileSchema,
+  type Phase,
   type ProjectDetail,
   type TasksFile,
 } from '@cherry/shared';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { writeFileAtomic } from '../fsutil.ts';
 import { gitStatus } from '../git.ts';
 import { conflict, notFound } from '../http.ts';
@@ -18,6 +20,19 @@ import { openInEditor } from '../projects/editor.ts';
 import type { GitInfoService } from '../projects/github.ts';
 import { buildCard, readProjectFiles } from '../projects/scanner.ts';
 import { fileDiff, listDocs, listTree, projectDir, readFileView } from '../projects/workspace.ts';
+
+/** `t<n>` one above the highest numbered id. */
+function nextTaskId(tasks: TasksFile): string {
+  const ids = new Set(tasks.tasks.map((t) => t.id));
+  let n = Math.max(0, ...tasks.tasks.map((t) => Number(/^t(\d+)$/.exec(t.id)?.[1] ?? 0))) + 1;
+  while (ids.has(`t${n}`)) n++;
+  return `t${n}`;
+}
+
+/** The phase of the first task that is not finished: where the project is now. */
+function currentPhase(tasks: TasksFile): Phase | null {
+  return tasks.tasks.find((t) => t.status === 'todo' || t.status === 'doing')?.phase ?? null;
+}
 
 const IdParams = z.object({ id: z.string().min(1).max(200) });
 const PathQuery = z.object({ path: z.string().max(4096).default('') });
@@ -102,6 +117,25 @@ export function workspaceRoutes(config: ConfigStore, gitInfo: GitInfoService) {
       const task = tasks.tasks.find((t) => t.id === taskId);
       if (!task) throw notFound(`No task ${taskId}`);
       task.status = status;
+      writeFileAtomic(file, JSON.stringify(tasks, null, 2) + '\n');
+      return tasks;
+    });
+
+    app.post('/api/projects/:id/tasks', async (req) => {
+      const dir = dirOf(req.params);
+      const { title } = NewTaskSchema.parse(req.body);
+      const file = path.join(dir, '_project', 'tasks.json');
+      const tasks: TasksFile = existsSync(file)
+        ? TasksFileSchema.parse(JSON.parse(readFileSync(file, 'utf8')))
+        : { schema: 1, tasks: [] };
+      tasks.tasks.push({
+        id: nextTaskId(tasks),
+        phase: currentPhase(tasks) ?? (await buildCard(dir)).phase ?? 'development',
+        title,
+        status: 'todo',
+        dependsOn: [],
+      });
+      mkdirSync(path.dirname(file), { recursive: true });
       writeFileAtomic(file, JSON.stringify(tasks, null, 2) + '\n');
       return tasks;
     });

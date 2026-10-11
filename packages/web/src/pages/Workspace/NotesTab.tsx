@@ -14,7 +14,7 @@ export function NotesTab({ projectId, stacked }: { projectId: string; stacked?: 
   );
 }
 
-function NotesEditor({ projectId }: { projectId: string }) {
+export function NotesEditor({ projectId }: { projectId: string }) {
   const notes = useNotes(projectId);
   const [generation, setGeneration] = useState(0);
   if (!notes.data) {
@@ -132,7 +132,7 @@ function NotesEditorLoaded({
       <textarea
         id="notes-editor"
         className={styles.notesEditor}
-        placeholder="Your own notes for this project. Plain Markdown. Only you write here."
+        placeholder="Your own notes for this project. Plain Markdown. Notes from the Overview box are added here too."
         value={text}
         onChange={(e) => onChange(e.target.value)}
         onBlur={flush}
@@ -148,7 +148,7 @@ const NEXT: Record<TaskStatus, TaskStatus> = {
   skipped: 'todo',
 };
 
-function TaskList({ projectId }: { projectId: string }) {
+export function TaskList({ projectId }: { projectId: string }) {
   const tasks = useTasks(projectId);
   const list = tasks.data?.tasks ?? [];
 
