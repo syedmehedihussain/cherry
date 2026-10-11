@@ -23,6 +23,10 @@
   gap: 8px;
   text-align: center;
 }
+.brand {
+  color: var(--brand-cream);
+  margin-bottom: 18px;
+}
 .greeting {
   font-size: var(--fs-lg);
   color: var(--t2);

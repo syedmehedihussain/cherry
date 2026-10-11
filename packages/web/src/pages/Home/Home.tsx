@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router';
 import { tildify } from '../../lib/paths.ts';
 import { recheckHealth, useHealth, useProjects } from '../../api/queries.ts';
 import { ClaudeMissingBanner } from '../../components/Banner/Banner.tsx';
+import { Wordmark } from '../../components/Brand/Brand.tsx';
 import { MagnetAvatar } from '../../components/MagnetAvatar/MagnetAvatar.tsx';
 import { ProjectCard, ProjectCardSkeleton } from '../../components/ProjectCard/ProjectCard.tsx';
 import { ProjectTable } from '../../components/ProjectTable/ProjectTable.tsx';
@@ -67,6 +68,9 @@ export function Home() {
       <main className={styles.main}>
         <section aria-label="Start" className={styles.start}>
           <div className={styles.hello}>
+            <span className={styles.brand}>
+              <Wordmark height={44} />
+            </span>
             <span className={styles.greeting}>{greeting(new Date(now).getHours())}</span>
             <h1 className={styles.title}>What are we building?</h1>
           </div>
