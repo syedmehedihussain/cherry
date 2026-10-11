@@ -1,5 +1,5 @@
 import { ArrowUp, Folder, Plus } from 'lucide-react';
-import { useId, useState, type KeyboardEvent } from 'react';
+import { useEffect, useId, useState, type KeyboardEvent } from 'react';
 import type { ProjectCard } from '@cherry/shared';
 import { MagnetAvatar } from '../MagnetAvatar/MagnetAvatar.tsx';
 import styles from './PromptBox.module.css';
@@ -13,6 +13,8 @@ interface PromptBoxProps {
   onNewProject(idea: string): void;
   onAskMagnet(text: string): void;
   onCalibrate(id: string): void;
+  /** The text in New project mode, so Home's Start project button can take it along. */
+  onIdeaChange?(idea: string): void;
 }
 
 const PLACEHOLDER: Record<PromptMode, string> = {
@@ -27,10 +29,12 @@ export function PromptBox({
   onNewProject,
   onAskMagnet,
   onCalibrate,
+  onIdeaChange,
 }: PromptBoxProps) {
   const [mode, setMode] = useState<PromptMode>('new');
   const [text, setText] = useState('');
   const id = useId();
+  useEffect(() => onIdeaChange?.(mode === 'new' ? text.trim() : ''), [mode, text, onIdeaChange]);
   const canSend = !disabled && mode !== 'calibrate' && text.trim().length > 0;
 
   const send = () => {

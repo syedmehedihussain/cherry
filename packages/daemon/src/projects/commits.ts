@@ -240,8 +240,7 @@ export class CommitService {
               id: 'c1',
               message: 'chore: update files',
               body: null,
-              explanation:
-                'Not grouped yet. Edit the message and commit all files, or use Group with Claude for suggested commits.',
+              explanation: 'Every changed file in one commit.',
               files,
             },
           ]

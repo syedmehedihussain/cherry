@@ -25,6 +25,7 @@ export function Home() {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<Sort>('last');
   const [checking, setChecking] = useState(false);
+  const [idea, setIdea] = useState('');
 
   const cards = useMemo(() => projects.data?.cards ?? [], [projects.data]);
   const claudeMissing = health.data
@@ -72,11 +73,12 @@ export function Home() {
             onNewProject={(idea) => void navigate(`/new?idea=${encodeURIComponent(idea)}`)}
             onAskMagnet={(text) => openMagnet(text)}
             onCalibrate={(id) => void navigate(`/p/${encodeURIComponent(id)}/calibrate`)}
+            onIdeaChange={setIdea}
           />
           {!empty && (
             <div className={styles.cta}>
               <Link
-                to="/new"
+                to={idea ? `/new?idea=${encodeURIComponent(idea)}` : '/new'}
                 className="btn btn-primary btn-lg"
                 aria-disabled={claudeMissing}
                 title={claudeMissing ? 'Connect Claude Code first' : undefined}
@@ -105,7 +107,7 @@ export function Home() {
             </div>
             <div className={styles.emptyActions}>
               <Link
-                to="/new"
+                to={idea ? `/new?idea=${encodeURIComponent(idea)}` : '/new'}
                 className="btn btn-primary btn-lg"
                 aria-disabled={claudeMissing}
                 onClick={(e) => claudeMissing && e.preventDefault()}

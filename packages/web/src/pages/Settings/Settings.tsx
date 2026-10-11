@@ -334,6 +334,8 @@ function ShortcutsSection() {
     ['Shift + Enter', 'New line in the composer'],
     ['↑ / ↓', 'Move between options on a decision card'],
     ['Esc', 'Close Magnet or a dialog'],
+    ['Ctrl + S', 'Save the file in the built-in editor'],
+    ['Tab', 'Indent two spaces in the built-in editor'],
   ];
   return (
     <section className={styles.section}>

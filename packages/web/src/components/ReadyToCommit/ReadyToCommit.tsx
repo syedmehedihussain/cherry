@@ -48,32 +48,22 @@ export function ReadyToCommit({ projectId }: { projectId: string }) {
             </span>
           )}
         </div>
-        {data?.grouped === false && data.files.length > 0 && !loading && (
+        {data?.grouped && data.files.length > 0 && (
           <button
             type="button"
-            className="btn btn-secondary btn-sm"
-            title="Asks Haiku to split the changes into commits with messages. Uses a few tokens."
+            className={styles.icon}
+            aria-label="Group the changes again"
+            title="Group the changes again"
+            disabled={loading}
             onClick={() => void refresh()}
           >
-            <Sparkles size={12} aria-hidden="true" />
-            Group with Claude
+            <RefreshCw
+              size={13}
+              aria-hidden="true"
+              className={refreshing ? styles.spinning : undefined}
+            />
           </button>
         )}
-        <button
-          type="button"
-          className={styles.icon}
-          hidden={!data?.grouped || !data.files.length}
-          aria-label="Group the changes again"
-          title="Group the changes again"
-          disabled={loading}
-          onClick={() => void refresh()}
-        >
-          <RefreshCw
-            size={13}
-            aria-hidden="true"
-            className={refreshing ? styles.spinning : undefined}
-          />
-        </button>
       </div>
 
       {loading && (
@@ -116,9 +106,20 @@ export function ReadyToCommit({ projectId }: { projectId: string }) {
           )}
           {data.error && <p className={styles.warn}>{data.error} All files are in one commit.</p>}
           {!data.grouped && (
-            <p className={styles.empty}>
-              Not grouped yet. Commit everything with one message, or use Group with Claude.
-            </p>
+            <div className={styles.ungrouped}>
+              <p className={styles.empty}>
+                Not grouped yet. Commit everything with one message, or let Claude split it.
+              </p>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                title="Asks Haiku to split the changes into commits with messages. Uses a few tokens."
+                onClick={() => void refresh()}
+              >
+                <Sparkles size={12} aria-hidden="true" />
+                Group with Claude
+              </button>
+            </div>
           )}
           {data.commits.length === 0 ? (
             <p className={styles.empty}>Nothing to commit. Your working tree is clean.</p>

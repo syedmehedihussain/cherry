@@ -99,7 +99,7 @@ export function ChangeSummary({
                 <li key={c.id}>
                   <code>{c.target}</code>
                   <span className={c.status === 'ok' ? styles.ok : styles.bad}>
-                    {c.status === 'ok' ? 'passed' : c.status}
+                    {c.status === 'ok' ? 'ok' : c.status === 'denied' ? 'denied by you' : c.status}
                   </span>
                 </li>
               ))}

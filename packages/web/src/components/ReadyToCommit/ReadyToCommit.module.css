@@ -242,3 +242,12 @@
   outline: 2px solid var(--accent);
   outline-offset: -1px;
 }
+.ungrouped {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ungrouped p {
+  margin: 0;
+}

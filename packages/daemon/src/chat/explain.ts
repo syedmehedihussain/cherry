@@ -63,7 +63,7 @@ export function explainPrompt(c: ReturnType<typeof turnChanges>, diff: string): 
     '',
     `Files changed: ${c.files.join(', ')}`,
     c.commands.length
-      ? `Commands run after the change:\n${c.commands.map((x) => `- ${x.command} (${x.status})`).join('\n')}`
+      ? `Commands run after the change:\n${c.commands.map((x) => `- ${x.command} (${x.status === 'denied' ? 'denied by the user' : x.status})`).join('\n')}`
       : 'No commands were run after the change.',
     '',
     "Claude's last message in that turn:",
