@@ -36,7 +36,8 @@
   --t-on-accent: #ffffff;   /* text on an accent fill */
   --knob: #ffffff;          /* switch knob */
   --t-gutter: #5f5f68;      /* line numbers */
-  --wordmark: var(--brand-cream); /* the cherry_ wordmark on the page background */
+  --wordmark: var(--t1);    /* the cherry_ wordmark on the page background */
+  --wordmark-cursor: var(--accent); /* its blinking cursor */
 
   /* Accent (blue) — focus, links, current phase, selection */
   /* Brand (docs/design-system.md → Brand): logo, wordmark and icons only, not UI states */
@@ -202,6 +203,8 @@
   --primary-hover: #fffaf3;
   --t-on-accent: #1e1414;
   --t-gutter: #6b5a55;
+  --wordmark: var(--brand-cream);
+  --wordmark-cursor: var(--brand-coral);
 
   --accent: #e07a5f;
   --accent-text: #eb9a82;
@@ -258,6 +261,7 @@
   --t-on-accent: #f5eee4;
   --t-gutter: #9a8a82;
   --wordmark: var(--brand-cherry);
+  --wordmark-cursor: var(--brand-coral);
 
   --accent: #7a1622;
   --accent-text: #7a1622;

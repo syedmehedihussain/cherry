@@ -34,6 +34,8 @@ token has the old value, so Classic looks exactly as before. Code highlighting u
 ## Consequences
 
 - Good: one switch in Settings → Appearance; new themes are one token block each.
+- The cherry_ wordmark follows the theme: Classic uses `--t1` text and the blue accent cursor;
+  the Cherry themes keep the brand cream or cherry text and the coral cursor.
 - Bad / cost: the choice is per browser, not per machine.
 - Follow-up: status-tint `rgba()` values in component CSS still use the dark-theme hues; they read
   fine on cream but could become tokens if a theme needs it.

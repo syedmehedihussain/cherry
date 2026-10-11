@@ -5,7 +5,7 @@
   overflow: visible;
 }
 .cursor {
-  fill: var(--brand-coral);
+  fill: var(--wordmark-cursor);
   animation: brand-blink 1.1s steps(1) infinite;
 }
 @keyframes brand-blink {
@@ -61,7 +61,7 @@
   height: 1.1em;
   margin-left: 2px;
   vertical-align: -0.2em;
-  background: var(--brand-coral);
+  background: var(--wordmark-cursor);
   animation: brand-blink 1.1s steps(1) infinite;
 }
 @media (prefers-reduced-motion: reduce) {
