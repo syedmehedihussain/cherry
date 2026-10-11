@@ -107,7 +107,7 @@ and Report opens the result in its own centre tab with the history of earlier ru
 **On hold (2026-10-11):** the user wants more work in before 1.0.0. The checklist stays.
 
 - [x] CI green again (daemon EPIPE crash outside git repos; fake Claude reports Claude ready).
-- [ ] Fix the security review findings: agent/Magnet edit guard through symlinks (high), read
+- [x] Fix the security review findings: agent/Magnet edit guard through symlinks (high), read
       tools outside the project and narrow secret list (medium), editor fallback (low).
 - [ ] Run Test runner, Code health and Dependency audit on Cherry; fix anything high.
 - [x] README rewritten for users: what it is, requirements, install, first run, features, skill.
