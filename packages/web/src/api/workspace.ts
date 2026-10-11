@@ -123,6 +123,15 @@ export const organiseNote = (id: string, text: string) =>
 export const setTaskStatus = (id: string, taskId: string, status: string) =>
   api('PATCH', `${base(id)}/tasks/${encodeURIComponent(taskId)}`, { status }, TasksFileSchema);
 
+/** Saves the built-in editor's text; refused (409) if the file changed since it was opened. */
+export const saveFile = (id: string, path: string, content: string, baseMtime: number) =>
+  api('PUT', `${base(id)}/file`, { path, content, baseMtime }, FileViewSchema).then((view) => {
+    queryClient.setQueryData(wk.file(id, path), view);
+    void queryClient.invalidateQueries({ queryKey: wk.diff(id, path) });
+    void queryClient.invalidateQueries({ queryKey: wk.changes(id) });
+    return view;
+  });
+
 export const openInEditor = (id: string, path: string) =>
   api('POST', `${base(id)}/open-in-editor`, { path });
 

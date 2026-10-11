@@ -19,7 +19,14 @@ import { resolveInside } from '../paths.ts';
 import { openInEditor } from '../projects/editor.ts';
 import type { GitInfoService } from '../projects/github.ts';
 import { buildCard, readProjectFiles } from '../projects/scanner.ts';
-import { fileDiff, listDocs, listTree, projectDir, readFileView } from '../projects/workspace.ts';
+import {
+  fileDiff,
+  listDocs,
+  listTree,
+  projectDir,
+  readFileView,
+  writeFileView,
+} from '../projects/workspace.ts';
 
 /** `t<n>` one above the highest numbered id. */
 function nextTaskId(tasks: TasksFile): string {
@@ -61,6 +68,17 @@ export function workspaceRoutes(config: ConfigStore, gitInfo: GitInfoService) {
     app.get('/api/projects/:id/file', async (req) =>
       readFileView(dirOf(req.params), PathQuery.parse(req.query).path),
     );
+
+    app.put('/api/projects/:id/file', async (req) => {
+      const body = z
+        .object({
+          path: z.string().min(1).max(4096),
+          content: z.string().max(1024 * 1024),
+          baseMtime: z.number(),
+        })
+        .parse(req.body);
+      return writeFileView(dirOf(req.params), body.path, body.content, body.baseMtime);
+    });
 
     app.get('/api/projects/:id/diff', async (req) =>
       fileDiff(dirOf(req.params), PathQuery.parse(req.query).path),

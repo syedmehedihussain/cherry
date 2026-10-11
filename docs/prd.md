@@ -42,7 +42,6 @@ personal data; personal content lives only in `~/.cherry/magnet/`.
 
 ## 4. Non-goals (MVP)
 
-- Editing code by hand inside Cherry (read-only viewer only).
 - A built-in terminal tab.
 - Multiple users, login, or access from outside `127.0.0.1` (Tailscale later).
 - Cloud storage or sync.
@@ -107,7 +106,7 @@ Priority: **P0** = MVP cannot ship without it. **P1** = MVP should have it. **P2
 | W-8 | Composer: "Message Claude", **Plan mode** toggle, model chip, **Stop** while running. | P0 |
 | W-9 | Session resumes across page reloads and daemon restarts. | P0 |
 | W-10 | Docs tab: grouped list (Project / Engineering / Decisions) and a rendered Markdown reader with **Ask Claude about this doc** and **Open in editor**. | P0 |
-| W-11 | File viewer: read-only, syntax highlighted, breadcrumb, **Show changes** (inline diff vs HEAD), **Open in editor**. | P0 |
+| W-11 | File viewer: syntax highlighted, **Edit** (built-in editor, Save / Ctrl+S, ADR-0021), breadcrumb, **Show changes** (inline diff vs HEAD), **Open in editor**. | P0 |
 | W-12 | GitHub box: repo, visibility, branch, ↑ahead ↓behind, uncommitted count, last 3 commits, open PR count, **Pull** and **Push** (push asks first). | P0 |
 | W-13 | Right panel tabs: **Agents** (with count) and **Magnet**. | P0 |
 | W-14 | Toast for approvals that arrive while you are on another tab. | P1 |

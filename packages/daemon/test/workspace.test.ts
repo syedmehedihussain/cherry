@@ -1,8 +1,9 @@
 import { execFileSync } from 'node:child_process';
+import { readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseFullDiff } from '../src/projects/workspace.ts';
-import { HOST, gitInit, testDaemon, write, type TestDaemon } from './helpers.ts';
+import { HOST, ORIGIN, gitInit, testDaemon, write, type TestDaemon } from './helpers.ts';
 
 describe('workspace routes', () => {
   let d: TestDaemon;
@@ -121,6 +122,46 @@ describe('workspace routes', () => {
       changes: 2,
     });
     expect(git.commits[0].subject).toBe('files');
+  });
+
+  describe('built-in editor save', () => {
+    const put = (payload: object) =>
+      d.app.inject({
+        method: 'PUT',
+        url: '/api/projects/core/file',
+        headers: { host: HOST, origin: ORIGIN, cookie },
+        payload,
+      });
+    const mtime = (rel: string) => statSync(path.join(core, rel)).mtimeMs;
+
+    it('saves a text file and returns the new view', async () => {
+      const res = await put({
+        path: 'README.md',
+        content: '# core\nedited\n',
+        baseMtime: mtime('README.md'),
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().content).toBe('# core\nedited\n');
+      expect(readFileSync(path.join(core, 'README.md'), 'utf8')).toBe('# core\nedited\n');
+    });
+
+    it('refuses when the file changed since it was opened', async () => {
+      const res = await put({ path: 'README.md', content: 'x', baseMtime: 1 });
+      expect(res.statusCode).toBe(409);
+      expect(readFileSync(path.join(core, 'README.md'), 'utf8')).toBe('# core\nedited\n');
+    });
+
+    it.each([['.env'], ['logo.bin'], ['../outside.txt'], ['nope.txt']])(
+      'refuses %s',
+      async (rel) => {
+        const res = await put({ path: rel, content: 'x', baseMtime: 0 });
+        expect(res.statusCode).toBeGreaterThanOrEqual(400);
+        expect(res.statusCode).not.toBe(200);
+      },
+    );
+    it('left the secret file alone', () => {
+      expect(readFileSync(path.join(core, '.env'), 'utf8')).toBe('SECRET=1\n');
+    });
   });
 });
 

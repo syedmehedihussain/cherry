@@ -1,9 +1,10 @@
-import { ArrowUpRight, Lock } from 'lucide-react';
+import { ArrowUpRight, Pencil } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState, type KeyboardEvent } from 'react';
 import type { ThemedToken } from 'shiki';
 import type { DiffLine } from '@cherry/shared';
-import { openInEditor, useDiff, useFile } from '../../api/workspace.ts';
+import { ApiFailure } from '../../api/client.ts';
+import { openInEditor, saveFile, useDiff, useFile } from '../../api/workspace.ts';
 import { highlightLines } from '../../lib/highlight.ts';
 import { themeMode, useTheme } from '../../lib/theme.ts';
 import { Switch } from '../Switch/Switch.tsx';
@@ -34,6 +35,18 @@ export function FileViewer({ projectId, path }: { projectId: string; path: strin
   const file = useFile(projectId, path);
   const changed = !!file.data?.git && !file.data.hidden && !file.data.binary;
   const [showChanges, setShowChanges] = useState(true);
+  // The built-in editor (ADR-0021): a draft per file, saved only on Save or Ctrl+S.
+  const [draft, setDraft] = useState<{ path: string; text: string } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const editing = draft?.path === path ? draft.text : null;
+  const dirty = editing !== null && editing !== file.data?.content;
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
   const diff = useDiff(projectId, path, changed);
   const diffOn = changed && showChanges && !!diff.data && diff.data.lines.length > 0;
 
@@ -59,6 +72,43 @@ export function FileViewer({ projectId, path }: { projectId: string; path: strin
       </div>
     );
 
+  const editable = !file.data.hidden && !file.data.binary && !file.data.truncated;
+  const startEdit = () => {
+    setSaveError(null);
+    setDraft({ path, text: file.data!.content });
+  };
+  const stopEdit = () => {
+    if (dirty && !window.confirm('Discard your changes to this file?')) return;
+    setDraft(null);
+    setSaveError(null);
+  };
+  const save = async () => {
+    if (editing === null || !dirty || saving) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await saveFile(projectId, path, editing, file.data!.mtime);
+      setDraft(null);
+    } catch (e) {
+      setSaveError(e instanceof ApiFailure ? e.message : 'Could not save.');
+    } finally {
+      setSaving(false);
+    }
+  };
+  const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      void save();
+    } else if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      const el = e.currentTarget;
+      const { selectionStart: a, selectionEnd: b, value } = el;
+      const next = value.slice(0, a) + '  ' + value.slice(b);
+      setDraft({ path, text: next });
+      requestAnimationFrame(() => el.setSelectionRange(a + 2, a + 2));
+    }
+  };
+
   const parts = file.data.path.split('/');
   const lines: DiffLine[] = diffOn
     ? diff.data!.lines
@@ -75,16 +125,46 @@ export function FileViewer({ projectId, path }: { projectId: string; path: strin
             </Fragment>
           ))}
         </div>
-        <span className={styles.readonly}>
-          <Lock size={11} strokeWidth={2} aria-hidden="true" />
-          Read-only
-        </span>
+        {editing !== null && <span className={styles.readonly}>Editing</span>}
         <span className={styles.meta}>
           {file.data.lines} lines · {LANG_LABEL[file.data.language] ?? file.data.language}
           {file.data.truncated && ' · first 1 MB'}
         </span>
         <span className={styles.spacer} />
-        {changed && (
+        {saveError && (
+          <span className={styles.saveError} role="alert">
+            {saveError}
+          </span>
+        )}
+        {editing !== null ? (
+          <>
+            <button type="button" className="btn btn-ghost" onClick={stopEdit}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={!dirty || saving}
+              onClick={() => void save()}
+              title="Save (Ctrl+S)"
+            >
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          </>
+        ) : (
+          editable && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={startEdit}
+              aria-label="Edit file"
+            >
+              <Pencil size={12} strokeWidth={2} aria-hidden="true" />
+              Edit
+            </button>
+          )
+        )}
+        {changed && editing === null && (
           <>
             <Switch checked={showChanges} onChange={setShowChanges} label="Show changes" />
             {diff.data && (
@@ -110,6 +190,16 @@ export function FileViewer({ projectId, path }: { projectId: string; path: strin
         </p>
       ) : file.data.binary ? (
         <p className={styles.message}>This is a binary file.</p>
+      ) : editing !== null ? (
+        <textarea
+          className={styles.editor}
+          value={editing}
+          onChange={(e) => setDraft({ path, text: e.target.value })}
+          onKeyDown={onKey}
+          aria-label={`Edit ${file.data.path}`}
+          spellCheck={false}
+          autoFocus
+        />
       ) : (
         <div
           className={styles.code}

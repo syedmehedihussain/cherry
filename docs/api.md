@@ -38,6 +38,7 @@ the projects folder (see `security.md`).
 | GET | `/api/projects/:id` | `ProjectDetail` (card + status + docs list + git) |
 | GET | `/api/projects/:id/tree?path=` | one directory level with git status per entry |
 | GET | `/api/projects/:id/file?path=` | `{ path, language, size, content, truncated }` (max 1 MB) |
+| PUT | `/api/projects/:id/file` | `{ path, content, baseMtime }`: built-in editor save. Existing text files under 1 MB only; 409 if the file changed since `baseMtime`; secret and binary files refused (ADR-0021) |
 | GET | `/api/projects/:id/diff?path=` | unified diff vs HEAD |
 | GET | `/api/projects/:id/docs` | grouped docs list |
 | GET | `/api/projects/:id/status` | parsed STATUS.md |

@@ -20,7 +20,8 @@ import type {
   TreeEntry,
 } from '@cherry/shared';
 import { git, gitStatus } from '../git.ts';
-import { badRequest, notFound } from '../http.ts';
+import { writeFileAtomic } from '../fsutil.ts';
+import { badRequest, conflict, notFound } from '../http.ts';
 import { isSecretFile, resolveInside } from '../paths.ts';
 
 export const IGNORED_DIRS = new Set([
@@ -225,6 +226,31 @@ export async function readFileView(dir: string, rel: string): Promise<FileView> 
     hidden: false,
     binary: false,
   };
+}
+
+/**
+ * Saves the built-in editor's text over an existing file (ADR-0021). Only text files under 1 MB,
+ * never secret files, and only if nobody changed the file since the editor opened it.
+ */
+export async function writeFileView(
+  dir: string,
+  rel: string,
+  content: string,
+  baseMtime: number,
+): Promise<FileView> {
+  const target = resolveInside(dir, rel);
+  if (!existsSync(target) || !statSync(target).isFile()) throw notFound(`No file ${rel}`);
+  const relPosix = toPosix(path.relative(dir, target));
+  if (isSecretFile(relPosix)) throw badRequest('Cherry never reads or writes secret files.');
+  const st = statSync(target);
+  if (st.size > MAX_FILE_BYTES) throw badRequest('Files over 1 MB cannot be edited here.');
+  if (looksBinary(readFileSync(target))) throw badRequest('Binary files cannot be edited here.');
+  if (Math.abs(st.mtimeMs - baseMtime) > 1)
+    throw conflict(
+      `${relPosix} changed on disk since you opened it. Reload to see the new version.`,
+    );
+  writeFileAtomic(target, content, st.mode & 0o777);
+  return readFileView(dir, relPosix);
 }
 
 /** Parses a unified diff with full context into the whole file plus inline removed lines. */

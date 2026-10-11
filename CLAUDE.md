@@ -57,7 +57,9 @@ Workspace packages import each other's TypeScript source directly (`exports` poi
 3. **Never overwrite a user file without an approval.** Calibration and survey write only after
    the user approves the file list. Existing files get additions, never replacement.
 4. **`_project/` is personal state, `docs/` is committed.** Do not move things between them.
-5. **No code editing in the UI.** Code is shown read-only. Edits come from Claude, after approval.
+5. **Edits in the UI only through the built-in editor** (ADR-0021). The file viewer has **Edit**;
+   Save writes one text file after an unchanged-on-disk check. Secret and binary files stay
+   blocked. Claude's edits still need approval.
 6. **Match the design.** Screens are in `docs/design/screens/`. Use tokens, not raw hex.
 7. **The designs say "Harness"** (the first name; it was later Apeiron, ADR-0014). Build it as **Cherry**, `~/.cherry/` and the
    `cherry` command. Replace the "H" app mark with the Cherry badge (`docs/design-system.md` → Brand).

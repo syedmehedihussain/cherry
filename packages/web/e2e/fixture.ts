@@ -54,6 +54,8 @@ export function createFixture(): void {
   git(core, 'commit', '-q', '-m', 'init');
   write(path.join(core, 'lib', 'streaks.ts'), 'export const streaks = 2;\n');
 
+  // Only the editor e2e touches this file (cctop has no git, so no change counts move).
+  write(path.join(E2E_PROJECTS, 'cctop', 'edit-me.txt'), 'one\n');
   write(
     path.join(E2E_PROJECTS, 'cctop', '_project', 'STATUS.md'),
     '---\nsummary: Terminal dashboard\n---\n## Next steps\n- [ ] Tag release 1.1\n',

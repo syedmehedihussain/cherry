@@ -35,7 +35,7 @@ test('browses the tree and shows changes in a file', async ({ page }) => {
   await page.getByRole('treeitem', { name: /lib/ }).click();
   await page.getByRole('treeitem', { name: /streaks\.ts/ }).click();
   await expect(page).toHaveURL(/\/p\/core\/files\/lib\/streaks\.ts$/);
-  await expect(page.getByText('Read-only')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Edit file' })).toBeVisible();
   await expect(page.getByRole('switch', { name: 'Show changes' })).toHaveAttribute(
     'aria-checked',
     'true',
@@ -45,6 +45,17 @@ test('browses the tree and shows changes in a file', async ({ page }) => {
   await expect(code).toContainText(/streaks = [23]/); // the chat e2e may have bumped it
   await page.getByRole('switch', { name: 'Show changes' }).click();
   await expect(code).not.toContainText('streaks = 1');
+});
+
+test('edits and saves a file in the built-in editor', async ({ page }) => {
+  await page.goto('/p/cctop/files/edit-me.txt');
+  await page.getByRole('button', { name: 'Edit file' }).click();
+  const editor = page.getByRole('textbox', { name: 'Edit edit-me.txt' });
+  await editor.fill('one\ntwo\n');
+  await editor.press('Control+s');
+  const code = page.getByRole('region', { name: 'Contents of edit-me.txt' });
+  await expect(code).toContainText('two');
+  await expect(page.getByRole('button', { name: 'Edit file' })).toBeVisible();
 });
 
 test('reads docs in the Docs tab', async ({ page }) => {
