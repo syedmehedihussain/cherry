@@ -22,7 +22,7 @@ export interface RunResult {
   out: string;
 }
 
-export const HELP = `cherry ${pkg.version}
+export const HELP = `cherry ${pkg.version} · cherry-pick your workflow
 
 Usage: cherry [command]
 

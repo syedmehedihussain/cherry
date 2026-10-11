@@ -8,7 +8,7 @@ import {
 } from '../../api/client.ts';
 import { queryClient, useLiveProjects } from '../../api/queries.ts';
 import { socket } from '../../api/socket.ts';
-import appMark from '../../assets/cherry-mark.png';
+import { Lockup } from '../../components/Brand/Brand.tsx';
 import { ApprovalToasts } from '../../components/ApprovalToast/ApprovalToast.tsx';
 import { MagnetPanel } from '../../components/MagnetPanel/MagnetPanel.tsx';
 import { useLiveMagnet } from '../../api/magnet.ts';
@@ -99,7 +99,7 @@ function GatePage({
   }[gate];
   return (
     <main className={styles.gate}>
-      <img src={appMark} width={40} height={40} alt="" />
+      <Lockup size={56} tagline />
       <h1>{text.title}</h1>
       <p>{text.body.split('`').map((part, i) => (i % 2 ? <code key={i}>{part}</code> : part))}</p>
       {gate === 'unreachable' && (

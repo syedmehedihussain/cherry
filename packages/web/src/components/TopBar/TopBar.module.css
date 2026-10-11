@@ -39,9 +39,9 @@
 }
 
 .wordmark {
-  font-weight: 600;
-  font-size: var(--fs-lg);
-  letter-spacing: var(--tracking-tight);
+  display: flex;
+  align-items: center;
+  color: var(--brand-cream);
 }
 
 .crumbs {

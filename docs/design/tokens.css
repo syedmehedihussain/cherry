@@ -27,6 +27,12 @@
   --t-on-primary: #0b0b0c;  /* text on the white primary pill */
 
   /* Accent (blue) — focus, links, current phase, selection */
+  /* Brand (docs/design-system.md → Brand): logo, wordmark and icons only, not UI states */
+  --brand-cherry: #5a0f17;  /* badge, icon tile, wordmark on cream */
+  --brand-cream: #f5eee4;   /* wordmark on dark, icon branch, app icon tile */
+  --brand-coral: #e07a5f;   /* the typing cursor */
+  --brand-leaf: #2f5d3a;    /* branch cherry stems */
+  --brand-ink: #1e1414;     /* dark brand card */
   --accent: #5b8def;
   --accent-text: #8db0f4;   /* accent used as text (passes 4.5:1) */
   --accent-text-strong: #b3cbf8; /* text on accent-tinted fills, link hover */

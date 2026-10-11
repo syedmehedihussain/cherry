@@ -108,7 +108,49 @@ SVG source is in `design/screens/Components.dc.html` — extract it into
 
 ## Brand
 
-App mark: the Cherry badge, a burgundy cherry with the word "Cherry" in cream lettering
-(`docs/design/brand/cherry-badge.png`, the original). The UI uses a trimmed 128 px copy
-(`packages/web/src/assets/cherry-mark.png`) and a 64 px favicon (`packages/web/public/favicon.png`).
-The artboards show an "H" (for Harness) in its place. Wordmark "Cherry", Geist 600, 14 px.
+The brand kit comes from the user's brand sheet ("Combined v1"). The sheet itself is a local,
+git-ignored reference in `design-reference/brand-combined-v1/`; the files below are made from
+it. Brand colours are tokens (`--brand-*` in `tokens.css`) and are only for the logo, wordmark
+and icons, never for UI states.
+
+| Token | Hex | Use |
+| --- | --- | --- |
+| `--brand-cherry` | `#5A0F17` | badge, icon tile, wordmark on cream |
+| `--brand-cream` | `#F5EEE4` | wordmark on dark, icon branch, app icon tile |
+| `--brand-coral` | `#E07A5F` | the typing cursor |
+| `--brand-leaf` | `#2F5D3A` | branch cherry stems |
+| `--brand-ink` | `#1E1414` | dark brand card |
+
+**Pieces**
+
+- **Badge**: the user's "CHERRY" lettering in a burgundy cherry (`docs/design/brand/cherry-badge.png`,
+  the original). The UI uses a 192 px copy (`packages/web/src/assets/brand/cherry-badge.png`).
+  Use it above 32 px.
+- **Branch cherry icon**: a cream branch cherry on a burgundy tile (radius 25 %). At 32 px and
+  below the badge letters blur, so this icon takes over: top bar (22 px), favicon
+  (`icon-32.svg`, `icon-16.svg`; the 16 px one has thicker strokes). The full-colour branch
+  cherry (leaf stems, coral bud) is `branch-cherry.svg`.
+- **Wordmark**: `cherry` in lower case, JetBrains Mono, tracking -0.05 em, then an underscore
+  cursor in coral that blinks (1.1 s, on for 55 %). It is drawn as outlines
+  (`components/Brand/wordmark-path.ts`, `wordmark.svg`, `wordmark-cream.svg`), so the app loads
+  no font. The outlines use the Bold weight (the sheet shows ExtraBold; Bold is the weight
+  installed here). Cream on dark, burgundy on cream. The cursor stops blinking with
+  `prefers-reduced-motion`.
+- **Lockup**: badge + wordmark (`lockup-light.svg`, `lockup-dark.svg`; the cursor blinks in
+  the SVG). The README shows the one that fits the reader's theme.
+- **Tagline**: `$ cherry-pick your workflow` with a coral block cursor (login gate, CLI help).
+- **App icons**: the badge on a cream tile with a thin `#E3D6C8` ring: `apple-touch-icon.png`
+  (180), `icon-192.png`, `icon-512.png` (web manifest), `docs/design/brand/app-icon-512.png`.
+
+**Where they are used**
+
+| Place | Piece |
+| --- | --- |
+| Top bar, every page | branch cherry icon 22 px + cream wordmark 15 px with cursor |
+| Login and "not running" gate | badge 56 px + wordmark + tagline |
+| Browser tab | `favicon.svg`, `favicon-32.png`, `favicon-16.png` |
+| Home screen / installed app | `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `site.webmanifest` |
+| README | `lockup-dark.svg` / `lockup-light.svg` + tagline |
+| `cherry --help` | first line ends with the tagline |
+
+The artboards show an "H" (for Harness) in the badge's place; build it with these pieces.

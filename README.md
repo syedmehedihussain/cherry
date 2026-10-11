@@ -1,4 +1,10 @@
-<p align="center"><img src="docs/images/cherry-logo.png" width="160" alt="Cherry" /></p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/design/brand/lockup-dark.svg" />
+    <img src="docs/design/brand/lockup-light.svg" width="360" alt="Cherry" />
+  </picture>
+</p>
+<p align="center"><code>$ cherry-pick your workflow</code></p>
 
 # Cherry
 

@@ -14,3 +14,6 @@ test-results/
 
 # Cherry uploads and reports (root only, so .claude/skills/cherry stays tracked)
 /cherry/
+
+# Design references from the user: local only, never committed
+/design-reference/

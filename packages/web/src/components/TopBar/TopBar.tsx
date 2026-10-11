@@ -2,10 +2,10 @@ import { Fragment, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { SlidersHorizontal } from 'lucide-react';
 import type { Phase } from '@cherry/shared';
-import appMark from '../../assets/cherry-mark.png';
 import { useHealth } from '../../api/queries.ts';
 import { useSocketStatus } from '../../api/socket.ts';
 import { useUi } from '../../state/ui.ts';
+import { CherryIcon, Wordmark } from '../Brand/Brand.tsx';
 import { ClaudeStatus, type ClaudeState } from '../ClaudeStatus/ClaudeStatus.tsx';
 import { MagnetAvatar } from '../MagnetAvatar/MagnetAvatar.tsx';
 import { PhaseBarFull } from '../PhaseBar/PhaseBar.tsx';
@@ -46,8 +46,10 @@ export function TopBar({ crumbs, phase, status, right, claude, beforeClaude }: T
     <header className={styles.bar}>
       <div className={styles.left}>
         <Link to="/" className={styles.home} aria-label="Cherry home">
-          <img src={appMark} width={22} height={22} alt="" />
-          <span className={styles.wordmark}>Cherry</span>
+          <CherryIcon size={22} />
+          <span className={styles.wordmark}>
+            <Wordmark height={15} />
+          </span>
         </Link>
         {crumbs.length > 0 && (
           <nav aria-label="Breadcrumb" className={styles.crumbs}>
