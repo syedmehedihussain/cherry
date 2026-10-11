@@ -10,7 +10,7 @@ test('the app opens on a dark page with the top bar', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Cherry home' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Open Magnet' })).toBeVisible();
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(bg).toBe('rgb(11, 11, 12)');
+  expect(bg).toBe('rgb(0, 0, 0)'); // Just black, the default theme
   const font = await page.evaluate(() => getComputedStyle(document.body).fontFamily);
   expect(font).toContain('Geist');
 });

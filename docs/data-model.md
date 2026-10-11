@@ -142,9 +142,14 @@ The phase task graph, seeded from Core's preset (`lib/services/project-presets.t
   "scan": { "ignore": ["archive", "scratch"] },
   "claude": { "bin": "claude", "defaultModel": "sonnet" },
   "agents": { "maxRunning": 3, "worktreeDir": "~/Projects/.cherry-worktrees" },
-  "magnet": { "readOnly": true }
+  "magnet": { "readOnly": true },
+  "onboarded": true
 }
 ```
+
+`onboarded` is `false` only in a config.json the daemon has just created (a fresh install); the
+UI then shows the welcome screen until `POST /api/setup`. A config.json without the field counts
+as onboarded, so existing installs skip it (ADR-0020).
 
 `agents.worktreeDir` left at its default follows `projectsDir` (`<projectsDir>/.cherry-worktrees`,
 ADR-0010).

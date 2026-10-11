@@ -1,6 +1,8 @@
 import { QueryClient, useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { z } from 'zod';
 import {
+  ConfigSchema,
   HealthSchema,
   PlanUsageSchema,
   ProjectListSchema,
@@ -22,6 +24,13 @@ export const keys = {
   config: ['config'] as const,
   planUsage: ['planUsage'] as const,
 };
+
+const ConfigViewSchema = ConfigSchema.extend({ resolvedProjectsDir: z.string() });
+export const useConfig = () =>
+  useQuery({
+    queryKey: keys.config,
+    queryFn: () => api('GET', '/api/config', undefined, ConfigViewSchema),
+  });
 
 export function useProjects() {
   return useQuery({

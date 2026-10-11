@@ -7,6 +7,7 @@ import { Placeholder } from './pages/Placeholder/Placeholder.tsx';
 import { Shell } from './pages/Shell/Shell.tsx';
 import { Survey } from './pages/Survey/Survey.tsx';
 import { Settings } from './pages/Settings/Settings.tsx';
+import { Welcome } from './pages/Welcome/Welcome.tsx';
 import { Workspace } from './pages/Workspace/Workspace.tsx';
 
 const router = createBrowserRouter([
@@ -18,6 +19,7 @@ const router = createBrowserRouter([
       { path: '/p/:id/calibrate', element: <Calibrate /> },
       { path: '/p/:id/*', element: <Workspace /> },
       { path: '/settings/:section?', element: <Settings /> },
+      { path: '/welcome', element: <Welcome /> },
       { path: '*', element: <Placeholder title="Not found" milestone="—" /> },
     ],
   },

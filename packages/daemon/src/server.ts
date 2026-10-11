@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import fastifyCookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';
@@ -9,14 +9,16 @@ import {
   ClientMessageSchema,
   ConfigPatchSchema,
   LoginBodySchema,
+  SetupBodySchema,
   type ApiError,
+  type FolderList,
 } from '@cherry/shared';
 import { AuthStore, SESSION_COOKIE, SESSION_TTL_MS, secretsMatch } from './auth.ts';
 import type { ConfigStore } from './config.ts';
 import type { EventHub } from './events.ts';
 import type { HealthService } from './health-service.ts';
-import { HttpError } from './http.ts';
-import { PathOutsideRoot } from './paths.ts';
+import { HttpError, badRequest } from './http.ts';
+import { PathOutsideRoot, expandHome, tildify } from './paths.ts';
 import type { PlanUsageService } from './plan-usage.ts';
 import type { ProjectService } from './projects/service.ts';
 
@@ -173,6 +175,21 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     return { ...next, resolvedProjectsDir: deps.config.projectsDir() };
   });
 
+  // --- Welcome screen ---
+  app.get('/api/folders', (req) => {
+    const q = (req.query as { path?: string }).path;
+    return listFolders(path.resolve(expandHome(q?.trim() || '~')));
+  });
+  app.post('/api/setup', async (req) => {
+    const dir = path.resolve(expandHome(SetupBodySchema.parse(req.body).projectsDir.trim()));
+    if (existsSync(dir) && !statSync(dir).isDirectory())
+      throw badRequest(`${tildify(dir)} is a file, not a folder.`);
+    mkdirSync(dir, { recursive: true });
+    const next = deps.config.update({ projectsDir: tildify(dir), onboarded: true });
+    void deps.projects.rescan();
+    return { ...next, resolvedProjectsDir: deps.config.projectsDir() };
+  });
+
   // --- Projects ---
   app.get('/api/projects', async () => ({
     projectsDir: deps.config.projectsDir(),
@@ -224,4 +241,21 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   }
 
   return app;
+}
+
+/** Sub-folder names of `dir` (no hidden ones), for the folder picker. Reads names only. */
+function listFolders(dir: string): FolderList {
+  const parent = path.dirname(dir) === dir ? null : tildify(path.dirname(dir));
+  let dirs: string[] = [];
+  let exists = false;
+  try {
+    dirs = readdirSync(dir, { withFileTypes: true })
+      .filter((d) => d.isDirectory() && !d.name.startsWith('.'))
+      .map((d) => d.name)
+      .sort((a, b) => a.localeCompare(b));
+    exists = true;
+  } catch {
+    // Missing or unreadable: the picker offers to create it.
+  }
+  return { path: tildify(dir), parent, exists, dirs };
 }

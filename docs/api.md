@@ -26,6 +26,8 @@ the projects folder (see `security.md`).
 | GET | `/api/claude/usage` | `{ available, plan, fiveHour, week, fetchedAt }`; each window `{ usedPercent, resetsAt }` or null. claude.ai plan limits from the Agent SDK (experimental `/usage` call, no turn), cached 60 s |
 | GET | `/api/config` | config.json |
 | PATCH | `/api/config` | updated config |
+| GET | `/api/folders?path=` | `{ path, parent, exists, dirs }`: sub-folder names (no hidden ones) for the welcome screen's folder picker; `path` defaults to `~` |
+| POST | `/api/setup` | `{ projectsDir }`: creates the folder if missing, saves it, sets `onboarded: true`, rescans (ADR-0020) |
 
 ## Projects
 

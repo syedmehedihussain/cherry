@@ -1,32 +1,17 @@
 import { ArrowLeft, Check } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
-import { z } from 'zod';
-import {
-  ConfigSchema,
-  MAGNET_FILES,
-  relativeTime,
-  type MagnetFileName,
-  type Usage,
-} from '@cherry/shared';
-import { api, ApiFailure } from '../../api/client.ts';
+import { MAGNET_FILES, relativeTime, type MagnetFileName, type Usage } from '@cherry/shared';
+import { ApiFailure } from '../../api/client.ts';
 import { patchConfig, saveMagnetFile, useMagnetInfo } from '../../api/magnet.ts';
-import { keys, recheckHealth, useHealth } from '../../api/queries.ts';
-import { useQuery } from '@tanstack/react-query';
+import { recheckHealth, useConfig, useHealth } from '../../api/queries.ts';
 import { MagnetAvatar } from '../../components/MagnetAvatar/MagnetAvatar.tsx';
 import { Switch } from '../../components/Switch/Switch.tsx';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
 import { tildify } from '../../lib/paths.ts';
-import { setTheme, THEMES, useTheme } from '../../lib/theme.ts';
+import { ThemePicker } from '../../components/ThemePicker/ThemePicker.tsx';
 import { useNow } from '../../lib/useNow.ts';
 import styles from './Settings.module.css';
-
-const ConfigViewSchema = ConfigSchema.extend({ resolvedProjectsDir: z.string() });
-const useConfig = () =>
-  useQuery({
-    queryKey: keys.config,
-    queryFn: () => api('GET', '/api/config', undefined, ConfigViewSchema),
-  });
 
 const GROUPS: { title: string | null; items: [string, string][] }[] = [
   {
@@ -123,38 +108,13 @@ export function Settings() {
 }
 
 function AppearanceSection() {
-  const theme = useTheme();
   return (
     <section className={styles.section}>
       <h1>Appearance</h1>
       <p className={styles.lead}>
         Pick a theme. It applies at once and is remembered in this browser.
       </p>
-      <div className={styles.themes} role="radiogroup" aria-label="Theme">
-        {THEMES.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="radio"
-            aria-checked={theme === t.id}
-            className={styles.theme}
-            onClick={() => setTheme(t.id)}
-          >
-            <span className={styles.themePreview} data-theme={t.id} aria-hidden="true">
-              <span className={styles.themeCard}>
-                <span className={styles.themeLine} />
-                <span className={styles.themeLine} data-short />
-                <span className={styles.themeAccent} />
-              </span>
-            </span>
-            <span className={styles.themeName}>
-              {t.label}
-              {theme === t.id && <Check size={14} />}
-            </span>
-            <span className={styles.themeHint}>{t.hint}</span>
-          </button>
-        ))}
-      </div>
+      <ThemePicker />
     </section>
   );
 }

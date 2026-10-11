@@ -31,6 +31,8 @@ export const ConfigSchema = z.object({
     })
     .default({ maxRunning: 3, worktreeDir: '~/Projects/.cherry-worktrees' }),
   magnet: z.object({ readOnly: z.boolean().default(true) }).default({ readOnly: true }),
+  /** False only on a fresh install, until the welcome screen is finished. */
+  onboarded: z.boolean().default(true),
 });
 export type Config = z.infer<typeof ConfigSchema>;
 
@@ -45,6 +47,18 @@ export const ConfigPatchSchema = z.object({
   magnet: z.object({ readOnly: z.boolean() }).partial().optional(),
 });
 export type ConfigPatch = z.infer<typeof ConfigPatchSchema>;
+
+/** One level of folders for the welcome screen's folder picker. Names only, no hidden folders. */
+export const FolderListSchema = z.object({
+  path: z.string(),
+  parent: z.string().nullable(),
+  exists: z.boolean(),
+  dirs: z.array(z.string()),
+});
+export type FolderList = z.infer<typeof FolderListSchema>;
+
+/** Finishes the welcome screen: the projects folder is created if missing. */
+export const SetupBodySchema = z.object({ projectsDir: z.string().min(1).max(1000) });
 
 export const LoginBodySchema = z.object({ code: z.string().min(1).max(200) });
 

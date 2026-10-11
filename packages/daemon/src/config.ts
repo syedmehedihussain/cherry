@@ -19,7 +19,7 @@ export class ConfigStore {
 
   private load(): Config {
     if (!existsSync(this.file)) {
-      const fresh = ConfigSchema.parse({});
+      const fresh = ConfigSchema.parse({ onboarded: false });
       writeFileAtomic(this.file, JSON.stringify(fresh, null, 2) + '\n', 0o600);
       return fresh;
     }
@@ -47,9 +47,10 @@ export class ConfigStore {
       : path.resolve(expandHome(set));
   }
 
-  update(patch: ConfigPatch): Config {
+  update(patch: ConfigPatch & { onboarded?: boolean }): Config {
     const next = ConfigSchema.parse({
       ...this.current,
+      ...(patch.onboarded !== undefined && { onboarded: patch.onboarded }),
       ...(patch.projectsDir !== undefined && { projectsDir: patch.projectsDir }),
       scan: { ...this.current.scan, ...patch.scan },
       claude: { ...this.current.claude, ...patch.claude },

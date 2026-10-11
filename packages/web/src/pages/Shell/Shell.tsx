@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Outlet } from 'react-router';
+import { Navigate, Outlet, useLocation } from 'react-router';
 import {
   ApiFailure,
   DaemonUnreachable,
   onApiFailure,
   redeemLoginFromHash,
 } from '../../api/client.ts';
-import { queryClient, useLiveProjects } from '../../api/queries.ts';
+import { queryClient, useConfig, useLiveProjects } from '../../api/queries.ts';
 import { socket } from '../../api/socket.ts';
 import { Lockup } from '../../components/Brand/Brand.tsx';
 import { ApprovalToasts } from '../../components/ApprovalToast/ApprovalToast.tsx';
@@ -67,6 +67,12 @@ export function Shell() {
 function Ready() {
   useLiveProjects();
   useLiveMagnet();
+  const config = useConfig();
+  const { pathname } = useLocation();
+  // A fresh install starts on the welcome screen.
+  if (config.data && !config.data.onboarded && pathname !== '/welcome')
+    return <Navigate to="/welcome" replace />;
+  if (pathname === '/welcome') return <Outlet />;
   return (
     <>
       <Outlet />
