@@ -16,7 +16,6 @@ import {
   isImageFile,
   useChat,
   useChatDraft,
-  useLiveChat,
 } from '../../api/chat.ts';
 import { queryClient } from '../../api/queries.ts';
 import { ApprovalCard } from '../../components/ApprovalCard/ApprovalCard.tsx';
@@ -92,7 +91,6 @@ interface ChatTabProps {
 
 export function ChatTab({ projectId, now }: ChatTabProps) {
   const chat = useChat(projectId);
-  useLiveChat(projectId);
   const draft = useChatDraft((s) => s.drafts[projectId]);
   const setDraft = useChatDraft((s) => s.set);
   const [model, setModel] = useState<string | null>(null);

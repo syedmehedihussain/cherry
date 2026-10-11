@@ -67,3 +67,22 @@ test('repository box minimizes and remembers it', async ({ page }) => {
   await repo.getByRole('button', { name: 'Expand repository' }).click();
   await expect(repo.getByRole('button', { name: 'Pull' })).toBeVisible();
 });
+
+// Claude's plan shows in the Live view and fills in one step at a time.
+test("live view follows Claude's plan", async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'core', exact: true }).first().click();
+  const aside = page.getByRole('complementary', { name: 'Repository and agents' });
+  await aside.getByRole('tab', { name: /^Live/ }).click();
+  await expect(aside.getByText('Claude is idle')).toBeVisible();
+
+  await page.getByLabel('Message Claude').fill('Plan the hero fix');
+  await page.getByRole('button', { name: 'Send' }).click();
+
+  const plan = aside.getByRole('region', { name: 'Plan' });
+  await expect(plan.getByText('1 of 2 done')).toBeVisible();
+  await expect(plan.getByText('Fixing the layout…')).toBeVisible();
+  await expect(aside.getByText('Claude is working')).toBeVisible();
+  await expect(plan.getByText('2 of 2 done')).toBeVisible();
+  await expect(aside.getByText('Claude is idle')).toBeVisible();
+});

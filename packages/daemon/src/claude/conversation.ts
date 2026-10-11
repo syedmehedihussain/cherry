@@ -3,6 +3,7 @@ import {
   DecisionCardInputSchema,
   type Approval,
   type ChatItem,
+  type PlanItem,
   type ToolVerb,
 } from '@cherry/shared';
 import { resolveInside } from '../paths.ts';
@@ -16,6 +17,7 @@ import {
   type PermissionAnswer,
   type RunnerEvent,
 } from './runner.ts';
+import { PLAN_TOOLS, PlanTracker } from './plan.ts';
 import type { Transcript } from './transcript.ts';
 
 const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
@@ -40,6 +42,8 @@ export interface ConversationOptions {
   /** Called for every new or changed item. */
   onItem(item: ChatItem): void;
   onDelta(itemId: string, turnId: string, text: string): void;
+  /** Claude's plan changed (TaskCreate, TaskUpdate, TodoWrite). */
+  onPlan?(plan: PlanItem[]): void;
   /**
    * Decide a tool call before asking the user. "ask" shows an approval card.
    * Default: edits and commands ask, everything else asks too.
@@ -54,6 +58,7 @@ export interface ConversationOptions {
 export class Conversation {
   readonly items = new Map<string, ChatItem>();
   readonly touched = new Set<string>();
+  private readonly planTracker = new PlanTracker();
   private turnId = '';
   private dirtyText = new Set<string>();
 
@@ -96,6 +101,10 @@ export class Conversation {
       durationMs: 0,
     });
     return true;
+  }
+
+  get plan(): PlanItem[] {
+    return this.planTracker.plan;
   }
 
   list(limit = 200): ChatItem[] {
@@ -179,6 +188,11 @@ export class Conversation {
       case 'tool_start': {
         this.flushText();
         if (ev.name === DECISION_TOOL || ev.name.startsWith('mcp__cherry__')) break;
+        // The plan shows in the Live view, not as a row per checklist tick.
+        if (PLAN_TOOLS.has(ev.name)) {
+          if (this.planTracker.start(ev.id, ev.name, ev.input)) this.o.onPlan?.(this.plan);
+          break;
+        }
         if (this.items.has(ev.id)) break;
         this.put({
           kind: 'tool',
@@ -198,6 +212,7 @@ export class Conversation {
         break;
       }
       case 'tool_end': {
+        if (this.planTracker.end(ev.id, ev.ok, ev.output)) this.o.onPlan?.(this.plan);
         const item = this.items.get(ev.id);
         if (item?.kind !== 'tool') break;
         if (item.status === 'denied') break;

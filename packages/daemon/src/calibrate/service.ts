@@ -40,7 +40,18 @@ import { IGNORED_DIRS, projectDir } from '../projects/workspace.ts';
 
 const READ_ONLY_GIT =
   /^git\s+(log|status|show|ls-files|diff|branch|remote|rev-parse|shortlog)\b[^;&|`$<>]*$/;
-const READ_TOOLS = new Set(['Read', 'Glob', 'Grep', 'LS', 'TodoWrite', 'ToolSearch']);
+const READ_TOOLS = new Set([
+  'Read',
+  'Glob',
+  'Grep',
+  'LS',
+  'TodoWrite',
+  'TaskCreate',
+  'TaskUpdate',
+  'TaskList',
+  'TaskGet',
+  'ToolSearch',
+]);
 /** Only these paths may be proposed (docs/project-standard.md). */
 const ALLOWED_PATHS = /^(CLAUDE\.md|README\.md|docs\/[\w./-]+\.md|_project\/(STATUS|notes)\.md)$/;
 

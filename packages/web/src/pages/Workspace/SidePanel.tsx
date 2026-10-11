@@ -1,15 +1,18 @@
 import { ChevronRight } from 'lucide-react';
 import { create } from 'zustand';
+import { useChat } from '../../api/chat.ts';
 import { useTasks } from '../../api/workspace.ts';
 import { AgentsPanel } from '../../components/AgentsPanel/AgentsPanel.tsx';
 import { GitPanel } from '../../components/GitHubBox/GitPanel.tsx';
 import { PlanUsage } from '../../components/PlanUsage/PlanUsage.tsx';
+import { LiveView } from './LiveView.tsx';
 import { NotesEditor, TaskList } from './NotesTab.tsx';
 import styles from './SidePanel.module.css';
 import ws from './Workspace.module.css';
 
 const VIEWS = [
   ['overview', 'Overview'],
+  ['live', 'Live'],
   ['github', 'GitHub'],
   ['agents', 'Agents'],
   ['tasks', 'Tasks'],
@@ -55,6 +58,7 @@ export function SidePanel({
   const view = useSideView((s) => s.view);
   const setView = useSideView((s) => s.set);
   const label = VIEWS.find(([id]) => id === view)?.[1];
+  const working = !!useChat(projectId).data?.running;
 
   return (
     <>
@@ -69,6 +73,9 @@ export function SidePanel({
             onClick={() => setView(id)}
           >
             {name}
+            {id === 'live' && working && (
+              <span className={styles.liveDot} aria-label="Claude is working" />
+            )}
           </button>
         ))}
       </nav>
@@ -92,6 +99,9 @@ export function SidePanel({
               }
             />
           </>
+        )}
+        {view === 'live' && (
+          <LiveView projectId={projectId} now={now} onOpenAgents={() => setView('agents')} />
         )}
         {view === 'github' && (
           <div className={styles.scroll}>

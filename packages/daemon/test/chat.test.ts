@@ -62,6 +62,31 @@ describe('chat', () => {
   });
   afterEach(() => d.cleanup());
 
+  it("keeps Claude's plan in the chat state, without approvals or timeline rows", async () => {
+    script = [
+      {
+        tool: { name: 'TaskCreate', input: { subject: 'Read the code' } },
+        output: 'Task #1 created',
+      },
+      {
+        tool: { name: 'TaskCreate', input: { subject: 'Write a test' } },
+        output: 'Task #2 created',
+      },
+      { tool: { name: 'TaskUpdate', input: { taskId: '1', status: 'completed' } }, output: 'ok' },
+      { tool: { name: 'TaskUpdate', input: { taskId: '2', status: 'in_progress' } }, output: 'ok' },
+      { text: 'Working on it.' },
+    ];
+    await api('POST', '/api/projects/core/chat', { text: 'plan it' });
+    await idle();
+    const state = await api('GET', '/api/projects/core/chat');
+    expect(state.body.plan).toEqual([
+      { id: '1', title: 'Read the code', activeForm: null, status: 'completed' },
+      { id: '2', title: 'Write a test', activeForm: null, status: 'in_progress' },
+    ]);
+    expect(state.body.items.filter((i: { kind: string }) => i.kind === 'tool')).toEqual([]);
+    expect(log.permissions).toEqual([]);
+  });
+
   it('streams text and records the transcript', async () => {
     script = [{ text: 'Hello from the fake Claude.' }];
     const r0 = await api('POST', '/api/projects/core/chat', { text: 'hi' });

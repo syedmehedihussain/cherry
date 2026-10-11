@@ -1,5 +1,66 @@
 [
   {
+    "match": "^Plan the hero fix",
+    "steps": [
+      {
+        "tool": {
+          "name": "TaskCreate",
+          "input": {
+            "subject": "Read the hero section",
+            "activeForm": "Reading the hero section"
+          }
+        },
+        "output": "Task #1 created"
+      },
+      {
+        "tool": {
+          "name": "TaskCreate",
+          "input": {
+            "subject": "Fix the layout",
+            "activeForm": "Fixing the layout"
+          }
+        },
+        "output": "Task #2 created"
+      },
+      {
+        "tool": {
+          "name": "TaskUpdate",
+          "input": {
+            "taskId": "1",
+            "status": "completed"
+          }
+        },
+        "output": "ok"
+      },
+      {
+        "tool": {
+          "name": "TaskUpdate",
+          "input": {
+            "taskId": "2",
+            "status": "in_progress"
+          }
+        },
+        "output": "ok"
+      },
+      {
+        "wait": 1500
+      },
+      {
+        "tool": {
+          "name": "TaskUpdate",
+          "input": {
+            "taskId": "2",
+            "status": "completed"
+          }
+        },
+        "output": "ok"
+      },
+      {
+        "text": "Both steps are done."
+      }
+    ]
+  },
+  {
     "match": "read-only scan agent inside Cherry",
     "steps": [
       {

@@ -163,6 +163,10 @@ export function useLiveChat(id: string): void {
         const cur = queryClient.getQueryData<ChatState>(chatKey(id));
         if (cur && cur.conversationId !== event.conversationId)
           void queryClient.invalidateQueries({ queryKey: chatKey(id) });
+      } else if (event.type === 'chat.plan' && event.projectId === id) {
+        queryClient.setQueryData<ChatState>(chatKey(id), (old) =>
+          old && old.conversationId === event.conversationId ? { ...old, plan: event.plan } : old,
+        );
       } else if (event.type === 'chat.state' && event.projectId === id) {
         const cur = queryClient.getQueryData<ChatState>(chatKey(id));
         if (!cur || cur.conversationId !== event.conversationId) {

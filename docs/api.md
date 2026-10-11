@@ -59,7 +59,7 @@ the projects folder (see `security.md`).
 
 | Method | Path | Does |
 | --- | --- | --- |
-| GET | `/api/projects/:id/chat` | current session meta + last 200 transcript events |
+| GET | `/api/projects/:id/chat` | current session meta + last 200 transcript events + `plan` (Claude's checklist, in memory) |
 | POST | `/api/projects/:id/chat` | `{ text, planMode?, model?, effort?, attachments? }` → starts a turn; `effort` is low, medium, high, xhigh or max (ignored for Haiku); attachments are upload ids, listed for Claude to Read |
 | POST | `/api/projects/:id/chat/stop` | interrupts the running turn |
 | POST | `/api/projects/:id/chat/new` | starts a fresh session |
@@ -151,6 +151,7 @@ One socket at `/ws`. Every event: `{ type, at, ...payload }`. The client subscri
 | `chat.item` | `{ projectId, conversationId, item: ChatItem }` (upsert by `item.id`: user message, text, tool row, decision, approval, turn end) | project:id |
 | `chat.delta` | `{ projectId, conversationId, itemId, turnId, text }` streamed text appended to a text item | project:id |
 | `chat.state` | `{ projectId, conversationId, running, turnId, touched }` | project:id |
+| `chat.plan` | `{ projectId, conversationId, plan: [{ id, title, activeForm, status }] }` — Claude's checklist changed (ADR-0017) | project:id |
 | `project.changed` | `{ projectId, paths }` files changed on disk | project:id |
 | `approval.requested` | `{ approval }` | approvals + project:id |
 | `approval.resolved` | `{ approval }` (with its final status) | approvals + project:id |

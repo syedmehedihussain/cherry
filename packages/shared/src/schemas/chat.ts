@@ -191,6 +191,16 @@ export const ChatItemSchema = z.discriminatedUnion('kind', [
 ]);
 export type ChatItem = z.infer<typeof ChatItemSchema>;
 
+/** One step of Claude's plan (its TaskCreate / TodoWrite list), shown in the Live view. */
+export const PlanItemSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  /** "Running the tests": shown while the step is in progress. */
+  activeForm: z.string().nullable(),
+  status: z.enum(['pending', 'in_progress', 'completed']),
+});
+export type PlanItem = z.infer<typeof PlanItemSchema>;
+
 export const ChatStateSchema = z.object({
   conversationId: z.string().nullable(),
   claudeSessionId: z.string().nullable(),
@@ -202,6 +212,8 @@ export const ChatStateSchema = z.object({
   /** Project-relative paths Claude edited in this conversation. */
   touched: z.array(z.string()),
   items: z.array(ChatItemSchema),
+  /** Claude's plan for this conversation; kept in memory, empty after a restart. */
+  plan: z.array(PlanItemSchema).default([]),
 });
 export type ChatState = z.infer<typeof ChatStateSchema>;
 

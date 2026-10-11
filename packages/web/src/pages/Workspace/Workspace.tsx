@@ -11,7 +11,13 @@ import { StatusNotch } from '../../components/StatusNotch/StatusNotch.tsx';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
 import { tildify } from '../../lib/paths.ts';
 import { useNow } from '../../lib/useNow.ts';
-import { sendChat, useChat, useChatDraft, usePendingApprovals } from '../../api/chat.ts';
+import {
+  sendChat,
+  useChat,
+  useChatDraft,
+  useLiveChat,
+  usePendingApprovals,
+} from '../../api/chat.ts';
 import { Pill } from '../../components/Pill/Pill.tsx';
 import { ChatTab, NewChatButton, useSessionMeta } from './ChatTab.tsx';
 import { DocsTab } from './DocsTab.tsx';
@@ -69,6 +75,8 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
   const detail = useProjectDetail(id);
   useLiveProject(id);
   const chat = useChat(id);
+  // Once per workspace: the Chat tab and the Live view both read this state.
+  useLiveChat(id);
   const approvals = usePendingApprovals();
   const setDraft = useChatDraft((s) => s.set);
   const pendingHere = (approvals.data ?? []).filter((a) => a.projectId === id);

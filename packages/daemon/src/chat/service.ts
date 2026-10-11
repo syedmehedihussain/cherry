@@ -33,6 +33,7 @@ export function chatSystemPrompt(phase: Phase | null): string {
     '- Read CLAUDE.md and _project/STATUS.md before anything else, when they exist.',
     '- When there is a real choice to make, call the ask_decision tool. Do not pick for the user.',
     '- Keep answers short and plain. Name the file, then the change.',
+    '- For work with more than one step, first record the steps with your task tool (TaskCreate), then do them one by one: mark a step in_progress when you start it and completed when it is done. The user follows this list live.',
     '- Every edit and command is shown to the user for approval. If they deny one, ask what they want instead.',
     phase
       ? `- Current phase: ${phase}. Do not write production code in the plan or design phase.`
@@ -89,6 +90,7 @@ export class ChatService {
       onItem: (item) => this.hub.publish(topic, 'chat.item', { projectId, conversationId, item }),
       onDelta: (itemId, turnId, text) =>
         this.hub.publish(topic, 'chat.delta', { projectId, conversationId, itemId, turnId, text }),
+      onPlan: (plan) => this.hub.publish(topic, 'chat.plan', { projectId, conversationId, plan }),
     });
     const live: Live = {
       conversationId,
@@ -153,6 +155,7 @@ export class ChatService {
       turns: sessionNumber,
       touched: live ? [...live.conversation.touched] : [],
       items: live?.conversation.list() ?? [],
+      plan: live?.conversation.plan ?? [],
     };
   }
 
