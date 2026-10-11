@@ -31,7 +31,9 @@ is cached per turn in the daemon.
 The same rule now applies to Ready to commit: opening it lists every changed file as one commit
 for free; **Group with Claude** runs the Haiku grouping.
 
-Rule for new features: Claude runs only after a user action. No background or automatic calls.
+Rule for new features (refined by the user on 2026-10-11): small jobs may run automatically on
+Haiku with small, capped prompts. Big jobs (reviews, scans, reports, explanations such as
+Explain) run only on the user's click. Automatic jobs never use a bigger model than Haiku.
 
 ## Consequences
 

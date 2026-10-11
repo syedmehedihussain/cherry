@@ -66,8 +66,9 @@ Workspace packages import each other's TypeScript source directly (`exports` poi
 8. **Every real choice becomes an ADR** in `docs/adr/`. Use `docs/adr/template.md`.
 9. **Work milestone by milestone.** Finish and test one roadmap task before the next. Tick the
    box in `docs/roadmap.md` and update `_project/STATUS.md` when a task is done.
-10. **Claude only on a click** (ADR-0022). No background or automatic Claude calls; every
-    summary, grouping or report waits for the user's click. Keep prompts small.
+10. **Token budget** (ADR-0022). Small jobs may run automatically, on Haiku, with small capped
+    prompts (e.g. tidying a note, grouping commits). Big jobs (reviews, scans, reports,
+    explanations) run only when the user clicks. Never use a bigger model for an automatic job.
 11. Conventional commits (`feat:`, `fix:`, `docs:` …). Small commits, one roadmap task each.
 
 ## Ask before
