@@ -19,6 +19,7 @@ import {
 } from '../../api/chat.ts';
 import { queryClient } from '../../api/queries.ts';
 import { ApprovalCard } from '../../components/ApprovalCard/ApprovalCard.tsx';
+import { ChangeSummary } from '../../components/ChangeSummary/ChangeSummary.tsx';
 import { Composer } from '../../components/Composer/Composer.tsx';
 import { DecisionCard } from '../../components/DecisionCard/DecisionCard.tsx';
 import { Markdown } from '../../components/Markdown/Markdown.tsx';
@@ -154,6 +155,7 @@ export function ChatTab({ projectId, now }: ChatTabProps) {
             ) : (
               <ClaudeBlock
                 key={b.id}
+                projectId={projectId}
                 block={b}
                 now={now}
                 running={!!state?.running}
@@ -238,12 +240,14 @@ function EmptyChat() {
 }
 
 function ClaudeBlock({
+  projectId,
   block,
   now,
   running,
   streamingId,
   onRetry,
 }: {
+  projectId: string;
   block: Extract<Block, { t: 'claude' }>;
   now: number;
   running: boolean;
@@ -253,6 +257,8 @@ function ClaudeBlock({
   const firstPending = block.parts.find(
     (p) => p.t === 'approval' && p.item.approval.status === 'pending',
   );
+  const end = block.parts.find((p) => p.t === 'end')?.item;
+  const tools = block.parts.flatMap((p) => (p.t === 'tools' ? p.items : []));
   return (
     <div className={styles.claude}>
       <div className={styles.claudeLabel}>Claude</div>
@@ -326,6 +332,7 @@ function ClaudeBlock({
             return null;
         }
       })}
+      {end && <ChangeSummary projectId={projectId} tools={tools} end={end} />}
     </div>
   );
 }

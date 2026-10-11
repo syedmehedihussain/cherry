@@ -1,4 +1,4 @@
-import { Check, ChevronRight, GitCommitHorizontal, RefreshCw } from 'lucide-react';
+import { Check, ChevronRight, GitCommitHorizontal, RefreshCw, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import type { CommitFile, CommitSuggestion } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
@@ -48,9 +48,21 @@ export function ReadyToCommit({ projectId }: { projectId: string }) {
             </span>
           )}
         </div>
+        {data?.grouped === false && data.files.length > 0 && !loading && (
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            title="Asks Haiku to split the changes into commits with messages. Uses a few tokens."
+            onClick={() => void refresh()}
+          >
+            <Sparkles size={12} aria-hidden="true" />
+            Group with Claude
+          </button>
+        )}
         <button
           type="button"
           className={styles.icon}
+          hidden={!data?.grouped || !data.files.length}
           aria-label="Group the changes again"
           title="Group the changes again"
           disabled={loading}
@@ -92,11 +104,22 @@ export function ReadyToCommit({ projectId }: { projectId: string }) {
             </p>
           )}
           {stale && (
-            <button type="button" className={styles.stale} onClick={() => void refresh()}>
+            <button
+              type="button"
+              className={styles.stale}
+              onClick={() =>
+                void queryClient.invalidateQueries({ queryKey: commitPlanKey(projectId) })
+              }
+            >
               Files changed since this list was made. Refresh
             </button>
           )}
           {data.error && <p className={styles.warn}>{data.error} All files are in one commit.</p>}
+          {!data.grouped && (
+            <p className={styles.empty}>
+              Not grouped yet. Commit everything with one message, or use Group with Claude.
+            </p>
+          )}
           {data.commits.length === 0 ? (
             <p className={styles.empty}>Nothing to commit. Your working tree is clean.</p>
           ) : (

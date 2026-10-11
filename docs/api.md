@@ -45,7 +45,7 @@ the projects folder (see `security.md`).
 | GET | `/api/projects/:id/tasks` | tasks.json |
 | PATCH | `/api/projects/:id/tasks/:taskId` | update a task status |
 | POST | `/api/projects/:id/tasks` | `{ title }` → adds a `todo` task in the current phase (first unfinished task's phase); creates tasks.json if missing; returns the tasks file |
-| GET | `/api/projects/:id/commits/plan?refresh=1` | uncommitted changes grouped into commits by Claude (Haiku, read-only; secret files never sent): `{ fingerprint, author, files, commits: [{ id, message, body, explanation }], hidden, error }`; cached until the changes differ (ADR-0018) |
+| GET | `/api/projects/:id/commits/plan?refresh=1` | uncommitted changes as commits: `{ fingerprint, author, files, commits: [{ id, message, body, explanation }], hidden, error, grouped }`. Without `refresh` it never calls Claude (one group with every file, `grouped: false`, or the last plan if nothing changed). `refresh=1` (**Group with Claude**) groups with Haiku, read-only, secret files never sent (ADR-0018, ADR-0022) |
 | POST | `/api/projects/:id/commits` | `{ message, files }` → `git add -A` + `git commit` of exactly those files with the user's git identity, no Claude trailer; `{ hash, message }` |
 | GET / PUT | `/api/projects/:id/notes` | notes.md (the only file the UI writes directly — it is the user's own notes) |
 | POST | `/api/projects/:id/notes/organise` | `{ text }` → the note-taker (Haiku, no tools but `save_note`) tidies the note and picks a `##` section; the daemon adds it there (additions only). `{ content, mtime, section }`; 502 `note_failed` leaves notes.md untouched (ADR-0016) |
@@ -67,6 +67,7 @@ the projects folder (see `security.md`).
 | GET | `/api/projects/:id/chat` | current session meta + last 200 transcript events + `plan` (Claude's checklist, in memory) |
 | POST | `/api/projects/:id/chat` | `{ text, planMode?, model?, effort?, attachments? }` → starts a turn; `effort` is low, medium, high, xhigh or max (ignored for Haiku); attachments are upload ids, listed for Claude to Read |
 | POST | `/api/projects/:id/chat/stop` | interrupts the running turn |
+| POST | `/api/projects/:id/chat/explain` | `{ turnId }` → `{ text }`: Haiku summary of what that turn changed (diff capped at 6 KB, no tools). Only on the user's click; cached per turn (ADR-0022) |
 | POST | `/api/projects/:id/chat/new` | starts a fresh session |
 | POST | `/api/decisions/:cardId` | `{ optionId? , custom? }` answer a decision card |
 

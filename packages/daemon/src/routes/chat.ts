@@ -62,6 +62,11 @@ export function chatRoutes(
       return { ok: true };
     });
 
+    app.post('/api/projects/:id/chat/explain', async (req) => {
+      const { turnId } = z.object({ turnId: z.string().min(1).max(100) }).parse(req.body);
+      return chat.explain(IdParams.parse(req.params).id, turnId);
+    });
+
     app.post('/api/projects/:id/chat/stop', async (req) => {
       await chat.stop(IdParams.parse(req.params).id);
       return { ok: true };

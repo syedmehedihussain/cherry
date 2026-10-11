@@ -14,6 +14,7 @@ import { Transcript } from '../claude/transcript.ts';
 import { readProjectFiles } from '../projects/scanner.ts';
 import { projectDir } from '../projects/workspace.ts';
 import { recordUsage } from '../usage.ts';
+import { explainTurn } from './explain.ts';
 import { UPLOADS_DIR, saveUpload, uploadPath } from './uploads.ts';
 
 /** Tells Claude where the attached files are; it opens them with Read (images too). */
@@ -55,6 +56,8 @@ interface Live {
 /** One chat conversation per project at a time; resumes across reloads and restarts. */
 export class ChatService {
   private readonly live = new Map<string, Live>();
+  /** Explain answers per turn, so a second click costs nothing. */
+  private readonly explained = new Map<string, string>();
 
   constructor(
     private readonly config: ConfigStore,
@@ -240,6 +243,17 @@ export class ChatService {
       this.publishState(projectId, current);
     }
     return { turnId, conversationId: current.conversationId };
+  }
+
+  /** Summarises one turn's file changes with Haiku. Only on the user's click (ADR-0022). */
+  async explain(projectId: string, turnId: string): Promise<{ text: string }> {
+    const dir = projectDir(this.config.projectsDir(), projectId);
+    const cached = this.explained.get(turnId);
+    if (cached) return { text: cached };
+    const items = this.current(projectId)?.conversation.list() ?? [];
+    const text = await explainTurn(this.runner, dir, items, turnId);
+    this.explained.set(turnId, text);
+    return { text };
   }
 
   async stop(projectId: string): Promise<void> {

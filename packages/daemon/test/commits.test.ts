@@ -68,9 +68,19 @@ describe('Ready to commit', () => {
         },
       },
     ];
-    const r = await api('GET', '/api/projects/site/commits/plan');
+    // Opening the view is free: one group, no Claude request.
+    const before = log.requests.length;
+    const free = (await api('GET', '/api/projects/site/commits/plan')).body as CommitPlan;
+    expect(log.requests.length).toBe(before);
+    expect(free.grouped).toBe(false);
+    expect(free.commits).toHaveLength(1);
+    expect(free.commits[0]!.files.sort()).toEqual(['README.md', 'old.ts', 'src/hero.ts']);
+
+    // Group with Claude.
+    const r = await api('GET', '/api/projects/site/commits/plan?refresh=1');
     expect(r.status).toBe(200);
     const plan = r.body as CommitPlan;
+    expect(plan.grouped).toBe(true);
     expect(plan.author).toEqual({ name: 'Syed Test', email: 'syed@example.com' });
     expect(plan.hidden).toEqual(['.env']);
     expect(plan.commits.map((c) => [c.message, c.files])).toEqual([

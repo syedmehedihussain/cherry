@@ -159,6 +159,8 @@ export const CommitPlanSchema = z.object({
   hidden: z.array(z.string()),
   /** Claude could not group the files; `commits` then has one group with everything. */
   error: z.string().nullable(),
+  /** False until the user clicks Group with Claude: then `commits` is one free group (ADR-0022). */
+  grouped: z.boolean(),
 });
 export type CommitPlan = z.infer<typeof CommitPlanSchema>;
 

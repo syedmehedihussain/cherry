@@ -28,6 +28,12 @@ test('chat: send, approve an edit, see it in the timeline and on disk', async ({
   expect(readFileSync(path.join(E2E_PROJECTS, 'core', 'lib', 'streaks.ts'), 'utf8')).toContain(
     'streaks = 3',
   );
+  // The change summary is closed until clicked, and opening it calls no Claude.
+  const summary = page.getByRole('button', { name: /Changed 1 file/ });
+  await expect(summary).toHaveAttribute('aria-expanded', 'false');
+  await summary.click();
+  await expect(page.getByRole('link', { name: 'lib/streaks.ts' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Explain with Claude' })).toBeVisible();
 });
 
 test('chat: a decision card waits for the answer', async ({ page }) => {
