@@ -10,6 +10,8 @@ import { HealthService } from './health-service.ts';
 import { PlanUsageService } from './plan-usage.ts';
 import { NoteService } from './notes/service.ts';
 import { noteRoutes } from './routes/notes.ts';
+import { CommitService } from './projects/commits.ts';
+import { commitRoutes } from './routes/commits.ts';
 import { ensureMagnetFiles } from './magnet/files.ts';
 import { GitInfoService } from './projects/github.ts';
 import { ProjectService } from './projects/service.ts';
@@ -140,6 +142,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     opts.home,
   );
   const notes = new NoteService(config, opts.runner ?? sdkRunner);
+  const commits = new CommitService(config, hub, opts.runner ?? sdkRunner);
   const gitActions = new GitActions(config, hub, approvals, gitInfo, opts.prList);
   const magnet = new MagnetService(
     config,
@@ -174,6 +177,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       scanRoutes(scans),
       magnetRoutes(magnet),
       noteRoutes(notes),
+      commitRoutes(commits),
     ],
   });
 

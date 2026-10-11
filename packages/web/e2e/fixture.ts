@@ -79,6 +79,21 @@ export function createFixture(): void {
   write(path.join(atlas, 'src', 'server.ts'), 'export {};\n');
   git(atlas, 'add', '-A');
   git(atlas, 'commit', '-q', '-m', 'feat: server skeleton');
+
+  // A Ready project with changes to commit as the user (GitHub view → Ready to commit).
+  const shop = path.join(E2E_PROJECTS, 'shop');
+  write(
+    path.join(shop, '_project', 'project.json'),
+    JSON.stringify({ schema: 1, name: 'shop', summary: 'Small web shop', phase: 'development' }),
+  );
+  write(path.join(shop, 'src', 'hero.ts'), 'export const hero = 1;\n');
+  git(shop, 'init', '-q', '-b', 'main');
+  writeFileSync(path.join(shop, '.git', 'info', 'exclude'), '_project/\n');
+  git(shop, 'config', 'user.name', 'E2E User');
+  git(shop, 'config', 'user.email', 'e2e-user@example.com');
+  git(shop, 'add', '-A');
+  git(shop, 'commit', '-q', '-m', 'feat: first');
+  write(path.join(shop, 'src', 'hero.ts'), 'export const hero = 2;\n');
 }
 
 export const E2E_REMOTES = path.join(E2E_ROOT, 'remotes');

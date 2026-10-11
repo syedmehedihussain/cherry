@@ -1,5 +1,24 @@
 [
   {
+    "match": "^Group these uncommitted changes",
+    "steps": [
+      {
+        "call": {
+          "name": "propose_commits",
+          "input": {
+            "commits": [
+              {
+                "message": "fix(hero): show the new hero value",
+                "explanation": "This commit changes the hero value from 1 to 2. The home page shows the new value.",
+                "files": ["src/hero.ts"]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  {
     "match": "^Plan the hero fix",
     "steps": [
       {

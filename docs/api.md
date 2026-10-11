@@ -42,6 +42,8 @@ the projects folder (see `security.md`).
 | GET | `/api/projects/:id/tasks` | tasks.json |
 | PATCH | `/api/projects/:id/tasks/:taskId` | update a task status |
 | POST | `/api/projects/:id/tasks` | `{ title }` → adds a `todo` task in the current phase (first unfinished task's phase); creates tasks.json if missing; returns the tasks file |
+| GET | `/api/projects/:id/commits/plan?refresh=1` | uncommitted changes grouped into commits by Claude (Haiku, read-only; secret files never sent): `{ fingerprint, author, files, commits: [{ id, message, body, explanation }], hidden, error }`; cached until the changes differ (ADR-0018) |
+| POST | `/api/projects/:id/commits` | `{ message, files }` → `git add -A` + `git commit` of exactly those files with the user's git identity, no Claude trailer; `{ hash, message }` |
 | GET / PUT | `/api/projects/:id/notes` | notes.md (the only file the UI writes directly — it is the user's own notes) |
 | POST | `/api/projects/:id/notes/organise` | `{ text }` → the note-taker (Haiku, no tools but `save_note`) tidies the note and picks a `##` section; the daemon adds it there (additions only). `{ content, mtime, section }`; 502 `note_failed` leaves notes.md untouched (ADR-0016) |
 | POST | `/api/projects/:id/open-in-editor` | `{ path }` → runs `$EDITOR` / `code` |

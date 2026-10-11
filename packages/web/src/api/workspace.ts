@@ -8,6 +8,8 @@ import {
   GitInfoSchema,
   GitResultSchema,
   NotesSchema,
+  CommitPlanSchema,
+  CommitResultSchema,
   OrganisedNoteSchema,
   ProjectDetailSchema,
   PullRequestListSchema,
@@ -93,6 +95,24 @@ export const useTasks = (id: string) =>
     queryKey: wk.tasks(id),
     queryFn: () => api('GET', `${base(id)}/tasks`, undefined, TasksFileSchema),
   });
+
+/** Not under wk.all: file events must not re-run Claude; the view refreshes on demand. */
+export const commitPlanKey = (id: string) => ['commits', id] as const;
+
+export const useCommitPlan = (id: string) =>
+  useQuery({
+    queryKey: commitPlanKey(id),
+    queryFn: () => api('GET', `${base(id)}/commits/plan`, undefined, CommitPlanSchema),
+    staleTime: Infinity,
+  });
+
+export const refreshCommitPlan = (id: string) =>
+  api('GET', `${base(id)}/commits/plan?refresh=1`, undefined, CommitPlanSchema).then((plan) =>
+    queryClient.setQueryData(commitPlanKey(id), plan),
+  );
+
+export const commitFiles = (id: string, message: string, files: string[]) =>
+  api('POST', `${base(id)}/commits`, { message, files }, CommitResultSchema);
 
 export const addTask = (id: string, title: string) =>
   api('POST', `${base(id)}/tasks`, { title }, TasksFileSchema);

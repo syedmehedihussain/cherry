@@ -126,6 +126,51 @@ export const GitResultSchema = z.object({
 });
 export type GitResult = z.infer<typeof GitResultSchema>;
 
+/** One uncommitted file, as offered for a commit. */
+export const CommitFileSchema = z.object({
+  path: z.string(),
+  letter: z.enum(['M', 'A', 'D', 'U', 'R']),
+  /** The old path of a rename. */
+  origPath: z.string().nullable(),
+});
+export type CommitFile = z.infer<typeof CommitFileSchema>;
+
+/** A commit Claude suggests: a group of files, a message and a plain explanation. */
+export const CommitSuggestionSchema = z.object({
+  id: z.string(),
+  /** Subject line, e.g. "feat(web): add the Live view". */
+  message: z.string(),
+  /** Optional longer message under the subject. */
+  body: z.string().nullable(),
+  /** What the commit does, in ASD-STE100. */
+  explanation: z.string(),
+  files: z.array(z.string()),
+});
+export type CommitSuggestion = z.infer<typeof CommitSuggestionSchema>;
+
+/** GET /api/projects/:id/commits/plan: the uncommitted changes, grouped into commits. */
+export const CommitPlanSchema = z.object({
+  fingerprint: z.string(),
+  /** Your git identity (git config user.name / user.email); commits are made as you. */
+  author: z.object({ name: z.string(), email: z.string() }).nullable(),
+  files: z.array(CommitFileSchema),
+  commits: z.array(CommitSuggestionSchema),
+  /** Secret files that changed; never sent to Claude, never offered for a commit. */
+  hidden: z.array(z.string()),
+  /** Claude could not group the files; `commits` then has one group with everything. */
+  error: z.string().nullable(),
+});
+export type CommitPlan = z.infer<typeof CommitPlanSchema>;
+
+export const CommitBodySchema = z.object({
+  message: z.string().trim().min(1).max(5000),
+  files: z.array(z.string().min(1).max(4096)).min(1).max(2000),
+});
+export type CommitBody = z.infer<typeof CommitBodySchema>;
+
+export const CommitResultSchema = z.object({ hash: z.string(), message: z.string() });
+export type CommitResult = z.infer<typeof CommitResultSchema>;
+
 export const ChangesSchema = z.object({
   entries: z.array(z.object({ path: z.string(), letter: GitLetterSchema })),
 });
