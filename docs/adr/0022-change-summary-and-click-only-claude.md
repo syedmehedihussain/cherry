@@ -28,8 +28,8 @@ Claude call. **Explain with Claude** sends one Haiku request with no tools: file
 Claude's last message (1,200 characters max) and the diff of those files (6 KB max). The answer
 is cached per turn in the daemon.
 
-The same rule now applies to Ready to commit: opening it lists every changed file as one commit
-for free; **Group with Claude** runs the Haiku grouping.
+Ready to commit was briefly click-only too. After the rule below was refined, the user chose to
+group with Haiku automatically again when the view opens (a small job).
 
 Rule for new features (refined by the user on 2026-10-11): small jobs may run automatically on
 Haiku with small, capped prompts. Big jobs (reviews, scans, reports, explanations such as

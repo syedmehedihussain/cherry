@@ -138,7 +138,11 @@ export const SurveyAnswerInputSchema = z.union([
     }),
 ]);
 export type SurveyAnswerInput = z.infer<typeof SurveyAnswerInputSchema>;
-export const SurveyCreateSchema = z.object({ createRepo: z.boolean() });
+export const SurveyCreateSchema = z.object({
+  createRepo: z.boolean(),
+  /** Write a .gitignore for the stack (Haiku) unless the drafted files have one. */
+  gitignore: z.boolean().default(true),
+});
 
 /** What Claude passes to propose_docs. Checked strictly by the daemon. */
 export const ProposeDocsInputSchema = z.object({

@@ -41,6 +41,7 @@ import {
   today,
 } from '../projects/standard.ts';
 import { projectDir } from '../projects/workspace.ts';
+import { draftGitignore } from './gitignore.ts';
 
 /** GitHub calls the survey needs; tests and e2e replace them so nothing leaves the machine. */
 export interface SurveyGitHub {
@@ -711,7 +712,10 @@ export class SurveyService {
   }
 
   /** Writes every proposed file, runs git init and the first commit, optionally creates the repo. */
-  async create(id: string, opts: { createRepo: boolean }): Promise<SurveyState> {
+  async create(
+    id: string,
+    opts: { createRepo: boolean; gitignore?: boolean },
+  ): Promise<SurveyState> {
     const file = this.read(id);
     const l = this.liveOf(id);
     if (file.status === 'created') throw conflict('This project was already created.');
@@ -745,6 +749,11 @@ export class SurveyService {
         const abs = resolveInside(dir, f.path);
         mkdirSync(path.dirname(abs), { recursive: true });
         writeFileSync(abs, f.content, { flag: 'wx' });
+      }
+      const ignore = path.join(dir, '.gitignore');
+      if (opts.gitignore !== false && !existsSync(ignore)) {
+        const stack = l.proposal.stack ?? [];
+        writeFileSync(ignore, await draftGitignore(this.runner, dir, stack), { flag: 'wx' });
       }
       setStage('git');
       await gitFirstCommit(dir);

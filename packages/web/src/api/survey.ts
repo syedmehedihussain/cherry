@@ -28,8 +28,8 @@ export const answerStep = (id: string, body: SurveyAnswerInput) =>
   api('POST', `${base(id)}/answer`, body, SurveyStateSchema).then(put);
 export const changeStep = (id: string, step: number) =>
   api('POST', `${base(id)}/change`, { step }, SurveyStateSchema).then(put);
-export const createProject = (id: string, createRepo: boolean) =>
-  api('POST', `${base(id)}/create`, { createRepo }, SurveyStateSchema).then(put);
+export const createProject = (id: string, createRepo: boolean, gitignore = true) =>
+  api('POST', `${base(id)}/create`, { createRepo, gitignore }, SurveyStateSchema).then(put);
 
 export function useLiveSurvey(id: string | undefined): void {
   useEffect(() => {

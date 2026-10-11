@@ -12,9 +12,6 @@ test('ready to commit: expand, read, commit as the user', async ({ page }) => {
 
   const box = aside.getByRole('region', { name: 'Ready to commit' });
   await expect(box).toContainText('as E2E User');
-  // Grouping costs tokens, so it waits for the click.
-  await expect(box).toContainText('Not grouped yet');
-  await box.getByRole('button', { name: 'Group with Claude' }).click();
   const row = box.getByRole('button', { name: /fix\(hero\): show the new hero value/ });
   await row.click();
   await expect(box).toContainText('This commit changes the hero value from 1 to 2.');

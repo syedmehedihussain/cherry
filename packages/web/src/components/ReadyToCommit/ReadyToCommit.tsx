@@ -1,4 +1,4 @@
-import { Check, ChevronRight, GitCommitHorizontal, RefreshCw, Sparkles } from 'lucide-react';
+import { Check, ChevronRight, GitCommitHorizontal, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import type { CommitFile, CommitSuggestion } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
@@ -48,7 +48,7 @@ export function ReadyToCommit({ projectId }: { projectId: string }) {
             </span>
           )}
         </div>
-        {data?.grouped && data.files.length > 0 && (
+        {!!data?.files.length && (
           <button
             type="button"
             className={styles.icon}
@@ -105,22 +105,6 @@ export function ReadyToCommit({ projectId }: { projectId: string }) {
             </button>
           )}
           {data.error && <p className={styles.warn}>{data.error} All files are in one commit.</p>}
-          {!data.grouped && (
-            <div className={styles.ungrouped}>
-              <p className={styles.empty}>
-                Not grouped yet. Commit everything with one message, or let Claude split it.
-              </p>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                title="Asks Haiku to split the changes into commits with messages. Uses a few tokens."
-                onClick={() => void refresh()}
-              >
-                <Sparkles size={12} aria-hidden="true" />
-                Group with Claude
-              </button>
-            </div>
-          )}
           {data.commits.length === 0 ? (
             <p className={styles.empty}>Nothing to commit. Your working tree is clean.</p>
           ) : (

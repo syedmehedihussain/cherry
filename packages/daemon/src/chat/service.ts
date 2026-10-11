@@ -35,6 +35,7 @@ export function chatSystemPrompt(phase: Phase | null): string {
     '- When there is a real choice to make, call the ask_decision tool. Do not pick for the user.',
     '- Keep answers short and plain. Name the file, then the change.',
     '- For work with more than one step, first record the steps with your task tool (TaskCreate), then do them one by one: mark a step in_progress when you start it and completed when it is done. The user follows this list live.',
+    '- Keep .gitignore current: when you add something that makes build output, caches, dependencies, local env files or secrets, add it to .gitignore (create the file if it is missing).',
     '- Every edit and command is shown to the user for approval. If they deny one, ask what they want instead.',
     phase
       ? `- Current phase: ${phase}. Do not write production code in the plan or design phase.`

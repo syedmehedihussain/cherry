@@ -198,19 +198,14 @@ export class CommitService {
   }
 
   /**
-   * The changes as commits. Without `refresh` this never calls Claude: it returns the last plan if
-   * nothing changed, else every file in one group. `refresh` (Group with Claude) runs Haiku.
+   * The changes as commits, grouped by Haiku (a small automatic job, ADR-0022). Reused while
+   * nothing changed; `refresh` groups again.
    */
   async plan(projectId: string, refresh = false): Promise<CommitPlan> {
     const dir = projectDir(this.config.projectsDir(), projectId);
     const snap = await this.snapshot(dir);
     const cached = this.cache.get(projectId);
     if (!refresh && cached?.fingerprint === snap.fingerprint) return cached.plan;
-    if (!refresh) {
-      const plan = await this.ungrouped(dir, snap);
-      this.cache.set(projectId, { fingerprint: snap.fingerprint, plan });
-      return plan;
-    }
     const key = `${projectId}:${snap.fingerprint}`;
     const running = this.pending.get(key);
     if (running && !refresh) return running;
@@ -223,33 +218,6 @@ export class CommitService {
     return job;
   }
 
-  /** Every changed file in one commit, for free. */
-  private async ungrouped(
-    dir: string,
-    snap: Awaited<ReturnType<CommitService['snapshot']>>,
-  ): Promise<CommitPlan> {
-    const files = snap.files.map((f) => f.path);
-    return {
-      fingerprint: snap.fingerprint,
-      author: await this.author(dir),
-      files: snap.files,
-      hidden: snap.hidden,
-      commits: files.length
-        ? [
-            {
-              id: 'c1',
-              message: 'chore: update files',
-              body: null,
-              explanation: 'Every changed file in one commit.',
-              files,
-            },
-          ]
-        : [],
-      error: null,
-      grouped: files.length === 0,
-    };
-  }
-
   private async build(
     dir: string,
     snap: Awaited<ReturnType<CommitService['snapshot']>>,
@@ -260,7 +228,6 @@ export class CommitService {
       author,
       files: snap.files,
       hidden: snap.hidden,
-      grouped: true,
     };
     if (snap.files.length === 0) return { ...base, commits: [], error: null };
     const paths = snap.files.map((f) => f.path);

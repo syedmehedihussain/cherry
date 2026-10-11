@@ -438,6 +438,8 @@ function Review({ state }: { state: SurveyState }) {
   const files = useMemo(() => state.proposal?.files ?? [], [state.proposal]);
   const [selected, setSelected] = useState<string>('CLAUDE.md');
   const [repo, setRepo] = useState<boolean>(!!state.repoName);
+  const hasIgnore = !!state.proposal?.files.some((f) => f.path === '.gitignore');
+  const [ignore, setIgnore] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const sel = files.find((f) => f.path === selected) ?? files[0];
   const create = state.create;
@@ -471,7 +473,7 @@ function Review({ state }: { state: SurveyState }) {
   const go = async () => {
     setError(null);
     try {
-      await createProject(state.id, repo && !!state.repoName);
+      await createProject(state.id, repo && !!state.repoName, ignore && !hasIgnore);
     } catch (e) {
       setError(message(e, 'Could not create the project.'));
     }
@@ -580,21 +582,34 @@ function Review({ state }: { state: SurveyState }) {
           {error && <p className={styles.error}>{error}</p>}
 
           <div className={styles.reviewFoot}>
-            {state.repoName ? (
-              <label className={styles.repoToggle}>
-                <input
-                  type="checkbox"
-                  checked={repo}
-                  disabled={creating}
-                  onChange={(e) => setRepo(e.target.checked)}
-                />
-                Create a private GitHub repository <span className="mono">{state.repoName}</span>
-              </label>
-            ) : (
-              <span className={styles.muted}>
-                GitHub is not connected; you can add a repository later.
-              </span>
-            )}
+            <div className={styles.toggles}>
+              {!hasIgnore && (
+                <label className={styles.repoToggle}>
+                  <input
+                    type="checkbox"
+                    checked={ignore}
+                    disabled={creating}
+                    onChange={(e) => setIgnore(e.target.checked)}
+                  />
+                  Create a <span className="mono">.gitignore</span> for this stack
+                </label>
+              )}
+              {state.repoName ? (
+                <label className={styles.repoToggle}>
+                  <input
+                    type="checkbox"
+                    checked={repo}
+                    disabled={creating}
+                    onChange={(e) => setRepo(e.target.checked)}
+                  />
+                  Create a private GitHub repository <span className="mono">{state.repoName}</span>
+                </label>
+              ) : (
+                <span className={styles.muted}>
+                  GitHub is not connected; you can add a repository later.
+                </span>
+              )}
+            </div>
             <div className={styles.actions}>
               <button
                 type="button"

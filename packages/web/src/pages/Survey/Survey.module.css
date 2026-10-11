@@ -625,3 +625,8 @@
   white-space: pre-wrap;
   color: var(--t-code);
 }
+.toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

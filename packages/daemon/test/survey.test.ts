@@ -82,6 +82,7 @@ describe('new project survey', () => {
     d = await testDaemon({
       runner: fakeRunner((req) => {
         if (req.prompt.includes('Write the planning documents')) return [docs];
+        if (req.prompt.includes('Write a .gitignore')) return [{ text: 'node_modules/\ndist/\n' }];
         const step = Number(/this is step (\d)/.exec(req.prompt)?.[1]);
         // The second time a step is drafted, its options carry a marker.
         return [card(step, round++ >= 100 ? 'x' : '')];
@@ -262,6 +263,11 @@ describe('new project survey', () => {
     expect(git('log', '--oneline')).toMatch(/docs: project plan/);
     expect(git('status', '--porcelain')).toBe('');
     expect(git('ls-files')).not.toContain('_project');
+    // The .gitignore box is on by default: Haiku's lines plus the base secrets lines, committed.
+    const ignore = readFileSync(path.join(dir(), '.gitignore'), 'utf8');
+    expect(ignore).toContain('node_modules/');
+    expect(ignore).toContain('.env');
+    expect(git('ls-files')).toContain('.gitignore');
     expect(fileOf().status).toBe('created');
 
     const card = (await d.projects.rescan()).find((c) => c.id === 'review-qr');
