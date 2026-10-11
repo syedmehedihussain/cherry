@@ -39,6 +39,12 @@ resolveInside(root: string, userPath: string): string  // throws PathOutsideRoot
 - Resolves symlinks (`realpath`) **before** checking the prefix.
 - `root` is the project folder for project routes and `~/.cherry/magnet` for Magnet files.
 - Covered by tests with `..`, absolute paths, symlinks pointing out, URL-encoded dots, and null bytes.
+- **Claude's file tools use it too** (`pathGuard` in the PreToolUse hook, every run kind): Read,
+  Grep, Glob, LS, Edit, Write, MultiEdit and NotebookEdit must point inside the run's folder
+  (`cwd` plus `additionalDirectories`), symlinks resolved. Agents and Magnet use `isInside` for
+  their own edit rules. Fixes the 2026-10-11 security review (high and medium findings).
+- **Open in editor** without VS Code opens the file's folder, never the file, so a `.desktop`,
+  `.command` or `.jar` from a cloned repo is not launched (low finding).
 
 ## Command rules
 
@@ -55,7 +61,8 @@ Auto-allowed: read-only tools listed in `claude-runner.md` for each session kind
 
 ## Files never read
 
-`.env`, `.env.*`, `*.pem`, `*.key`, `id_rsa*`, `id_ed25519*`, `.npmrc`, `.netrc`, anything in
+`.env`, `.env.*`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `id_rsa*`, `id_ed25519*`, `id_ecdsa*`,
+`id_dsa*`, `.npmrc`, `.netrc`, `.pypirc`, `.git-credentials`, `.htpasswd`, `credentials`, anything in
 `.git/` except via git commands. The file viewer shows "Hidden for safety" for these.
 
 ## What leaves the machine

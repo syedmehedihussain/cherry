@@ -1,11 +1,11 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, symlinkSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Agent } from '@cherry/shared';
 import { slugify } from '../src/agents/manager.ts';
 import { fakeRunner, type FakeLog, type Step } from '../src/claude/fake-runner.ts';
-import { HOST, gitInit, testDaemon, write, type TestDaemon } from './helpers.ts';
+import { HOST, gitInit, tempDir, testDaemon, write, type TestDaemon } from './helpers.ts';
 
 const env = { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null' };
 const git = (cwd: string, ...args: string[]) =>
@@ -137,7 +137,30 @@ describe('background agents', () => {
     await until(a.id, (x) => x.status === 'done');
     expect(existsSync(path.join(dir, 'hack.txt'))).toBe(false);
     expect(log.permissions[0]).toMatchObject({ tool: 'Write', allowed: false });
-    expect(log.permissions[0]!.message).toMatch(/inside their worktree/);
+    expect(log.permissions[0]!.message).toMatch(/inside (their worktree|the project folder)/);
+  });
+
+  // Security review 2026-10-11, high finding: a committed symlink must not let an agent write
+  // outside its worktree, and reads stay inside it too.
+  it('refuses edits through a symlink that points out of the worktree, and outside reads', async () => {
+    const outside = tempDir();
+    write(path.join(outside, 'bashrc'), 'original\n');
+    mkdirSync(path.join(dir, 'tools'), { recursive: true });
+    symlinkSync(path.join(outside, 'bashrc'), path.join(dir, 'tools', 'env.sh'));
+    git(dir, 'add', '-A');
+    git(dir, 'commit', '-q', '-m', 'link');
+    script = () => [
+      { tool: { name: 'Write', input: { file_path: 'tools/env.sh', content: 'pwned\n' } } },
+      { tool: { name: 'Read', input: { file_path: path.join(outside, 'bashrc') } } },
+      { text: 'Tried.' },
+    ];
+    const a = await startAgent('Update env');
+    await until(a.id, (x) => x.status === 'done');
+    expect(readFileSync(path.join(outside, 'bashrc'), 'utf8')).toBe('original\n');
+    expect(log.permissions.map((p) => [p.tool, p.allowed])).toEqual([
+      ['Write', false],
+      ['Read', false],
+    ]);
   });
 
   it('queues agents over the limit and starts them when one finishes', async () => {

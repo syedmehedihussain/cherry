@@ -1,7 +1,7 @@
 import { createSdkMcpServer, query, tool, type SDKMessage } from '@anthropic-ai/claude-agent-sdk';
 import path from 'node:path';
 import { z } from 'zod';
-import { isSecretFile } from '../paths.ts';
+import { isInside, isSecretFile } from '../paths.ts';
 
 /** The internal event stream every runner produces (claude-runner.md). */
 export type RunnerEvent =
@@ -93,12 +93,59 @@ export function secretGuard(
   if (
     tool === 'Grep' &&
     typeof input.glob === 'string' &&
-    /\.env|\.pem|\.key|id_rsa|id_ed25519/.test(input.glob)
+    /\.env|\.pem|\.key|\.p12|\.pfx|id_rsa|id_ed25519|id_ecdsa|credentials/.test(input.glob)
   ) {
     return 'Cherry never lets Claude search secret files.';
   }
   return null;
 }
+const FILE_TOOLS = new Set([
+  'Read',
+  'Glob',
+  'Grep',
+  'LS',
+  'Edit',
+  'Write',
+  'MultiEdit',
+  'NotebookEdit',
+]);
+
+/**
+ * Refuses file tools aimed outside the run's folders (cwd + additionalDirectories), with
+ * symlinks resolved. Covers chat, scans, agents, calibration and survey alike.
+ */
+export function pathGuard(
+  roots: string[],
+  tool: string,
+  input: Record<string, unknown>,
+): string | null {
+  if (!FILE_TOOLS.has(tool)) return null;
+  const paths = ['file_path', 'notebook_path', 'path']
+    .map((k) => input[k])
+    .filter((v): v is string => typeof v === 'string' && v !== '');
+  // An absolute Glob pattern carries its own folder: check the part before the first wildcard.
+  if (tool === 'Glob' && typeof input.pattern === 'string' && path.isAbsolute(input.pattern))
+    paths.push(input.pattern.split(/[*?[{]/)[0]!);
+  const outside = paths.find((p) => !roots.some((r) => isInside(r, path.resolve(roots[0]!, p))));
+  return outside
+    ? `Cherry keeps Claude inside the project folder. ${outside} is outside it.`
+    : null;
+}
+
+/** Every Cherry rule that runs before a tool call, then the request's own guard. */
+export function preToolGuard(
+  req: Pick<RunRequest, 'cwd' | 'additionalDirectories' | 'guard'>,
+  tool: string,
+  input: Record<string, unknown>,
+): string | null {
+  return (
+    secretGuard(req.cwd, tool, input) ??
+    pathGuard([req.cwd, ...(req.additionalDirectories ?? [])], tool, input) ??
+    req.guard?.(tool, input) ??
+    null
+  );
+}
+
 /** Tools that only read. ToolSearch just loads tool definitions (the SDK defers MCP tools). */
 /** Run without asking: reading, and Claude's own checklist (TaskCreate…, TodoWrite). */
 export const READ_TOOLS = [
@@ -209,10 +256,7 @@ export const sdkRunner: Runner = (req) => {
               async (hookInput) => {
                 if (hookInput.hook_event_name !== 'PreToolUse') return {};
                 const input = (hookInput.tool_input ?? {}) as Record<string, unknown>;
-                const reason =
-                  secretGuard(req.cwd, hookInput.tool_name, input) ??
-                  req.guard?.(hookInput.tool_name, input) ??
-                  null;
+                const reason = preToolGuard(req, hookInput.tool_name, input);
                 return reason
                   ? {
                       hookSpecificOutput: {

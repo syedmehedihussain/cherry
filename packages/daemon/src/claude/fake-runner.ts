@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
-import { secretGuard, type RunHandle, type Runner, type RunRequest } from './runner.ts';
+import { preToolGuard, type RunHandle, type Runner, type RunRequest } from './runner.ts';
 
 /** One step of a fake Claude script (docs/testing.md → The fake Claude). */
 export type Step =
@@ -84,7 +84,7 @@ export function fakeRunner(
           const id = `toolu_${n}_${i}`;
           const { name, input } = step.tool;
           req.onEvent({ t: 'tool_start', id, name, input });
-          const refused = secretGuard(req.cwd, name, input) ?? req.guard?.(name, input) ?? null;
+          const refused = preToolGuard(req, name, input);
           if (refused) {
             log?.permissions.push({ tool: name, allowed: false, message: refused });
             req.onEvent({ t: 'tool_end', id, ok: false, output: refused });

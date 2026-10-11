@@ -13,6 +13,7 @@ import {
 } from '@cherry/shared';
 import { z } from 'zod';
 import type { ConfigStore } from '../config.ts';
+import { isInside } from '../paths.ts';
 import type { Db } from '../db.ts';
 import type { EventHub } from '../events.ts';
 import { writeFileAtomic } from '../fsutil.ts';
@@ -258,8 +259,7 @@ export class MagnetService {
         if (READ_TOOLS.includes(tool) || EDIT_TOOLS.has(tool)) {
           const p = ['file_path', 'path'].map((k) => input[k]).find((v) => typeof v === 'string');
           if (typeof p !== 'string') return null;
-          const abs = path.resolve(magnet, p);
-          const inside = (root: string) => abs === root || abs.startsWith(root + path.sep);
+          const inside = (root: string) => isInside(root, path.resolve(magnet, p));
           if (EDIT_TOOLS.has(tool))
             return inside(magnet) ? null : 'Magnet may only edit its own notes.';
           return inside(projectsDir) || inside(magnet)

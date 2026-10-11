@@ -64,16 +64,34 @@ export function resolveInside(root: string, userPath: string): string {
   return target;
 }
 
-/** Files the viewer and Claude's calibration never read (docs/security.md). */
+/** True if `p` (relative to `root`, or absolute) is inside `root` after resolving symlinks. */
+export function isInside(root: string, p: string): boolean {
+  try {
+    resolveInside(root, path.isAbsolute(p) ? path.relative(root, p) : p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Files the viewer and Claude never read (docs/security.md). */
 const SECRET_PATTERNS = [
   /^\.env$/,
   /^\.env\..+/,
   /\.pem$/,
   /\.key$/,
+  /\.p12$/,
+  /\.pfx$/,
   /^id_rsa/,
   /^id_ed25519/,
+  /^id_ecdsa/,
+  /^id_dsa/,
   /^\.npmrc$/,
   /^\.netrc$/,
+  /^\.pypirc$/,
+  /^\.git-credentials$/,
+  /^\.htpasswd$/,
+  /^credentials$/,
 ];
 
 export function isSecretFile(relPath: string): boolean {

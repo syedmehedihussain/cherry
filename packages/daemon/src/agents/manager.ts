@@ -7,7 +7,7 @@ import type { Db } from '../db.ts';
 import type { EventHub } from '../events.ts';
 import { git, gitStatus } from '../git.ts';
 import { conflict, notFound } from '../http.ts';
-import { isSecretFile } from '../paths.ts';
+import { isInside, isSecretFile } from '../paths.ts';
 import type { ApprovalBroker } from '../claude/approvals.ts';
 import { Conversation } from '../claude/conversation.ts';
 import type { DecisionBroker } from '../claude/decisions.ts';
@@ -267,8 +267,7 @@ export class AgentManager {
         if (!EDIT_TOOLS.has(tool)) return null;
         const p = typeof input.file_path === 'string' ? input.file_path : input.notebook_path;
         if (typeof p !== 'string') return null;
-        const abs = path.resolve(r.worktree, p);
-        return abs === r.worktree || abs.startsWith(r.worktree + path.sep)
+        return isInside(r.worktree, p)
           ? null
           : `Agents may only edit files inside their worktree (${r.worktree}).`;
       },

@@ -234,7 +234,7 @@ describe('chat', () => {
     await api('POST', '/api/projects/core/chat', { text: 'write outside' });
     await idle();
     expect(d.approvals.list()).toHaveLength(0);
-    expect(log.permissions[0]?.message).toContain('only allows edits inside the project');
+    expect(log.permissions[0]?.message).toMatch(/inside the project/);
   });
 
   it('holds a decision card until the user answers', async () => {
