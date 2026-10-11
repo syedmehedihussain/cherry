@@ -61,7 +61,7 @@ function agentPrompt(task: string, branch: string): string {
     '- Read CLAUDE.md and the relevant code first.',
     "- You may edit files in this folder. Running commands needs the user's approval, so run only what you need (for example the tests).",
     '- Do not commit, push or switch branches. Cherry commits your work when you finish and the user reviews the diff.',
-    '- End with one short sentence that says what you changed.',
+    '- End with one short sentence that says what you changed. Write it, and any other report, in ASD-STE100 Simplified Technical English (short sentences, active voice, approved words).',
   ].join('\n');
 }
 

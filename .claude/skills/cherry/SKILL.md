@@ -151,6 +151,20 @@ What to look for, in what order, and how to rate severity (critical, high, mediu
 Cherry adds the read-only rules and the report format (Summary, Findings, What to do next).
 ```
 
+## Reports are in ASD-STE100
+
+Every report that an agent or subagent writes is in ASD-STE100 Simplified Technical English.
+This applies to Cherry scan reports, background agent summaries, custom scan agents, and any
+subagent you start (Agent tool) while you work with Cherry. Tell each subagent this in its prompt.
+
+- Short sentences: max 20 words in a procedure, max 25 in a description.
+- One instruction per sentence. Start instructions with the verb ("Run the tests.").
+- Active voice. Use approved words, with one meaning for each word.
+- Keep code, paths, commands, product names and error text exactly as they are.
+
+Cherry adds this rule to the built-in scan and agent prompts. A custom scan agent gets it from
+the report format, so its body does not need to repeat it.
+
 ## Troubleshooting
 
 | Symptom | Fix |

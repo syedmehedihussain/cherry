@@ -114,6 +114,7 @@ function scanPrompt(p: ScanPreset, commands: string[]): string {
     '- `## Summary`: 2 to 4 sentences, the verdict in plain words.',
     '- `## Findings`: one `### <Severity> · <short title>` per finding, most severe first, each with where (`path:line`), why it matters, and the fix. Say "No findings." if there are none.',
     '- `## What to do next`: a short numbered list.',
+    '- Write the whole report, and the submit_report summary, in ASD-STE100 Simplified Technical English: short sentences (procedures max 20 words, descriptions max 25), one instruction per sentence, active voice, approved words with one meaning each. Keep code, paths, commands and names exactly as they are.',
   ].join('\n');
 }
 
