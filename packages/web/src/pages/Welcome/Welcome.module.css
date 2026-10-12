@@ -105,3 +105,69 @@
   margin-top: var(--sp-4);
   align-self: flex-end;
 }
+.tools {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.toolList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--b);
+  border-radius: var(--r-xl);
+  background: var(--s1);
+}
+.toolList li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+}
+.toolList li + li {
+  border-top: 1px solid var(--b);
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 7px;
+  flex: none;
+  border-radius: 50%;
+}
+li[data-tone='ok'] .dot {
+  background: var(--success);
+}
+li[data-tone='warn'] .dot {
+  background: var(--warning);
+}
+li[data-tone='bad'] .dot {
+  background: var(--danger);
+}
+.toolText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.toolText strong {
+  font-weight: 500;
+}
+.toolText > span {
+  font-size: var(--fs-sm);
+  color: var(--t3);
+  line-height: var(--lh-body);
+}
+.toolText code {
+  font-family: var(--mono);
+  color: var(--t2);
+}
+.toolFoot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.toolFoot .note {
+  padding: 0;
+}

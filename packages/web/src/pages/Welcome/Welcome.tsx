@@ -1,17 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { ArrowUp, Folder } from 'lucide-react';
-import { useDeferredValue, useState } from 'react';
+import { useDeferredValue, useEffect, useState, type ReactNode } from 'react';
 import { Navigate, useNavigate } from 'react-router';
 import { ConfigSchema, FolderListSchema } from '@cherry/shared';
 import { api, ApiFailure } from '../../api/client.ts';
-import { keys, queryClient, useConfig } from '../../api/queries.ts';
+import { keys, queryClient, recheckHealth, useConfig, useHealth } from '../../api/queries.ts';
 import { CherryBadge } from '../../components/Brand/Brand.tsx';
 import { ThemePicker } from '../../components/ThemePicker/ThemePicker.tsx';
 import styles from './Welcome.module.css';
 
-const STEPS = 3;
+const STEPS = 4;
 
-/** First start only: what Cherry is, where the projects live, and a theme. */
+/** First start only: what Cherry is, where the projects live, the tools it needs, and a theme. */
 export function Welcome() {
   const config = useConfig();
   const navigate = useNavigate();
@@ -70,6 +70,16 @@ export function Welcome() {
 
         {step === 2 && (
           <>
+            <h1>Check your tools</h1>
+            <p className={styles.lead}>
+              Cherry runs Claude Code and git on this machine. GitHub is optional.
+            </p>
+            <ToolCheck />
+          </>
+        )}
+
+        {step === 3 && (
+          <>
             <h1>Pick a theme</h1>
             <p className={styles.lead}>You can change it later in Settings.</p>
             <ThemePicker />
@@ -114,6 +124,85 @@ export function Welcome() {
         </div>
       </div>
     </main>
+  );
+}
+
+type Tone = 'ok' | 'warn' | 'bad';
+
+function ToolCheck() {
+  const health = useHealth();
+  const [busy, setBusy] = useState(false);
+  const check = () => {
+    setBusy(true);
+    void recheckHealth()
+      .catch(() => undefined)
+      .finally(() => setBusy(false));
+  };
+  // A fresh look when the step opens: the user may have just logged in somewhere.
+  useEffect(() => {
+    void recheckHealth().catch(() => undefined);
+  }, []);
+  const h = health.data;
+  if (!h) return <span className="shimmer" style={{ height: 160, width: '100%' }} />;
+
+  const claude: [Tone, ReactNode] = !h.claude.found
+    ? ['bad', <>Not installed. Install Claude Code, then check again.</>]
+    : !h.claude.loggedIn
+      ? [
+          'bad',
+          <>
+            Installed, not logged in. Run <code>claude</code> in a terminal and log in.
+          </>,
+        ]
+      : ['ok', <>Ready{h.claude.version ? ` · ${h.claude.version}` : ''}</>];
+  const git: [Tone, ReactNode] = h.git.found
+    ? ['ok', <>Ready{h.git.version ? ` · ${h.git.version}` : ''}</>]
+    : ['bad', <>Not found. Install git, then check again.</>];
+  const gh: [Tone, ReactNode] = !h.gh.found
+    ? [
+        'warn',
+        <>
+          Optional. Install the GitHub CLI (<code>gh</code>) to create repos and see pull requests.
+        </>,
+      ]
+    : !h.gh.loggedIn
+      ? [
+          'warn',
+          <>
+            Installed, not logged in. Run <code>gh auth login</code>.
+          </>,
+        ]
+      : ['ok', <>Connected</>];
+  const rows: [string, Tone, ReactNode][] = [
+    ['Claude Code', ...claude],
+    ['git', ...git],
+    ['GitHub', ...gh],
+  ];
+
+  return (
+    <div className={styles.tools}>
+      <ul className={styles.toolList} aria-label="Tools">
+        {rows.map(([name, tone, text]) => (
+          <li key={name} data-tone={tone}>
+            <span className={styles.dot} aria-hidden="true" />
+            <span className={styles.toolText}>
+              <strong>{name}</strong>
+              <span>{text}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div className={styles.toolFoot}>
+        <button type="button" className="btn btn-secondary btn-md" disabled={busy} onClick={check}>
+          {busy ? 'Checking…' : 'Check again'}
+        </button>
+        {claude[0] !== 'ok' && (
+          <span className={styles.note}>
+            You can go on and fix this later. Chat and agents need Claude Code.
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
 

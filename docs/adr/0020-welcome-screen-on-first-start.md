@@ -25,9 +25,11 @@ browser never touches the disk, so the folder picker needs the daemon.
 
 We chose **option 1**. A config.json the daemon creates starts with `onboarded: false`; a file
 without the field is treated as onboarded, so existing installs and the test fixtures skip the
-screen. The Shell sends every route to `/welcome` until setup is done. Three steps: what Cherry
+screen. The Shell sends every route to `/welcome` until setup is done. Four steps: what Cherry
 is, the projects folder (path field + one-level folder list with Up; a missing folder is created
-on finish), and the theme cards from Settings.
+on finish), a tool check (Claude Code installed and logged in, git, and the optional `gh` CLI,
+from `/api/health` with a recheck when the step opens and on "Check again"; a missing tool warns
+but does not block), and the theme cards from Settings.
 
 ## Consequences
 
