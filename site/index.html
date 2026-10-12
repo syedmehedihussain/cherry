@@ -3,37 +3,33 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Cherry · Claude Code, with a plan</title>
+    <title>Cherry: Claude Code, with a plan</title>
     <meta
       name="description"
-      content="Cherry is a free, open-source local workspace that drives Claude Code like a senior engineer: survey, decide, document, then build. Every edit waits for your approval."
+      content="Cherry is a free, open-source local workspace where Claude Code surveys, documents and builds your projects. Nothing touches your disk until you approve it."
     />
     <meta name="theme-color" content="#000000" />
     <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <link rel="preload" href="assets/fonts/geist.woff2" as="font" type="font/woff2" crossorigin />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Cherry · Claude Code, with a plan" />
+    <meta property="og:title" content="Cherry: Claude Code, with a plan" />
     <meta
       property="og:description"
-      content="A local workspace that drives Claude Code to plan, document and build your projects. Every edit waits for your yes."
+      content="A local workspace where Claude Code surveys, documents and builds your projects. Nothing touches your disk until you approve it."
     />
     <meta property="og:image" content="https://syedmehedihussain.github.io/cherry/assets/og.png" />
     <meta property="og:url" content="https://syedmehedihussain.github.io/cherry/" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="glow" aria-hidden="true"></div>
+    <a class="skip" href="#main">Skip to content</a>
+    <span class="sentinel" aria-hidden="true"></span>
 
     <header class="nav">
       <div class="wrap nav-in">
-        <a class="brand" href="#top" aria-label="Cherry home">
-          <img src="assets/cherry-badge.png" width="32" height="32" alt="" />
+        <a class="brand" href="#main" aria-label="Cherry, back to top">
+          <img src="assets/cherry-badge.png" width="30" height="30" alt="" />
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="60 280 3840 930"
@@ -60,65 +56,62 @@
         <nav class="links" aria-label="Sections">
           <a href="#features">Features</a>
           <a href="#how">How it works</a>
-          <a href="#safety">Safety</a>
           <a href="#install">Install</a>
         </nav>
         <a
-          class="btn btn-ghost btn-sm"
+          class="btn btn-quiet btn-sm"
           href="https://github.com/syedmehedihussain/cherry"
           target="_blank"
           rel="noopener"
-        >
-          <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
+          ><svg
+            class="gh"
+            viewBox="0 0 16 16"
+            width="16"
+            height="16"
+            fill="currentColor"
+            aria-hidden="true"
+          >
             <path
               d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
             />
           </svg>
-          GitHub
-        </a>
+          GitHub</a
+        >
       </div>
     </header>
 
-    <main id="top">
-      <section class="hero wrap">
-        <a
-          class="pill reveal"
-          href="https://github.com/syedmehedihussain/cherry/releases/tag/v1.1.0"
-          target="_blank"
-          rel="noopener"
-        >
-          <span class="dot"></span> v1.1 is out<span class="pill-more">
-            · Run button, built-in editor, change summaries</span
-          >
-          <span aria-hidden="true">→</span>
-        </a>
-        <h1 class="reveal">Claude Code,<br /><span class="grad">with a plan.</span></h1>
-        <p class="lead reveal">
-          Cherry is a local workspace that drives Claude Code the way a senior engineer works:
-          <strong>survey, decide, document, then build.</strong> It runs on your machine, reads your
-          projects folder, and every edit waits for your yes.
-        </p>
-        <div class="cta reveal">
-          <a class="btn btn-primary" href="#install">Get started</a>
-          <a
-            class="btn btn-ghost"
-            href="https://github.com/syedmehedihussain/cherry"
-            target="_blank"
-            rel="noopener"
-            >View on GitHub</a
-          >
-        </div>
-        <p class="term reveal">
-          <span class="prompt">$</span> cherry-pick your workflow<span
-            class="caret"
-            aria-hidden="true"
-          ></span>
-        </p>
-
-        <figure class="window reveal">
-          <div class="chrome" aria-hidden="true">
-            <span></span><span></span><span></span><em>127.0.0.1:4317</em>
+    <main id="main">
+      <section class="hero wrap" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <h1 id="hero-title" class="in-1">Claude Code,<br />with a plan.</h1>
+          <p class="hero-sub in-2">
+            A local workspace where Claude surveys, documents and builds your projects. Nothing
+            touches your disk until you approve it.
+          </p>
+          <div class="hero-cta in-3">
+            <a class="btn btn-primary" href="#install">Install</a>
+            <a
+              class="btn btn-quiet"
+              href="https://github.com/syedmehedihussain/cherry"
+              target="_blank"
+              rel="noopener"
+              ><svg
+                class="gh"
+                viewBox="0 0 16 16"
+                width="16"
+                height="16"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+                />
+              </svg>
+              GitHub</a
+            >
           </div>
+        </div>
+        <figure class="demo in-4">
           <video
             src="assets/cherry-demo.mp4"
             poster="assets/cherry-demo-poster.webp"
@@ -127,315 +120,328 @@
             loop
             playsinline
             preload="metadata"
-            aria-label="Cherry demo: Claude adds a theme toggle, each edit is approved, then the app runs on localhost"
+            width="1440"
+            height="900"
+            aria-label="Demo: Claude adds a theme toggle, each edit is approved, then the app runs on localhost"
           ></video>
+          <figcaption>
+            From prompt to a running app: three approvals, a change summary, then Run. Recorded on a
+            demo project.
+          </figcaption>
         </figure>
-        <ul class="facts reveal" aria-label="At a glance">
-          <li><strong>100%</strong> local · 127.0.0.1 only</li>
-          <li><strong>0</strong> edits without approval</li>
-          <li><strong>MIT</strong> licensed, free</li>
-          <li><strong>Haiku</strong> for small jobs, you click for big ones</li>
-        </ul>
       </section>
 
-      <section id="features" class="wrap section">
-        <p class="eyebrow reveal">Features</p>
-        <h2 class="reveal">Everything between the idea and the commit.</h2>
-        <p class="sub reveal">
-          Not a code editor, not a vibe-coding toy. You read and decide here; Claude does the
-          typing.
-        </p>
+      <section class="proof wrap" aria-label="At a glance">
+        <dl>
+          <div class="reveal">
+            <dt>127.0.0.1</dt>
+            <dd>Runs on your machine. No telemetry.</dd>
+          </div>
+          <div class="reveal">
+            <dt>Every edit</dt>
+            <dd>Shown as a diff and waits for your yes.</dd>
+          </div>
+          <div class="reveal">
+            <dt>Haiku</dt>
+            <dd>For small automatic jobs. Big ones run on your click.</dd>
+          </div>
+          <div class="reveal">
+            <dt>MIT</dt>
+            <dd>Free and open source.</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section id="features" class="features wrap" aria-labelledby="features-title">
+        <h2 id="features-title" class="reveal">Everything between the idea and the commit.</h2>
+        <p class="section-sub reveal">You read and decide. Claude does the typing.</p>
 
         <div class="bento">
-          <article class="card wide reveal">
-            <div class="card-text">
+          <article class="tile t-approve reveal">
+            <div class="tile-text">
               <h3>Approve every change</h3>
               <p>
-                Each edit arrives as a diff card and each command shows what it runs and where.
-                Allow once, allow for the session, or deny with a reason. Claude waits.
+                Edits arrive as diffs, commands show what runs and where. Allow once, for the
+                session, or deny with a reason.
               </p>
             </div>
             <img
               src="assets/chat-approval-crop.webp"
-              alt="An approval card showing a diff Claude wants to apply"
+              alt="An approval card with the diff Claude wants to apply"
               loading="lazy"
+              width="1400"
+              height="810"
             />
           </article>
-          <article class="card reveal">
-            <div class="card-text">
+          <article class="tile t-survey reveal">
+            <div class="tile-text">
               <h3>Survey before code</h3>
-              <p>
-                Seven decision cards (users, scope, stack, data, quality bar) then Claude writes
-                CLAUDE.md, a PRD, ADRs and the first commit.
-              </p>
+              <p>Seven decision cards, then CLAUDE.md, a PRD, ADRs and the first commit.</p>
             </div>
             <img
               src="assets/survey-crop.webp"
-              alt="A survey decision card with a recommended option"
+              alt="A survey question with a recommended answer"
               loading="lazy"
+              width="1400"
+              height="807"
             />
           </article>
-          <article class="card reveal">
-            <div class="card-text">
+          <article class="tile t-run reveal">
+            <div class="tile-text">
               <h3>Run it on localhost</h3>
-              <p>
-                One play button starts the dev server, streams its output and gives you the link. It
-                also finds servers Claude already started.
-              </p>
+              <p>One button starts the dev server and hands you the link.</p>
             </div>
             <img
               src="assets/run-crop.webp"
-              alt="The Run tab with a running dev server and its local address"
+              alt="The Run tab with a dev server running"
               loading="lazy"
+              width="1400"
+              height="802"
             />
           </article>
-          <article class="card reveal">
-            <div class="card-text">
+          <article class="tile t-changes reveal">
+            <div class="tile-text">
               <h3>See what changed</h3>
-              <p>
-                After a turn: the files, the lines, the commands and how they went. Free. Ask for a
-                plain-words explanation only when you click.
-              </p>
+              <p>Files, lines and commands after every reply, at no token cost.</p>
             </div>
             <img
               src="assets/chat-changes-crop.webp"
               alt="A change summary under Claude's reply"
               loading="lazy"
+              width="1400"
+              height="802"
             />
           </article>
-          <article class="card reveal">
-            <div class="card-text">
+          <article class="tile t-scan reveal">
+            <div class="tile-text">
               <h3>Scan agents</h3>
-              <p>
-                Security review, test runner, code health and dependency audit. Read-only, one
-                click, a report you read in the centre.
-              </p>
+              <p>Security, tests, code health and dependencies, read-only, one click each.</p>
             </div>
             <img
               src="assets/scan-report-crop.webp"
-              alt="A security review report with findings"
+              alt="A security review report"
               loading="lazy"
+              width="1400"
+              height="807"
             />
           </article>
-          <article class="card wide reveal">
-            <div class="card-text">
+          <article class="tile t-magnet reveal">
+            <div class="tile-text">
               <h3>Magnet, across every project</h3>
-              <p>
-                Ask what is stuck this week. Magnet reads all your projects, answers, and proposes
-                actions (start an agent, calibrate a folder, push) that you approve.
-              </p>
+              <p>Ask what is stuck this week. It answers and proposes actions you approve.</p>
             </div>
             <img
               src="assets/magnet-crop.webp"
-              alt="Magnet answering what is stuck this week and proposing an agent"
+              alt="Magnet answering what is stuck this week"
               loading="lazy"
+              width="1400"
+              height="787"
             />
           </article>
+          <article class="tile t-more reveal">
+            <h3>Also in the box</h3>
+            <ul>
+              <li>Background agents on their own branch</li>
+              <li>Built-in editor with a safe save</li>
+              <li>Docs reader and Markdown preview</li>
+              <li>Commits grouped for you</li>
+              <li>Pull, push and pull requests</li>
+              <li>Four themes</li>
+            </ul>
+          </article>
         </div>
-
-        <ul class="mini reveal">
-          <li>
-            <h4>Background agents</h4>
-            <p>
-              Tasks run on their own git worktree and branch. Review the diff, then Accept or
-              Discard.
-            </p>
-          </li>
-          <li>
-            <h4>Built-in editor</h4>
-            <p>
-              Edit any text file. Save refuses if the file changed on disk. Secrets stay blocked.
-            </p>
-          </li>
-          <li>
-            <h4>Docs that stay true</h4>
-            <p>
-              Docs reader with ADR links, Markdown preview, a live Status report and Notes &amp;
-              Tasks.
-            </p>
-          </li>
-          <li>
-            <h4>Commits, grouped</h4>
-            <p>
-              Haiku groups your changes into small conventional commits. You commit as yourself.
-            </p>
-          </li>
-          <li>
-            <h4>GitHub built in</h4>
-            <p>Branch, ahead and behind, pull, push after approval, open pull requests.</p>
-          </li>
-          <li>
-            <h4>Four themes</h4>
-            <p>Just black, Cherry dark, Cherry light and Classic. Pick one on first start.</p>
-          </li>
-        </ul>
       </section>
 
-      <section id="how" class="wrap section">
-        <p class="eyebrow reveal">How it works</p>
-        <h2 class="reveal">The order a good engineer works in.</h2>
-        <ol class="steps">
+      <section id="how" class="how wrap" aria-labelledby="how-title">
+        <div class="how-head">
+          <h2 id="how-title" class="reveal">Plan first. Then build.</h2>
+          <p class="section-sub reveal">The order a careful engineer works in, made the default.</p>
+        </div>
+        <ol class="how-list">
           <li class="reveal">
-            <span>01</span>
             <h3>Survey</h3>
             <p>
-              Describe the idea. Answer seven short questions, each with a recommended option and
-              its trade-off.
+              Describe the idea and answer seven short questions. Each comes with a recommended
+              option and its trade-off.
             </p>
           </li>
           <li class="reveal">
-            <span>02</span>
             <h3>Decide</h3>
             <p>
-              Every real choice becomes an ADR. Change an answer later and Cherry marks what needs a
-              re-check.
+              Every real choice is written down as an ADR. Change an answer later and Cherry marks
+              what needs a second look.
             </p>
           </li>
           <li class="reveal">
-            <span>03</span>
             <h3>Document</h3>
             <p>
-              CLAUDE.md, PRD, architecture, data model and STATUS.md are written before any code,
-              with your approval.
+              CLAUDE.md, the PRD, architecture, data model and STATUS.md exist before the first line
+              of code.
             </p>
           </li>
           <li class="reveal">
-            <span>04</span>
             <h3>Build</h3>
             <p>
-              Chat, agents and scans do the work. You approve, run it, and commit in small steps.
+              Chat, agents and scans do the work. You approve, run it on localhost and commit in
+              small steps.
             </p>
           </li>
         </ol>
       </section>
 
-      <section class="wrap section gallery-sec">
-        <p class="eyebrow reveal">A closer look</p>
-        <h2 class="reveal">Calm, dense, keyboard-friendly.</h2>
-        <div class="gallery reveal" tabindex="0" aria-label="Screenshots">
+      <section class="gallery-sec" aria-labelledby="gallery-title">
+        <div class="wrap"><h2 id="gallery-title" class="reveal">A closer look.</h2></div>
+        <div
+          class="gallery reveal"
+          tabindex="0"
+          role="region"
+          aria-label="Screenshots, scroll sideways"
+        >
           <figure>
             <img
               src="assets/home.webp"
               alt="Home with every project, its phase and next step"
               loading="lazy"
+              width="1600"
+              height="1000"
             />
-            <figcaption>Home: every project, its phase and next step</figcaption>
+            <figcaption>Home: every project, its phase and next step.</figcaption>
           </figure>
           <figure>
-            <img src="assets/status.webp" alt="The Status report" loading="lazy" />
-            <figcaption>Status: where you left off and what is next</figcaption>
+            <img
+              src="assets/status.webp"
+              alt="The Status report of a project"
+              loading="lazy"
+              width="1600"
+              height="1000"
+            />
+            <figcaption>Status: where you left off and what comes next.</figcaption>
           </figure>
           <figure>
-            <img src="assets/diff.webp" alt="File viewer with uncommitted changes" loading="lazy" />
-            <figcaption>Files with diffs and a built-in editor</figcaption>
+            <img
+              src="assets/diff.webp"
+              alt="A file with uncommitted changes"
+              loading="lazy"
+              width="1600"
+              height="1000"
+            />
+            <figcaption>Files with their changes and a built-in editor.</figcaption>
           </figure>
           <figure>
-            <img src="assets/markdown.webp" alt="Markdown preview of a PRD" loading="lazy" />
-            <figcaption>Markdown opens as a preview</figcaption>
+            <img
+              src="assets/markdown.webp"
+              alt="A PRD opened as a Markdown preview"
+              loading="lazy"
+              width="1600"
+              height="1000"
+            />
+            <figcaption>Markdown opens as a readable page.</figcaption>
           </figure>
           <figure>
-            <img src="assets/themes.webp" alt="Theme picker" loading="lazy" />
-            <figcaption>Four themes; Just black by default</figcaption>
-          </figure>
-          <figure>
-            <img src="assets/welcome.webp" alt="Welcome screen" loading="lazy" />
-            <figcaption>A short welcome on first start</figcaption>
+            <img
+              src="assets/themes.webp"
+              alt="The theme picker in Settings"
+              loading="lazy"
+              width="1600"
+              height="1000"
+            />
+            <figcaption>Four themes. Just black is the default.</figcaption>
           </figure>
         </div>
       </section>
 
-      <section id="safety" class="wrap section">
-        <p class="eyebrow reveal">Safety</p>
-        <h2 class="reveal">Your machine, your rules.</h2>
-        <div class="safety">
+      <section id="safety" class="safety wrap" aria-labelledby="safety-title">
+        <h2 id="safety-title" class="reveal">Built to be trusted with your code.</h2>
+        <div class="safety-grid">
           <div class="reveal">
             <h3>Loopback only</h3>
             <p>
-              The daemon binds 127.0.0.1. Every request needs a session from a one-time login link;
-              Host and Origin are checked.
+              The daemon binds 127.0.0.1. Every request needs a session from a one-time login link.
             </p>
           </div>
           <div class="reveal">
             <h3>Nothing without a yes</h3>
+            <p>sudo, force pushes to main and rm -rf outside the project are blocked outright.</p>
+          </div>
+          <div class="reveal">
+            <h3>Secrets stay closed</h3>
             <p>
-              Edits and commands wait for approval. sudo, force pushes to main and rm -rf outside
-              the project are blocked outright.
+              .env files, keys and credentials are never read. File tools cannot leave the project.
             </p>
           </div>
           <div class="reveal">
-            <h3>Secrets stay secret</h3>
+            <h3>Easy on your plan</h3>
             <p>
-              .env files, keys and credentials are never read, and Claude's file tools cannot leave
-              the project folder.
-            </p>
-          </div>
-          <div class="reveal">
-            <h3>Token-aware</h3>
-            <p>
-              Small automatic jobs use Haiku with capped prompts. Reviews, reports and explanations
-              run only when you click.
+              Change summaries and Run cost no tokens. Reviews and reports run only on your click.
             </p>
           </div>
         </div>
       </section>
 
-      <section id="install" class="wrap section">
-        <p class="eyebrow reveal">Install</p>
-        <h2 class="reveal">Up in two minutes.</h2>
-        <p class="sub reveal">
-          Needs Linux,
-          <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a>
-          (signed in), git and
-          <a href="https://mise.jdx.dev" target="_blank" rel="noopener">mise</a> or Node 22 + pnpm.
-          The GitHub CLI is optional.
-        </p>
+      <section id="install" class="install wrap" aria-labelledby="install-title">
+        <div class="install-copy">
+          <h2 id="install-title" class="reveal">Install in two minutes.</h2>
+          <p class="section-sub reveal">
+            Linux today. You need
+            <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a>
+            signed in, git, and
+            <a href="https://mise.jdx.dev" target="_blank" rel="noopener">mise</a> or Node 22 with
+            pnpm. The GitHub CLI is optional.
+          </p>
+          <p class="note reveal">
+            The repo also ships a Claude Code skill, so Claude can install and run Cherry for you.
+          </p>
+        </div>
         <div class="code reveal">
-          <button class="copy" type="button" data-copy="install">Copy</button>
-          <pre id="install-code"><code><span class="c"># get Cherry</span>
-git clone https://github.com/syedmehedihussain/cherry.git
+          <button class="copy" type="button" data-copy>Copy</button>
+          <pre id="install-code"><code>git clone https://github.com/syedmehedihussain/cherry.git
 cd cherry
 mise install &amp;&amp; pnpm install
 ./scripts/install-cli.sh
-
-<span class="c"># start it: opens your browser with a one-time login link</span>
 cherry</code></pre>
-        </div>
-        <p class="note reveal">
-          Prefer to let Claude do it? The repo ships a Claude Code skill that installs, runs and
-          troubleshoots Cherry.
-        </p>
-      </section>
-
-      <section class="wrap section final reveal">
-        <img src="assets/cherry-badge.png" width="72" height="72" alt="" />
-        <h2>Pick your workflow.</h2>
-        <p class="sub">Free and open source under the MIT licence.</p>
-        <div class="cta">
-          <a class="btn btn-primary" href="#install">Get started</a>
-          <a
-            class="btn btn-ghost"
-            href="https://github.com/syedmehedihussain/cherry/releases"
-            target="_blank"
-            rel="noopener"
-            >Release notes</a
-          >
         </div>
       </section>
     </main>
 
     <footer class="foot">
       <div class="wrap foot-in">
-        <div>
-          <p class="side">
-            A side quest of
-            <a href="https://syedmehedihussain.codes/" target="_blank" rel="noopener">smh</a>
-          </p>
-          <p class="muted">
-            Designed and built by Syed Mehedi Hussain. Not affiliated with Anthropic.
-          </p>
-        </div>
-        <nav class="foot-links" aria-label="Contact">
-          <a href="https://syedmehedihussain.codes/" target="_blank" rel="noopener">Website</a>
+        <a class="brand" href="#main" aria-label="Cherry, back to top">
+          <img src="assets/cherry-badge.png" width="26" height="26" alt="" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="60 280 3840 930"
+            role="img"
+            aria-label="Cherry"
+            class="wordmark"
+          >
+            <path
+              d="M309 1030Q238 1030 185.5 1003.5Q133 977 104.0 928.5Q75 880 75 814V676Q75 610 104.0 561.5Q133 513 185.5 486.5Q238 460 309 460Q412 460 474.5 513.5Q537 567 540 659H417Q414 616 384.5 592.5Q355 569 309 569Q258 569 229.0 596.5Q200 624 200 675V814Q200 865 229.0 893.0Q258 921 309 921Q356 921 385.0 897.5Q414 874 417 831H540Q537 923 474.5 976.5Q412 1030 309 1030ZM627.0 1020V290H752.0V470L749.0 572Q759.0 520 798.0 490.0Q837.0 460 897.0 460Q978.0 460 1026.5 514.0Q1075.0 568 1075.0 659V1020H950.0V674Q950.0 623 923.5 595.5Q897.0 568 852.0 568Q805.0 568 778.5 596.0Q752.0 624 752.0 676V1020ZM1401.0 1030Q1331.0 1030 1279.0 1003.0Q1227.0 976 1198.5 926.5Q1170.0 877 1170.0 810V680Q1170.0 613 1198.5 563.5Q1227.0 514 1279.0 487.0Q1331.0 460 1401.0 460Q1470.0 460 1521.5 487.0Q1573.0 514 1601.5 562.5Q1630.0 611 1630.0 676V776H1290.0V814Q1290.0 870 1319.0 898.5Q1348.0 927 1401.0 927Q1440.0 927 1467.5 913.5Q1495.0 900 1500.0 874H1624.0Q1611.0 945 1550.0 987.5Q1489.0 1030 1401.0 1030ZM1290.0 676V695L1510.0 694V675Q1510.0 618 1482.0 587.0Q1454.0 556 1401.0 556Q1346.0 556 1318.0 587.5Q1290.0 619 1290.0 676ZM1747.0 1020V470H1869.0V577Q1879.0 523 1918.5 491.5Q1958.0 460 2021.0 460Q2105.0 460 2152.0 514.0Q2199.0 568 2199.0 665V717H2074.0V671Q2074.0 621 2048.0 594.5Q2022.0 568 1974.0 568Q1924.0 568 1898.0 598.0Q1872.0 628 1872.0 683V1020ZM2297.0 1020V470H2419.0V577Q2429.0 523 2468.5 491.5Q2508.0 460 2571.0 460Q2655.0 460 2702.0 514.0Q2749.0 568 2749.0 665V717H2624.0V671Q2624.0 621 2598.0 594.5Q2572.0 568 2524.0 568Q2474.0 568 2448.0 598.0Q2422.0 628 2422.0 683V1020ZM2915.0 1200 2993.0 990 2786.0 470H2918.0L3024.0 751Q3033.0 776 3042.0 805.5Q3051.0 835 3055.0 860Q3058.0 835 3066.5 805.5Q3075.0 776 3084.0 751L3182.0 470H3314.0L3046.0 1200Z"
+              fill="currentColor"
+            />
+            <rect x="3410" y="1045" width="480" height="113" class="cursor" fill="#2f7bff">
+              <animate
+                attributeName="opacity"
+                values="1;1;0;0"
+                keyTimes="0;0.55;0.56;1"
+                dur="1.1s"
+                calcMode="discrete"
+                repeatCount="indefinite"
+              />
+            </rect>
+          </svg>
+        </a>
+        <p class="credit">
+          A side quest of
+          <a href="https://syedmehedihussain.codes/" target="_blank" rel="noopener">smh</a>. Not
+          affiliated with Anthropic.
+        </p>
+        <nav class="foot-links" aria-label="Contact and project links">
+          <a
+            href="https://github.com/syedmehedihussain/cherry/releases"
+            target="_blank"
+            rel="noopener"
+            >Releases</a
+          >
           <a href="https://github.com/syedmehedihussain" target="_blank" rel="noopener">GitHub</a>
           <a href="mailto:syedmehedihussain@gmail.com">Email</a>
           <a
@@ -449,43 +455,46 @@ cherry</code></pre>
     </footer>
 
     <script>
-      // Fade sections in as they scroll into view (skipped when motion is reduced).
       const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const els = document.querySelectorAll('.reveal');
-      if (reduce || !('IntersectionObserver' in window)) els.forEach((e) => e.classList.add('in'));
+      // Sections fade in once as they enter the viewport.
+      const items = document.querySelectorAll('.reveal');
+      if (reduce || !('IntersectionObserver' in window))
+        items.forEach((el) => el.classList.add('shown'));
       else {
         const io = new IntersectionObserver(
           (entries) => {
             for (const e of entries)
               if (e.isIntersecting) {
-                e.target.classList.add('in');
+                e.target.classList.add('shown');
                 io.unobserve(e.target);
               }
           },
-          { rootMargin: '0px 0px -8% 0px' },
+          { rootMargin: '0px 0px -10% 0px' },
         );
-        els.forEach((e) => io.observe(e));
+        items.forEach((el) => io.observe(el));
       }
-      if (reduce) document.querySelector('video')?.pause();
-      // Copy the install commands without the comments.
-      document.querySelector('[data-copy]')?.addEventListener('click', async (ev) => {
-        const text = document
-          .getElementById('install-code')
-          .innerText.split('\n')
-          .filter((l) => l.trim() && !l.trim().startsWith('#'))
-          .join('\n');
-        try {
-          await navigator.clipboard.writeText(text);
-          ev.target.textContent = 'Copied';
-        } catch {
-          ev.target.textContent = 'Select and copy';
-        }
-        setTimeout(() => (ev.target.textContent = 'Copy'), 1600);
-      });
-      // Shadow under the nav once the page scrolls.
+      // A hairline under the nav once the page has scrolled (no scroll listener).
       const nav = document.querySelector('.nav');
-      addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 8), {
-        passive: true,
+      new IntersectionObserver(([e]) => nav.classList.toggle('stuck', !e.isIntersecting)).observe(
+        document.querySelector('.sentinel'),
+      );
+      if (reduce) {
+        const v = document.querySelector('video');
+        v?.removeAttribute('autoplay');
+        v?.pause();
+      }
+      // Copy the install commands.
+      const copy = document.querySelector('[data-copy]');
+      copy?.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(
+            document.getElementById('install-code').innerText.trim(),
+          );
+          copy.textContent = 'Copied';
+        } catch {
+          copy.textContent = 'Select to copy';
+        }
+        setTimeout(() => (copy.textContent = 'Copy'), 1600);
       });
     </script>
   </body>
