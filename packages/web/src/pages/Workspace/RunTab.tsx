@@ -34,12 +34,27 @@ export function RunTab({ projectId }: { projectId: string }) {
 
   if (run.isError) return <p className={styles.message}>{(run.error as Error).message}</p>;
   if (!s) return null;
+  const others =
+    s.servers.length > 0 ? (
+      <div className={styles.others}>
+        <span>Already running from this folder:</span>
+        {s.servers.map((x) => (
+          <a key={x.port} href={x.url} target="_blank" rel="noopener noreferrer" title={x.command}>
+            {shortUrl(x.url)}
+            <ArrowUpRight size={12} strokeWidth={2} aria-hidden="true" />
+          </a>
+        ))}
+      </div>
+    ) : null;
   if (!s.command)
     return (
-      <p className={styles.message}>
-        Cherry could not find how to run this project. It looks for a dev or start script in
-        package.json, manage.py, a Makefile, Cargo.toml, go.mod or an index.html.
-      </p>
+      <>
+        {others}
+        <p className={styles.message}>
+          Cherry runs websites only: a dev server script in package.json, Django, Flask, FastAPI, a
+          Rust or Go web server, or a static index.html. It found none here.
+        </p>
+      </>
     );
 
   return (
@@ -49,9 +64,13 @@ export function RunTab({ projectId }: { projectId: string }) {
           <span className={styles.dot} aria-hidden="true" />
           {s.running
             ? 'Running'
-            : s.exitCode !== null
-              ? `Stopped (exit ${s.exitCode})`
-              : 'Not running'}
+            : s.exitCode === 0
+              ? 'Finished'
+              : s.exitCode !== null
+                ? `Exited with code ${s.exitCode}`
+                : s.startedAt
+                  ? 'Stopped'
+                  : 'Not running'}
         </span>
         <code className={styles.command} title={s.source ?? undefined}>
           {s.command}
@@ -106,6 +125,7 @@ export function RunTab({ projectId }: { projectId: string }) {
           </button>
         )}
       </div>
+      {others}
       <pre
         ref={out}
         className={styles.output}

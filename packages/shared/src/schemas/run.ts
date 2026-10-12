@@ -13,9 +13,15 @@ export const RunStateSchema = z.object({
   /** The first local address the app printed (http://localhost:5173/). */
   url: z.string().nullable(),
   startedAt: z.number().nullable(),
-  /** Exit code of the last run once it stopped; null while running or never run. */
+  /** Exit code when the app ended by itself; null while running, after Stop, or never run. */
   exitCode: z.number().nullable(),
+  /**
+   * Websites already running from this project folder that Cherry did not start (a dev server
+   * Claude started in a chat, or one from a terminal). Found from the open local ports.
+   */
+  servers: z.array(z.object({ url: z.string(), port: z.number(), command: z.string() })),
   /** Recent output, ANSI colours removed, capped. */
   output: z.string(),
 });
 export type RunState = z.infer<typeof RunStateSchema>;
+export type RunServer = RunState['servers'][number];

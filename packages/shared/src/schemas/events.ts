@@ -56,8 +56,8 @@ export interface EventMap {
   'magnet.item': { conversationId: string; item: ChatItem };
   'magnet.delta': { conversationId: string; itemId: string; text: string };
   'magnet.state': { conversationId: string | null; running: boolean };
-  /** The project's app started, stopped or printed its address (output not included). */
-  'run.state': { projectId: string; state: Omit<RunState, 'output'> };
+  /** The project's app started, stopped or printed its address (no output, no other servers). */
+  'run.state': { projectId: string; state: Omit<RunState, 'output' | 'servers'> };
   /** New output from the project's app. */
   'run.output': { projectId: string; text: string };
   'approval.requested': { approval: Approval };

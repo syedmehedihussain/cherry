@@ -1,10 +1,13 @@
 import { spawn, type ChildProcess } from 'node:child_process';
-import type { RunState } from '@cherry/shared';
+import type { RunServer, RunState } from '@cherry/shared';
 import type { ConfigStore } from '../config.ts';
 import type { EventHub } from '../events.ts';
 import { conflict } from '../http.ts';
 import { projectDir } from '../projects/workspace.ts';
 import { detectRun } from './detect.ts';
+import { answersHttp, projectListeners } from './listeners.ts';
+
+const HTTP_CACHE_MS = 30_000;
 
 const MAX_OUTPUT = 64_000;
 const FLUSH_MS = 100;
@@ -44,16 +47,19 @@ export function findLocalUrl(text: string): string | null {
  */
 export class RunService {
   private readonly runs = new Map<string, Run>();
+  /** "pid:port" → does it answer HTTP, so a poll does not knock on every port again. */
+  private readonly http = new Map<string, { ok: boolean; at: number }>();
 
   constructor(
     private readonly config: ConfigStore,
     private readonly hub: EventHub,
   ) {}
 
-  get(id: string): RunState {
+  async get(id: string): Promise<RunState> {
     const dir = projectDir(this.config.projectsDir(), id);
     const run = this.runs.get(id);
-    if (run?.child) return this.view(run);
+    const servers = await this.servers(dir, run);
+    if (run?.child) return { ...this.view(run), servers };
     const found = detectRun(dir);
     return {
       command: found?.command ?? null,
@@ -62,8 +68,28 @@ export class RunService {
       url: null,
       startedAt: run?.startedAt ?? null,
       exitCode: run?.exitCode ?? null,
+      servers,
       output: run?.output ?? '',
     };
+  }
+
+  /** Websites running from the folder that Cherry did not start (and that are not Cherry). */
+  private async servers(dir: string, run: Run | undefined): Promise<RunServer[]> {
+    const own = run?.child?.pid;
+    const list = projectListeners(dir).filter((l) => l.pid !== process.pid && l.pgid !== own);
+    const now = Date.now();
+    const out: RunServer[] = [];
+    for (const l of list) {
+      const key = `${l.pid}:${l.port}`;
+      let hit = this.http.get(key);
+      if (!hit || now - hit.at > HTTP_CACHE_MS) {
+        hit = { ok: await answersHttp(l.port), at: now };
+        this.http.set(key, hit);
+      }
+      if (hit.ok)
+        out.push({ url: `http://localhost:${l.port}/`, port: l.port, command: l.command });
+    }
+    return out;
   }
 
   start(id: string): RunState {
@@ -75,7 +101,14 @@ export class RunService {
       cwd: dir,
       detached: true,
       stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env, BROWSER: 'none', FORCE_COLOR: '0', NO_COLOR: '1' },
+      // Python holds its output back when not on a terminal; the address would never show.
+      env: {
+        ...process.env,
+        BROWSER: 'none',
+        FORCE_COLOR: '0',
+        NO_COLOR: '1',
+        PYTHONUNBUFFERED: '1',
+      },
     });
     const run: Run = {
       child,
@@ -95,8 +128,9 @@ export class RunService {
     child.on('error', (err) => this.append(id, run, `\n${err.message}\n`));
     child.on('close', (code, signal) => {
       run.child = null;
-      run.exitCode = code ?? (signal ? 130 : 1);
-      this.append(id, run, `\n[stopped${code !== null ? `, exit code ${code}` : ''}]\n`);
+      // Null when ended by a signal (Stop): that is not the app failing.
+      run.exitCode = signal ? null : code;
+      this.append(id, run, code !== null ? `\n[exited with code ${code}]\n` : '\n[stopped]\n');
       this.flush(id, run);
       this.publishState(id, run);
     });
@@ -138,8 +172,11 @@ export class RunService {
   }
 
   private publishState(id: string, run: Run) {
-    const state: Omit<RunState, 'output'> & { output?: string } = { ...this.view(run) };
+    const state: Omit<RunState, 'output' | 'servers'> & { output?: string; servers?: unknown } = {
+      ...this.view(run),
+    };
     delete state.output;
+    delete state.servers;
     this.hub.publish(`project:${id}`, 'run.state', { projectId: id, state });
   }
 
@@ -151,6 +188,7 @@ export class RunService {
       url: run.url,
       startedAt: run.startedAt,
       exitCode: run.exitCode,
+      servers: [],
       output: run.output,
     };
   }

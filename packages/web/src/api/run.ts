@@ -15,10 +15,16 @@ export const useRun = (projectId: string) =>
   useQuery({
     queryKey: runKey(projectId),
     queryFn: () => api('GET', url(projectId), undefined, RunStateSchema),
+    // Picks up a dev server Claude or a terminal started; local /proc reads only, no tokens.
+    refetchInterval: 5000,
   });
 
 const put = (projectId: string) => (s: RunState) => {
-  queryClient.setQueryData(runKey(projectId), s);
+  // Start answers before the server list is known; keep the last one.
+  queryClient.setQueryData<RunState>(runKey(projectId), (old) => ({
+    ...s,
+    servers: s.servers.length ? s.servers : (old?.servers ?? []),
+  }));
   return s;
 };
 export const startRun = (projectId: string) =>
@@ -34,6 +40,7 @@ export function useLiveRun(projectId: string): void {
       if (event.type === 'run.state' && event.projectId === projectId) {
         queryClient.setQueryData<RunState>(runKey(projectId), (old) => ({
           ...event.state,
+          servers: old?.servers ?? [],
           output: old?.output ?? '',
         }));
       } else if (event.type === 'run.output' && event.projectId === projectId) {

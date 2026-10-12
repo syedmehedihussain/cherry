@@ -1,4 +1,4 @@
-import { Play } from 'lucide-react';
+import { ArrowUpRight, Play } from 'lucide-react';
 import type { RunState } from '@cherry/shared';
 import styles from './RunButton.module.css';
 
@@ -18,11 +18,30 @@ export function shortUrl(url: string): string {
 }
 
 /**
- * Play button before the Status pill. Hidden when Cherry cannot tell how to run the project.
- * Idle, a click starts the app; running, it shows the address and opens the Run tab.
+ * Play button before the Status pill. Running, it shows the address and opens the Run tab. When
+ * a site is already up from this folder (Claude or a terminal started it), it is a link to it
+ * in a new tab. Idle, a click starts the app. Hidden when there is nothing to run or open.
  */
 export function RunButton({ state, active, busy, onRun, onOpen }: RunButtonProps) {
-  if (!state?.command) return null;
+  if (!state) return null;
+  const other = state.servers[0];
+  if (!state.running && other)
+    return (
+      <a
+        className={styles.run}
+        data-running
+        href={other.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`Open ${shortUrl(other.url)} in a new tab. Already running: ${other.command}`}
+        title={`Already running: ${other.command}`}
+      >
+        <span className={styles.dot} aria-hidden="true" />
+        <span className={styles.text}>{shortUrl(other.url)}</span>
+        <ArrowUpRight size={11} strokeWidth={2} aria-hidden="true" className={styles.arrow} />
+      </a>
+    );
+  if (!state.command) return null;
   if (state.running)
     return (
       <button

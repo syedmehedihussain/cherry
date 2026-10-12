@@ -61,12 +61,17 @@ Auto-allowed: read-only tools listed in `claude-runner.md` for each session kind
 
 ## Running the project's app
 
-The Run button (ADR-0024) runs the project's own dev command, found from its files
-(`package.json` script, `manage.py`, Makefile, Cargo, Go, or a static `index.html`). It runs only
+The Run button (ADR-0024) runs the project's own web dev command, found from its files (a web
+`package.json` script, Django, Flask, FastAPI, a Rust or Go web server, or a static
+`index.html`). Install scripts, Makefiles and command-line programs are never run. It runs only
 on the user's click, as the user, in the project folder; it is the same as typing the command in
 a terminal there. Claude never starts it. The process gets its own process group, Stop ends the
 whole group, and the daemon stops every run when it shuts down. Output is kept in memory only
 (64 KB per project) and is never sent to Claude.
+
+To show a site Claude or a terminal already started, the daemon reads `/proc` (listening local
+ports, and the working folder and command line of the user's own processes) and sends one GET to
+`127.0.0.1:<port>` to check it answers HTTP. Nothing leaves the machine.
 
 ## Files never read
 

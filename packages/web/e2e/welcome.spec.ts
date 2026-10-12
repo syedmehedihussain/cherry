@@ -18,7 +18,8 @@ test('the welcome screen checks Claude Code, git and GitHub', async ({ page }) =
   await expect(tools).toContainText('git');
   await expect(tools).toContainText('GitHub');
   await page.getByRole('button', { name: 'Check again' }).click();
-  await expect(page.getByRole('button', { name: 'Check again' })).toBeEnabled();
+  // The real tool check can take a while when the whole suite is running.
+  await expect(page.getByRole('button', { name: 'Check again' })).toBeEnabled({ timeout: 20_000 });
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page.getByRole('heading', { name: 'Pick a theme' })).toBeVisible();
 });

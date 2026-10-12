@@ -73,3 +73,25 @@
   margin: 0;
   max-width: 640px;
 }
+.others {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--b);
+  font-size: var(--fs-sm);
+  color: var(--t3);
+}
+.others a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--mono);
+  color: var(--accent-text-strong);
+  text-decoration: none;
+}
+.others a:hover {
+  text-decoration: underline;
+}

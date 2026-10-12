@@ -55,7 +55,7 @@ the projects folder (see `security.md`).
 
 | Method | Path | Does |
 | --- | --- | --- |
-| GET | `/api/projects/:id/run` | `{ command, source, running, url, startedAt, exitCode, output }`; `command` is null when Cherry cannot tell how to run the project (the Run button stays hidden) |
+| GET | `/api/projects/:id/run` | `{ command, source, running, url, startedAt, exitCode, servers, output }`; `command` is null when the project is not a website Cherry can run; `servers` lists `{ url, port, command }` of sites already running from the folder that Cherry did not start (Linux /proc, HTTP-checked) |
 | POST | `/api/projects/:id/run` | starts `command` in the project folder in its own process group; 409 if already running or nothing to run |
 | DELETE | `/api/projects/:id/run` | SIGTERM to the whole process group, SIGKILL after 3 s; returns the stopped state |
 
@@ -175,7 +175,7 @@ One socket at `/ws`. Every event: `{ type, at, ...payload }`. The client subscri
 | `survey.updated` | `{ projectId, state }` (full survey state) | project:id |
 | `calibrate.progress` | `{ step, rows, found }` | project:id |
 | `calibrate.proposal` | proposal | project:id |
-| `run.state` | `{ projectId, state }` the app started, stopped or printed its local address (no output) | project:id |
+| `run.state` | `{ projectId, state }` the app started, stopped or printed its local address (no output, no servers) | project:id |
 | `run.output` | `{ projectId, text }` new output, colour codes removed, sent at most every 100 ms | project:id |
 | `magnet.item` / `magnet.delta` / `magnet.state` | Magnet's conversation (items include `projects` and `action`) | magnet |
 
