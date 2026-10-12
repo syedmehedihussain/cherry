@@ -33,6 +33,14 @@ Read this page, then open only what your task needs.
 | [`design/screens/`](design/screens/) | The design artboards (`*.dc.html`) exported from the canvas. Source of truth for layout. |
 
 
+## Outside docs/
+
+| Path | What it is |
+| --- | --- |
+| [`../site/`](../site/) | The landing page, deployed to GitHub Pages by `.github/workflows/pages.yml`. |
+| [`../scripts/media/`](../scripts/media/) | The made-up demo used for README screenshots, the video and the landing page. |
+| [`images/`](images/) | Screenshots and the demo GIF used in the README. |
+
 ## Note on the design files
 
 The artboards were made in Claude Design while the app was still called **Harness**. Wherever

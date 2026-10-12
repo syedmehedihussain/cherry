@@ -1,0 +1,508 @@
+[
+  {
+    "match": "theme toggle",
+    "steps": [
+      {
+        "text": "I'll add the toggle to the header. First a look at how the theme is set today."
+      },
+      {
+        "tool": {
+          "name": "Read",
+          "input": {
+            "file_path": "src/theme.ts"
+          }
+        },
+        "output": "     1\u2192export type Theme = 'light' | 'dark';\n     2\u2192\n     3\u2192const KEY = 'orbit.theme';"
+      },
+      {
+        "tool": {
+          "name": "Read",
+          "input": {
+            "file_path": "src/header.ts"
+          }
+        },
+        "output": "     1\u2192import { applyTheme, currentTheme } from './theme.ts';"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "text": "`currentTheme()` already reads the saved choice, so I only need a setter that saves it, and a button in the header."
+      },
+      {
+        "tool": {
+          "name": "Edit",
+          "input": {
+            "file_path": "src/theme.ts",
+            "old_string": "export function applyTheme(theme: Theme): void {\n  document.documentElement.dataset.theme = theme;\n}",
+            "new_string": "export function applyTheme(theme: Theme): void {\n  document.documentElement.dataset.theme = theme;\n}\n\n/** Flips light and dark, saves the choice and applies it. */\nexport function toggleTheme(): Theme {\n  const next: Theme = currentTheme() === 'dark' ? 'light' : 'dark';\n  localStorage.setItem(KEY, next);\n  applyTheme(next);\n  return next;\n}"
+          }
+        }
+      },
+      {
+        "tool": {
+          "name": "Edit",
+          "input": {
+            "file_path": "src/header.ts",
+            "old_string": "import { applyTheme, currentTheme } from './theme.ts';",
+            "new_string": "import { applyTheme, currentTheme, toggleTheme } from './theme.ts';"
+          }
+        }
+      },
+      {
+        "tool": {
+          "name": "Bash",
+          "input": {
+            "command": "npm test",
+            "description": "Run the test suite"
+          }
+        },
+        "output": "# tests 12\n# pass 12\n# fail 0"
+      },
+      {
+        "text": "Done. The header can now switch themes:\n\n- `toggleTheme()` in `src/theme.ts` flips light and dark, saves the choice under `orbit.theme` and applies it.\n- `src/header.ts` imports it for the new button.\n- All 12 tests pass.\n\nNext step from STATUS.md: **Export a note as PDF**."
+      }
+    ]
+  },
+  {
+    "match": "^Group these uncommitted changes",
+    "steps": [
+      {
+        "call": {
+          "name": "propose_commits",
+          "input": {
+            "commits": [
+              {
+                "message": "fix(hero): show the new hero value",
+                "explanation": "This commit changes the hero value from 1 to 2. The home page shows the new value.",
+                "files": ["src/hero.ts"]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  {
+    "match": "^Plan the hero fix",
+    "steps": [
+      {
+        "tool": {
+          "name": "TaskCreate",
+          "input": {
+            "subject": "Read the hero section",
+            "activeForm": "Reading the hero section"
+          }
+        },
+        "output": "Task #1 created"
+      },
+      {
+        "tool": {
+          "name": "TaskCreate",
+          "input": {
+            "subject": "Fix the layout",
+            "activeForm": "Fixing the layout"
+          }
+        },
+        "output": "Task #2 created"
+      },
+      {
+        "tool": {
+          "name": "TaskUpdate",
+          "input": {
+            "taskId": "1",
+            "status": "completed"
+          }
+        },
+        "output": "ok"
+      },
+      {
+        "tool": {
+          "name": "TaskUpdate",
+          "input": {
+            "taskId": "2",
+            "status": "in_progress"
+          }
+        },
+        "output": "ok"
+      },
+      {
+        "wait": 1500
+      },
+      {
+        "tool": {
+          "name": "TaskUpdate",
+          "input": {
+            "taskId": "2",
+            "status": "completed"
+          }
+        },
+        "output": "ok"
+      },
+      {
+        "text": "Both steps are done."
+      }
+    ]
+  },
+  {
+    "match": "read-only scan agent inside Cherry",
+    "steps": [
+      {
+        "tool": {
+          "name": "Read",
+          "input": {
+            "file_path": "CLAUDE.md"
+          }
+        }
+      },
+      {
+        "wait": 400
+      },
+      {
+        "call": {
+          "name": "submit_report",
+          "input": {
+            "verdict": "warn",
+            "summary": "One high finding: note paths from the search box reach the file system unchecked.",
+            "counts": {
+              "critical": 0,
+              "high": 1,
+              "medium": 1,
+              "low": 0
+            },
+            "markdown": "## Summary\n\norbit-notes is in good shape: no secrets in the repo, dependencies are current, and the server only listens on 127.0.0.1. One path issue needs a fix before release.\n\n## Findings\n\n### High \u00b7 Path traversal when opening a note\n\n`src/search.ts:14` joins the note path from the URL with the notes folder without checking the result stays inside it. `../../.ssh/config` would be read. Resolve the path and refuse anything outside the folder.\n\n### Medium \u00b7 Search query is not length-limited\n\n`src/search.ts:9` passes the raw query to FTS5. A very long query blocks the event loop. Cap it at 200 characters.\n\n## What to do next\n\n1. Add a path guard in `openNote()` with a test for `../`.\n2. Cap the query length.\n3. Run the scan again."
+          }
+        }
+      }
+    ]
+  },
+  {
+    "match": "What's stuck this week",
+    "steps": [
+      {
+        "tool": {
+          "name": "Read",
+          "input": {
+            "file_path": "projects.md"
+          }
+        }
+      },
+      {
+        "call": {
+          "name": "show_projects",
+          "input": {
+            "ids": ["weather-bot", "pixel-garden"]
+          }
+        }
+      },
+      {
+        "text": "Two projects have not moved this week:\n\n- **weather-bot** is still at Plan: the survey was never started.\n- **pixel-garden** has its art direction but no screens yet.\n\n**orbit-notes** moved the most: search and tags shipped, the theme toggle is next."
+      },
+      {
+        "call": {
+          "name": "propose_action",
+          "input": {
+            "kind": "start_agent",
+            "projectId": "pixel-garden",
+            "task": "Sketch the garden screen and the four plant growth stages as HTML mockups"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "match": "background agent working in your own git worktree",
+    "steps": [
+      {
+        "tool": {
+          "name": "Read",
+          "input": {
+            "file_path": "lib/streaks.ts"
+          }
+        }
+      },
+      {
+        "tool": {
+          "name": "Write",
+          "input": {
+            "file_path": "tests/streaks.test.ts",
+            "content": "import { streaks } from '../lib/streaks';\n\ntest('streaks', () => expect(streaks).toBe(1));\n"
+          }
+        }
+      },
+      {
+        "tool": {
+          "name": "Bash",
+          "input": {
+            "command": "npm test"
+          }
+        },
+        "output": "Tests 1 passed"
+      },
+      {
+        "text": "Added a test for the streak counter."
+      }
+    ]
+  },
+  {
+    "match": "this is step 2 of a short survey",
+    "steps": [
+      {
+        "call": {
+          "name": "draft_card",
+          "input": {
+            "topic": "Who is review-qr for?",
+            "question": "Who is review-qr for?",
+            "context": "You said: printable QR codes for reviews.",
+            "options": [
+              {
+                "id": "opt_a",
+                "title": "Small shop owners in the UK",
+                "detail": "Fits what you said.",
+                "tradeoff": "Less flexible later.",
+                "recommended": true
+              },
+              {
+                "id": "opt_b",
+                "title": "Marketing agencies",
+                "detail": "Another way.",
+                "tradeoff": "More work up front."
+              }
+            ],
+            "why": "It matches the idea and keeps v1 small."
+          }
+        }
+      }
+    ]
+  },
+  {
+    "match": "this is step 3 of a short survey",
+    "steps": [
+      {
+        "call": {
+          "name": "draft_card",
+          "input": {
+            "topic": "What must v1 do?",
+            "question": "What must v1 do?",
+            "context": "You said: printable QR codes for reviews.",
+            "options": [
+              {
+                "id": "opt_a",
+                "title": "QR generator, per-business link, scan counter",
+                "detail": "Fits what you said.",
+                "tradeoff": "Less flexible later.",
+                "recommended": true
+              },
+              {
+                "id": "opt_b",
+                "title": "Full review dashboard",
+                "detail": "Another way.",
+                "tradeoff": "More work up front."
+              }
+            ],
+            "why": "It matches the idea and keeps v1 small."
+          }
+        }
+      }
+    ]
+  },
+  {
+    "match": "this is step 4 of a short survey",
+    "steps": [
+      {
+        "call": {
+          "name": "draft_card",
+          "input": {
+            "topic": "Where should review-qr run?",
+            "question": "Where should review-qr run?",
+            "context": "You said: printable QR codes for reviews.",
+            "options": [
+              {
+                "id": "opt_a",
+                "title": "Static site + small API on your home server",
+                "detail": "Fits what you said.",
+                "tradeoff": "Less flexible later.",
+                "recommended": true
+              },
+              {
+                "id": "opt_b",
+                "title": "Serverless on a free tier",
+                "detail": "Another way.",
+                "tradeoff": "More work up front."
+              }
+            ],
+            "why": "It matches the idea and keeps v1 small."
+          }
+        }
+      }
+    ]
+  },
+  {
+    "match": "this is step 5 of a short survey",
+    "steps": [
+      {
+        "call": {
+          "name": "draft_card",
+          "input": {
+            "topic": "What does review-qr store?",
+            "question": "What does review-qr store?",
+            "context": "You said: printable QR codes for reviews.",
+            "options": [
+              {
+                "id": "opt_a",
+                "title": "Business, ReviewLink, Scan",
+                "detail": "Fits what you said.",
+                "tradeoff": "Less flexible later.",
+                "recommended": true
+              },
+              {
+                "id": "opt_b",
+                "title": "Only links, no scans",
+                "detail": "Another way.",
+                "tradeoff": "More work up front."
+              }
+            ],
+            "why": "It matches the idea and keeps v1 small."
+          }
+        }
+      }
+    ]
+  },
+  {
+    "match": "this is step 6 of a short survey",
+    "steps": [
+      {
+        "call": {
+          "name": "draft_card",
+          "input": {
+            "topic": "What is the quality bar for v1?",
+            "question": "What is the quality bar for v1?",
+            "context": "You said: printable QR codes for reviews.",
+            "options": [
+              {
+                "id": "opt_a",
+                "title": "Tests for links and the counter",
+                "detail": "Fits what you said.",
+                "tradeoff": "Less flexible later.",
+                "recommended": true
+              },
+              {
+                "id": "opt_b",
+                "title": "Manual checks only",
+                "detail": "Another way.",
+                "tradeoff": "More work up front."
+              }
+            ],
+            "why": "It matches the idea and keeps v1 small."
+          }
+        }
+      }
+    ]
+  },
+  {
+    "match": "Write the planning documents",
+    "steps": [
+      {
+        "call": {
+          "name": "propose_docs",
+          "input": {
+            "summary": "Printable QR codes that open a business review page",
+            "stack": ["Node 22", "SQLite"],
+            "files": [
+              {
+                "path": "CLAUDE.md",
+                "content": "# CLAUDE.md \u2014 review-qr\n\nPrintable QR codes that open a review page.\n\n## Rules\n- No payments. They are out of scope.\n"
+              },
+              {
+                "path": "README.md",
+                "content": "# review-qr\n\nPrintable QR codes. The plan lives in docs/.\n"
+              },
+              {
+                "path": "docs/prd.md",
+                "content": "# PRD \u2014 review-qr\n\n## Problem\n\nShops want more reviews.\n"
+              },
+              {
+                "path": "docs/architecture.md",
+                "content": "# Architecture\n\nStatic pages + one API.\n"
+              },
+              {
+                "path": "docs/adr/0001-host-on-home-server.md",
+                "content": "# 0001 \u2014 Host on the home server\n\n- **Status:** Accepted\n"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  {
+    "match": "Calibrate the project",
+    "steps": [
+      {
+        "tool": {
+          "name": "Read",
+          "input": {
+            "file_path": "README.md"
+          }
+        }
+      },
+      {
+        "call": {
+          "name": "note_found",
+          "input": {
+            "tags": [
+              {
+                "label": "Node 20"
+              },
+              {
+                "label": "no tests",
+                "gap": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "decision": {
+          "topic": "Phase",
+          "question": "Which phase is torongo in?",
+          "options": [
+            {
+              "id": "dev",
+              "title": "Development",
+              "tradeoff": "Core still being built",
+              "recommended": true
+            },
+            {
+              "id": "dep",
+              "title": "Deployment",
+              "tradeoff": "Assumes it is live"
+            }
+          ]
+        }
+      },
+      {
+        "call": {
+          "name": "propose_files",
+          "input": {
+            "summary": "Real-time translation",
+            "phase": "development",
+            "stack": ["Node 20"],
+            "files": [
+              {
+                "path": "CLAUDE.md",
+                "action": "create",
+                "content": "# CLAUDE.md \u2014 torongo\n\nTranslation app.\n"
+              },
+              {
+                "path": "docs/architecture.md",
+                "action": "create",
+                "content": "# Architecture\n\nOne server.\n"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+]
