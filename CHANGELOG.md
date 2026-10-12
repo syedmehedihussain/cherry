@@ -2,10 +2,53 @@
 
 All notable changes to Cherry. Versions follow [Semantic Versioning](https://semver.org).
 
-## 1.0.0 — unreleased
+## 1.1.0 — 2026-10-12
 
-The first release. Linux only; install from a clone with `./scripts/install-cli.sh`
-(ADR-0013).
+The first public release. It has everything planned for 1.0.0 (listed below; 1.0.0 was never
+tagged on its own) and the work since. Linux only; install from a clone (ADR-0013).
+
+### Added
+
+- **Run button** before Status: one click runs the project's website on localhost (web dev
+  scripts, a build before `preview`, Django, Flask, FastAPI, Rust or Go web servers, a static
+  `index.html`) with live output, Open, Restart and Stop in a Run tab. Install scripts and
+  command-line programs are never run. A site Claude or a terminal already started from the
+  folder shows as a link that opens in a new tab (ADR-0024).
+- **Built-in editor**: Edit any text file in the file viewer, Save or Ctrl+S; refused if the
+  file changed on disk; secret and binary files stay blocked (ADR-0021).
+- **Change summary** under every Claude reply that edited files: files, lines, the commands
+  after the change and how they went, at no token cost. **Explain with Claude** asks Haiku for
+  a plain-words explanation only when you click (ADR-0022).
+- **Ready to commit** on the GitHub view: Haiku groups your changes into small conventional
+  commits and you commit as yourself (ADR-0018).
+- **.gitignore for the stack** when a project is created, kept current by Claude (ADR-0023).
+- **Welcome screen** on first start: what Cherry is, the projects folder (pick or create), a
+  check of Claude Code, git and GitHub, and a theme (ADR-0020).
+- **Themes**: Just black (default), Cherry dark, Cherry light and Classic (ADR-0019).
+- **Brand**: the Cherry badge, the `cherry_` wordmark with its cursor, favicons and app icons.
+- **Markdown preview** in the file viewer with a Source toggle.
+- **Live view** follows Claude's task plan step by step (ADR-0017); a **Status report** tab
+  from the Status pill; Notes & Tasks in one view; quick add for tasks, notes and agents;
+  Claude Code plan usage (5-hour and week) on the Overview (ADR-0016).
+- Agent and scan reports written in ASD-STE100 Simplified Technical English (ADR-0015).
+- An About page with credits and contact links.
+- A landing page (`site/`, GitHub Pages) and reproducible demo media (`scripts/media/`).
+
+### Changed
+
+- New installs use **Opus** for chat and agents; small automatic jobs use Haiku with capped
+  prompts, and big jobs (reviews, reports, explanations) run only on a click (ADR-0022).
+- Paths show as `~/…` from the daemon's real home folder.
+
+### Security
+
+- Claude's file tools are kept inside the project, agent and Magnet path guards resolve
+  symlinks, the secret-file list is wider, and Open in editor falls back to opening the folder.
+
+## 1.0.0 — not released on its own
+
+The planned first release; it ships as part of 1.1.0. Linux only; install from a clone with
+`./scripts/install-cli.sh` (ADR-0013).
 
 ### The app
 

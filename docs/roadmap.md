@@ -102,20 +102,23 @@ branch.
 **Done when:** one click on Run in the Agents view scans the project without asking anything,
 and Report opens the result in its own centre tab with the history of earlier runs.
 
-## M9 — Release 1.0.0 (ADR-0013)
+## M9 — First public release: 1.1.0 (ADR-0013)
 
-**On hold (2026-10-11):** the user wants more work in before 1.0.0. The checklist stays.
+1.0.0 was held back (2026-10-11) for more work; the first public release is 1.1.0
+(2026-10-12) and includes it.
 
 - [x] CI green again (daemon EPIPE crash outside git repos; fake Claude reports Claude ready).
 - [x] Fix the security review findings: agent/Magnet edit guard through symlinks (high), read
       tools outside the project and narrow secret list (medium), editor fallback (low).
 - [ ] Run Test runner, Code health and Dependency audit on Cherry; fix anything high.
-- [x] README rewritten for users: what it is, requirements, install, first run, features, skill.
-- [x] `CHANGELOG.md` (1.0.0 unreleased).
-- [ ] Version 1.0.0 in every package and `cherry --version` (in the release commit).
+- [x] README rewritten for users: what it is, requirements, install, first run, features, skill;
+      screenshots and a demo GIF from `scripts/media/`.
+- [x] `CHANGELOG.md` (1.1.0).
+- [x] Version 1.1.0 in every package and `cherry --version` (in the release commit).
 - [x] Fresh install check: clone into a temp folder, empty `CHERRY_HOME`, install, first run
       (2026-10-11: works; the first-run UI build is now quiet).
-- [ ] Tag `v1.0.0` and publish the GitHub release (ask first).
+- [x] Landing page in `site/`, deployed to GitHub Pages and linked from the repo.
+- [x] Tag `v1.1.0` and publish the GitHub release (the user asked, 2026-10-12).
 
 **Done when:** someone on Linux follows the README from a fresh clone, opens Cherry, and every
 check in CI is green on the tagged commit.
