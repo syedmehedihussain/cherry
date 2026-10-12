@@ -1,4 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
+import { homedir } from 'node:os';
 import path from 'node:path';
 import fastifyCookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';
@@ -168,11 +169,12 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   app.get('/api/config', () => ({
     ...deps.config.get(),
     resolvedProjectsDir: deps.config.projectsDir(),
+    home: homedir(),
   }));
   app.patch('/api/config', async (req) => {
     const next = deps.config.update(ConfigPatchSchema.parse(req.body));
     void deps.projects.rescan();
-    return { ...next, resolvedProjectsDir: deps.config.projectsDir() };
+    return { ...next, resolvedProjectsDir: deps.config.projectsDir(), home: homedir() };
   });
 
   // --- Welcome screen ---
@@ -187,7 +189,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     mkdirSync(dir, { recursive: true });
     const next = deps.config.update({ projectsDir: tildify(dir), onboarded: true });
     void deps.projects.rescan();
-    return { ...next, resolvedProjectsDir: deps.config.projectsDir() };
+    return { ...next, resolvedProjectsDir: deps.config.projectsDir(), home: homedir() };
   });
 
   // --- Projects ---

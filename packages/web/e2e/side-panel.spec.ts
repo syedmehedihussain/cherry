@@ -47,7 +47,7 @@ test('overview box adds a task and opens Notes', async ({ page }) => {
   await aside.getByRole('tab', { name: 'Overview' }).click();
   await aside.getByRole('button', { name: /^Type/ }).click();
   await aside.getByRole('menuitemradio', { name: /Agent/ }).click();
-  await expect(aside.getByRole('button', { name: 'Model: Sonnet' })).toBeVisible();
+  await expect(aside.getByRole('button', { name: 'Model: Opus' })).toBeVisible();
 });
 
 // The Overview boxes minimize to one line and stay that way after a reload.

@@ -267,7 +267,7 @@ export class CalibrationService {
       cwd: dir,
       prompt: calibrationPrompt({ name, light, hasClaudeMd, hasReadme }),
       resume: null,
-      model: state.model ?? 'sonnet',
+      model: state.model ?? this.config.get().claude.defaultModel,
       planMode: false,
       appendSystemPrompt: 'You are calibrating a project for Cherry. You are read-only.',
       allowedTools: [],

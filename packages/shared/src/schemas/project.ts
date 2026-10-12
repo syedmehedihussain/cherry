@@ -24,8 +24,8 @@ export const ProjectJsonSchema = z.object({
     .partial()
     .default({}),
   claude: z
-    .object({ model: z.string().default('sonnet'), sessionId: z.string().nullable().default(null) })
-    .default({ model: 'sonnet', sessionId: null }),
+    .object({ model: z.string().default('opus'), sessionId: z.string().nullable().default(null) })
+    .default({ model: 'opus', sessionId: null }),
 });
 export type ProjectJson = z.infer<typeof ProjectJsonSchema>;
 

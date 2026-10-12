@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router';
 import type { Agent } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
 import { startAgent, useAgentDiff, useAgents, useLiveAgents } from '../../api/agents.ts';
-import { queryClient } from '../../api/queries.ts';
+import { queryClient, useConfig } from '../../api/queries.ts';
 import { addTask, organiseNote, wk } from '../../api/workspace.ts';
 import { AgentCard } from '../AgentCard/AgentCard.tsx';
 import { ChipSelect, type ChipOption } from '../ChipSelect/ChipSelect.tsx';
@@ -148,7 +148,11 @@ function TaskBox({
   const [text, setText] = useState('');
   const [chosen, setChosen] = useState<BoxKind>(readKind);
   const kind: BoxKind = kinds ? chosen : 'agent';
-  const [model, setModel] = useState<Model>('sonnet');
+  const fallback = useConfig().data?.claude.defaultModel;
+  const [picked, setModel] = useState<Model | null>(null);
+  // The model from Settings until the user picks one here (Opus out of the box).
+  const model: Model =
+    picked ?? (fallback === 'sonnet' || fallback === 'haiku' ? fallback : 'opus');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ready = text.trim().length >= (kind === 'agent' ? 3 : 1) && !busy;

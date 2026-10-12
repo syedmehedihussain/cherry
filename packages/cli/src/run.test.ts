@@ -3,7 +3,7 @@ import { run } from './run.ts';
 
 describe('cherry cli', () => {
   it('prints the version', async () => {
-    expect(await run(['--version'])).toEqual({ code: 0, out: '0.0.0' });
+    expect(await run(['--version'])).toEqual({ code: 0, out: '1.1.0' });
   });
 
   it('prints help that lists the bare command as up', async () => {

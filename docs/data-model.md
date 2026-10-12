@@ -22,7 +22,7 @@ human-readable version. Every JSON file has a `schema` number so we can migrate 
     "adr": "docs/adr/"
   },
   "claude": {
-    "model": "sonnet",
+    "model": "opus",
     "sessionId": null
   }
 }
@@ -140,7 +140,7 @@ The phase task graph, seeded from Core's preset (`lib/services/project-presets.t
   "projectsDir": "~/Projects",
   "port": 4317,
   "scan": { "ignore": ["archive", "scratch"] },
-  "claude": { "bin": "claude", "defaultModel": "sonnet" },
+  "claude": { "bin": "claude", "defaultModel": "opus" },
   "agents": { "maxRunning": 3, "worktreeDir": "~/Projects/.cherry-worktrees" },
   "magnet": { "readOnly": true },
   "onboarded": true

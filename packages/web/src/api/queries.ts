@@ -9,6 +9,7 @@ import {
   type Health,
   type ProjectList,
 } from '@cherry/shared';
+import { setHome } from '../lib/paths.ts';
 import { api } from './client.ts';
 import { socket } from './socket.ts';
 
@@ -25,11 +26,18 @@ export const keys = {
   planUsage: ['planUsage'] as const,
 };
 
-const ConfigViewSchema = ConfigSchema.extend({ resolvedProjectsDir: z.string() });
+const ConfigViewSchema = ConfigSchema.extend({
+  resolvedProjectsDir: z.string(),
+  home: z.string().optional(),
+});
 export const useConfig = () =>
   useQuery({
     queryKey: keys.config,
-    queryFn: () => api('GET', '/api/config', undefined, ConfigViewSchema),
+    queryFn: () =>
+      api('GET', '/api/config', undefined, ConfigViewSchema).then((c) => {
+        setHome(c.home);
+        return c;
+      }),
   });
 
 export function useProjects() {

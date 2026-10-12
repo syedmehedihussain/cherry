@@ -162,7 +162,7 @@ export function ChatTab({ projectId, now }: ChatTabProps) {
                 streamingId={state?.running && lastItem?.kind === 'text' ? lastItem.id : null}
                 onRetry={
                   lastUserText
-                    ? () => void send(lastUserText, false, model ?? state?.model ?? 'sonnet')
+                    ? () => void send(lastUserText, false, model ?? state?.model ?? 'opus')
                     : undefined
                 }
               />

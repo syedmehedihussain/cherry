@@ -22,8 +22,8 @@ export const ConfigSchema = z.object({
   port: z.number().int().default(4317),
   scan: z.object({ ignore: z.array(z.string()).default([]) }).default({ ignore: [] }),
   claude: z
-    .object({ bin: z.string().default('claude'), defaultModel: z.string().default('sonnet') })
-    .default({ bin: 'claude', defaultModel: 'sonnet' }),
+    .object({ bin: z.string().default('claude'), defaultModel: z.string().default('opus') })
+    .default({ bin: 'claude', defaultModel: 'opus' }),
   agents: z
     .object({
       maxRunning: z.number().int().min(1).max(10).default(3),
