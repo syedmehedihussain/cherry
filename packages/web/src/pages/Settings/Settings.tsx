@@ -1,10 +1,11 @@
-import { ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Check, Code2, Globe, Mail } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 import { MAGNET_FILES, relativeTime, type MagnetFileName, type Usage } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
 import { patchConfig, saveMagnetFile, useMagnetInfo } from '../../api/magnet.ts';
 import { recheckHealth, useConfig, useHealth } from '../../api/queries.ts';
+import { Lockup } from '../../components/Brand/Brand.tsx';
 import { MagnetAvatar } from '../../components/MagnetAvatar/MagnetAvatar.tsx';
 import { Switch } from '../../components/Switch/Switch.tsx';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
@@ -115,15 +116,6 @@ function AppearanceSection() {
         Pick a theme. It applies at once and is remembered in this browser.
       </p>
       <ThemePicker />
-    </section>
-  );
-}
-
-function Simple({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className={styles.section}>
-      <h1>{title}</h1>
-      <div className={styles.prose}>{children}</div>
     </section>
   );
 }
@@ -354,21 +346,103 @@ function ShortcutsSection() {
   );
 }
 
+const AUTHOR = 'Syed Mehedi Hussain';
+const AUTHOR_LINKS = [
+  {
+    label: 'Website',
+    text: 'syedmehedihussain.codes',
+    href: 'https://syedmehedihussain.codes/',
+    icon: <Globe size={16} aria-hidden="true" />,
+  },
+  {
+    label: 'GitHub',
+    text: 'github.com/syedmehedihussain',
+    href: 'https://github.com/syedmehedihussain',
+    icon: <GitHubMark />,
+  },
+  {
+    label: 'Email',
+    text: 'm21gits@gmail.com',
+    href: 'mailto:m21gits@gmail.com',
+    icon: <Mail size={16} aria-hidden="true" />,
+  },
+  {
+    label: 'Source code',
+    text: 'syedmehedihussain/cherry',
+    href: 'https://github.com/syedmehedihussain/cherry',
+    icon: <Code2 size={16} aria-hidden="true" />,
+  },
+];
+
+function GitHubMark() {
+  return (
+    <svg viewBox="0 0 16 16" width={16} height={16} fill="currentColor" aria-hidden="true">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+    </svg>
+  );
+}
+
 function AboutSection() {
   const h = useHealth().data;
   return (
-    <Simple title="About">
-      <p>
-        Cherry {h?.version ?? ''} — a local workspace that drives Claude Code to plan, document and
-        build your projects. MIT licence.
-      </p>
-      <p>
-        Settings live in <span className="mono">~/.cherry/config.json</span>, Magnet's notes in{' '}
-        <span className="mono">~/.cherry/magnet/</span>. Each project keeps its own state in{' '}
-        <span className="mono">_project/</span>, outside git.
-      </p>
-      <p>The app only listens on 127.0.0.1 and talks to Claude and GitHub, nothing else.</p>
-    </Simple>
+    <section className={styles.section} aria-label="About">
+      <div className={styles.aboutHero}>
+        <Lockup size={64} tagline />
+        <p className={styles.lead}>
+          A local workspace that drives Claude Code to plan, document and build your projects.
+        </p>
+        <span className={styles.aboutMeta}>
+          {h?.version ? `Version ${h.version} · ` : ''}MIT licence
+        </span>
+      </div>
+
+      <section aria-labelledby="made-by" className={styles.block}>
+        <h2 id="made-by">Made by {AUTHOR}</h2>
+        <p className={styles.lead}>
+          Designed and built by {AUTHOR}. Questions, ideas or bugs are welcome.
+        </p>
+        <ul className={styles.links}>
+          {AUTHOR_LINKS.map((l) => (
+            <li key={l.label}>
+              <a href={l.href} target="_blank" rel="noopener noreferrer">
+                <span className={styles.linkIcon}>{l.icon}</span>
+                <span className={styles.linkText}>
+                  <strong>{l.label}</strong>
+                  <span>{l.text}</span>
+                </span>
+                <ArrowUpRight size={14} aria-hidden="true" className={styles.linkArrow} />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section aria-labelledby="how-it-runs" className={styles.block}>
+        <h2 id="how-it-runs">How it runs</h2>
+        <dl className={styles.facts}>
+          <div>
+            <dt>Settings</dt>
+            <dd className="mono">~/.cherry/config.json</dd>
+          </div>
+          <div>
+            <dt>Magnet&rsquo;s notes</dt>
+            <dd className="mono">~/.cherry/magnet/</dd>
+          </div>
+          <div>
+            <dt>Project state</dt>
+            <dd>
+              <span className="mono">_project/</span> in each project, outside git
+            </dd>
+          </div>
+          <div>
+            <dt>Network</dt>
+            <dd>Listens on 127.0.0.1 only. Talks to Claude and GitHub, nothing else.</dd>
+          </div>
+        </dl>
+      </section>
+
+      <p className={styles.muted}>Built with Claude Code.</p>
+    </section>
   );
 }
 
