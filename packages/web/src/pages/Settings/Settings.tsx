@@ -362,8 +362,8 @@ const AUTHOR_LINKS = [
   },
   {
     label: 'Email',
-    text: 'm21gits@gmail.com',
-    href: 'mailto:m21gits@gmail.com',
+    text: 'syedmehedihussain@gmail.com',
+    href: 'mailto:syedmehedihussain@gmail.com',
     icon: <Mail size={16} aria-hidden="true" />,
   },
   {
@@ -397,7 +397,7 @@ function AboutSection() {
       </div>
 
       <section aria-labelledby="made-by" className={styles.block}>
-        <h2 id="made-by">Made by {AUTHOR}</h2>
+        <h2 id="made-by">A side quest of smh</h2>
         <p className={styles.lead}>
           Designed and built by {AUTHOR}. Questions, ideas or bugs are welcome.
         </p>

@@ -5,7 +5,7 @@ test('the About page credits the author with working links', async ({ page }) =>
   await page.goto(`/#login=${await loginCode()}`);
   await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
   await page.goto('/settings/about');
-  await expect(page.getByRole('heading', { name: 'Made by Syed Mehedi Hussain' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'A side quest of smh' })).toBeVisible();
   await expect(page.getByRole('link', { name: /Website/ })).toHaveAttribute(
     'href',
     'https://syedmehedihussain.codes/',
@@ -16,6 +16,6 @@ test('the About page credits the author with working links', async ({ page }) =>
   );
   await expect(page.getByRole('link', { name: /Email/ })).toHaveAttribute(
     'href',
-    'mailto:m21gits@gmail.com',
+    'mailto:syedmehedihussain@gmail.com',
   );
 });
