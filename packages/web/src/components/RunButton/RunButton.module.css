@@ -1,0 +1,47 @@
+.run {
+  flex: none;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px 0 10px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--b);
+  background: var(--s1);
+  color: var(--t2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition:
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+.run:hover,
+.run[aria-pressed='true'] {
+  border-color: var(--bs);
+  background: var(--s2);
+  color: var(--t1);
+}
+.run:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.run[data-running] {
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+}
+.icon {
+  color: var(--success);
+  fill: currentColor;
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: var(--status-dot-glow-success);
+}
+.text {
+  white-space: nowrap;
+}

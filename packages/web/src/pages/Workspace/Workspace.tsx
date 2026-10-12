@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { create } from 'zustand';
 import { ApiFailure } from '../../api/client.ts';
@@ -8,6 +8,9 @@ import { FileTree } from '../../components/FileTree/FileTree.tsx';
 import { FileViewer } from '../../components/FileViewer/FileViewer.tsx';
 import { GitPanel } from '../../components/GitHubBox/GitPanel.tsx';
 import { StatusNotch } from '../../components/StatusNotch/StatusNotch.tsx';
+import { RunButton } from '../../components/RunButton/RunButton.tsx';
+import { startRun, useLiveRun, useRun } from '../../api/run.ts';
+import { RunTab } from './RunTab.tsx';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
 import { tildify } from '../../lib/paths.ts';
 import { useNow } from '../../lib/useNow.ts';
@@ -28,7 +31,7 @@ import { useScanAgents } from '../../api/scans.ts';
 import { SidePanel } from './SidePanel.tsx';
 import styles from './Workspace.module.css';
 
-type Tab = 'chat' | 'docs' | 'notes' | 'file' | 'report' | 'status';
+type Tab = 'chat' | 'docs' | 'notes' | 'file' | 'report' | 'status' | 'run';
 
 /** The last file opened per project, so its tab stays while you visit other tabs. */
 const useOpenFiles = create<{
@@ -63,6 +66,7 @@ function parseSplat(splat: string): { tab: Tab; path: string | null } {
   if (splat.startsWith('reports/')) return { tab: 'report', path: splat.slice(8) || null };
   if (splat === 'notes') return { tab: 'notes', path: null };
   if (splat === 'status') return { tab: 'status', path: null };
+  if (splat === 'run') return { tab: 'run', path: null };
   return { tab: 'chat', path: null };
 }
 
@@ -77,6 +81,9 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
   const chat = useChat(id);
   // Once per workspace: the Chat tab and the Live view both read this state.
   useLiveChat(id);
+  const app = useRun(id);
+  useLiveRun(id);
+  const [starting, setStarting] = useState(false);
   const approvals = usePendingApprovals();
   const setDraft = useChatDraft((s) => s.set);
   const pendingHere = (approvals.data ?? []).filter((a) => a.projectId === id);
@@ -141,12 +148,27 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
         phase={card ? card.phase : null}
         claude={running ? 'working' : undefined}
         beforeClaude={
-          <StatusNotch
-            status={detail.data ? detail.data.status : undefined}
-            updatedAt={detail.data?.statusMtime ?? null}
-            active={tab === 'status'}
-            onOpen={() => void navigate(`${base}/status`)}
-          />
+          <>
+            <RunButton
+              state={app.data}
+              active={tab === 'run'}
+              busy={starting}
+              onOpen={() => void navigate(`${base}/run`)}
+              onRun={() => {
+                setStarting(true);
+                void startRun(id)
+                  .catch(() => undefined)
+                  .finally(() => setStarting(false));
+                void navigate(`${base}/run`);
+              }}
+            />
+            <StatusNotch
+              status={detail.data ? detail.data.status : undefined}
+              updatedAt={detail.data?.statusMtime ?? null}
+              active={tab === 'status'}
+              onOpen={() => void navigate(`${base}/status`)}
+            />
+          </>
         }
         status={
           pendingHere.length > 0 ? (
@@ -250,6 +272,16 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
                 </span>
               </>
             )}
+            {(tab === 'run' || app.data?.running) && (
+              <>
+                <span className={styles.tabSep} aria-hidden="true" />
+                <span className={styles.fileTab} data-active={tab === 'run' || undefined}>
+                  <Link to={`${base}/run`} aria-current={tab === 'run' ? 'page' : undefined}>
+                    Run
+                  </Link>
+                </span>
+              </>
+            )}
             <span className={styles.tabSpacer} />
             {tab === 'chat' && (
               <>
@@ -272,6 +304,7 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
               />
             )}
             {tab === 'notes' && <NotesTab projectId={id} />}
+            {tab === 'run' && <RunTab projectId={id} />}
             {tab === 'status' && (
               <StatusTab
                 projectId={id}

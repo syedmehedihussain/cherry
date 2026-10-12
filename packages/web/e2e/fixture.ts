@@ -60,6 +60,16 @@ export function createFixture(): void {
     path.join(E2E_PROJECTS, 'cctop', '_project', 'STATUS.md'),
     '---\nsummary: Terminal dashboard\n---\n## Next steps\n- [ ] Tag release 1.1\n',
   );
+  // Something the Run button can start: prints a local address and stays up until stopped.
+  write(
+    path.join(E2E_PROJECTS, 'cctop', 'package.json'),
+    JSON.stringify({ scripts: { dev: 'node server.js' } }),
+  );
+  write(
+    path.join(E2E_PROJECTS, 'cctop', 'server.js'),
+    "console.log('ready on http://localhost:4998/');\nsetInterval(() => {}, 1000);\n",
+  );
+  mkdirSync(path.join(E2E_PROJECTS, 'cctop', 'node_modules'), { recursive: true });
   write(path.join(E2E_PROJECTS, 'torongo', 'README.md'), '# torongo\nReal-time translation.\n');
 
   // A Ready project with a local "remote" and one commit to push (M6).

@@ -6,6 +6,7 @@ import type { CalibrationState } from './calibration.ts';
 import type { SurveyState } from './survey.ts';
 import type { GitResult } from './workspace.ts';
 import type { Agent } from './agent.ts';
+import type { RunState } from './run.ts';
 
 /** Client → server over /ws. */
 export const ClientMessageSchema = z.object({
@@ -55,6 +56,10 @@ export interface EventMap {
   'magnet.item': { conversationId: string; item: ChatItem };
   'magnet.delta': { conversationId: string; itemId: string; text: string };
   'magnet.state': { conversationId: string | null; running: boolean };
+  /** The project's app started, stopped or printed its address (output not included). */
+  'run.state': { projectId: string; state: Omit<RunState, 'output'> };
+  /** New output from the project's app. */
+  'run.output': { projectId: string; text: string };
   'approval.requested': { approval: Approval };
   'approval.resolved': { approval: Approval };
 }

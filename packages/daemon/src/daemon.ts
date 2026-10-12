@@ -35,6 +35,8 @@ import { ApprovalBroker } from './claude/approvals.ts';
 import { DecisionBroker } from './claude/decisions.ts';
 import { sdkRunner, type Runner } from './claude/runner.ts';
 import { buildServer } from './server.ts';
+import { RunService } from './run/service.ts';
+import { runRoutes } from './routes/run.ts';
 import { watchProjects } from './watcher.ts';
 import pkg from '../package.json' with { type: 'json' };
 
@@ -55,6 +57,7 @@ export interface Daemon {
   projects: ProjectService;
   health: HealthService;
   planUsage: PlanUsageService;
+  runs: RunService;
   cliSecret: string;
   close(): Promise<void>;
 }
@@ -143,6 +146,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
   );
   const notes = new NoteService(config, opts.runner ?? sdkRunner);
   const commits = new CommitService(config, hub, opts.runner ?? sdkRunner);
+  const runs = new RunService(config, hub);
   const gitActions = new GitActions(config, hub, approvals, gitInfo, opts.prList);
   const magnet = new MagnetService(
     config,
@@ -178,6 +182,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       magnetRoutes(magnet),
       noteRoutes(notes),
       commitRoutes(commits),
+      runRoutes(runs),
     ],
   });
 
@@ -199,6 +204,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     projects,
     health,
     planUsage,
+    runs,
     cliSecret,
     chat,
     approvals,
@@ -209,6 +215,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     scans,
     magnet,
     async close() {
+      await runs.stopAll();
       await chat.stopAll();
       await survey.stopAll();
       await agents.stopAll();

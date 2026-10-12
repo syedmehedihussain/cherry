@@ -10,3 +10,4 @@ export * from './schemas/survey.ts';
 export * from './schemas/agent.ts';
 export * from './schemas/scan.ts';
 export * from './schemas/magnet.ts';
+export * from './schemas/run.ts';

@@ -51,6 +51,14 @@ the projects folder (see `security.md`).
 | POST | `/api/projects/:id/notes/organise` | `{ text }` → the note-taker (Haiku, no tools but `save_note`) tidies the note and picks a `##` section; the daemon adds it there (additions only). `{ content, mtime, section }`; 502 `note_failed` leaves notes.md untouched (ADR-0016) |
 | POST | `/api/projects/:id/open-in-editor` | `{ path }` → runs `$EDITOR` / `code` |
 
+## Run the app (ADR-0024)
+
+| Method | Path | Does |
+| --- | --- | --- |
+| GET | `/api/projects/:id/run` | `{ command, source, running, url, startedAt, exitCode, output }`; `command` is null when Cherry cannot tell how to run the project (the Run button stays hidden) |
+| POST | `/api/projects/:id/run` | starts `command` in the project folder in its own process group; 409 if already running or nothing to run |
+| DELETE | `/api/projects/:id/run` | SIGTERM to the whole process group, SIGKILL after 3 s; returns the stopped state |
+
 ## Git and GitHub
 
 | Method | Path | Does |
@@ -167,6 +175,8 @@ One socket at `/ws`. Every event: `{ type, at, ...payload }`. The client subscri
 | `survey.updated` | `{ projectId, state }` (full survey state) | project:id |
 | `calibrate.progress` | `{ step, rows, found }` | project:id |
 | `calibrate.proposal` | proposal | project:id |
+| `run.state` | `{ projectId, state }` the app started, stopped or printed its local address (no output) | project:id |
+| `run.output` | `{ projectId, text }` new output, colour codes removed, sent at most every 100 ms | project:id |
 | `magnet.item` / `magnet.delta` / `magnet.state` | Magnet's conversation (items include `projects` and `action`) | magnet |
 
 On reconnect the client re-subscribes and re-fetches state with GET calls. Events are not replayed.

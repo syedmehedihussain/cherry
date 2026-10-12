@@ -59,6 +59,15 @@ Always need approval: every other Bash call, every Edit/Write in a chat session,
 
 Auto-allowed: read-only tools listed in `claude-runner.md` for each session kind.
 
+## Running the project's app
+
+The Run button (ADR-0024) runs the project's own dev command, found from its files
+(`package.json` script, `manage.py`, Makefile, Cargo, Go, or a static `index.html`). It runs only
+on the user's click, as the user, in the project folder; it is the same as typing the command in
+a terminal there. Claude never starts it. The process gets its own process group, Stop ends the
+whole group, and the daemon stops every run when it shuts down. Output is kept in memory only
+(64 KB per project) and is never sent to Claude.
+
 ## Files never read
 
 `.env`, `.env.*`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `id_rsa*`, `id_ed25519*`, `id_ecdsa*`,
