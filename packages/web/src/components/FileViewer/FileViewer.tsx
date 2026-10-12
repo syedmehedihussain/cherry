@@ -6,6 +6,7 @@ import type { DiffLine } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
 import { openInEditor, saveFile, useDiff, useFile } from '../../api/workspace.ts';
 import { highlightLines } from '../../lib/highlight.ts';
+import { Markdown } from '../Markdown/Markdown.tsx';
 import { themeMode, useTheme } from '../../lib/theme.ts';
 import { Switch } from '../Switch/Switch.tsx';
 import styles from './FileViewer.module.css';
@@ -31,8 +32,21 @@ const LANG_LABEL: Record<string, string> = {
   text: 'Plain text',
 };
 
-export function FileViewer({ projectId, path }: { projectId: string; path: string }) {
+/** YAML frontmatter is metadata, not reading text: the preview leaves it out. */
+const FRONTMATTER = /^---\r?\n[\s\S]*?\r?\n---\r?\n?/;
+
+export function FileViewer({
+  projectId,
+  path,
+  fileHref,
+}: {
+  projectId: string;
+  path: string;
+  /** In-app link to another file of the project, for links in a Markdown preview. */
+  fileHref?(path: string): string;
+}) {
   const file = useFile(projectId, path);
+  const [source, setSource] = useState(false);
   const changed = !!file.data?.git && !file.data.hidden && !file.data.binary;
   const [showChanges, setShowChanges] = useState(true);
   // The built-in editor (ADR-0021): a draft per file, saved only on Save or Ctrl+S.
@@ -73,6 +87,8 @@ export function FileViewer({ projectId, path }: { projectId: string; path: strin
     );
 
   const editable = !file.data.hidden && !file.data.binary && !file.data.truncated;
+  const isMarkdown = file.data.language === 'markdown' && !file.data.hidden && !file.data.binary;
+  const preview = isMarkdown && !source && editing === null;
   const startEdit = () => {
     setSaveError(null);
     setDraft({ path, text: file.data!.content });
@@ -164,7 +180,17 @@ export function FileViewer({ projectId, path }: { projectId: string; path: strin
             </button>
           )
         )}
-        {changed && editing === null && (
+        {isMarkdown && editing === null && (
+          <div className={styles.seg} role="group" aria-label="Markdown view">
+            <button type="button" aria-pressed={!source} onClick={() => setSource(false)}>
+              Preview
+            </button>
+            <button type="button" aria-pressed={source} onClick={() => setSource(true)}>
+              Source
+            </button>
+          </div>
+        )}
+        {changed && editing === null && !preview && (
           <>
             <Switch checked={showChanges} onChange={setShowChanges} label="Show changes" />
             {diff.data && (
@@ -200,6 +226,21 @@ export function FileViewer({ projectId, path }: { projectId: string; path: strin
           spellCheck={false}
           autoFocus
         />
+      ) : preview ? (
+        <div
+          className={styles.preview}
+          role="region"
+          aria-label={`Preview of ${file.data.path}`}
+          tabIndex={0}
+        >
+          <div className={styles.article}>
+            <Markdown
+              source={code.replace(FRONTMATTER, '')}
+              docPath={file.data.path}
+              docHref={fileHref}
+            />
+          </div>
+        </div>
       ) : (
         <div
           className={styles.code}

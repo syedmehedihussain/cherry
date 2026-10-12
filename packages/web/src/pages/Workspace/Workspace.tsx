@@ -281,7 +281,14 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
                 updateDisabledReason="Claude is working; wait for the turn to finish"
               />
             )}
-            {tab === 'file' && path && <FileViewer key={path} projectId={id} path={path} />}
+            {tab === 'file' && path && (
+              <FileViewer
+                key={path}
+                projectId={id}
+                path={path}
+                fileHref={(p) => `${base}/files/${p}`}
+              />
+            )}
             {tab === 'report' && path && (
               <ReportTab
                 key={path.split('/')[0]}

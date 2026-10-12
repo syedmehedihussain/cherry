@@ -58,6 +58,16 @@ test('edits and saves a file in the built-in editor', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Edit file' })).toBeVisible();
 });
 
+test('previews a Markdown file, with the source one click away', async ({ page }) => {
+  await page.goto('/p/torongo/files/README.md');
+  const preview = page.getByRole('region', { name: 'Preview of README.md' });
+  await expect(preview.getByRole('heading', { level: 1, name: 'torongo' })).toBeVisible();
+  await page.getByRole('button', { name: 'Source', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Contents of README.md' })).toContainText(
+    '# torongo',
+  );
+});
+
 test('reads docs in the Docs tab', async ({ page }) => {
   await page.goto('/p/core/docs');
   await expect(page.getByRole('navigation', { name: 'Documents' })).toContainText('README.md');
