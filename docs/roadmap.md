@@ -129,10 +129,29 @@ check in CI is green on the tagged commit.
 - [x] Auto switch for background agents.
 - [x] Decisions: Claude proposes big choices as ADRs (`propose_decision`); approve, reject and
       done routes; Approve only / apply in chat / start an agent.
-- [x] Decisions pill in the right column with a pending count.
+- [x] Decisions tab in the centre with a pending count.
 
 **Done when:** in Auto mode, Claude proposes a database switch instead of making it, the
 proposal waits in Decisions, and approving it updates the ADR and applies the change.
+
+## V2 — Plan section
+
+Make planning in Cherry fit real software engineering, from the Plan phase to Plan mode in the
+chat. The scope is agreed first; the items after the proposal are candidates until then.
+
+- [ ] Audit planning today (survey, PRD and ADRs, plan-phase tasks, Plan mode, Live plan) and
+      list the gaps.
+- [ ] Agree the scope with the user.
+- [ ] Proposal and ADR: requirements with acceptance criteria, non-functional needs, risks,
+      scope and milestones.
+- [ ] Plan review card: comment on Claude's plan, Approve and build, or Send notes.
+- [ ] New feature spec: requirements, design and tasks with IDs and dependencies.
+- [ ] Analyze: check a plan or spec against CLAUDE.md and the ADRs.
+- [ ] Plan phase checklist and exit gate.
+- [ ] Next task from dependencies; start an agent from a task.
+
+**Done when:** a new feature on an existing project goes from idea to reviewed spec and ordered
+tasks inside Cherry, and Claude's plans can be reviewed and sent back with comments.
 
 ## After the MVP
 
