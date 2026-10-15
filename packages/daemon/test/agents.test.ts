@@ -128,6 +128,22 @@ describe('background agents', () => {
     expect(log.permissions).toEqual([expect.objectContaining({ tool: 'Bash', allowed: false })]);
   });
 
+  it('in Auto mode runs commands without asking, but push still waits', async () => {
+    script = () => [
+      { tool: { name: 'Bash', input: { command: 'npm install -D vitest' } } },
+      { tool: { name: 'Bash', input: { command: 'git push origin HEAD' } } },
+      { text: 'Done.' },
+    ];
+    const r = await api('POST', '/api/projects/core/agents', { task: 'Add vitest', auto: true });
+    expect(r.body.auto).toBe(true);
+    const w = await until(r.body.id, (x) => x.status === 'waiting');
+    expect(w.waiting).toMatchObject({ kind: 'command', command: 'git push origin HEAD' });
+    await api('POST', `/api/approvals/${w.waiting!.id}`, { answer: 'deny' });
+    await until(r.body.id, (x) => x.status === 'done');
+    expect(log.permissions.map((p) => p.allowed)).toEqual([true, false]);
+    expect(log.requests[0]?.prompt).toMatch(/auto mode/);
+  });
+
   it('refuses edits outside the worktree', async () => {
     script = () => [
       { tool: { name: 'Write', input: { file_path: path.join(dir, 'hack.txt'), content: 'x' } } },

@@ -126,7 +126,7 @@ check in CI is green on the tagged commit.
 ## V2 — Auto mode and Decisions (ADR-0025, ADR-0026)
 
 - [x] Auto mode in the chat: Ask / Auto / Plan menu; push, publish and `rm -r` still ask.
-- [ ] Auto switch for background agents.
+- [x] Auto switch for background agents.
 - [ ] Decisions: Claude proposes big choices as ADRs (`propose_decision`); approve, reject and
       done routes; Approve only / apply in chat / start an agent.
 - [ ] Decisions pill in the right column with a pending count.

@@ -118,7 +118,7 @@ proposal and the create progress, and is pushed as `survey.updated` on every cha
 | Method | Path | Does |
 | --- | --- | --- |
 | GET | `/api/projects/:id/agents` | agent list |
-| POST | `/api/projects/:id/agents` | `{ task, model }` → the agent (queued when all slots are busy) |
+| POST | `/api/projects/:id/agents` | `{ task, model, auto? }` → the agent (queued when all slots are busy); `auto` runs commands without asking except push, publish and rm -r (ADR-0025) |
 | GET | `/api/agents/:agentId/diff` | `{ files: [{ path, isNew, added, removed, lines }] }`, agent branch vs where it started |
 | POST | `/api/agents/:agentId/accept` | `git merge --no-edit` into the current branch, then remove worktree and branch (ADR-0010) |
 | POST | `/api/agents/:agentId/discard` | remove worktree + branch |

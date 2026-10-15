@@ -104,6 +104,14 @@ export function AgentCard({ agent, now, last, focus, onReviewDiff }: AgentCardPr
           </span>
           <span>·</span>
           <span>{MODEL[agent.model] ?? agent.model}</span>
+          {agent.auto && (
+            <>
+              <span>·</span>
+              <span title="Commands run without asking. Push, publish and rm -r still ask.">
+                Auto
+              </span>
+            </>
+          )}
           <span>·</span>
           <span>
             {agent.status === 'queued' ? 'waiting for a free slot' : elapsed(end - agent.startedAt)}

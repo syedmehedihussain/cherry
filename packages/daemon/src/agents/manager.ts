@@ -31,6 +31,8 @@ interface Row {
   summary: string | null;
   error: string | null;
   activity_json: string;
+  /** 1 in Auto mode (ADR-0025). */
+  auto: number;
   started_at: number;
   ended_at: number | null;
 }
@@ -53,13 +55,15 @@ export function slugify(task: string): string {
   return words.slice(0, 4).join('-').slice(0, 40).replace(/-+$/, '') || 'task';
 }
 
-function agentPrompt(task: string, branch: string): string {
+function agentPrompt(task: string, branch: string, auto: boolean): string {
   return [
     task,
     '',
     `You are a background agent working in your own git worktree on branch ${branch}. The user is not watching; work on your own until the task is done.`,
     '- Read CLAUDE.md and the relevant code first.',
-    "- You may edit files in this folder. Running commands needs the user's approval, so run only what you need (for example the tests).",
+    auto
+      ? '- You may edit files in this folder and run commands without asking (auto mode). Pushing, publishing and rm -r still need approval, and you do not need them.'
+      : "- You may edit files in this folder. Running commands needs the user's approval, so run only what you need (for example the tests).",
     '- Keep .gitignore current: if your change makes build output, caches, dependencies or local env files, add them to .gitignore.',
     '- Do not commit, push or switch branches. Cherry commits your work when you finish and the user reviews the diff.',
     '- End with one short sentence that says what you changed. Write it, and any other report, in ASD-STE100 Simplified Technical English (short sentences, active voice, approved words).',
@@ -102,6 +106,7 @@ export class AgentManager {
       projectId: r.project_id,
       task: r.task,
       model: r.model,
+      auto: r.auto === 1,
       branch: r.branch,
       baseBranch: r.base_branch,
       status: r.status,
@@ -194,13 +199,14 @@ export class AgentManager {
     const queued = this.runningCount() >= this.config.get().agents.maxRunning;
     this.db
       .prepare(
-        `INSERT INTO agents (id, project_id, task, model, branch, base_branch, worktree, status, started_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO agents (id, project_id, task, model, auto, branch, base_branch, worktree, status, started_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         id,
         projectId,
         body.task,
         body.model ?? this.config.get().claude.defaultModel,
+        body.auto ? 1 : 0,
         branch,
         status.branch,
         worktree,
@@ -247,6 +253,7 @@ export class AgentManager {
       },
       // Edits inside the worktree run without asking; anything outside is refused.
       policy: (tool) => (EDIT_TOOLS.has(tool) ? 'allow' : 'ask'),
+      auto: r.auto === 1,
     });
     live.conversation = conversation;
     this.live.set(id, live);
@@ -256,12 +263,13 @@ export class AgentManager {
     let finished = false;
     const handle = this.runner({
       cwd: r.worktree,
-      prompt: agentPrompt(r.task, r.branch),
+      prompt: agentPrompt(r.task, r.branch, r.auto === 1),
       resume: null,
       model: r.model,
       planMode: false,
-      appendSystemPrompt:
-        'You are a background agent inside Cherry, working in a git worktree. Edits inside this folder are allowed; commands need approval.',
+      appendSystemPrompt: r.auto
+        ? 'You are a background agent inside Cherry, working in a git worktree, in auto mode. Edits inside this folder and most commands run without asking.'
+        : 'You are a background agent inside Cherry, working in a git worktree. Edits inside this folder are allowed; commands need approval.',
       allowedTools: READ_TOOLS,
       decisions: false,
       guard: (tool, input) => {
@@ -442,7 +450,11 @@ export class AgentManager {
     const r = this.row(id);
     if (ACTIVE.includes(r.status)) throw conflict('This agent is still running.');
     if (r.status === 'failed' || r.status === 'done') await this.discard(id);
-    return this.start(r.project_id, { task: r.task, model: r.model as AgentStart['model'] });
+    return this.start(r.project_id, {
+      task: r.task,
+      model: r.model as AgentStart['model'],
+      auto: r.auto === 1,
+    });
   }
 
   async stop(id: string): Promise<Agent> {

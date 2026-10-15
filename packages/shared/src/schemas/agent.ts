@@ -18,6 +18,8 @@ export const AgentSchema = z.object({
   projectId: z.string(),
   task: z.string(),
   model: z.string(),
+  /** Auto mode: commands run without asking, except push, publish and rm -r (ADR-0025). */
+  auto: z.boolean(),
   branch: z.string(),
   baseBranch: z.string(),
   status: AgentStatusSchema,
@@ -41,6 +43,7 @@ export type AgentList = z.infer<typeof AgentListSchema>;
 export const AgentStartSchema = z.object({
   task: z.string().trim().min(3, 'Describe the task.').max(2000),
   model: z.enum(['sonnet', 'opus', 'haiku']).optional(),
+  auto: z.boolean().optional(),
 });
 export type AgentStart = z.infer<typeof AgentStartSchema>;
 
