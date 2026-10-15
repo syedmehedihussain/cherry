@@ -176,7 +176,7 @@ export function ChatTab({ projectId, now }: ChatTabProps) {
       <div className={styles.scroll} ref={scroller} onScroll={onScroll}>
         <div className={styles.thread}>
           {chat.isPending && <span className="shimmer" style={{ height: 80 }} />}
-          {state && items.length === 0 && <EmptyChat />}
+          {state && items.length === 0 && <EmptyChat mode={mode.mode} />}
           {blocks.map((b) =>
             b.t === 'user' ? (
               <div key={b.item.id} className={styles.userRow}>
@@ -264,14 +264,17 @@ function Attachments({ projectId, files }: { projectId: string; files: string[] 
   );
 }
 
-function EmptyChat() {
+const MODE_NOTE: Record<ChatMode, string> = {
+  ask: 'Every edit and command waits for your approval.',
+  auto: 'Auto mode: edits and most commands run without asking; pushing, publishing and deleting folders still ask.',
+  plan: 'Plan mode: Claude reads and plans, and changes nothing until you approve the plan.',
+};
+
+function EmptyChat({ mode }: { mode: ChatMode }) {
   return (
     <div className={styles.empty}>
       <h2>Start a conversation</h2>
-      <p>
-        Ask Claude to look into something or describe the next task. Every edit and command waits
-        for your approval.
-      </p>
+      <p>Ask Claude to look into something or describe the next task. {MODE_NOTE[mode]}</p>
     </div>
   );
 }

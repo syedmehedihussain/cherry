@@ -2,6 +2,7 @@ import { Check, ChevronDown, ChevronRight, Scale, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import type { Adr, AdrApplyMode } from '@cherry/shared';
+import { useChat } from '../../api/chat.ts';
 import { useAgents } from '../../api/agents.ts';
 import { ApiFailure } from '../../api/client.ts';
 import {
@@ -137,9 +138,20 @@ function DecisionItem({ projectId, adr }: { projectId: string; adr: Adr }) {
     }
   };
 
+  const chatRunning = !!useChat(projectId).data?.running;
+  // Apply again when the last try is over without the decision being done (agent discarded or
+  // failed, or a chat turn that ended without calling decision_done).
+  const inFlight =
+    adr.applying?.kind === 'chat'
+      ? chatRunning
+      : adr.applying?.kind === 'agent'
+        ? !!agent && ['running', 'waiting', 'done'].includes(agent.status)
+        : false;
   const applying =
     adr.applying?.kind === 'chat'
-      ? 'Sent to the chat'
+      ? chatRunning
+        ? 'Sent to the chat'
+        : 'Sent to the chat; mark it done if the change is made'
       : adr.applying?.kind === 'agent'
         ? agent
           ? `Agent ${agent.status === 'done' ? 'finished; accept its work to finish' : agent.status}`
@@ -260,7 +272,7 @@ function DecisionItem({ projectId, adr }: { projectId: string; adr: Adr }) {
                 <Check size={13} aria-hidden="true" />
                 Mark done
               </button>
-              {!adr.applying && (
+              {!inFlight && (
                 <>
                   <button
                     type="button"

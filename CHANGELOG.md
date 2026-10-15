@@ -27,6 +27,10 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Fixed
 
+- The empty chat describes the chosen mode; it no longer says every edit waits for approval in
+  Auto mode.
+- An approved decision can be applied again after its agent was discarded or failed, or its chat
+  turn ended without finishing it.
 - `cherry down` could leave the daemon running: a browser tab that did not answer the
   WebSocket close kept it open for 30 s. Sockets and open requests are now cut at once, the
   daemon always exits within 10 s, and `cherry down` uses SIGKILL after 12 s.
