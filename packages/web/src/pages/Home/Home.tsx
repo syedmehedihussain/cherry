@@ -5,6 +5,7 @@ import { tildify } from '../../lib/paths.ts';
 import { recheckHealth, useHealth, useProjects } from '../../api/queries.ts';
 import { ClaudeMissingBanner } from '../../components/Banner/Banner.tsx';
 import { Wordmark } from '../../components/Brand/Brand.tsx';
+import { Ideas } from '../../components/Ideas/Ideas.tsx';
 import { MagnetAvatar } from '../../components/MagnetAvatar/MagnetAvatar.tsx';
 import { ProjectCard, ProjectCardSkeleton } from '../../components/ProjectCard/ProjectCard.tsx';
 import { ProjectTable } from '../../components/ProjectTable/ProjectTable.tsx';
@@ -121,7 +122,9 @@ export function Home() {
               </Link>
             </div>
           </section>
-        ) : (
+        ) : null}
+        {empty && <Ideas now={now} disabled={claudeMissing} />}
+        {empty ? null : (
           <>
             <section aria-labelledby="recent" className={styles.section}>
               <div className={styles.sectionHead}>
@@ -134,6 +137,8 @@ export function Home() {
                   : recent.map((c) => <ProjectCard key={c.id} card={c} now={now} />)}
               </div>
             </section>
+
+            <Ideas now={now} disabled={claudeMissing} />
 
             <section aria-labelledby="all" className={styles.section}>
               <div className={styles.sectionHead}>

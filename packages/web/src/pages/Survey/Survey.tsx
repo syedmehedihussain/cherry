@@ -27,6 +27,7 @@ import { Switch } from '../../components/Switch/Switch.tsx';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
 import { tildify } from '../../lib/paths.ts';
 import { useNow } from '../../lib/useNow.ts';
+import { removeIdea } from '../../api/ideas.ts';
 import styles from './Survey.module.css';
 
 const label = (n: number) => SURVEY_STEPS.find((s) => s.step === n)?.label ?? `Step ${n}`;
@@ -229,8 +230,12 @@ function IdeaStep({ state }: { state?: SurveyState }) {
   const navigate = useNavigate();
   const health = useHealth();
   const [idea, setIdea] = useState(state?.idea ?? params.get('idea') ?? '');
-  const [name, setName] = useState(state?.name ?? '');
-  const [nameTouched, setNameTouched] = useState(!!state);
+  // From an idea on Home: its name becomes the folder name, and the idea goes once started.
+  const fromIdea = state ? null : params.get('from');
+  const [name, setName] = useState(
+    state?.name ?? (params.get('name') ? suggestName(params.get('name')!) : ''),
+  );
+  const [nameTouched, setNameTouched] = useState(!!state || !!params.get('name'));
   const [quick, setQuick] = useState(state?.quick ?? false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -251,6 +256,7 @@ function IdeaStep({ state }: { state?: SurveyState }) {
       } else {
         const s = await startSurvey({ name: nameCheck.data, idea: idea.trim(), quick });
         void queryClient.invalidateQueries({ queryKey: ['projects'] });
+        if (fromIdea) void removeIdea(fromIdea).catch(() => undefined);
         void navigate(`/new/${encodeURIComponent(s.id)}`, { replace: true });
       }
     } catch (err) {

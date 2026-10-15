@@ -90,6 +90,15 @@ the projects folder (see `security.md`).
 | GET | `/api/projects/:id/uploads/:file` | the stored file; png/jpeg/gif/webp inline, everything else as a download (`nosniff`, sandbox CSP) |
 | POST | `/api/approvals/:id` | `{ answer: "allow" \| "allow_session" \| "deny", reason? }` |
 
+## Project ideas (ADR-0027)
+
+| Method | Path | Does |
+| --- | --- | --- |
+| GET | `/api/ideas` | `{ ideas: Idea[] }`, newest first |
+| POST | `/api/ideas` | `{ name, description? }` → `{ idea }` |
+| PATCH | `/api/ideas/:id` | `{ name, description? }` → `{ idea }` |
+| DELETE | `/api/ideas/:id` | removes the idea; Home calls it once the survey for it has started |
+
 ## Survey
 
 | Method | Path | Does |

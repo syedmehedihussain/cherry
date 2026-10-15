@@ -12,3 +12,4 @@ export * from './schemas/scan.ts';
 export * from './schemas/magnet.ts';
 export * from './schemas/run.ts';
 export * from './schemas/adr.ts';
+export * from './schemas/idea.ts';

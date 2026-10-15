@@ -172,6 +172,28 @@ ADR-0010).
 
 On first run the app writes starter versions of the three user files with short placeholder text.
 
+## 6b. `~/.cherry/ideas.json` (ADR-0027)
+
+Project ideas on Home's **Upcoming** list. Written with mode 600; a file that does not parse is
+left as it is and the API returns an error.
+
+```json
+{
+  "schema": 1,
+  "ideas": [
+    {
+      "id": "idea_3f9a0c12be",
+      "name": "Recipe planner",
+      "description": "Plan meals for a week and build the shopping list from them.",
+      "createdAt": "2026-10-15T18:40:00.000Z",
+      "updatedAt": "2026-10-15T18:40:00.000Z"
+    }
+  ]
+}
+```
+
+`name` is 1–80 characters, `description` up to 4000 (may be empty). Newest first.
+
 ## 7. SQLite cache — `~/.cherry/cache.db`
 
 Rebuildable from disk (except `usage_days`). Managed with plain SQL migrations in

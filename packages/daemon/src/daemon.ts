@@ -1,3 +1,5 @@
+import { IdeaStore } from './ideas/store.ts';
+import { ideaRoutes } from './routes/ideas.ts';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { FastifyInstance } from 'fastify';
@@ -194,6 +196,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       commitRoutes(commits),
       runRoutes(runs),
       adrRoutes(adrs),
+      ideaRoutes(new IdeaStore(opts.home)),
     ],
   });
 

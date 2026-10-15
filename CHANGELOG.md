@@ -6,6 +6,8 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **Upcoming** on Home: save a project idea (name and description) for later, edit or remove it,
+  and click **Start** to open the new project survey with it filled in (ADR-0027).
 - **Auto mode**: the composer's Plan mode chip is now a mode menu with **Ask** (the default),
   **Auto** and **Plan**. In Auto mode, edits and most commands run without an approval card.
   `git push`, GitHub writes, publishing and deploying, and `rm -r` still ask. Blocked commands,
