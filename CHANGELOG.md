@@ -21,8 +21,9 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Changed
 
-- The side panel shows Overview, Live, GitHub, Decisions and **More** (Agents). Tasks and notes
-  are only in the **Notes & Tasks** tab in the centre; the Overview task line opens it.
+- The centre tabs are Chat, Docs, Notes & Tasks, **Agents** (with a running count) and
+  **Decisions** (with a pending count). The side panel keeps Overview, Live and GitHub; the
+  Overview's task line, "See all" and quick add open the matching centre tab.
 
 ### Fixed
 

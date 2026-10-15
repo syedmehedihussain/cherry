@@ -15,16 +15,11 @@ test('side panel switches between views and remembers the choice', async ({ page
   await expect(aside.getByRole('list', { name: 'Recent commits' })).toBeVisible();
   await expect(aside.getByRole('region', { name: 'Agents' })).toHaveCount(0);
 
-  // Agents sit behind More; the tab then shows the open view's name.
-  await views.getByRole('tab', { name: 'More' }).click();
-  await expect(aside.getByRole('menuitemradio', { name: 'Notes' })).toHaveCount(0);
-  await aside.getByRole('menuitemradio', { name: 'Agents' }).click();
-  await expect(aside.getByRole('tabpanel', { name: 'Agents' })).toBeVisible();
-  await expect(views.getByRole('tab', { name: 'Agents' })).toHaveAttribute('aria-selected', 'true');
-  await expect(aside.getByLabel('Task')).toBeVisible();
+  // Agents, Decisions and Notes & Tasks are centre tabs, not side views.
+  await expect(views.getByRole('tab')).toHaveText(['Overview', 'Live', 'GitHub']);
 
   await page.reload();
-  await expect(views.getByRole('tab', { name: 'Agents' })).toHaveAttribute('aria-selected', 'true');
+  await expect(views.getByRole('tab', { name: 'GitHub' })).toHaveAttribute('aria-selected', 'true');
 });
 
 // The Overview box adds a task to the task list and opens the Notes & Tasks tab in the centre.

@@ -10,11 +10,18 @@ test('agent: start → approve → review diff → accept → commit on main', a
   await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
 
-  const panel = page.getByRole('region', { name: 'Agents' });
-  await panel.getByRole('button', { name: /^Type/ }).click();
+  // Started from the Overview box; the Agents tab in the centre then opens.
+  const box = page
+    .getByRole('complementary', { name: 'Repository and agents' })
+    .getByRole('region', { name: 'Agents' });
+  await box.getByRole('button', { name: /^Type/ }).click();
   await page.getByRole('menuitemradio', { name: /Agent/ }).click();
-  await panel.getByLabel('Task').fill('Write tests for the streak service');
-  await panel.getByRole('button', { name: 'Start' }).click();
+  await box.getByLabel('Task').fill('Write tests for the streak service');
+  await box.getByRole('button', { name: 'Start' }).click();
+  await expect(page).toHaveURL(/\/p\/core\/agents$/);
+  const panel = page
+    .getByRole('region', { name: 'Project' })
+    .getByRole('region', { name: 'Agents' });
 
   const card = panel.getByRole('article', { name: 'Write tests for the streak service' });
   await expect(card).toContainText('agent/tests-streak-service');

@@ -20,14 +20,12 @@ test.afterAll(() => {
 test('scan agent: run → report in the centre, with history', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
-  const aside = page.getByRole('complementary', { name: 'Repository and agents' });
-  await aside
-    .getByRole('tablist', { name: 'Side panel' })
-    .getByRole('tab', { name: /^More|^Agents/ })
+  await page
+    .getByRole('navigation', { name: 'Workspace tabs' })
+    .getByRole('link', { name: /^Agents/ })
     .click();
-  await aside.getByRole('menuitemradio', { name: 'Agents' }).click();
 
-  const scans = aside.getByRole('region', { name: 'Scan agents' });
+  const scans = page.getByRole('region', { name: 'Scan agents' });
   for (const name of ['Security review', 'Test runner', 'Code health', 'Dependency audit'])
     await expect(scans).toContainText(name);
 

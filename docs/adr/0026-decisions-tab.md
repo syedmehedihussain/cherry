@@ -28,8 +28,8 @@ to follow the answer.
 
 We chose **option 1**. Claude calls `propose_decision` (chat and agents). Cherry writes a new
 ADR with Status Proposed and the next number, and never replaces a file. The tool returns at
-once: Claude must not make that change, but it goes on with other work. A **Decisions** pill
-in the right column shows the pending count. For each decision, the user picks **Approve
+once: Claude must not make that change, but it goes on with other work. A **Decisions** tab
+in the centre (next to Chat, Docs, Notes & Tasks and Agents) shows the pending count. For each decision, the user picks **Approve
 only**, **Approve & apply in chat** (Cherry sends the change to the project chat in the last
 mode used) or **Approve & start agent** (a background agent in a worktree), or **Reject** with
 a reason.
@@ -52,4 +52,4 @@ that applies it is kept in SQLite (`decision_links`).
 - Bad / cost: Proposed ADRs that are later rejected stay in `docs/adr/` (as Rejected).
 - Bad / cost: Claude decides what counts as "big"; the prompt names the kinds (stack,
   database, data format, architecture, renaming, removing a feature).
-- Follow-up: let the user write a decision by hand from the Decisions pill.
+- Follow-up: let the user write a decision by hand from the Decisions tab.

@@ -35,7 +35,7 @@ export function ApprovalToasts() {
               className="btn btn-primary btn-sm"
               onClick={() => {
                 const target = a.source.startsWith('agent:')
-                  ? `/p/${encodeURIComponent(a.projectId)}?agent=${a.source.slice(6)}`
+                  ? `/p/${encodeURIComponent(a.projectId)}/agents?agent=${a.source.slice(6)}`
                   : `/p/${encodeURIComponent(a.projectId)}`;
                 void navigate(target);
               }}

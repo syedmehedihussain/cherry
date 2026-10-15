@@ -1,11 +1,9 @@
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { create } from 'zustand';
 import { useChat } from '../../api/chat.ts';
 import { useTasks } from '../../api/workspace.ts';
 import { AgentsPanel } from '../../components/AgentsPanel/AgentsPanel.tsx';
-import { Decisions, usePendingDecisions } from '../../components/Decisions/Decisions.tsx';
 import { GitPanel } from '../../components/GitHubBox/GitPanel.tsx';
 import { PlanUsage } from '../../components/PlanUsage/PlanUsage.tsx';
 import { ReadyToCommit } from '../../components/ReadyToCommit/ReadyToCommit.tsx';
@@ -16,14 +14,9 @@ const VIEWS = [
   ['overview', 'Overview'],
   ['live', 'Live'],
   ['github', 'GitHub'],
-  ['decisions', 'Decisions'],
-  ['agents', 'Agents'],
 ] as const;
 
 type View = (typeof VIEWS)[number][0];
-
-/** Views behind the More button, so the row stays short. */
-const MORE: readonly View[] = ['agents'];
 
 const KEY = 'cherry.sideView';
 
@@ -49,7 +42,10 @@ const useSideView = create<{ view: View; set(v: View): void }>((set) => ({
   },
 }));
 
-/** Right column of the workspace: a row of views, one shown at a time. */
+/**
+ * Right column of the workspace: a row of views, one shown at a time. Agents, Decisions and
+ * Notes & Tasks are tabs in the centre.
+ */
 export function SidePanel({
   projectId,
   branch,
@@ -63,15 +59,15 @@ export function SidePanel({
   const setView = useSideView((s) => s.set);
   const label = VIEWS.find(([id]) => id === view)?.[1];
   const working = !!useChat(projectId).data?.running;
-  const pending = usePendingDecisions(projectId);
   const navigate = useNavigate();
-  // Tasks and notes live in the Notes & Tasks tab in the centre.
-  const openNotes = () => navigate(`/p/${encodeURIComponent(projectId)}/notes`);
+  const base = `/p/${encodeURIComponent(projectId)}`;
+  const openNotes = () => void navigate(`${base}/notes`);
+  const openAgents = () => void navigate(`${base}/agents`);
 
   return (
     <>
       <nav className={styles.views} role="tablist" aria-label="Side panel">
-        {VIEWS.filter(([id]) => !MORE.includes(id)).map(([id, name]) => (
+        {VIEWS.map(([id, name]) => (
           <button
             key={id}
             type="button"
@@ -84,14 +80,8 @@ export function SidePanel({
             {id === 'live' && working && (
               <span className={styles.liveDot} aria-label="Claude is working" />
             )}
-            {id === 'decisions' && pending > 0 && (
-              <span className={styles.badge} aria-label={`${pending} pending`}>
-                {pending}
-              </span>
-            )}
           </button>
         ))}
-        <MoreViews view={view} onPick={setView} />
       </nav>
       <div className={styles.body} role="tabpanel" aria-label={label}>
         {view === 'overview' && (
@@ -106,81 +96,21 @@ export function SidePanel({
               branch={branch}
               now={now}
               limit={3}
-              onSeeAll={() => setView('agents')}
+              onSeeAll={openAgents}
               kinds
-              onDone={(kind) => (kind === 'agent' ? setView('agents') : openNotes())}
+              onDone={(kind) => (kind === 'agent' ? openAgents() : openNotes())}
             />
           </>
         )}
-        {view === 'live' && (
-          <LiveView projectId={projectId} now={now} onOpenAgents={() => setView('agents')} />
-        )}
+        {view === 'live' && <LiveView projectId={projectId} now={now} onOpenAgents={openAgents} />}
         {view === 'github' && (
           <div className={styles.scroll}>
             <GitPanel key={projectId} projectId={projectId} now={now} full />
             <ReadyToCommit key={`commits-${projectId}`} projectId={projectId} />
           </div>
         )}
-        {view === 'agents' && <AgentsPanel projectId={projectId} branch={branch} now={now} />}
-        {view === 'decisions' && <Decisions projectId={projectId} />}
       </div>
     </>
-  );
-}
-
-/** The last tab: "More", or the name of the extra view that is open. Opens a menu of them. */
-function MoreViews({ view, onPick }: { view: View; onPick(v: View): void }) {
-  const [open, setOpen] = useState(false);
-  const wrap = useRef<HTMLDivElement>(null);
-  const current = MORE.includes(view) ? VIEWS.find(([id]) => id === view)?.[1] : null;
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  return (
-    <div className={styles.moreWrap} ref={wrap}>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={!!current}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        className={styles.view}
-        onClick={() => setOpen(!open)}
-      >
-        {current ?? 'More'}
-        <ChevronDown size={12} strokeWidth={2} aria-hidden="true" className={styles.moreIcon} />
-      </button>
-      {open && (
-        <div className={styles.moreMenu} role="menu" aria-label="More views">
-          {VIEWS.filter(([id]) => MORE.includes(id)).map(([id, name]) => (
-            <button
-              key={id}
-              type="button"
-              role="menuitemradio"
-              aria-checked={view === id}
-              onClick={() => {
-                onPick(id);
-                setOpen(false);
-              }}
-            >
-              {name}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
   );
 }
 

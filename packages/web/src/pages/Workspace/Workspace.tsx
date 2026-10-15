@@ -25,13 +25,17 @@ import { Pill } from '../../components/Pill/Pill.tsx';
 import { ChatTab, NewChatButton, useSessionMeta } from './ChatTab.tsx';
 import { DocsTab } from './DocsTab.tsx';
 import { NotesTab } from './NotesTab.tsx';
+import { AgentsPanel } from '../../components/AgentsPanel/AgentsPanel.tsx';
+import { Decisions, usePendingDecisions } from '../../components/Decisions/Decisions.tsx';
+import { useAgents, useLiveAgents } from '../../api/agents.ts';
 import { ReportTab } from './ReportTab.tsx';
 import { StatusTab, UPDATE_STATUS_PROMPT } from './StatusTab.tsx';
 import { useScanAgents } from '../../api/scans.ts';
 import { SidePanel } from './SidePanel.tsx';
 import styles from './Workspace.module.css';
 
-type Tab = 'chat' | 'docs' | 'notes' | 'file' | 'report' | 'status' | 'run';
+type Tab =
+  'chat' | 'docs' | 'notes' | 'agents' | 'decisions' | 'file' | 'report' | 'status' | 'run';
 
 /** The last file opened per project, so its tab stays while you visit other tabs. */
 const useOpenFiles = create<{
@@ -65,6 +69,8 @@ function parseSplat(splat: string): { tab: Tab; path: string | null } {
   if (splat.startsWith('files/')) return { tab: 'file', path: splat.slice(6) || null };
   if (splat.startsWith('reports/')) return { tab: 'report', path: splat.slice(8) || null };
   if (splat === 'notes') return { tab: 'notes', path: null };
+  if (splat === 'agents') return { tab: 'agents', path: null };
+  if (splat === 'decisions') return { tab: 'decisions', path: null };
   if (splat === 'status') return { tab: 'status', path: null };
   if (splat === 'run') return { tab: 'run', path: null };
   return { tab: 'chat', path: null };
@@ -108,6 +114,11 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
     if (tab === 'status') setStatusOpen(id, true);
   }, [tab, id, setStatusOpen]);
   const scans = useScanAgents(id);
+  const pendingDecisions = usePendingDecisions(id);
+  useLiveAgents(id);
+  const agentsBusy = (useAgents(id).data?.agents ?? []).filter(
+    (a) => a.status === 'running' || a.status === 'waiting',
+  ).length;
   const reportAgent = openReport?.split('/')[0] ?? '';
   const reportName = scans.data?.agents.find((a) => a.id === reportAgent)?.name ?? reportAgent;
 
@@ -204,6 +215,22 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
             </TabLink>
             <TabLink to={`${base}/notes`} active={tab === 'notes'}>
               Notes &amp; Tasks
+            </TabLink>
+            <TabLink to={`${base}/agents`} active={tab === 'agents'}>
+              Agents
+              {agentsBusy > 0 && (
+                <span className={styles.tabCount} aria-label={`${agentsBusy} running`}>
+                  {agentsBusy}
+                </span>
+              )}
+            </TabLink>
+            <TabLink to={`${base}/decisions`} active={tab === 'decisions'}>
+              Decisions
+              {pendingDecisions > 0 && (
+                <span className={styles.tabBadge} aria-label={`${pendingDecisions} pending`}>
+                  {pendingDecisions}
+                </span>
+              )}
             </TabLink>
             {openFile && (
               <>
@@ -304,6 +331,20 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
               />
             )}
             {tab === 'notes' && <NotesTab projectId={id} />}
+            {tab === 'agents' && (
+              <div className={styles.pane}>
+                <AgentsPanel
+                  projectId={id}
+                  branch={detail.data?.card.git?.branch ?? null}
+                  now={now}
+                />
+              </div>
+            )}
+            {tab === 'decisions' && (
+              <div className={styles.pane}>
+                <Decisions projectId={id} />
+              </div>
+            )}
             {tab === 'run' && <RunTab projectId={id} />}
             {tab === 'status' && (
               <StatusTab
