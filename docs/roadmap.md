@@ -129,7 +129,7 @@ check in CI is green on the tagged commit.
 - [x] Auto switch for background agents.
 - [x] Decisions: Claude proposes big choices as ADRs (`propose_decision`); approve, reject and
       done routes; Approve only / apply in chat / start an agent.
-- [ ] Decisions pill in the right column with a pending count.
+- [x] Decisions pill in the right column with a pending count.
 
 **Done when:** in Auto mode, Claude proposes a database switch instead of making it, the
 proposal waits in Decisions, and approving it updates the ADR and applies the change.

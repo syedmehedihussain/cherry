@@ -1,0 +1,243 @@
+.wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.wrap section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.heading {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--t2);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+.count {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: var(--r-pill);
+  background: var(--neutral-fill);
+  color: var(--t2);
+  font-size: var(--fs-xs);
+  text-align: center;
+}
+.empty {
+  margin: 0;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 12px;
+  border: 1px dashed var(--b);
+  border-radius: var(--r-lg);
+  color: var(--t3);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+.empty svg {
+  flex: none;
+  margin-top: 2px;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--b);
+  border-radius: var(--r-lg);
+  background: var(--s1);
+}
+.card[data-state='pending'] {
+  border-color: color-mix(in srgb, var(--warning) 45%, transparent);
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.num {
+  color: var(--t3);
+  font-size: var(--fs-xs);
+}
+.by {
+  color: var(--t3);
+  font-size: var(--fs-xs);
+}
+.title {
+  color: var(--t1);
+  font-weight: 500;
+  line-height: 1.35;
+  text-decoration: none;
+}
+.title:hover {
+  color: var(--accent-text-strong);
+  text-decoration: underline;
+}
+.context {
+  margin: 0;
+  color: var(--t2);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.proposal {
+  padding: 8px 10px;
+  border-left: 2px solid var(--accent-border);
+  background: var(--accent-fill-weak);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  font-size: var(--fs-sm);
+}
+.options {
+  color: var(--t2);
+  font-size: var(--fs-sm);
+}
+.options summary {
+  cursor: pointer;
+  color: var(--t3);
+}
+.applying {
+  margin: 0;
+  color: var(--t3);
+  font-size: var(--fs-sm);
+}
+.applying[data-kind='chat'],
+.applying[data-kind='agent'] {
+  color: var(--accent-text);
+}
+.note {
+  margin: 0;
+  color: var(--warning);
+  font-size: var(--fs-sm);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.menuWrap {
+  position: relative;
+}
+.menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 10;
+  min-width: 250px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  background: var(--s2);
+  border: 1px solid var(--bs);
+  border-radius: var(--r-lg);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+.menu button {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--t1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.menu button:hover,
+.menu button:focus-visible {
+  background: var(--s3);
+}
+.menuLabel {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+.menuDetail {
+  color: var(--t3);
+  font-size: var(--fs-xs);
+}
+.reject {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.input {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--bs);
+  border-radius: var(--r-md);
+  background: var(--s2);
+  color: var(--t1);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+.historyToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--t2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+.history {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.history li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+  font-size: var(--fs-sm);
+}
+.historyTitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--t2);
+  text-decoration: none;
+}
+.historyTitle:hover {
+  color: var(--t1);
+  text-decoration: underline;
+}
+.state {
+  flex: none;
+  font-size: var(--fs-xs);
+  color: var(--success);
+}
+.state[data-state='rejected'] {
+  color: var(--danger-text);
+}
+/* The card's Markdown is small, like the rest of the side panel. */
+.proposal div[data-variant='chat'],
+.options div[data-variant='chat'] {
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+.proposal div[data-variant='chat'] p {
+  margin: 0;
+}

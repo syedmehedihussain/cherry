@@ -1,5 +1,63 @@
 [
   {
+    "match": "^Decision ADR-0001 was approved",
+    "steps": [
+      {
+        "text": "Moving streaks to SQLite."
+      },
+      {
+        "call": {
+          "name": "decision_done",
+          "input": {
+            "adr": 1
+          }
+        }
+      },
+      {
+        "text": "Switched to SQLite."
+      }
+    ]
+  },
+  {
+    "match": "^Propose: storage",
+    "steps": [
+      {
+        "call": {
+          "name": "propose_decision",
+          "input": {
+            "title": "Move streaks to SQLite",
+            "context": "Streaks live in a JSON file. Reads get slow as the history grows.",
+            "options": [
+              {
+                "title": "SQLite",
+                "tradeoff": "A native dependency"
+              },
+              {
+                "title": "Keep JSON",
+                "tradeoff": "Slow reads"
+              }
+            ],
+            "proposal": "We propose **SQLite** because queries stay simple.",
+            "consequences": ["Good: fast reads"]
+          }
+        }
+      },
+      {
+        "call": {
+          "name": "propose_decision",
+          "input": {
+            "title": "Rename core to hub",
+            "context": "The name core is vague.",
+            "proposal": "We propose the name **hub**."
+          }
+        }
+      },
+      {
+        "text": "I proposed two decisions. They wait in Decisions."
+      }
+    ]
+  },
+  {
     "match": "^Auto: test and push",
     "steps": [
       {

@@ -2,6 +2,21 @@
 
 All notable changes to Cherry. Versions follow [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+### Added
+
+- **Auto mode**: the composer's Plan mode chip is now a mode menu with **Ask** (the default),
+  **Auto** and **Plan**. In Auto mode, edits and most commands run without an approval card.
+  `git push`, GitHub writes, publishing and deploying, and `rm -r` still ask. Blocked commands,
+  edits outside the project and secret files stay refused. Background agents have the same
+  Auto switch (ADR-0025).
+- **Decisions**: Claude proposes big project choices (stack, database, data format,
+  architecture, a rename) with `propose_decision` instead of making them. Each one is saved as
+  a Proposed ADR and waits in a new **Decisions** pill with a pending count. **Approve only**,
+  **Approve & apply in chat** or **Approve & start agent**, or **Reject** with a reason. The ADR
+  goes Pending → Approved (`Done: not yet`) → Done (a date), or Rejected (ADR-0026).
+
 ## 1.1.0 — 2026-10-12
 
 The first public release. It has everything planned for 1.0.0 (listed below; 1.0.0 was never

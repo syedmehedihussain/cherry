@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { useChat } from '../../api/chat.ts';
 import { useTasks } from '../../api/workspace.ts';
 import { AgentsPanel } from '../../components/AgentsPanel/AgentsPanel.tsx';
+import { Decisions, usePendingDecisions } from '../../components/Decisions/Decisions.tsx';
 import { GitPanel } from '../../components/GitHubBox/GitPanel.tsx';
 import { PlanUsage } from '../../components/PlanUsage/PlanUsage.tsx';
 import { ReadyToCommit } from '../../components/ReadyToCommit/ReadyToCommit.tsx';
@@ -16,6 +17,7 @@ const VIEWS = [
   ['live', 'Live'],
   ['github', 'GitHub'],
   ['agents', 'Agents'],
+  ['decisions', 'Decisions'],
   ['notes', 'Notes'],
 ] as const;
 
@@ -59,6 +61,7 @@ export function SidePanel({
   const setView = useSideView((s) => s.set);
   const label = VIEWS.find(([id]) => id === view)?.[1];
   const working = !!useChat(projectId).data?.running;
+  const pending = usePendingDecisions(projectId);
 
   return (
     <>
@@ -75,6 +78,11 @@ export function SidePanel({
             {name}
             {id === 'live' && working && (
               <span className={styles.liveDot} aria-label="Claude is working" />
+            )}
+            {id === 'decisions' && pending > 0 && (
+              <span className={styles.badge} aria-label={`${pending} pending`}>
+                {pending}
+              </span>
             )}
           </button>
         ))}
@@ -108,6 +116,7 @@ export function SidePanel({
           </div>
         )}
         {view === 'agents' && <AgentsPanel projectId={projectId} branch={branch} now={now} />}
+        {view === 'decisions' && <Decisions projectId={projectId} />}
         {view === 'notes' && (
           <div className={ws.notes} data-stacked>
             <TaskList projectId={projectId} />
