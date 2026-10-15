@@ -87,10 +87,11 @@
 .modelWrap {
   position: relative;
 }
-.modeMenu {
-  min-width: 260px;
+/* Two classes, so these win over .menu (defined further down). */
+.menu.modeMenu {
+  min-width: 270px;
 }
-.modeMenu button {
+.menu.modeMenu button {
   height: auto;
   padding: 6px 10px;
   display: flex;
