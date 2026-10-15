@@ -15,12 +15,16 @@ test('side panel switches between views and remembers the choice', async ({ page
   await expect(aside.getByRole('list', { name: 'Recent commits' })).toBeVisible();
   await expect(aside.getByRole('region', { name: 'Agents' })).toHaveCount(0);
 
-  await views.getByRole('tab', { name: 'Agents' }).click();
+  // Agents and Notes sit behind More; the tab then shows the open view's name.
+  await views.getByRole('tab', { name: 'More' }).click();
+  await aside.getByRole('menuitemradio', { name: 'Agents' }).click();
   await expect(aside.getByRole('tabpanel', { name: 'Agents' })).toBeVisible();
+  await expect(views.getByRole('tab', { name: 'Agents' })).toHaveAttribute('aria-selected', 'true');
   await expect(aside.getByLabel('Task')).toBeVisible();
 
   // Tasks and notes share one view: tasks on top, notes below.
-  await views.getByRole('tab', { name: 'Notes' }).click();
+  await views.getByRole('tab', { name: 'Agents' }).click();
+  await aside.getByRole('menuitemradio', { name: 'Notes' }).click();
   await expect(aside.getByRole('heading', { name: 'Tasks' })).toBeVisible();
   await expect(aside.getByRole('heading', { name: 'Notes' })).toBeVisible();
 

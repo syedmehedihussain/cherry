@@ -48,6 +48,53 @@
   text-align: center;
   vertical-align: 1px;
 }
+.moreWrap {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+}
+.moreWrap .view {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+.moreIcon {
+  flex: none;
+}
+.moreMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  min-width: 140px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  background: var(--s2);
+  border: 1px solid var(--bs);
+  border-radius: var(--r-lg);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+.moreMenu button {
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--t1);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.moreMenu button:hover,
+.moreMenu button:focus-visible {
+  background: var(--s3);
+}
+.moreMenu button[aria-checked='true'] {
+  color: var(--accent-text-strong);
+}
 .view:hover {
   color: var(--t1);
 }

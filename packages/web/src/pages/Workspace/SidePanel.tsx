@@ -1,4 +1,5 @@
-import { ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { create } from 'zustand';
 import { useChat } from '../../api/chat.ts';
 import { useTasks } from '../../api/workspace.ts';
@@ -16,12 +17,15 @@ const VIEWS = [
   ['overview', 'Overview'],
   ['live', 'Live'],
   ['github', 'GitHub'],
-  ['agents', 'Agents'],
   ['decisions', 'Decisions'],
+  ['agents', 'Agents'],
   ['notes', 'Notes'],
 ] as const;
 
 type View = (typeof VIEWS)[number][0];
+
+/** Views behind the More button, so the row stays short. */
+const MORE: readonly View[] = ['agents', 'notes'];
 
 const KEY = 'cherry.sideView';
 
@@ -66,7 +70,7 @@ export function SidePanel({
   return (
     <>
       <nav className={styles.views} role="tablist" aria-label="Side panel">
-        {VIEWS.map(([id, name]) => (
+        {VIEWS.filter(([id]) => !MORE.includes(id)).map(([id, name]) => (
           <button
             key={id}
             type="button"
@@ -86,6 +90,7 @@ export function SidePanel({
             )}
           </button>
         ))}
+        <MoreViews view={view} onPick={setView} />
       </nav>
       <div className={styles.body} role="tabpanel" aria-label={label}>
         {view === 'overview' && (
@@ -125,6 +130,62 @@ export function SidePanel({
         )}
       </div>
     </>
+  );
+}
+
+/** The last tab: "More", or the name of the extra view that is open. Opens a menu of them. */
+function MoreViews({ view, onPick }: { view: View; onPick(v: View): void }) {
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+  const current = MORE.includes(view) ? VIEWS.find(([id]) => id === view)?.[1] : null;
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className={styles.moreWrap} ref={wrap}>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={!!current}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className={styles.view}
+        onClick={() => setOpen(!open)}
+      >
+        {current ?? 'More'}
+        <ChevronDown size={12} strokeWidth={2} aria-hidden="true" className={styles.moreIcon} />
+      </button>
+      {open && (
+        <div className={styles.moreMenu} role="menu" aria-label="More views">
+          {VIEWS.filter(([id]) => MORE.includes(id)).map(([id, name]) => (
+            <button
+              key={id}
+              type="button"
+              role="menuitemradio"
+              aria-checked={view === id}
+              onClick={() => {
+                onPick(id);
+                setOpen(false);
+              }}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
