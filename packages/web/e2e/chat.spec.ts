@@ -61,3 +61,21 @@ test('chat: a command approval can be denied with a reason', async ({ page }) =>
   await card.getByRole('button', { name: 'Deny' }).click();
   await expect(page.getByText('Denied', { exact: true }).first()).toBeVisible();
 });
+
+test('chat: Auto mode runs commands without a card, but git push still asks', async ({ page }) => {
+  await page.goto('/p/core');
+  await page.getByRole('button', { name: 'Mode: Ask' }).click();
+  await page.getByRole('menuitemradio', { name: /Auto/ }).click();
+  await expect(page.getByRole('button', { name: 'Mode: Auto' })).toBeVisible();
+  await page.getByLabel('Message Claude').fill('Auto: test and push');
+  await page.getByLabel('Message Claude').press('Enter');
+  const card = page.getByRole('group', { name: 'Claude wants to run a command' });
+  await expect(card).toContainText('git push origin main');
+  await expect(page.getByRole('group', { name: 'Claude wants to run a command' })).toHaveCount(1);
+  await card.getByRole('button', { name: 'Allow', exact: true }).click();
+  await expect(page.getByText('Pushed.')).toBeVisible();
+  // The mode is remembered for the project; put it back for the other tests.
+  await page.reload();
+  await page.getByRole('button', { name: 'Mode: Auto' }).click();
+  await page.getByRole('menuitemradio', { name: /Ask/ }).click();
+});

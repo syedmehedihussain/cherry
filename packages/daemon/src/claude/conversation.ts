@@ -8,7 +8,7 @@ import {
 } from '@cherry/shared';
 import { resolveInside } from '../paths.ts';
 import type { ApprovalBroker, ApprovalDraft } from './approvals.ts';
-import { classifyCommand } from './commands.ts';
+import { autoNeedsApproval, classifyCommand } from './commands.ts';
 import type { DecisionBroker } from './decisions.ts';
 import { editPreview } from './preview.ts';
 import {
@@ -49,6 +49,8 @@ export interface ConversationOptions {
    * Default: edits and commands ask, everything else asks too.
    */
   policy?(tool: string, input: Record<string, unknown>): 'allow' | 'ask' | { deny: string };
+  /** Auto mode (ADR-0025): only pushing, publishing and rm -r still ask. */
+  auto?: boolean;
 }
 
 /**
@@ -61,8 +63,10 @@ export class Conversation {
   private readonly planTracker = new PlanTracker();
   private turnId = '';
   private dirtyText = new Set<string>();
+  private auto: boolean;
 
   constructor(private readonly o: ConversationOptions) {
+    this.auto = !!o.auto;
     for (const item of o.transcript.load()) {
       this.items.set(item.id, item);
       if (item.kind === 'tool' && item.verb === 'edit' && item.status === 'ok')
@@ -114,6 +118,11 @@ export class Conversation {
 
   startTurn(turnId: string): void {
     this.turnId = turnId;
+  }
+
+  /** The chat picks the mode per message. */
+  setAuto(auto: boolean): void {
+    this.auto = auto;
   }
 
   put(item: ChatItem, persist = true): void {
@@ -269,6 +278,8 @@ export class Conversation {
 
     let draft: ApprovalDraft;
     let ruleKeys: string[];
+    // Auto mode: what got past the deny rules below runs, except what autoNeedsApproval names.
+    let autoOk = this.auto;
     const base = { projectId: this.o.projectId, source: this.o.source, tool, cwd: this.o.cwd };
     if (EDIT_TOOLS.has(tool)) {
       const target =
@@ -310,6 +321,7 @@ export class Conversation {
         detail: null,
       };
       ruleKeys = [`run:${command}`];
+      if (autoNeedsApproval(command)) autoOk = false;
     } else {
       draft = {
         ...base,
@@ -322,6 +334,7 @@ export class Conversation {
       ruleKeys = [`tool:${tool}`];
     }
 
+    if (autoOk) return { allow: true };
     if (this.o.approvals.isAllowedBySession(this.o.source, ruleKeys)) return { allow: true };
 
     const { approval, done } = this.o.approvals.request(draft, this.o.source, ruleKeys);

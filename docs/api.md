@@ -73,7 +73,7 @@ the projects folder (see `security.md`).
 | Method | Path | Does |
 | --- | --- | --- |
 | GET | `/api/projects/:id/chat` | current session meta + last 200 transcript events + `plan` (Claude's checklist, in memory) |
-| POST | `/api/projects/:id/chat` | `{ text, planMode?, model?, effort?, attachments? }` → starts a turn; `effort` is low, medium, high, xhigh or max (ignored for Haiku); attachments are upload ids, listed for Claude to Read |
+| POST | `/api/projects/:id/chat` | `{ text, mode?, model?, effort?, attachments? }` → starts a turn; `mode` is ask (default), auto or plan (ADR-0025); `effort` is low, medium, high, xhigh or max (ignored for Haiku); attachments are upload ids, listed for Claude to Read |
 | POST | `/api/projects/:id/chat/stop` | interrupts the running turn |
 | POST | `/api/projects/:id/chat/explain` | `{ turnId }` → `{ text }`: Haiku summary of what that turn changed (diff capped at 6 KB, no tools). Only on the user's click; cached per turn (ADR-0022) |
 | POST | `/api/projects/:id/chat/new` | starts a fresh session |

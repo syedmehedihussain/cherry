@@ -1,5 +1,34 @@
 [
   {
+    "match": "^Auto: test and push",
+    "steps": [
+      {
+        "text": "Running the tests, then pushing."
+      },
+      {
+        "tool": {
+          "name": "Bash",
+          "input": {
+            "command": "npm test"
+          }
+        },
+        "output": "12 passed"
+      },
+      {
+        "tool": {
+          "name": "Bash",
+          "input": {
+            "command": "git push origin main"
+          }
+        },
+        "output": "pushed"
+      },
+      {
+        "text": "Pushed."
+      }
+    ]
+  },
+  {
     "match": "^Group these uncommitted changes",
     "steps": [
       {

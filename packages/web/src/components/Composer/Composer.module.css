@@ -74,8 +74,35 @@
   background: color-mix(in srgb, var(--accent) 14%, transparent);
   color: var(--accent-text-strong);
 }
+.chip[data-mode='auto'] {
+  border-color: color-mix(in srgb, var(--warning) 55%, transparent);
+  background: var(--warning-fill);
+  color: var(--warning);
+}
+.chip[data-mode='plan'] {
+  border-color: var(--accent-border);
+  background: var(--accent-fill);
+  color: var(--accent-text-strong);
+}
 .modelWrap {
   position: relative;
+}
+.modeMenu {
+  min-width: 260px;
+}
+.modeMenu button {
+  height: auto;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.modeLabel {
+  font-weight: 500;
+}
+.modeDetail {
+  color: var(--t3);
+  font-size: var(--fs-xs);
 }
 .menu {
   position: absolute;

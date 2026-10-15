@@ -3,10 +3,12 @@ import {
   ChevronDown,
   FileText,
   Gauge,
+  Hand,
   Map as MapIcon,
   Paperclip,
   Square,
   X,
+  Zap,
 } from 'lucide-react';
 import {
   useEffect,
@@ -22,10 +24,28 @@ import {
   MAX_ATTACHMENTS,
   MAX_UPLOAD_BYTES,
   MODELS,
+  type ChatMode,
   type Effort,
   type UploadedFile,
 } from '@cherry/shared';
 import styles from './Composer.module.css';
+
+/** The three chat modes (ADR-0025). */
+const MODES: { id: ChatMode; label: string; detail: string; Icon: typeof Hand }[] = [
+  { id: 'ask', label: 'Ask', detail: 'Every edit and command asks first', Icon: Hand },
+  {
+    id: 'auto',
+    label: 'Auto',
+    detail: 'Runs without asking; push, publish and rm -r still ask',
+    Icon: Zap,
+  },
+  {
+    id: 'plan',
+    label: 'Plan',
+    detail: 'Claude plans first and does not edit files',
+    Icon: MapIcon,
+  },
+];
 
 interface ComposerProps {
   running: boolean;
@@ -37,7 +57,9 @@ interface ComposerProps {
   effort: Effort | null;
   draft?: string;
   onDraftUsed?: () => void;
-  onSend(text: string, planMode: boolean, model: string, attachments: string[]): Promise<boolean>;
+  mode: ChatMode;
+  onMode(mode: ChatMode): void;
+  onSend(text: string, mode: ChatMode, model: string, attachments: string[]): Promise<boolean>;
   /** Stores one file and returns its id; without it there is no paperclip. */
   onUpload?: (file: File) => Promise<UploadedFile>;
   /** Deletes an uploaded file whose chip was removed before sending. */
@@ -53,6 +75,8 @@ export function Composer({
   disabled,
   model,
   effort,
+  mode,
+  onMode,
   draft,
   onDraftUsed,
   onSend,
@@ -63,8 +87,7 @@ export function Composer({
   onDiscard,
 }: ComposerProps) {
   const [text, setText] = useState('');
-  const [plan, setPlan] = useState(false);
-  const [menu, setMenu] = useState<'model' | 'effort' | null>(null);
+  const [menu, setMenu] = useState<'mode' | 'model' | 'effort' | null>(null);
   const [sending, setSending] = useState(false);
   const id = useId();
   const area = useRef<HTMLTextAreaElement>(null);
@@ -152,7 +175,7 @@ export function Composer({
         : 'Have a look at the attached files.');
     const ok = await onSend(
       body,
-      plan,
+      mode,
       model,
       ready.map((f) => f.id!),
     );
@@ -183,6 +206,7 @@ export function Composer({
   };
   const modelLabel = MODELS.find((m) => m.id === model)?.label ?? model;
   const effortLabel = EFFORTS.find((e) => e.id === effort)?.label ?? 'Default';
+  const current = MODES.find((m) => m.id === mode) ?? MODES[0]!;
 
   return (
     <div className={styles.wrap}>
@@ -289,16 +313,41 @@ export function Composer({
               />
             </>
           )}
-          <button
-            type="button"
-            className={styles.chip}
-            aria-pressed={plan}
-            onClick={() => setPlan(!plan)}
-            title="Claude plans first and does not edit files"
-          >
-            <MapIcon size={12} strokeWidth={1.8} aria-hidden="true" />
-            Plan mode
-          </button>
+          <div className={styles.modelWrap}>
+            <button
+              type="button"
+              className={styles.chip}
+              data-mode={mode}
+              aria-haspopup="menu"
+              aria-expanded={menu === 'mode'}
+              aria-label={`Mode: ${current.label}`}
+              title={current.detail}
+              onClick={() => setMenu(menu === 'mode' ? null : 'mode')}
+            >
+              <current.Icon size={12} strokeWidth={1.8} aria-hidden="true" />
+              {current.label}
+              <ChevronDown size={12} strokeWidth={2} aria-hidden="true" />
+            </button>
+            {menu === 'mode' && (
+              <div className={`${styles.menu} ${styles.modeMenu}`} role="menu" aria-label="Mode">
+                {MODES.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={m.id === mode}
+                    onClick={() => {
+                      onMode(m.id);
+                      setMenu(null);
+                    }}
+                  >
+                    <span className={styles.modeLabel}>{m.label}</span>
+                    <span className={styles.modeDetail}>{m.detail}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div className={styles.modelWrap}>
             <button
               type="button"

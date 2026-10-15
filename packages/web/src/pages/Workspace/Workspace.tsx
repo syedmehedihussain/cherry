@@ -115,7 +115,7 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
   const updateStatus = running
     ? undefined
     : () => {
-        void sendChat(id, UPDATE_STATUS_PROMPT, false);
+        void sendChat(id, UPDATE_STATUS_PROMPT, 'ask');
         void navigate(base);
       };
 

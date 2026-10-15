@@ -1,6 +1,12 @@
 import { FileText, MessageSquarePlus, RotateCcw } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { ChatItem, ChatState, Effort } from '@cherry/shared';
+import {
+  ChatModeSchema,
+  type ChatItem,
+  type ChatMode,
+  type ChatState,
+  type Effort,
+} from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
 import {
   answerApproval,
@@ -85,6 +91,25 @@ function toolRuns(items: ToolItem[]): (ToolItem | ToolItem[])[] {
   return out;
 }
 
+const modeKey = (projectId: string) => `cherry.chatMode.${projectId}`;
+
+/** The chat mode is remembered per project; Ask when nothing is stored. */
+function readMode(projectId: string): ChatMode {
+  try {
+    return ChatModeSchema.catch('ask').parse(localStorage.getItem(modeKey(projectId)));
+  } catch {
+    return 'ask';
+  }
+}
+
+function storeMode(projectId: string, mode: ChatMode): void {
+  try {
+    localStorage.setItem(modeKey(projectId), mode);
+  } catch {
+    // Private window: the mode just isn't remembered.
+  }
+}
+
 interface ChatTabProps {
   projectId: string;
   now: number;
@@ -96,6 +121,16 @@ export function ChatTab({ projectId, now }: ChatTabProps) {
   const setDraft = useChatDraft((s) => s.set);
   const [model, setModel] = useState<string | null>(null);
   const [effort, setEffort] = useState<Effort | null>(null);
+  const [mode, setMode] = useState<{ projectId: string; mode: ChatMode }>(() => ({
+    projectId,
+    mode: readMode(projectId),
+  }));
+  // Another project: load its mode while rendering, so the menu never shows the old one.
+  if (mode.projectId !== projectId) setMode({ projectId, mode: readMode(projectId) });
+  const changeMode = (m: ChatMode) => {
+    storeMode(projectId, m);
+    setMode({ projectId, mode: m });
+  };
   const [error, setError] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
@@ -120,11 +155,11 @@ export function ChatTab({ projectId, now }: ChatTabProps) {
     if (el) stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
   };
 
-  const send = async (text: string, planMode: boolean, m: string, attachments: string[] = []) => {
+  const send = async (text: string, chatMode: ChatMode, m: string, attachments: string[] = []) => {
     setError(null);
     stick.current = true;
     try {
-      await sendChat(projectId, text, planMode, m, attachments, effort ?? undefined);
+      await sendChat(projectId, text, chatMode, m, attachments, effort ?? undefined);
       if (!state?.conversationId)
         await queryClient.invalidateQueries({ queryKey: chatKey(projectId) });
       return true;
@@ -162,7 +197,7 @@ export function ChatTab({ projectId, now }: ChatTabProps) {
                 streamingId={state?.running && lastItem?.kind === 'text' ? lastItem.id : null}
                 onRetry={
                   lastUserText
-                    ? () => void send(lastUserText, false, model ?? state?.model ?? 'opus')
+                    ? () => void send(lastUserText, mode.mode, model ?? state?.model ?? 'opus')
                     : undefined
                 }
               />
@@ -186,6 +221,8 @@ export function ChatTab({ projectId, now }: ChatTabProps) {
           paused={paused}
           model={model ?? state?.model ?? 'sonnet'}
           effort={effort}
+          mode={mode.mode}
+          onMode={changeMode}
           draft={draft}
           onDraftUsed={() => setDraft(projectId, '')}
           onSend={send}

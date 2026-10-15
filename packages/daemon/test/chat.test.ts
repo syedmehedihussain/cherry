@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { ChatItem, ServerEvent } from '@cherry/shared';
-import { classifyCommand } from '../src/claude/commands.ts';
+import { autoNeedsApproval, classifyCommand } from '../src/claude/commands.ts';
 import { fakeRunner, type FakeLog, type Step } from '../src/claude/fake-runner.ts';
 import { HOST, testDaemon, write, type TestDaemon } from './helpers.ts';
 
@@ -237,6 +237,70 @@ describe('chat', () => {
     expect(log.permissions[0]?.message).toMatch(/inside the project/);
   });
 
+  describe('auto mode', () => {
+    it('runs edits and commands without an approval', async () => {
+      script = [
+        {
+          tool: {
+            name: 'Edit',
+            input: { file_path: 'lib/streaks.ts', old_string: '1', new_string: '2' },
+          },
+        },
+        { tool: { name: 'Bash', input: { command: 'npm test' } } },
+      ];
+      await api('POST', '/api/projects/core/chat', { text: 'go', mode: 'auto' });
+      await idle();
+      expect(d.approvals.list()).toHaveLength(0);
+      expect(log.permissions).toEqual([
+        { tool: 'Edit', allowed: true },
+        { tool: 'Bash', allowed: true },
+      ]);
+      expect(readFileSync(file(), 'utf8')).toBe('export const streaks = 2;\n');
+      expect(log.requests[0]?.appendSystemPrompt).toMatch(/auto mode/);
+      expect(log.requests[0]?.planMode).toBe(false);
+    });
+
+    it('still asks before git push', async () => {
+      script = [{ tool: { name: 'Bash', input: { command: 'git push origin main' } } }];
+      await api('POST', '/api/projects/core/chat', { text: 'ship', mode: 'auto' });
+      await until(() => pending().length === 1);
+      expect(pending()[0]).toMatchObject({ kind: 'command', command: 'git push origin main' });
+      await api('POST', `/api/approvals/${pending()[0]!.id}`, { answer: 'deny' });
+      await idle();
+    });
+
+    // The must-pass safety rules hold in every mode.
+    it('still blocks sudo, edits outside the project and secret files', async () => {
+      script = [
+        { tool: { name: 'Bash', input: { command: 'sudo rm -rf /' } } },
+        { tool: { name: 'Write', input: { file_path: '../other/x.ts', content: 'x' } } },
+        { tool: { name: 'Write', input: { file_path: '.env', content: 'KEY=x' } } },
+      ];
+      await api('POST', '/api/projects/core/chat', { text: 'go', mode: 'auto' });
+      await idle();
+      expect(d.approvals.list()).toHaveLength(0);
+      expect(log.permissions.map((p) => p.allowed)).toEqual([false, false, false]);
+      expect(log.permissions[2]?.message).toMatch(/secret/);
+    });
+
+    it('goes back to asking when the next message is in Ask mode', async () => {
+      script = [{ tool: { name: 'Bash', input: { command: 'npm test' } } }];
+      await api('POST', '/api/projects/core/chat', { text: 'a', mode: 'auto' });
+      await idle();
+      await api('POST', '/api/projects/core/chat', { text: 'b' });
+      await until(() => pending().length === 1);
+      await api('POST', `/api/approvals/${pending()[0]!.id}`, { answer: 'allow' });
+      await idle();
+    });
+
+    it('Plan mode is the SDK plan permission mode', async () => {
+      script = [{ text: 'ok' }];
+      await api('POST', '/api/projects/core/chat', { text: 'a', mode: 'plan' });
+      await idle();
+      expect(log.requests[0]?.planMode).toBe(true);
+    });
+  });
+
   it('holds a decision card until the user answers', async () => {
     script = [{ decision: card }, { text: 'Great.' }];
     await api('POST', '/api/projects/core/chat', { text: 'streaks?' });
@@ -315,4 +379,33 @@ describe('classifyCommand', () => {
     'git push --force origin agent/x',
     'curl -s https://api.example.com',
   ])('asks for %s', (cmd) => expect(classifyCommand(cmd, cwd).blocked).toBe(false));
+});
+
+describe('autoNeedsApproval', () => {
+  it.each([
+    'git push origin main',
+    'git add . && git push',
+    'gh pr create --fill',
+    'gh pr merge 3',
+    'gh repo delete x --yes',
+    'gh release create v1',
+    'npm publish',
+    'pnpm -r publish --access public',
+    'npx vercel --prod',
+    'pnpm dlx netlify deploy',
+    'fly deploy',
+    'rm -rf dist',
+    'rm -r build',
+  ])('asks for %s', (cmd) => expect(autoNeedsApproval(cmd)).toBe(true));
+
+  it.each([
+    'npm test',
+    'pnpm install',
+    'git commit -m x',
+    'git status',
+    'gh pr list',
+    'gh pr view 3',
+    'rm file.txt',
+    'npm run build',
+  ])('runs %s', (cmd) => expect(autoNeedsApproval(cmd)).toBe(false));
 });

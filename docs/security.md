@@ -55,9 +55,25 @@ Always blocked (never even shown as an approval):
 - `sudo …`
 - `curl … | sh`, `wget … | sh`
 
-Always need approval: every other Bash call, every Edit/Write in a chat session, every push.
+Always need approval (Ask mode, the default): every other Bash call, every Edit/Write in a chat
+session, every push.
 
 Auto-allowed: read-only tools listed in `claude-runner.md` for each session kind.
+
+### Auto mode (ADR-0025)
+
+The chat composer and the agent task box can switch to **Auto**. Then edits inside the project
+and most commands run without a card, but they still show as timeline rows. In Auto mode:
+
+- **Still blocked:** everything in the list above, edits outside the project, and secret files.
+  The path guard and the secret guard run before every tool call in every mode.
+- **Still asks:** `git push`; GitHub writes (`gh pr create|merge|close`,
+  `gh repo create|delete|edit`, `gh release create`); publishing and deploying (`npm`, `pnpm`,
+  `yarn` or `bun publish`, `vercel`, `netlify deploy`, `fly deploy`, `firebase deploy`,
+  `gh-pages`, `wrangler`), also through `npx` or `pnpm dlx`; and any `rm -r`, even inside the
+  project.
+- The mode is sent with every message, so it can't carry over by mistake. The chat remembers it
+  per project in the browser.
 
 ## Running the project's app
 

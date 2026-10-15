@@ -8,6 +8,7 @@ import {
   type Approval,
   type ApprovalAnswer,
   type ChatItem,
+  type ChatMode,
   type ChatState,
   type DecisionAnswer,
   type UploadedFile,
@@ -30,14 +31,14 @@ export const useChat = (id: string) =>
 export const sendChat = (
   id: string,
   text: string,
-  planMode: boolean,
+  mode: ChatMode,
   model?: string,
   attachments: string[] = [],
   effort?: string,
 ) =>
   api<{ turnId: string; conversationId: string }>('POST', `${base(id)}/chat`, {
     text,
-    planMode,
+    mode,
     ...(model ? { model } : {}),
     ...(attachments.length ? { attachments } : {}),
     ...(effort ? { effort } : {}),

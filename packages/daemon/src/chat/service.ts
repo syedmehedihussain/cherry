@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
-import type { ChatSend, ChatState, Phase } from '@cherry/shared';
+import type { ChatMode, ChatSend, ChatState, Phase } from '@cherry/shared';
 import type { ConfigStore } from '../config.ts';
 import type { Db } from '../db.ts';
 import type { EventHub } from '../events.ts';
@@ -28,7 +28,7 @@ export function withAttachments(text: string, attachments: string[]): string {
   ].join('\n');
 }
 
-export function chatSystemPrompt(phase: Phase | null): string {
+export function chatSystemPrompt(phase: Phase | null, mode: ChatMode = 'ask'): string {
   return [
     'You are working inside Cherry, a workspace that follows a strict engineering process.',
     '- Read CLAUDE.md and _project/STATUS.md before anything else, when they exist.',
@@ -36,7 +36,9 @@ export function chatSystemPrompt(phase: Phase | null): string {
     '- Keep answers short and plain. Name the file, then the change.',
     '- For work with more than one step, first record the steps with your task tool (TaskCreate), then do them one by one: mark a step in_progress when you start it and completed when it is done. The user follows this list live.',
     '- Keep .gitignore current: when you add something that makes build output, caches, dependencies, local env files or secrets, add it to .gitignore (create the file if it is missing).',
-    '- Every edit and command is shown to the user for approval. If they deny one, ask what they want instead.',
+    mode === 'auto'
+      ? '- You are in auto mode: edits and most commands run without asking. Pushing, publishing and deleting folders still ask. If the user denies one, ask what they want instead.'
+      : '- Every edit and command is shown to the user for approval. If they deny one, ask what they want instead.',
     phase
       ? `- Current phase: ${phase}. Do not write production code in the plan or design phase.`
       : '- The project phase is unknown.',
@@ -48,6 +50,8 @@ interface Live {
   claudeSessionId: string | null;
   conversation: Conversation;
   model: string;
+  /** The mode of the last message, reused when Cherry sends one itself. */
+  mode: ChatMode;
   startedAt: number;
   turns: number;
   running: RunHandle | null;
@@ -101,6 +105,7 @@ export class ChatService {
       claudeSessionId,
       conversation,
       model,
+      mode: 'ask',
       startedAt,
       turns,
       running: null,
@@ -203,6 +208,8 @@ export class ChatService {
     const current = live;
     current.turnId = turnId;
     current.conversation.startTurn(turnId);
+    current.conversation.setAuto(body.mode === 'auto');
+    current.mode = body.mode;
     current.conversation.addUser(`u_${turnId}`, body.text, body.attachments);
 
     const phase = readProjectFiles(dir).projectJson?.phase ?? null;
@@ -213,8 +220,8 @@ export class ChatService {
       resume: current.claudeSessionId,
       model,
       ...(body.effort && model !== 'haiku' ? { effort: body.effort } : {}),
-      planMode: body.planMode,
-      appendSystemPrompt: chatSystemPrompt(phase),
+      planMode: body.mode === 'plan',
+      appendSystemPrompt: chatSystemPrompt(phase, body.mode),
       allowedTools: READ_TOOLS,
       decisions: true,
       onPermission: (tool, input, id) => current.conversation.permission(tool, input, id),

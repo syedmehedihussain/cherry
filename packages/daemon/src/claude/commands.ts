@@ -64,3 +64,34 @@ export function classifyCommand(command: string, cwd: string): CommandVerdict {
   }
   return { blocked: false };
 }
+
+const GH_WRITES: Record<string, string[]> = {
+  pr: ['create', 'merge', 'close'],
+  repo: ['create', 'delete', 'edit'],
+  release: ['create'],
+};
+
+/**
+ * In auto mode most commands run without asking (ADR-0025). These still ask: pushing, GitHub
+ * writes, publishing and deploying, and deleting folders inside the project. Blocked commands
+ * are checked first with classifyCommand.
+ */
+export function autoNeedsApproval(command: string): boolean {
+  for (const seg of segments(command)) {
+    const t = tokens(seg);
+    // `npx vercel`, `pnpm dlx netlify deploy`: look at the tool that is launched.
+    while (['npx', 'pnpx', 'bunx'].includes(t[0] ?? '')) t.shift();
+    if (['pnpm', 'yarn', 'npm'].includes(t[0] ?? '') && ['dlx', 'exec'].includes(t[1] ?? ''))
+      t.splice(0, 2);
+    const prog = path.basename(t[0] ?? '');
+    const args = t.slice(1).filter((x) => !x.startsWith('-'));
+    if (prog === 'git' && args[0] === 'push') return true;
+    if (prog === 'gh' && GH_WRITES[args[0] ?? '']?.includes(args[1] ?? '')) return true;
+    if (['npm', 'pnpm', 'yarn', 'bun'].includes(prog) && args.includes('publish')) return true;
+    if (['vercel', 'gh-pages', 'wrangler'].includes(prog)) return true;
+    if (['netlify', 'fly', 'flyctl', 'firebase'].includes(prog) && args[0] === 'deploy')
+      return true;
+    if (prog === 'rm' && /(^|\s)-[a-zA-Z]*[rR]|--recursive/.test(t.slice(1).join(' '))) return true;
+  }
+  return false;
+}

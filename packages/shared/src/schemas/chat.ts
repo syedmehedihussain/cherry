@@ -221,9 +221,13 @@ export type ChatState = z.infer<typeof ChatStateSchema>;
 export const MAX_ATTACHMENTS = 8;
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
+/** Ask: every edit and command asks. Auto: most run without asking (ADR-0025). Plan: no edits. */
+export const ChatModeSchema = z.enum(['ask', 'auto', 'plan']);
+export type ChatMode = z.infer<typeof ChatModeSchema>;
+
 export const ChatSendSchema = z.object({
   text: z.string().min(1).max(20_000),
-  planMode: z.boolean().default(false),
+  mode: ChatModeSchema.default('ask'),
   model: z.enum(['sonnet', 'opus', 'haiku']).optional(),
   /** Reasoning effort for this turn; left out, the model's default is used. */
   effort: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).optional(),
