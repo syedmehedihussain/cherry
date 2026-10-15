@@ -23,7 +23,7 @@ test('scan agent: run → report in the centre, with history', async ({ page }) 
   const aside = page.getByRole('complementary', { name: 'Repository and agents' });
   await aside
     .getByRole('tablist', { name: 'Side panel' })
-    .getByRole('tab', { name: /^More|^Agents|^Notes/ })
+    .getByRole('tab', { name: /^More|^Agents/ })
     .click();
   await aside.getByRole('menuitemradio', { name: 'Agents' }).click();
 

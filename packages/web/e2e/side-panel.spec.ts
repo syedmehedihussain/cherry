@@ -15,25 +15,20 @@ test('side panel switches between views and remembers the choice', async ({ page
   await expect(aside.getByRole('list', { name: 'Recent commits' })).toBeVisible();
   await expect(aside.getByRole('region', { name: 'Agents' })).toHaveCount(0);
 
-  // Agents and Notes sit behind More; the tab then shows the open view's name.
+  // Agents sit behind More; the tab then shows the open view's name.
   await views.getByRole('tab', { name: 'More' }).click();
+  await expect(aside.getByRole('menuitemradio', { name: 'Notes' })).toHaveCount(0);
   await aside.getByRole('menuitemradio', { name: 'Agents' }).click();
   await expect(aside.getByRole('tabpanel', { name: 'Agents' })).toBeVisible();
   await expect(views.getByRole('tab', { name: 'Agents' })).toHaveAttribute('aria-selected', 'true');
   await expect(aside.getByLabel('Task')).toBeVisible();
 
-  // Tasks and notes share one view: tasks on top, notes below.
-  await views.getByRole('tab', { name: 'Agents' }).click();
-  await aside.getByRole('menuitemradio', { name: 'Notes' }).click();
-  await expect(aside.getByRole('heading', { name: 'Tasks' })).toBeVisible();
-  await expect(aside.getByRole('heading', { name: 'Notes' })).toBeVisible();
-
   await page.reload();
-  await expect(views.getByRole('tab', { name: 'Notes' })).toHaveAttribute('aria-selected', 'true');
+  await expect(views.getByRole('tab', { name: 'Agents' })).toHaveAttribute('aria-selected', 'true');
 });
 
-// The Overview box adds a task to the task list and shows it in the Tasks view.
-test('overview box adds a task and opens Notes', async ({ page }) => {
+// The Overview box adds a task to the task list and opens the Notes & Tasks tab in the centre.
+test('overview box adds a task and opens Notes & Tasks', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
   const aside = page.getByRole('complementary', { name: 'Repository and agents' });
@@ -45,8 +40,8 @@ test('overview box adds a task and opens Notes', async ({ page }) => {
   await aside.getByRole('textbox', { name: 'Task' }).fill('Fix the hero section');
   await aside.getByRole('button', { name: 'Add' }).click();
 
-  await expect(aside.getByRole('tab', { name: 'Notes' })).toHaveAttribute('aria-selected', 'true');
-  await expect(aside.getByRole('button', { name: /Fix the hero section/ })).toBeVisible();
+  await expect(page).toHaveURL(/\/p\/core\/notes$/);
+  await expect(page.getByRole('button', { name: /Fix the hero section/ })).toBeVisible();
 
   await aside.getByRole('tab', { name: 'Overview' }).click();
   await aside.getByRole('button', { name: /^Type/ }).click();

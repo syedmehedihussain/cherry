@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { create } from 'zustand';
 import { useChat } from '../../api/chat.ts';
 import { useTasks } from '../../api/workspace.ts';
@@ -9,9 +10,7 @@ import { GitPanel } from '../../components/GitHubBox/GitPanel.tsx';
 import { PlanUsage } from '../../components/PlanUsage/PlanUsage.tsx';
 import { ReadyToCommit } from '../../components/ReadyToCommit/ReadyToCommit.tsx';
 import { LiveView } from './LiveView.tsx';
-import { NotesEditor, TaskList } from './NotesTab.tsx';
 import styles from './SidePanel.module.css';
-import ws from './Workspace.module.css';
 
 const VIEWS = [
   ['overview', 'Overview'],
@@ -19,13 +18,12 @@ const VIEWS = [
   ['github', 'GitHub'],
   ['decisions', 'Decisions'],
   ['agents', 'Agents'],
-  ['notes', 'Notes'],
 ] as const;
 
 type View = (typeof VIEWS)[number][0];
 
 /** Views behind the More button, so the row stays short. */
-const MORE: readonly View[] = ['agents', 'notes'];
+const MORE: readonly View[] = ['agents'];
 
 const KEY = 'cherry.sideView';
 
@@ -66,6 +64,9 @@ export function SidePanel({
   const label = VIEWS.find(([id]) => id === view)?.[1];
   const working = !!useChat(projectId).data?.running;
   const pending = usePendingDecisions(projectId);
+  const navigate = useNavigate();
+  // Tasks and notes live in the Notes & Tasks tab in the centre.
+  const openNotes = () => navigate(`/p/${encodeURIComponent(projectId)}/notes`);
 
   return (
     <>
@@ -98,7 +99,7 @@ export function SidePanel({
             <div className={styles.pad}>
               <GitPanel key={projectId} projectId={projectId} now={now} collapsible />
               <PlanUsage now={now} />
-              <TasksLine projectId={projectId} onOpen={() => setView('notes')} />
+              <TasksLine projectId={projectId} onOpen={openNotes} />
             </div>
             <AgentsPanel
               projectId={projectId}
@@ -107,7 +108,7 @@ export function SidePanel({
               limit={3}
               onSeeAll={() => setView('agents')}
               kinds
-              onDone={(kind) => setView(kind === 'agent' ? 'agents' : 'notes')}
+              onDone={(kind) => (kind === 'agent' ? setView('agents') : openNotes())}
             />
           </>
         )}
@@ -122,12 +123,6 @@ export function SidePanel({
         )}
         {view === 'agents' && <AgentsPanel projectId={projectId} branch={branch} now={now} />}
         {view === 'decisions' && <Decisions projectId={projectId} />}
-        {view === 'notes' && (
-          <div className={ws.notes} data-stacked>
-            <TaskList projectId={projectId} />
-            <NotesEditor projectId={projectId} />
-          </div>
-        )}
       </div>
     </>
   );
