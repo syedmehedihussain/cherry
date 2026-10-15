@@ -93,9 +93,19 @@ export async function startDaemon(): Promise<RunInfo> {
   throw new Error(`The daemon did not start. See ${path.join(logDir, 'daemon.log')}`);
 }
 
+/** SIGTERM, then SIGKILL if the daemon is still there after 12 s (it exits itself within 10). */
 export async function stopDaemon(info: RunInfo): Promise<boolean> {
   process.kill(info.pid, 'SIGTERM');
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 120; i++) {
+    await sleep(100);
+    if (!pidAlive(info.pid)) return true;
+  }
+  try {
+    process.kill(info.pid, 'SIGKILL');
+  } catch {
+    return true;
+  }
+  for (let i = 0; i < 20; i++) {
     await sleep(100);
     if (!pidAlive(info.pid)) return true;
   }

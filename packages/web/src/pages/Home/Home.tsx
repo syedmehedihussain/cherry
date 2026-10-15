@@ -9,6 +9,7 @@ import { MagnetAvatar } from '../../components/MagnetAvatar/MagnetAvatar.tsx';
 import { ProjectCard, ProjectCardSkeleton } from '../../components/ProjectCard/ProjectCard.tsx';
 import { ProjectTable } from '../../components/ProjectTable/ProjectTable.tsx';
 import { PromptBox } from '../../components/PromptBox/PromptBox.tsx';
+import { Shutdown } from '../../components/Shutdown/Shutdown.tsx';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
 import { useNow } from '../../lib/useNow.ts';
 import { useUi } from '../../state/ui.ts';
@@ -171,6 +172,7 @@ export function Home() {
             </section>
           </>
         )}
+        <Shutdown />
       </main>
     </div>
   );

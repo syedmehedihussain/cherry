@@ -18,7 +18,7 @@ import { AuthStore, SESSION_COOKIE, SESSION_TTL_MS, secretsMatch } from './auth.
 import type { ConfigStore } from './config.ts';
 import type { EventHub } from './events.ts';
 import type { HealthService } from './health-service.ts';
-import { HttpError, badRequest } from './http.ts';
+import { HttpError, badRequest, conflict } from './http.ts';
 import { PathOutsideRoot, expandHome, tildify } from './paths.ts';
 import type { PlanUsageService } from './plan-usage.ts';
 import type { ProjectService } from './projects/service.ts';
@@ -39,6 +39,8 @@ export interface ServerDeps {
   webDist?: string;
   /** Extra routes from later milestones. */
   routes?: ((app: FastifyInstance) => void)[];
+  /** Stops the daemon process; the Shut down button on Home calls it. Not set in tests. */
+  onShutdown?: () => void;
 }
 
 const PUBLIC_API = new Set(['POST /api/session']);
@@ -53,12 +55,22 @@ function withLocalhostAliases(origins: string[]): string[] {
 }
 
 export function buildServer(deps: ServerDeps): FastifyInstance {
-  const app = Fastify({ logger: false, bodyLimit: 2 * 1024 * 1024 });
+  // On close, drop open connections instead of waiting for them to end (a request that waits on
+  // Claude would otherwise keep the daemon alive).
+  const app = Fastify({ logger: false, bodyLimit: 2 * 1024 * 1024, forceCloseConnections: true });
   const origins = withLocalhostAliases(deps.origins);
   const hosts = new Set(origins.map((o) => new URL(o).host));
 
   void app.register(fastifyCookie);
-  void app.register(fastifyWebsocket);
+  void app.register(fastifyWebsocket, {
+    // The default sends a close frame and waits for each browser to answer; a sleeping tab never
+    // does, and the daemon then hangs for 30 s on stop. Cut the sockets: the UI reconnects.
+    preClose(this: FastifyInstance, done: () => void) {
+      for (const client of this.websocketServer.clients) client.terminate();
+      this.websocketServer.close();
+      done();
+    },
+  });
 
   const sessionId = (req: FastifyRequest) => req.cookies[SESSION_COOKIE];
 
@@ -164,6 +176,13 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
 
   // --- System ---
   app.get('/api/health', () => deps.health.get());
+  // Home's Shut down button. The reply goes out first, then the daemon stops.
+  app.post('/api/shutdown', async (_req, reply) => {
+    const stop = deps.onShutdown;
+    if (!stop) throw conflict('Cherry cannot be shut down from here.');
+    reply.raw.once('finish', () => setTimeout(stop, 50));
+    return { ok: true };
+  });
   app.post('/api/health/recheck', () => deps.health.recheck());
   app.get('/api/claude/usage', () => deps.planUsage.get());
   app.get('/api/config', () => ({

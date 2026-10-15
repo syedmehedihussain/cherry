@@ -85,6 +85,8 @@ export interface DaemonOptions {
   github?: SurveyGitHub;
   /** Replace `gh pr list` (tests). */
   prList?: PrLister;
+  /** Stops the process (main.ts); enables POST /api/shutdown. */
+  onShutdown?: () => void;
 }
 
 const WEB_DIST = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../web/dist');
@@ -178,6 +180,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     cliSecret,
     origins: [`http://127.0.0.1:${opts.port}`, ...(opts.extraOrigins ?? [])],
     webDist: WEB_DIST,
+    ...(opts.onShutdown ? { onShutdown: opts.onShutdown } : {}),
     routes: [
       workspaceRoutes(config, gitInfo),
       chatRoutes(chat, approvals, decisions),

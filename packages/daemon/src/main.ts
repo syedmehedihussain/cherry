@@ -38,6 +38,7 @@ const daemon = createDaemon({
   port,
   extraOrigins: webUrl.endsWith(`:${port}`) ? [] : [webUrl],
   watch: true,
+  onShutdown: () => void stop(),
 });
 
 // Loopback only (ADR-0005). Never bind 0.0.0.0.
@@ -68,6 +69,8 @@ let stopping = false;
 async function stop() {
   if (stopping) return;
   stopping = true;
+  // Whatever still hangs on close, the process ends within 10 s.
+  setTimeout(() => process.exit(0), 10_000).unref();
   try {
     rmSync(runFile, { force: true });
     await daemon.close();

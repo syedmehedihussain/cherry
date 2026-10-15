@@ -54,6 +54,7 @@ export async function testDaemon(
     runner?: import('../src/claude/runner.ts').Runner;
     github?: import('../src/survey/service.ts').SurveyGitHub;
     prList?: import('../src/projects/git-actions.ts').PrLister;
+    onShutdown?: () => void;
   } = {},
 ): Promise<TestDaemon> {
   const home = tempDir('cherry-home-');
@@ -80,6 +81,7 @@ export async function testDaemon(
       createRepo: async () => ({ ok: false, error: 'no gh in tests' }),
     },
     prList: opts.prList ?? (async () => ({ prs: [], error: 'no gh in tests' })),
+    ...(opts.onShutdown ? { onShutdown: opts.onShutdown } : {}),
   });
   await daemon.app.ready();
   return {

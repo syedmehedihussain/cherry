@@ -16,6 +16,19 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
   a Proposed ADR and waits in a new **Decisions** pill with a pending count. **Approve only**,
   **Approve & apply in chat** or **Approve & start agent**, or **Reject** with a reason. The ADR
   goes Pending → Approved (`Done: not yet`) → Done (a date), or Rejected (ADR-0026).
+- **Shut down Cherry** button at the bottom of Home. It asks once, stops the daemon and shows
+  how to start it again.
+
+### Changed
+
+- The side panel shows Overview, Live, GitHub, Decisions and **More**; Agents and Notes are in
+  More.
+
+### Fixed
+
+- `cherry down` could leave the daemon running: a browser tab that did not answer the
+  WebSocket close kept it open for 30 s. Sockets and open requests are now cut at once, the
+  daemon always exits within 10 s, and `cherry down` uses SIGKILL after 12 s.
 
 ## 1.1.0 — 2026-10-12
 

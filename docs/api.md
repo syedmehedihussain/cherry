@@ -23,6 +23,7 @@ the projects folder (see `security.md`).
 | --- | --- | --- |
 | GET | `/api/health` | `{ ok, version, claude: { found, loggedIn, version }, git, gh }` |
 | POST | `/api/health/recheck` | same, after re-running checks ("Check again" button) |
+| POST | `/api/shutdown` | `{ ok: true }`, then the daemon stops (Home → Shut down Cherry). Stops running chats, agents and apps, like `cherry down` |
 | GET | `/api/claude/usage` | `{ available, plan, fiveHour, week, fetchedAt }`; each window `{ usedPercent, resetsAt }` or null. claude.ai plan limits from the Agent SDK (experimental `/usage` call, no turn), cached 60 s |
 | GET | `/api/config` | config.json |
 | PATCH | `/api/config` | updated config |
