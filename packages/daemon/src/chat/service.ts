@@ -6,6 +6,7 @@ import type { ConfigStore } from '../config.ts';
 import type { Db } from '../db.ts';
 import type { EventHub } from '../events.ts';
 import { conflict } from '../http.ts';
+import { DECISIONS_PROMPT, type AdrService } from '../adr/service.ts';
 import type { ApprovalBroker } from '../claude/approvals.ts';
 import { Conversation } from '../claude/conversation.ts';
 import type { DecisionBroker } from '../claude/decisions.ts';
@@ -33,6 +34,7 @@ export function chatSystemPrompt(phase: Phase | null, mode: ChatMode = 'ask'): s
     'You are working inside Cherry, a workspace that follows a strict engineering process.',
     '- Read CLAUDE.md and _project/STATUS.md before anything else, when they exist.',
     '- When there is a real choice to make, call the ask_decision tool. Do not pick for the user.',
+    DECISIONS_PROMPT,
     '- Keep answers short and plain. Name the file, then the change.',
     '- For work with more than one step, first record the steps with your task tool (TaskCreate), then do them one by one: mark a step in_progress when you start it and completed when it is done. The user follows this list live.',
     '- Keep .gitignore current: when you add something that makes build output, caches, dependencies, local env files or secrets, add it to .gitignore (create the file if it is missing).',
@@ -72,6 +74,7 @@ export class ChatService {
     private readonly decisions: DecisionBroker,
     private readonly runner: Runner,
     private readonly home: string,
+    private readonly adrs?: AdrService,
   ) {}
 
   private transcriptFile(conversationId: string): string {
@@ -224,6 +227,7 @@ export class ChatService {
       appendSystemPrompt: chatSystemPrompt(phase, body.mode),
       allowedTools: READ_TOOLS,
       decisions: true,
+      ...(this.adrs ? { extraTools: this.adrs.tools(projectId, 'chat') } : {}),
       onPermission: (tool, input, id) => current.conversation.permission(tool, input, id),
       onDecision: (input) => current.conversation.decision(input),
       onEvent: (ev) => {
@@ -251,6 +255,12 @@ export class ChatService {
       this.publishState(projectId, current);
     }
     return { turnId, conversationId: current.conversationId };
+  }
+
+  /** A message Cherry sends for the user (an approved decision), in the mode they used last. */
+  sendAs(projectId: string, text: string): { turnId: string; conversationId: string } {
+    const mode = this.current(projectId)?.mode ?? 'ask';
+    return this.send(projectId, { text, mode, attachments: [] });
   }
 
   /** Summarises one turn's file changes with Haiku. Only on the user's click (ADR-0022). */

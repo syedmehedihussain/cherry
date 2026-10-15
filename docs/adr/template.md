@@ -1,8 +1,9 @@
 # NNNN — Title in plain words
 
-- **Status:** Proposed | Accepted | Superseded by NNNN
+- **Status:** Proposed | Accepted | Rejected | Superseded by NNNN
 - **Date:** YYYY-MM-DD
 - **Decided by:** Meddy
+<!-- Optional (ADR-0026): - **Done:** not yet | YYYY-MM-DD   - **Rejected because:** … -->
 
 ## Context
 

@@ -229,6 +229,17 @@ CREATE TABLE approvals (
   answered_at   INTEGER
 );
 
+-- Decisions tab (ADR-0026, migration 004). The decision's state lives in the ADR file; this
+-- only links an approved decision to the chat turn or agent making the change.
+CREATE TABLE decision_links (
+  project_id    TEXT NOT NULL,
+  adr_number    INTEGER NOT NULL,
+  kind          TEXT NOT NULL,          -- chat | agent
+  ref           TEXT NOT NULL,          -- turn id or agent id
+  created_at    INTEGER NOT NULL,
+  PRIMARY KEY (project_id, adr_number)
+);
+
 CREATE TABLE usage_days (
   day           TEXT PRIMARY KEY,       -- YYYY-MM-DD local
   sessions      INTEGER NOT NULL DEFAULT 0,

@@ -125,6 +125,23 @@ proposal and the create progress, and is pushed as `survey.updated` on every cha
 | POST | `/api/agents/:agentId/retry` | new run with the same task |
 | POST | `/api/agents/:agentId/stop` | interrupt |
 
+## Decisions (ADR-0026)
+
+A decision is an ADR in the project's ADR folder (`docs/adr/` unless `project.json` `docs.adr`
+says otherwise), addressed by its number. The file holds the state; see
+`docs/project-standard.md` → ADR format.
+
+| Method | Path | Does |
+| --- | --- | --- |
+| GET | `/api/projects/:id/decisions` | `{ dir, decisions: Adr[] }`, newest number first; `state` is pending, approved, done or rejected; `applying` names the chat turn or agent making an approved change |
+| POST | `/api/projects/:id/decisions/:n/approve` | `{ apply: none\|chat\|agent }` → Status Accepted, `Done: not yet`; chat or agent also starts the change. Returns `{ decision, warning }`; `warning` says why the change was not started (for example, the chat is busy) |
+| POST | `/api/projects/:id/decisions/:n/apply` | `{ apply: chat\|agent }` → starts an approved change again |
+| POST | `/api/projects/:id/decisions/:n/reject` | `{ reason? }` → Status Rejected, `Rejected because: …`; the file stays |
+| POST | `/api/projects/:id/decisions/:n/done` | approved → `Done: YYYY-MM-DD` |
+
+Claude proposes with the `propose_decision` tool (chat and agents) and closes an applied one with
+`decision_done` (chat only; an agent's decision is done when the user accepts its work).
+
 ## Scan agents and reports (ADR-0012)
 
 | Method | Path | Does |
@@ -172,6 +189,7 @@ One socket at `/ws`. Every event: `{ type, at, ...payload }`. The client subscri
 | `git.result` | `{ projectId, action: pull\|push, ok, message }` | project:id |
 | `tree.changed` | `{ paths: string[] }` | project:id |
 | `agent.updated` | `{ projectId, agent }` (status, last timeline rows, waiting approval, change size) | project:id |
+| `decisions.updated` | `{ projectId }` a decision was proposed, approved, rejected or done; re-fetch the list | project:id |
 | `survey.updated` | `{ projectId, state }` (full survey state) | project:id |
 | `calibrate.progress` | `{ step, rows, found }` | project:id |
 | `calibrate.proposal` | proposal | project:id |

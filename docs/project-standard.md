@@ -110,4 +110,20 @@ _Updated: 2026-10-08 14:10_
 ## ADR format
 
 `docs/adr/NNNN-kebab-title.md`, numbered from 0001, never renumbered. Template in
-[`adr/template.md`](adr/template.md). Status is one of `Proposed`, `Accepted`, `Superseded by NNNN`.
+[`adr/template.md`](adr/template.md). Status is one of `Proposed`, `Accepted`, `Rejected`,
+`Superseded by NNNN`.
+
+Optional header lines used by the Decisions tab (ADR-0026):
+
+- `- **Proposed by:** Claude (chat)`: Claude wrote the proposal with `propose_decision`.
+- `- **Done:** not yet` on an Accepted ADR: approved, but the change is not made yet. Cherry
+  writes the date (`- **Done:** 2026-10-15`) when it is made. An Accepted ADR without this line
+  counts as done.
+- `- **Rejected because:** …` on a Rejected ADR. The file stays as a record.
+
+| Decisions tab | Status line | Done line |
+| --- | --- | --- |
+| Pending | Proposed | none |
+| Approved | Accepted | `not yet` |
+| Done | Accepted or Superseded | a date, or none |
+| Rejected | Rejected | none |

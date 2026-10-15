@@ -10,6 +10,8 @@ import { HealthService } from './health-service.ts';
 import { PlanUsageService } from './plan-usage.ts';
 import { NoteService } from './notes/service.ts';
 import { noteRoutes } from './routes/notes.ts';
+import { adrRoutes } from './routes/decisions.ts';
+import { AdrService } from './adr/service.ts';
 import { CommitService } from './projects/commits.ts';
 import { commitRoutes } from './routes/commits.ts';
 import { ensureMagnetFiles } from './magnet/files.ts';
@@ -52,6 +54,7 @@ export interface Daemon {
   calibration: CalibrationService;
   survey: SurveyService;
   agents: AgentManager;
+  adrs: AdrService;
   scans: ScanService;
   magnet: MagnetService;
   projects: ProjectService;
@@ -100,6 +103,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
   const gitInfo = new GitInfoService();
   const approvals = new ApprovalBroker(db, hub);
   const decisions = new DecisionBroker();
+  const adrs = new AdrService(config, db, hub);
   const chat = new ChatService(
     config,
     db,
@@ -108,6 +112,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     decisions,
     opts.runner ?? sdkRunner,
     opts.home,
+    adrs,
   );
   const calibration = new CalibrationService(
     config,
@@ -135,7 +140,9 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     decisions,
     opts.runner ?? sdkRunner,
     opts.home,
+    adrs,
   );
+  adrs.connect({ chat, agents });
   const scans = new ScanService(
     config,
     hub,
@@ -183,6 +190,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       noteRoutes(notes),
       commitRoutes(commits),
       runRoutes(runs),
+      adrRoutes(adrs),
     ],
   });
 
@@ -212,6 +220,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     calibration,
     survey,
     agents,
+    adrs,
     scans,
     magnet,
     async close() {

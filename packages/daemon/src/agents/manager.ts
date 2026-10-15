@@ -1,3 +1,4 @@
+import { DECISIONS_PROMPT, type AdrService } from '../adr/service.ts';
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
@@ -64,6 +65,7 @@ function agentPrompt(task: string, branch: string, auto: boolean): string {
     auto
       ? '- You may edit files in this folder and run commands without asking (auto mode). Pushing, publishing and rm -r still need approval, and you do not need them.'
       : "- You may edit files in this folder. Running commands needs the user's approval, so run only what you need (for example the tests).",
+    DECISIONS_PROMPT,
     '- Keep .gitignore current: if your change makes build output, caches, dependencies or local env files, add them to .gitignore.',
     '- Do not commit, push or switch branches. Cherry commits your work when you finish and the user reviews the diff.',
     '- End with one short sentence that says what you changed. Write it, and any other report, in ASD-STE100 Simplified Technical English (short sentences, active voice, approved words).',
@@ -86,6 +88,7 @@ export class AgentManager {
     private readonly decisions: DecisionBroker,
     private readonly runner: Runner,
     private readonly home: string,
+    private readonly adrs?: AdrService,
   ) {
     // Nothing survives a restart; keep the worktree so Try again and Discard still work.
     db.prepare(
@@ -272,6 +275,7 @@ export class AgentManager {
         : 'You are a background agent inside Cherry, working in a git worktree. Edits inside this folder are allowed; commands need approval.',
       allowedTools: READ_TOOLS,
       decisions: false,
+      ...(this.adrs ? { extraTools: this.adrs.tools(r.project_id, 'agent') } : {}),
       guard: (tool, input) => {
         if (!EDIT_TOOLS.has(tool)) return null;
         const p = typeof input.file_path === 'string' ? input.file_path : input.notebook_path;
@@ -429,6 +433,7 @@ export class AgentManager {
     }
     await this.removeWorktree(r);
     this.set(id, { status: 'accepted', ended_at: Date.now() });
+    this.adrs?.agentAccepted(id);
     this.hub.publish(`project:${r.project_id}`, 'project.changed', {
       projectId: r.project_id,
       paths: [],

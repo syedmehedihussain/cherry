@@ -50,6 +50,8 @@ export interface EventMap {
   'git.result': { projectId: string } & GitResult;
   /** An agent was added or changed (upsert by id). */
   'agent.updated': { projectId: string; agent: Agent };
+  /** A project decision was proposed, approved, rejected or done (ADR-0026). */
+  'decisions.updated': { projectId: string };
   /** A scan agent started, made progress, or saved a report. */
   'scan.updated': { projectId: string; agentId: string };
   /** Magnet's conversation (topic "magnet"). */

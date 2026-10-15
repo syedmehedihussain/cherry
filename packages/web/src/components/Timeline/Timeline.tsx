@@ -26,15 +26,22 @@ function rowKind(t: ToolItem): RowKind {
   return t.status === 'running' ? 'running' : 'other';
 }
 
+/** Cherry's own tools, in words. */
+const TOOL_LABEL: Record<string, string> = {
+  mcp__cherry__propose_decision: 'Proposed decision',
+  mcp__cherry__decision_done: 'Decision done',
+};
+const toolLabel = (t: ToolItem) => TOOL_LABEL[t.tool] ?? t.tool;
+
 const VERB: Record<RowKind, (t: ToolItem) => string> = {
   read: () => 'Read',
   edit: (t) => (t.tool === 'Write' ? 'Wrote' : 'Edited'),
   ran: () => 'Ran',
-  running: (t) => (t.verb === 'edit' ? 'Editing' : t.verb === 'run' ? 'Running' : t.tool),
+  running: (t) => (t.verb === 'edit' ? 'Editing' : t.verb === 'run' ? 'Running' : toolLabel(t)),
   waiting: () => 'Waiting',
   failed: () => 'Failed',
   denied: () => 'Denied',
-  other: (t) => t.tool,
+  other: toolLabel,
 };
 
 function Icon({ kind }: { kind: RowKind }) {

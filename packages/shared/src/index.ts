@@ -11,3 +11,4 @@ export * from './schemas/agent.ts';
 export * from './schemas/scan.ts';
 export * from './schemas/magnet.ts';
 export * from './schemas/run.ts';
+export * from './schemas/adr.ts';
