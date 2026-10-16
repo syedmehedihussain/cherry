@@ -10,7 +10,7 @@ import {
   type SurveyState,
 } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
-import { queryClient, useHealth } from '../../api/queries.ts';
+import { queryClient, useConfig, useHealth } from '../../api/queries.ts';
 import {
   answerStep,
   changeStep,
@@ -229,6 +229,9 @@ function IdeaStep({ state }: { state?: SurveyState }) {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const health = useHealth();
+  // The folder chosen at setup or in Settings → Projects folder, never a fixed ~/Projects.
+  const config = useConfig();
+  const projectsDir = config.data ? `${tildify(config.data.resolvedProjectsDir)}/` : '…/';
   const [idea, setIdea] = useState(state?.idea ?? params.get('idea') ?? '');
   // From an idea on Home: its name becomes the folder name, and the idea goes once started.
   const fromIdea = state ? null : params.get('from');
@@ -291,7 +294,9 @@ function IdeaStep({ state }: { state?: SurveyState }) {
         <label className={styles.field}>
           <span>Folder name</span>
           <div className={styles.nameRow}>
-            <span className={styles.prefix}>~/Projects/</span>
+            <span className={styles.prefix} title={projectsDir}>
+              {projectsDir}
+            </span>
             <input
               value={shownName}
               readOnly={!!state}

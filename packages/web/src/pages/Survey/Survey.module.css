@@ -306,6 +306,12 @@
   border-color: var(--accent-border);
 }
 .prefix {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--t3);
 }
 .hint {

@@ -31,6 +31,9 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Fixed
 
+- The new project survey showed `~/Projects/` before the folder name even when another projects
+  folder was chosen. It now shows the folder from setup or Settings; so do the "already exists"
+  error and Magnet's calibration card.
 - The empty chat describes the chosen mode; it no longer says every edit waits for approval in
   Auto mode.
 - An approved decision can be applied again after its agent was discarded or failed, or its chat

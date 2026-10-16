@@ -30,7 +30,7 @@ import type { EventHub } from '../events.ts';
 import { run } from '../exec.ts';
 import { readJsonFile, writeFileAtomic } from '../fsutil.ts';
 import { badRequest, conflict, notFound } from '../http.ts';
-import { resolveInside } from '../paths.ts';
+import { resolveInside, tildify } from '../paths.ts';
 import type { RunHandle, Runner } from '../claude/runner.ts';
 import type { ProjectService } from '../projects/service.ts';
 import {
@@ -302,7 +302,7 @@ export class SurveyService {
       if (existsSync(this.file(input.name)))
         throw conflict(`There is already a survey for ${input.name}. Open it from Home.`);
       if (readdirSync(dir).length > 0)
-        throw conflict(`~/Projects/${input.name} already exists. Pick another name.`);
+        throw conflict(`${tildify(dir)} already exists. Pick another name.`);
     }
     mkdirSync(path.join(dir, '_project'), { recursive: true });
     const now = isoNow();

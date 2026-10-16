@@ -13,7 +13,7 @@ import {
 } from '@cherry/shared';
 import { z } from 'zod';
 import type { ConfigStore } from '../config.ts';
-import { isInside } from '../paths.ts';
+import { isInside, tildify } from '../paths.ts';
 import type { Db } from '../db.ts';
 import type { EventHub } from '../events.ts';
 import { writeFileAtomic } from '../fsutil.ts';
@@ -38,12 +38,13 @@ function describe(
   kind: MagnetAction['kind'],
   projectId: string | null,
   task: string | null,
+  projectsDir: string,
 ): { title: string; detail: string } {
   switch (kind) {
     case 'calibrate':
       return {
         title: `Magnet wants to start calibration in ${projectId}`,
-        detail: `Reads ~/Projects/${projectId} and proposes project files. Nothing is written until you approve the files.`,
+        detail: `Reads ${tildify(path.join(projectsDir, projectId ?? ''))} and proposes project files. Nothing is written until you approve the files.`,
       };
     case 'start_agent':
       return {
@@ -323,7 +324,7 @@ export class MagnetService {
               id: `act_${randomUUID().slice(0, 10)}`,
               kind: a.kind,
               projectId,
-              ...describe(a.kind, projectId, task),
+              ...describe(a.kind, projectId, task, this.config.projectsDir()),
               task,
               status: 'proposed',
               result: null,

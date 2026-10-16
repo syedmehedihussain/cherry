@@ -62,3 +62,12 @@ test('a new project from Home gets its docs, a first commit and opens at Design'
   expect(log).toContain('docs: project plan');
   await expect(page.getByRole('list', { name: 'Project phase' })).toBeVisible();
 });
+
+// The folder name sits under the projects folder from setup or Settings, not a fixed ~/Projects.
+test('the survey shows the chosen projects folder', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'Start project' }).first().click();
+  const field = page.locator('label').filter({ hasText: 'Folder name' });
+  await expect(field).toContainText(`${E2E_PROJECTS}/`);
+  await expect(field).not.toContainText('~/Projects/');
+});
