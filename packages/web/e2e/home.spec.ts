@@ -15,15 +15,16 @@ test('the app opens on a dark page with the top bar', async ({ page }) => {
   expect(font).toContain('Geist');
 });
 
-test('Home lists one project in each state', async ({ page }) => {
+test('Home lists the projects, with Calibrate on folders not set up', async ({ page }) => {
   const table = page.getByRole('table');
   await expect(table.getByRole('row')).toHaveCount(6);
   const row = (name: string) =>
     table.getByRole('row').filter({ has: page.getByRole('link', { name, exact: true }) });
-  await expect(row('core')).toContainText('Ready');
   await expect(row('core')).toContainText('Development');
   await expect(row('core')).toContainText('1 change');
-  await expect(row('cctop')).toContainText('cctop');
+  // No State column: a folder Cherry has not set up offers Calibrate instead.
+  await expect(row('cctop').getByRole('link', { name: 'Calibrate' })).toBeVisible();
+  await expect(row('core').getByRole('link', { name: 'Calibrate' })).toHaveCount(0);
   await expect(page.getByText('Next: Build the Study Room floor')).toBeVisible();
 });
 

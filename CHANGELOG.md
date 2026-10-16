@@ -23,6 +23,8 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Changed
 
+- Home's project table has no State column; a folder not set up in Cherry yet shows
+  **Calibrate** instead.
 - The centre tabs are Chat, Docs, Notes & Tasks, **Agents** (with a running count) and
   **Decisions** (with a pending count). The side panel keeps Overview, Live and GitHub; the
   Overview's task line, "See all" and quick add open the matching centre tab.

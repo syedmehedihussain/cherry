@@ -14,21 +14,18 @@
   width: auto;
 }
 .table th:nth-child(2) {
-  width: 140px;
-}
-.table th:nth-child(3) {
   width: 170px;
 }
-.table th:nth-child(4) {
+.table th:nth-child(3) {
   width: 22%;
+}
+.table th:nth-child(4) {
+  width: 110px;
 }
 .table th:nth-child(5) {
   width: 110px;
 }
 .table th:nth-child(6) {
-  width: 110px;
-}
-.table th:nth-child(7) {
   width: 104px;
 }
 .table th {

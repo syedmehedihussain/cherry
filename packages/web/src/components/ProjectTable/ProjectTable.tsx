@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { relativeTime, type ProjectCard } from '@cherry/shared';
 import { PhaseBarCompact } from '../PhaseBar/PhaseBar.tsx';
-import { GitChip, Pill, StatePill } from '../Pill/Pill.tsx';
+import { GitChip } from '../Pill/Pill.tsx';
 import { projectHref } from '../ProjectCard/ProjectCard.tsx';
 import styles from './ProjectTable.module.css';
 
@@ -20,7 +20,6 @@ export function ProjectTable({
         <thead>
           <tr>
             <th scope="col">Project</th>
-            <th scope="col">State</th>
             <th scope="col">Phase</th>
             <th scope="col">Stack</th>
             <th scope="col">Last worked</th>
@@ -34,7 +33,7 @@ export function ProjectTable({
           {loading &&
             Array.from({ length: 5 }, (_, i) => (
               <tr key={i} aria-hidden="true">
-                <td colSpan={7}>
+                <td colSpan={6}>
                   <span className="shimmer" style={{ display: 'block', height: 28 }} />
                 </td>
               </tr>
@@ -49,7 +48,6 @@ export function ProjectTable({
                   <span className={styles.summary}>{c.summary}</span>
                 </div>
               </td>
-              <td>{c.draft ? <Pill tone="neutral">Draft</Pill> : <StatePill state={c.state} />}</td>
               <td>
                 <PhaseBarCompact phase={c.phase} width={110} />
               </td>
@@ -78,8 +76,12 @@ export function ProjectTable({
                     Continue
                   </Link>
                 ) : (
-                  c.state === 'uncalibrated' && (
-                    <Link to={projectHref(c)} className="btn btn-secondary btn-sm">
+                  // Not set up in Cherry yet (no project.json): one click to calibrate it.
+                  c.state !== 'ready' && (
+                    <Link
+                      to={`/p/${encodeURIComponent(c.id)}/calibrate`}
+                      className="btn btn-secondary btn-sm"
+                    >
                       Calibrate
                     </Link>
                   )

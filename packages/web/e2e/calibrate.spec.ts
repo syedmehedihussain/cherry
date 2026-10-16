@@ -6,7 +6,12 @@ import { E2E_PROJECTS, loginCode } from './fixture.ts';
 // E2E flow 2: calibrate the not-calibrated fixture, write some files, it becomes Ready.
 test('calibrates torongo and writes only the ticked files', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
-  await page.getByRole('table').getByRole('link', { name: 'Calibrate' }).click();
+  await page
+    .getByRole('table')
+    .getByRole('row')
+    .filter({ has: page.getByRole('link', { name: 'torongo', exact: true }) })
+    .getByRole('link', { name: 'Calibrate' })
+    .click();
   await expect(
     page.getByRole('heading', { name: "torongo isn't set up for Cherry yet." }),
   ).toBeVisible();
@@ -29,5 +34,6 @@ test('calibrates torongo and writes only the ticked files', async ({ page }) => 
     .getByRole('table')
     .getByRole('row')
     .filter({ has: page.getByRole('link', { name: 'torongo', exact: true }) });
-  await expect(row).toContainText('Ready');
+  await expect(row).toContainText('Development');
+  await expect(row.getByRole('link', { name: 'Calibrate' })).toHaveCount(0);
 });
