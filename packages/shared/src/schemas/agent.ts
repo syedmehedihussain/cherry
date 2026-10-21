@@ -18,13 +18,15 @@ export const AgentSchema = z.object({
   projectId: z.string(),
   task: z.string(),
   model: z.string(),
-  /** Auto mode: commands run without asking, except push, publish and rm -r (ADR-0025). */
+  /** Always true: agents run in Auto mode (ADR-0028). Kept for older rows and clients. */
   auto: z.boolean(),
   branch: z.string(),
   baseBranch: z.string(),
   status: AgentStatusSchema,
   /** One line from Claude when done. */
   summary: z.string().nullable(),
+  /** Commands the agent skipped because only the user may run them (push, publish, rm -r). */
+  needsYou: z.array(z.string()),
   error: z.string().nullable(),
   /** The last few timeline rows (tool items). */
   activity: z.array(ChatItemSchema),
@@ -43,6 +45,7 @@ export type AgentList = z.infer<typeof AgentListSchema>;
 export const AgentStartSchema = z.object({
   task: z.string().trim().min(3, 'Describe the task.').max(2000),
   model: z.enum(['sonnet', 'opus', 'haiku']).optional(),
+  /** Ignored: agents always run in Auto mode (ADR-0028). */
   auto: z.boolean().optional(),
 });
 export type AgentStart = z.infer<typeof AgentStartSchema>;

@@ -189,7 +189,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       calibrateRoutes(calibration),
       surveyRoutes(survey),
       gitRoutes(gitActions),
-      agentRoutes(agents),
+      agentRoutes(agents, chat),
       scanRoutes(scans),
       magnetRoutes(magnet),
       noteRoutes(notes),

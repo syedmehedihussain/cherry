@@ -142,7 +142,7 @@ Built before the Plan section (the user's order, 2026-10-22).
 - [x] Scans list folds into one row in the Agents tab, closed by default.
 - [x] Notifications: desktop notification and tab title count for agent done, failed or
       needs you, scan done, decision proposed, and a chat reply while the tab is hidden.
-- [ ] Background agents always run in Auto. Push, publish and `rm -r` are skipped, not asked;
+- [x] Background agents always run in Auto. Push, publish and `rm -r` are skipped, not asked;
       the agent finishes the rest and ends as "needs you" with **Continue in chat**.
 - [ ] Decisions: approve in the chat card; Approve only adds a task; Run with agent builds,
       tests and reports "ready to merge"; Merge tries `git merge`, an agent resolves conflicts.

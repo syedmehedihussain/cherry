@@ -125,37 +125,61 @@ describe('background agents', () => {
     expect(git(dir, 'worktree', 'list').split('\n')).toHaveLength(1);
   });
 
-  it('commands wait for an approval and the card shows waiting', async () => {
+  it('always runs in Auto: commands run without asking or a card', async () => {
     script = () => [
       { tool: { name: 'Bash', input: { command: 'npm install -D vitest' } } },
       { text: 'Done.' },
     ];
-    const a = await startAgent('Add vitest');
-    const w = await until(a.id, (x) => x.status === 'waiting');
-    expect(w.waiting).toMatchObject({
-      kind: 'command',
-      command: 'npm install -D vitest',
-      source: `agent:${a.id}`,
-    });
-    await api('POST', `/api/approvals/${w.waiting!.id}`, { answer: 'deny' });
-    await until(a.id, (x) => x.status === 'done');
-    expect(log.permissions).toEqual([expect.objectContaining({ tool: 'Bash', allowed: false })]);
+    // An older client may still send auto: false; agents run in Auto anyway (ADR-0028).
+    const r = await api('POST', '/api/projects/core/agents', { task: 'Add vitest', auto: false });
+    expect(r.body.auto).toBe(true);
+    const done = await until(r.body.id, (x) => x.status === 'done');
+    expect(done.needsYou).toEqual([]);
+    expect(log.permissions).toEqual([expect.objectContaining({ tool: 'Bash', allowed: true })]);
+    expect(d.approvals.list()).toEqual([]);
+    expect(log.requests[0]?.prompt).toMatch(/auto mode/);
   });
 
-  it('in Auto mode runs commands without asking, but push still waits', async () => {
-    script = () => [
-      { tool: { name: 'Bash', input: { command: 'npm install -D vitest' } } },
-      { tool: { name: 'Bash', input: { command: 'git push origin HEAD' } } },
-      { text: 'Done.' },
-    ];
-    const r = await api('POST', '/api/projects/core/agents', { task: 'Add vitest', auto: true });
-    expect(r.body.auto).toBe(true);
-    const w = await until(r.body.id, (x) => x.status === 'waiting');
-    expect(w.waiting).toMatchObject({ kind: 'command', command: 'git push origin HEAD' });
-    await api('POST', `/api/approvals/${w.waiting!.id}`, { answer: 'deny' });
-    await until(r.body.id, (x) => x.status === 'done');
-    expect(log.permissions.map((p) => p.allowed)).toEqual([true, false]);
-    expect(log.requests[0]?.prompt).toMatch(/auto mode/);
+  it('skips push, publish and rm -r without asking, then needs you and continues in chat', async () => {
+    const notices: { kind: string; title: string }[] = [];
+    d.hub.listen((topic, ev) => {
+      if (topic === 'notices') notices.push(ev as never);
+    });
+    script = (prompt) =>
+      prompt.includes('skipped these steps')
+        ? [{ text: 'Here is what each step does.' }]
+        : [
+            { tool: { name: 'Bash', input: { command: 'npm test' } } },
+            { tool: { name: 'Bash', input: { command: 'git push origin HEAD' } } },
+            { tool: { name: 'Bash', input: { command: 'npm publish' } } },
+            { tool: { name: 'Bash', input: { command: 'sudo rm -rf /' } } },
+            { text: 'Done. Needs you: push and publish.' },
+          ];
+    const a = await startAgent('Ship the release');
+    const done = await until(a.id, (x) => x.status === 'done');
+    expect(done.needsYou).toEqual(['git push origin HEAD', 'npm publish']);
+    expect(d.approvals.list()).toEqual([]);
+    expect(log.permissions.map((p) => p.allowed)).toEqual([true, false, false, false]);
+    expect(log.permissions[1]!.message).toMatch(/Skip this step/);
+    // A blocked command keeps its own refusal and is not offered to the user.
+    expect(log.permissions[3]!.message).not.toMatch(/Skip this step/);
+    expect(notices).toEqual([
+      expect.objectContaining({ kind: 'agent.needs', title: 'Agent needs you: Ship the release' }),
+    ]);
+
+    const c = await api('POST', `/api/agents/${a.id}/continue`);
+    expect(c.status).toBe(200);
+    const sent = log.requests.at(-1)!;
+    expect(sent.cwd).toBe(dir);
+    expect(sent.prompt).toContain(`branch ${a.branch} (not merged yet)`);
+    expect(sent.prompt).toContain('- `git push origin HEAD`');
+    expect(sent.prompt).toContain('- `npm publish`');
+  });
+
+  it('refuses Continue in chat for an agent that skipped nothing', async () => {
+    const a = await startAgent();
+    await until(a.id, (x) => x.status === 'done');
+    expect((await api('POST', `/api/agents/${a.id}/continue`)).status).toBe(409);
   });
 
   it('refuses edits outside the worktree', async () => {
@@ -206,13 +230,12 @@ describe('background agents', () => {
   });
 
   it('a failed agent can be tried again', async () => {
-    script = () => [{ tool: { name: 'Bash', input: { command: 'npm ls' } } }];
+    script = () => [{ wait: 3000 }, { text: 'never' }];
     const a = await startAgent('Check deps');
-    const w = await until(a.id, (x) => x.status === 'waiting');
+    await until(a.id, (x) => x.status === 'running');
     await api('POST', `/api/agents/${a.id}/stop`);
     const failed = await until(a.id, (x) => x.status === 'failed');
     expect(failed.error).toBe('Stopped.');
-    expect(d.approvals.list('pending').find((p) => p.id === w.waiting!.id)).toBeUndefined();
     script = () => [{ text: 'All good.' }];
     const r = await api('POST', `/api/agents/${a.id}/retry`);
     expect(r.body.task).toBe('Check deps');

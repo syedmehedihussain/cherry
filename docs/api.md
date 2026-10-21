@@ -128,12 +128,13 @@ proposal and the create progress, and is pushed as `survey.updated` on every cha
 | Method | Path | Does |
 | --- | --- | --- |
 | GET | `/api/projects/:id/agents` | agent list |
-| POST | `/api/projects/:id/agents` | `{ task, model, auto? }` → the agent (queued when all slots are busy); `auto` runs commands without asking except push, publish and rm -r (ADR-0025) |
+| POST | `/api/projects/:id/agents` | `{ task, model }` → the agent (queued when all slots are busy). Agents always run in Auto; push, publish, deploy and rm -r are skipped and listed in `needsYou` (ADR-0028). `auto` is accepted and ignored |
 | GET | `/api/agents/:agentId/diff` | `{ files: [{ path, isNew, added, removed, lines }] }`, agent branch vs where it started |
 | POST | `/api/agents/:agentId/accept` | `git merge --no-edit` into the current branch, then remove worktree and branch (ADR-0010) |
 | POST | `/api/agents/:agentId/discard` | remove worktree + branch |
 | POST | `/api/agents/:agentId/retry` | new run with the same task |
 | POST | `/api/agents/:agentId/stop` | interrupt |
+| POST | `/api/agents/:agentId/continue` | Continue in chat: sends the branch, summary and skipped commands to the project chat as a new turn; 409 unless the agent is done with `needsYou` (ADR-0028) |
 
 ## Decisions (ADR-0026)
 

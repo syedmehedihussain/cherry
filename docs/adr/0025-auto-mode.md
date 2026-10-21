@@ -3,6 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-10-15
 - **Decided by:** Meddy
+- **Amended by:** 0028 (background agents always run in Auto; the agent switch is gone)
 
 ## Context
 

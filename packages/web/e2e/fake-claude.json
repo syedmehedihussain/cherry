@@ -261,6 +261,14 @@
         "output": "Tests 1 passed"
       },
       {
+        "tool": {
+          "name": "Bash",
+          "input": {
+            "command": "git push origin HEAD"
+          }
+        }
+      },
+      {
         "text": "Added a test for the streak counter."
       }
     ]

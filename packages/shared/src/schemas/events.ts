@@ -11,6 +11,7 @@ import type { RunState } from './run.ts';
 export type NoticeKind =
   | 'agent.done'
   | 'agent.failed'
+  | 'agent.needs'
   | 'scan.done'
   | 'scan.failed'
   | 'decision.proposed'

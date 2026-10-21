@@ -7,6 +7,7 @@ import {
   type AgentList,
   type AgentStart,
 } from '@cherry/shared';
+import { chatKey } from './chat.ts';
 import { api } from './client.ts';
 import { queryClient } from './queries.ts';
 import { socket } from './socket.ts';
@@ -53,6 +54,12 @@ export const acceptAgent = action('accept');
 export const discardAgent = action('discard');
 export const retryAgent = action('retry');
 export const stopAgent = action('stop');
+
+/** Sends the steps the agent skipped to the project chat as a new message. */
+export const continueAgentInChat = (projectId: string, id: string) =>
+  api('POST', `/api/agents/${encodeURIComponent(id)}/continue`, undefined).then(() => {
+    void queryClient.invalidateQueries({ queryKey: chatKey(projectId) });
+  });
 
 /** Keeps the agent list current from `agent.updated` events. */
 export function useLiveAgents(projectId: string): void {

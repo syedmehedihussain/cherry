@@ -231,7 +231,8 @@ CREATE TABLE agents (
   session_id    TEXT,
   task          TEXT NOT NULL,
   model         TEXT NOT NULL,
-  auto          INTEGER NOT NULL DEFAULT 0,  -- 1 = Auto mode (ADR-0025, migration 003)
+  auto          INTEGER NOT NULL DEFAULT 0,  -- 1 = Auto mode (ADR-0025, migration 003); always 1 since ADR-0028
+  needs_json    TEXT NOT NULL DEFAULT '[]',  -- commands skipped for the user (ADR-0028, migration 005)
   branch        TEXT NOT NULL,
   worktree      TEXT NOT NULL,
   status        TEXT NOT NULL,          -- running | waiting | done | failed | accepted | discarded

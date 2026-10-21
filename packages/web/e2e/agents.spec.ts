@@ -4,8 +4,10 @@ import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { E2E_PROJECTS, loginCode } from './fixture.ts';
 
-// E2E flow 5: an agent runs on the side, asks to run a command, and Accept lands it on main.
-test('agent: start → approve → review diff → accept → commit on main', async ({ page }) => {
+// E2E flow 5: an agent runs on its own (Auto), skips the push for you, and Accept lands it.
+test('agent: start → runs on its own → needs you → review diff → accept → commit on main', async ({
+  page,
+}) => {
   await page.goto(`/#login=${await loginCode()}`);
   await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
@@ -25,11 +27,14 @@ test('agent: start → approve → review diff → accept → commit on main', a
 
   const card = panel.getByRole('article', { name: 'Write tests for the streak service' });
   await expect(card).toContainText('agent/tests-streak-service');
-  await expect(card).toContainText('Wants to run npm test');
-  await card.getByRole('button', { name: 'Review' }).click();
-  await card.getByRole('button', { name: 'Allow', exact: true }).click();
-
+  // No approval: the test runs on its own, the push is skipped and left for the user.
   await expect(card).toContainText('Added a test for the streak counter.');
+  await expect(card).toContainText('Needs you');
+  await expect(card).toContainText('git push origin HEAD');
+  await expect(card.getByRole('button', { name: 'Continue in chat' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Notifications' })).toContainText(
+    'Agent needs you: Write tests for the streak service',
+  );
   await card.getByRole('button', { name: 'Review diff' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toContainText('tests/streaks.test.ts');

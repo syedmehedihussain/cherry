@@ -86,7 +86,8 @@
 .status {
   color: var(--accent-text);
 }
-.status[data-status='waiting'] {
+.status[data-status='waiting'],
+.status[data-status='needs'] {
   color: var(--warning);
 }
 .status[data-status='done'],
@@ -153,6 +154,22 @@
   cursor: pointer;
   padding: 4px;
   white-space: nowrap;
+}
+.needs {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  background: rgba(210, 153, 34, 0.08);
+  color: var(--t2);
+  font-size: 12.5px;
+}
+.needs ul {
+  margin: 0;
+  padding-left: 16px;
+  color: var(--t1);
 }
 .summary {
   margin: 0;

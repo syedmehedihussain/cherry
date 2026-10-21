@@ -1,9 +1,16 @@
 import { Check, Clock, ShieldAlert, X } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import type { Agent } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
 import { answerApproval } from '../../api/chat.ts';
-import { acceptAgent, discardAgent, retryAgent, stopAgent } from '../../api/agents.ts';
+import {
+  acceptAgent,
+  continueAgentInChat,
+  discardAgent,
+  retryAgent,
+  stopAgent,
+} from '../../api/agents.ts';
 import { ApprovalCard } from '../ApprovalCard/ApprovalCard.tsx';
 import { TimelineRow, type ToolItem } from '../Timeline/Timeline.tsx';
 import styles from './AgentCard.module.css';
@@ -68,6 +75,8 @@ export function AgentCard({ agent, now, last, focus, onReviewDiff }: AgentCardPr
   const [reviewing, setReviewing] = useState(!!focus);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const needsYou = agent.status === 'done' && agent.needsYou.length > 0;
   const tools = agent.activity.filter((i): i is ToolItem => i.kind === 'tool');
   const end = agent.endedAt ?? now;
   const act = async (name: string, fn: () => Promise<unknown>) => {
@@ -99,19 +108,11 @@ export function AgentCard({ agent, now, last, focus, onReviewDiff }: AgentCardPr
           <span className={styles.time}>{ago(now - (agent.endedAt ?? agent.startedAt))}</span>
         </div>
         <div className={styles.meta}>
-          <span className={styles.status} data-status={agent.status}>
-            {LABEL[agent.status]}
+          <span className={styles.status} data-status={needsYou ? 'needs' : agent.status}>
+            {needsYou ? 'Needs you' : LABEL[agent.status]}
           </span>
           <span>·</span>
           <span>{MODEL[agent.model] ?? agent.model}</span>
-          {agent.auto && (
-            <>
-              <span>·</span>
-              <span title="Commands run without asking. Push, publish and rm -r still ask.">
-                Auto
-              </span>
-            </>
-          )}
           <span>·</span>
           <span>
             {agent.status === 'queued' ? 'waiting for a free slot' : elapsed(end - agent.startedAt)}
@@ -169,6 +170,31 @@ export function AgentCard({ agent, now, last, focus, onReviewDiff }: AgentCardPr
                 </span>
               )}
             </p>
+            {needsYou && (
+              <div className={styles.needs}>
+                <span>Skipped, only you may run:</span>
+                <ul>
+                  {agent.needsYou.map((c) => (
+                    <li key={c} className="mono">
+                      {c}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  disabled={!!busy}
+                  onClick={() =>
+                    void act('continue in the chat', async () => {
+                      await continueAgentInChat(agent.projectId, agent.id);
+                      void navigate(`/p/${encodeURIComponent(agent.projectId)}`);
+                    })
+                  }
+                >
+                  Continue in chat
+                </button>
+              </div>
+            )}
             <div className={styles.actions}>
               <button
                 type="button"

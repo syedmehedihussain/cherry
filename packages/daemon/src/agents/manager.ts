@@ -10,6 +10,7 @@ import { git, gitStatus } from '../git.ts';
 import { conflict, notFound } from '../http.ts';
 import { isInside, isSecretFile } from '../paths.ts';
 import type { ApprovalBroker } from '../claude/approvals.ts';
+import { autoNeedsApproval, classifyCommand } from '../claude/commands.ts';
 import { Conversation } from '../claude/conversation.ts';
 import type { DecisionBroker } from '../claude/decisions.ts';
 import { diffLines } from '../claude/preview.ts';
@@ -32,8 +33,10 @@ interface Row {
   summary: string | null;
   error: string | null;
   activity_json: string;
-  /** 1 in Auto mode (ADR-0025). */
+  /** 1 in Auto mode (ADR-0025); every new agent since ADR-0028. */
   auto: number;
+  /** JSON array of commands skipped for the user (ADR-0028). */
+  needs_json: string;
   started_at: number;
   ended_at: number | null;
 }
@@ -43,6 +46,8 @@ interface Live {
   handle: RunHandle | null;
   lastText: string;
   waiting: Agent['waiting'];
+  /** Commands refused because only the user may run them. */
+  skipped: string[];
 }
 
 /** "Write tests for the streak service" → "tests-streak-service". */
@@ -56,15 +61,18 @@ export function slugify(task: string): string {
   return words.slice(0, 4).join('-').slice(0, 40).replace(/-+$/, '') || 'task';
 }
 
-function agentPrompt(task: string, branch: string, auto: boolean): string {
+const SKIP_REASON =
+  'Only the user may run this (push, publish, deploy or rm -r). Do not try another way. Skip this step, finish the rest of the task, and list the skipped step under "Needs you" at the end of your report.';
+
+function agentPrompt(task: string, branch: string): string {
   return [
     task,
     '',
-    `You are a background agent working in your own git worktree on branch ${branch}. The user is not watching; work on your own until the task is done.`,
+    `You are a background agent working in your own git worktree on branch ${branch}. The user is not watching and will not answer; work on your own until the task is done.`,
     '- Read CLAUDE.md and the relevant code first.',
-    auto
-      ? '- You may edit files in this folder and run commands without asking (auto mode). Pushing, publishing and rm -r still need approval, and you do not need them.'
-      : "- You may edit files in this folder. Running commands needs the user's approval, so run only what you need (for example the tests).",
+    '- You may edit files in this folder and run commands without asking (auto mode).',
+    '- Pushing, publishing, deploying and rm -r are refused for agents. If the task needs one, skip that step, finish the rest, and end your report with a "Needs you" list of the skipped steps.',
+    '- If the project has tests, run them before you finish and say the result.',
     DECISIONS_PROMPT,
     '- Keep .gitignore current: if your change makes build output, caches, dependencies or local env files, add them to .gitignore.',
     '- Do not commit, push or switch branches. Cherry commits your work when you finish and the user reviews the diff.',
@@ -117,6 +125,7 @@ export class AgentManager {
       baseBranch: r.base_branch,
       status: r.status,
       summary: r.summary,
+      needsYou: JSON.parse(r.needs_json) as string[],
       error: r.error,
       activity: JSON.parse(r.activity_json) as ChatItem[],
       waiting: l?.waiting ?? null,
@@ -212,7 +221,7 @@ export class AgentManager {
         projectId,
         body.task,
         body.model ?? this.config.get().claude.defaultModel,
-        body.auto ? 1 : 0,
+        1,
         branch,
         status.branch,
         worktree,
@@ -232,6 +241,7 @@ export class AgentManager {
       handle: null,
       lastText: '',
       waiting: null,
+      skipped: [],
     };
     const conversation = new Conversation({
       projectId: r.project_id,
@@ -257,9 +267,23 @@ export class AgentManager {
         const item = conversation.items.get(itemId);
         if (item?.kind === 'text') live.lastText = item.text;
       },
-      // Edits inside the worktree run without asking; anything outside is refused.
-      policy: (tool) => (EDIT_TOOLS.has(tool) ? 'allow' : 'ask'),
-      auto: r.auto === 1,
+      // Edits inside the worktree run without asking; anything outside is refused (guard).
+      // Auto mode runs the rest. What only the user may do is refused, never asked: nobody is
+      // watching a background agent (ADR-0028). Blocked commands fall through to their rule.
+      policy: (tool, input) => {
+        if (EDIT_TOOLS.has(tool)) return 'allow';
+        const command = tool === 'Bash' && typeof input.command === 'string' ? input.command : '';
+        if (
+          command &&
+          !classifyCommand(command, r.worktree).blocked &&
+          autoNeedsApproval(command)
+        ) {
+          if (!live.skipped.includes(command)) live.skipped.push(command);
+          return { deny: SKIP_REASON };
+        }
+        return 'ask';
+      },
+      auto: true,
     });
     live.conversation = conversation;
     this.live.set(id, live);
@@ -269,13 +293,12 @@ export class AgentManager {
     let finished = false;
     const handle = this.runner({
       cwd: r.worktree,
-      prompt: agentPrompt(r.task, r.branch, r.auto === 1),
+      prompt: agentPrompt(r.task, r.branch),
       resume: null,
       model: r.model,
       planMode: false,
-      appendSystemPrompt: r.auto
-        ? 'You are a background agent inside Cherry, working in a git worktree, in auto mode. Edits inside this folder and most commands run without asking.'
-        : 'You are a background agent inside Cherry, working in a git worktree. Edits inside this folder are allowed; commands need approval.',
+      appendSystemPrompt:
+        'You are a background agent inside Cherry, working in a git worktree, in auto mode. Edits inside this folder and most commands run without asking. Push, publish, deploy and rm -r are refused: skip them and report them under "Needs you".',
       allowedTools: READ_TOOLS,
       decisions: false,
       ...(this.adrs ? { extraTools: this.adrs.tools(r.project_id, 'agent') } : {}),
@@ -299,6 +322,7 @@ export class AgentManager {
         live.handle = null;
         live.waiting = null;
         this.approvals.cancel(source, 'Agent finished');
+        this.set(id, { needs_json: JSON.stringify(live.skipped) });
         this.track(
           this.finish(id, ev.ok && !ev.stopped, ev.stopped ? 'Stopped.' : ev.error, live.lastText),
         );
@@ -355,13 +379,15 @@ export class AgentManager {
         summary: summary ?? (changes?.files ? null : 'No changes.'),
         ended_at: Date.now(),
       });
+      const needs = JSON.parse(this.row(id).needs_json) as string[];
       notify(this.hub, {
         projectId: r.project_id,
-        kind: 'agent.done',
-        title: `Agent done: ${taskLine(r.task)}`,
-        body:
-          summary ??
-          (changes?.files ? `${changes.files} files changed. Review the diff.` : 'No changes.'),
+        kind: needs.length ? 'agent.needs' : 'agent.done',
+        title: `${needs.length ? 'Agent needs you' : 'Agent done'}: ${taskLine(r.task)}`,
+        body: needs.length
+          ? `Skipped ${needs.length === 1 ? 'a step' : `${needs.length} steps`} only you may run: ${needs[0]}`
+          : (summary ??
+            (changes?.files ? `${changes.files} files changed. Review the diff.` : 'No changes.')),
         link: projectLink(r.project_id, `/agents?agent=${id}`),
       });
     }
@@ -474,8 +500,27 @@ export class AgentManager {
     return this.start(r.project_id, {
       task: r.task,
       model: r.model as AgentStart['model'],
-      auto: r.auto === 1,
     });
+  }
+
+  /** The chat message for Continue in chat: what the agent did and the steps it left for you. */
+  continuePrompt(id: string): { projectId: string; text: string } {
+    const r = this.row(id);
+    const needs = JSON.parse(r.needs_json) as string[];
+    if (r.status !== 'done' || !needs.length)
+      throw conflict('Only a finished agent that skipped steps can continue in the chat.');
+    return {
+      projectId: r.project_id,
+      text: [
+        `A background agent finished this task on branch ${r.branch} (not merged yet): ${taskLine(r.task)}`,
+        r.summary ? `Its summary: ${r.summary}` : null,
+        'It skipped these steps because only I may run them:',
+        ...needs.map((c) => `- \`${c}\``),
+        'Help me finish them. Check the branch first and tell me what each step will do before you run it.',
+      ]
+        .filter((l) => l !== null)
+        .join('\n'),
+    };
   }
 
   async stop(id: string): Promise<Agent> {

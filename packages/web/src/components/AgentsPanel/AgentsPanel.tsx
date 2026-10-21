@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import type { Agent } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
-import { Switch } from '../Switch/Switch.tsx';
 import { startAgent, useAgentDiff, useAgents, useLiveAgents } from '../../api/agents.ts';
 import { queryClient, useConfig } from '../../api/queries.ts';
 import { addTask, organiseNote, wk } from '../../api/workspace.ts';
@@ -154,7 +153,6 @@ function TaskBox({
   // The model from Settings until the user picks one here (Opus out of the box).
   const model: Model =
     picked ?? (fallback === 'sonnet' || fallback === 'haiku' ? fallback : 'opus');
-  const [auto, setAuto] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ready = text.trim().length >= (kind === 'agent' ? 3 : 1) && !busy;
@@ -182,7 +180,7 @@ function TaskBox({
         const res = await organiseNote(projectId, value);
         queryClient.setQueryData(wk.notes(projectId), { content: res.content, mtime: res.mtime });
       } else {
-        await startAgent(projectId, { task: value, model, auto });
+        await startAgent(projectId, { task: value, model });
       }
       setText('');
       onDone?.(kind);
@@ -217,7 +215,7 @@ function TaskBox({
         placeholder={words.placeholder}
         title={
           kind === 'agent'
-            ? `Starts from your last commit${branch ? ` on ${branch}` : ''}, in its own worktree. Edits there need no approval; commands do, unless Auto is on.`
+            ? `Starts from your last commit${branch ? ` on ${branch}` : ''}, in its own worktree. It runs on its own: push, publish and rm -r are left for you.`
             : kind === 'note'
               ? 'Claude cleans up the note and adds it under the right heading in _project/notes.md. Your other notes stay as they are.'
               : 'Adds a task to _project/tasks.json, in the current phase.'
@@ -240,11 +238,6 @@ function TaskBox({
         )}
         {kind === 'agent' && (
           <ChipSelect label="Model" value={model} options={MODELS} onChange={(m) => setModel(m)} />
-        )}
-        {kind === 'agent' && (
-          <span title="Commands run without asking. Push, publish and rm -r still ask.">
-            <Switch checked={auto} onChange={setAuto} label="Auto" disabled={busy} />
-          </span>
         )}
         <span className={styles.spacer} />
         <button type="submit" className={styles.send} disabled={!ready}>
