@@ -1,21 +1,22 @@
 import { useState } from 'react';
 
 /** Open or minimized, remembered per box in localStorage (a per-viewer convenience). */
-export function useCollapsed(key: string): [boolean, () => void] {
+export function useCollapsed(key: string, collapsedByDefault = false): [boolean, () => void] {
   const storageKey = `cherry.collapsed.${key}`;
   const [collapsed, setCollapsed] = useState(() => {
     try {
-      return localStorage.getItem(storageKey) === '1';
+      const v = localStorage.getItem(storageKey);
+      return v === null ? collapsedByDefault : v === '1';
     } catch {
-      return false;
+      return collapsedByDefault;
     }
   });
   const toggle = () => {
     const next = !collapsed;
     setCollapsed(next);
     try {
-      if (next) localStorage.setItem(storageKey, '1');
-      else localStorage.removeItem(storageKey);
+      if (next === collapsedByDefault) localStorage.removeItem(storageKey);
+      else localStorage.setItem(storageKey, next ? '1' : '0');
     } catch {
       // Private window: the choice just isn't remembered.
     }

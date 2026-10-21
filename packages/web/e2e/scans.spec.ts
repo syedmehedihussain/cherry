@@ -26,6 +26,12 @@ test('scan agent: run → report in the centre, with history', async ({ page }) 
     .click();
 
   const scans = page.getByRole('region', { name: 'Scan agents' });
+  // Folded by default; the header says how many there are.
+  await expect(scans.getByRole('button', { name: /Scans 4/ })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+  await scans.getByRole('button', { name: /Scans 4/ }).click();
   for (const name of ['Security review', 'Test runner', 'Code health', 'Dependency audit'])
     await expect(scans).toContainText(name);
 

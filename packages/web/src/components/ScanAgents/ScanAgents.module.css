@@ -10,6 +10,25 @@
   align-items: center;
   justify-content: space-between;
 }
+.fold {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  margin-left: -4px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--t3);
+  cursor: pointer;
+}
+.fold:hover {
+  background: var(--s2);
+}
+.count {
+  font-size: var(--fs-2xs);
+  color: var(--t3);
+}
 .howto {
   font-size: var(--fs-2xs);
   color: var(--t3);

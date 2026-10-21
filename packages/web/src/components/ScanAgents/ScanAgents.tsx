@@ -1,5 +1,6 @@
 import {
   Bot,
+  ChevronRight,
   FileText,
   FlaskConical,
   HeartPulse,
@@ -14,6 +15,7 @@ import { useNavigate } from 'react-router';
 import { relativeTime, type ReportMeta, type ScanAgent } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
 import { runScan, stopScan, useLiveScans, useScanAgents } from '../../api/scans.ts';
+import { useCollapsed } from '../../lib/useCollapsed.ts';
 import styles from './ScanAgents.module.css';
 
 export const SCAN_ICON: Record<ScanAgent['icon'], LucideIcon> = {
@@ -47,11 +49,25 @@ export function ScanAgents({ projectId, now }: { projectId: string; now: number 
   const scans = useScanAgents(projectId);
   useLiveScans(projectId);
   const [error, setError] = useState<string | null>(null);
+  // Folded by default so the agent feed, not the scan list, gets the height.
+  const [collapsed, toggle] = useCollapsed('scans', true);
   if (!scans.data) return null;
+  const running = scans.data.agents.filter((a) => a.run).length;
   return (
     <section className={styles.wrap} aria-label="Scan agents">
       <div className={styles.head}>
-        <span className="label">Scans</span>
+        <button type="button" className={styles.fold} aria-expanded={!collapsed} onClick={toggle}>
+          <ChevronRight
+            size={12}
+            aria-hidden="true"
+            style={{ transform: collapsed ? undefined : 'rotate(90deg)' }}
+          />
+          <span className="label">Scans</span>
+          <span className={styles.count}>
+            {scans.data.agents.length}
+            {running > 0 && ` · ${running} running`}
+          </span>
+        </button>
         <span
           className={styles.howto}
           title={
@@ -61,11 +77,13 @@ export function ScanAgents({ projectId, now }: { projectId: string; now: number 
           Add your own
         </span>
       </div>
-      <ul className={styles.list}>
-        {scans.data.agents.map((a) => (
-          <ScanRow key={a.id} projectId={projectId} agent={a} now={now} onError={setError} />
-        ))}
-      </ul>
+      {!collapsed && (
+        <ul className={styles.list}>
+          {scans.data.agents.map((a) => (
+            <ScanRow key={a.id} projectId={projectId} agent={a} now={now} onError={setError} />
+          ))}
+        </ul>
+      )}
       {error && <p className={styles.error}>{error}</p>}
       {scans.data.problems.map((p) => (
         <p key={p.file} className={styles.error}>
