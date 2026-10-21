@@ -134,7 +134,32 @@ check in CI is green on the tagged commit.
 **Done when:** in Auto mode, Claude proposes a database switch instead of making it, the
 proposal waits in Decisions, and approving it updates the ADR and applies the change.
 
+## V2 — Works on its own
+
+Agents work without approval clicks and report back; Cherry tells you when it needs you.
+Built before the Plan section (the user's order, 2026-10-22).
+
+- [ ] Scans list folds into one row in the Agents tab; the side panel agent feed folds too.
+- [ ] Notifications: desktop notification and tab title count for agent done, failed or
+      needs you, scan done, decision proposed, and a chat reply while the tab is hidden.
+- [ ] Background agents always run in Auto. Push, publish and `rm -r` are skipped, not asked;
+      the agent finishes the rest and ends as "needs you" with **Continue in chat**.
+- [ ] Decisions: approve in the chat card; Approve only adds a task; Run with agent builds,
+      tests and reports "ready to merge"; Merge tries `git merge`, an agent resolves conflicts.
+- [ ] Git: an Auto commit switch (Claude commits after each finished piece of work); off, a
+      Source Control list with stage, unstage, message and Commit. The Haiku grouping goes.
+- [ ] Open any folder: **Open folder…** on Home and `cherry .` / `cherry open <path>`, next to
+      the projects folder.
+- [ ] Tests, docs, CHANGELOG; hands-on run on a scratch project.
+
+**Done when:** an agent runs a decision to the end without one approval click, says it is
+tested and ready, Merge lands it, and a notification told you each step; commits happen on
+their own with Auto commit on and by hand like VS Code with it off; a folder outside
+`~/Projects` opens with `cherry .`.
+
 ## V2 — Plan section
+
+Built last, after "Works on its own". Plan mode taken to the highest level.
 
 Make planning in Cherry fit real software engineering, from the Plan phase to Plan mode in the
 chat. The scope is agreed first; the items after the proposal are candidates until then.
