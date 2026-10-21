@@ -1,4 +1,4 @@
-import type { EventMap, EventType, ServerEvent } from '@cherry/shared';
+import type { EventMap, EventType, Notice, ServerEvent } from '@cherry/shared';
 
 export interface Subscriber {
   topics: Set<string>;
@@ -34,3 +34,12 @@ export class EventHub {
     return this.subscribers.size;
   }
 }
+
+/** Tells every open tab that work ended or needs the user (desktop notifications). */
+export function notify(hub: EventHub, notice: Notice): void {
+  hub.publish('notices', 'notice', notice);
+}
+
+/** The web route for a project, plus an optional tab path. */
+export const projectLink = (projectId: string, rest = ''): string =>
+  `/p/${encodeURIComponent(projectId)}${rest}`;

@@ -5,7 +5,7 @@ import path from 'node:path';
 import type { Agent, AgentStart, AgentStatus, ApprovalFile, ChatItem } from '@cherry/shared';
 import type { ConfigStore } from '../config.ts';
 import type { Db } from '../db.ts';
-import type { EventHub } from '../events.ts';
+import { notify, projectLink, type EventHub } from '../events.ts';
 import { git, gitStatus } from '../git.ts';
 import { conflict, notFound } from '../http.ts';
 import { isInside, isSecretFile } from '../paths.ts';
@@ -77,6 +77,9 @@ function agentPrompt(task: string, branch: string, auto: boolean): string {
  * worktree on `agent/<slug>`. Edits inside the worktree are allowed; commands need approval.
  * Accept merges into the project's current branch; Discard removes worktree and branch.
  */
+/** The task's first line, short enough for a notification title. */
+const taskLine = (task: string) => task.split('\n')[0]!.slice(0, 60);
+
 export class AgentManager {
   private readonly live = new Map<string, Live>();
 
@@ -320,10 +323,14 @@ export class AgentManager {
         lastFailed?.kind === 'tool'
           ? `${lastFailed.target} · ${lastFailed.meta ?? 'failed'}`
           : null;
-      this.set(id, {
-        status: 'failed',
-        error: error ?? failedRow ?? 'The agent stopped.',
-        ended_at: Date.now(),
+      const reason = error ?? failedRow ?? 'The agent stopped.';
+      this.set(id, { status: 'failed', error: reason, ended_at: Date.now() });
+      notify(this.hub, {
+        projectId: r.project_id,
+        kind: 'agent.failed',
+        title: `Agent failed: ${taskLine(r.task)}`,
+        body: reason,
+        link: projectLink(r.project_id, `/agents?agent=${id}`),
       });
     } else {
       // Commit whatever the agent changed so the branch holds the work.
@@ -347,6 +354,15 @@ export class AgentManager {
         status: 'done',
         summary: summary ?? (changes?.files ? null : 'No changes.'),
         ended_at: Date.now(),
+      });
+      notify(this.hub, {
+        projectId: r.project_id,
+        kind: 'agent.done',
+        title: `Agent done: ${taskLine(r.task)}`,
+        body:
+          summary ??
+          (changes?.files ? `${changes.files} files changed. Review the diff.` : 'No changes.'),
+        link: projectLink(r.project_id, `/agents?agent=${id}`),
       });
     }
     this.live.delete(id);

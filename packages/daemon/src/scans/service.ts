@@ -14,7 +14,7 @@ import {
   type ScanVerdict,
 } from '@cherry/shared';
 import type { ConfigStore } from '../config.ts';
-import type { EventHub } from '../events.ts';
+import { notify, projectLink, type EventHub } from '../events.ts';
 import { badRequest, conflict, notFound } from '../http.ts';
 import { resolveInside } from '../paths.ts';
 import type { ApprovalBroker } from '../claude/approvals.ts';
@@ -287,7 +287,7 @@ export class ScanService {
       markdown: string;
       startedAt: number;
     },
-  ): void {
+  ): string {
     ensureIgnored(dir);
     const folder = path.join(dir, REPORTS_DIR, p.id);
     mkdirSync(folder, { recursive: true });
@@ -315,6 +315,7 @@ export class ScanService {
       '',
     ].join('\n');
     writeFileSync(path.join(folder, `${id}.md`), fm + r.markdown.trim() + '\n');
+    return id;
   }
 
   start(projectId: string, agentId: string): ScanRun {
@@ -397,12 +398,16 @@ export class ScanService {
         finished = true;
         this.live.delete(k);
         this.approvals.cancel(source, 'Scan finished');
+        let saved: { id: string; failed: boolean; summary: string } | null = null;
+        const save = (r: Parameters<ScanService['write']>[2]) => {
+          saved = { id: this.write(dir, p, r), failed: r.status === 'failed', summary: r.summary };
+        };
         try {
           const report = submitted as z.infer<typeof SubmitSchema> | null;
           if (live.stopped || ev.stopped) {
             // Stopped by the user: nothing to keep.
           } else if (report) {
-            this.write(dir, p, {
+            save({
               status: 'done',
               verdict: report.verdict,
               summary: report.summary,
@@ -412,7 +417,7 @@ export class ScanService {
             });
           } else if (ev.ok && lastText.trim().length > 40) {
             // Finished without the tool: keep what it wrote rather than lose the run.
-            this.write(dir, p, {
+            save({
               status: 'done',
               verdict: 'none',
               summary:
@@ -426,13 +431,23 @@ export class ScanService {
             });
           } else {
             const error = ev.error ?? 'The agent ended without a report.';
-            this.write(dir, p, {
+            save({
               status: 'failed',
               verdict: 'none',
               summary: error,
               counts: null,
               markdown: `## Summary\n\nThe scan did not finish: ${error}\n\nRun it again. If it keeps failing, check that Claude Code is signed in.`,
               startedAt: run.startedAt,
+            });
+          }
+          if (saved) {
+            const { id, failed, summary } = saved;
+            notify(this.hub, {
+              projectId,
+              kind: failed ? 'scan.failed' : 'scan.done',
+              title: `${p.name} ${failed ? 'failed' : 'finished'}`,
+              body: summary || 'The report is ready.',
+              link: projectLink(projectId, `/reports/${agentId}/${id}`),
             });
           }
         } finally {

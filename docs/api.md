@@ -205,6 +205,7 @@ One socket at `/ws`. Every event: `{ type, at, ...payload }`. The client subscri
 | `calibrate.proposal` | proposal | project:id |
 | `run.state` | `{ projectId, state }` the app started, stopped or printed its local address (no output, no servers) | project:id |
 | `run.output` | `{ projectId, text }` new output, colour codes removed, sent at most every 100 ms | project:id |
+| `notice` | `{ projectId, kind, title, body, link }` work ended or needs you: `agent.done`, `agent.failed`, `scan.done`, `scan.failed`, `decision.proposed`, `chat.done`, `chat.failed`; `link` is the web route. The web shows a toast, a desktop notification while the tab is in the background, and a count in the tab title | notices |
 | `magnet.item` / `magnet.delta` / `magnet.state` | Magnet's conversation (items include `projects` and `action`) | magnet |
 
 On reconnect the client re-subscribes and re-fetches state with GET calls. Events are not replayed.

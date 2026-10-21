@@ -10,6 +10,12 @@ import { MagnetAvatar } from '../../components/MagnetAvatar/MagnetAvatar.tsx';
 import { Switch } from '../../components/Switch/Switch.tsx';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
 import { tildify } from '../../lib/paths.ts';
+import {
+  notifyState,
+  turnOffNotifications,
+  turnOnNotifications,
+  type NotifyState,
+} from '../../lib/desktopNotify.ts';
 import { ThemePicker } from '../../components/ThemePicker/ThemePicker.tsx';
 import { useNow } from '../../lib/useNow.ts';
 import styles from './Settings.module.css';
@@ -187,10 +193,43 @@ function GeneralSection() {
             ))}
           </select>
         </label>
+        <NotifyRow />
       </div>
       <Saved at={save.savedAt} />
       {save.error && <p className={styles.error}>{save.error}</p>}
     </section>
+  );
+}
+
+const NOTIFY_HINT: Record<NotifyState, string> = {
+  on: 'Agent done or failed, scan done, a decision to approve, an approval, and a chat reply while you are in another tab.',
+  off: 'Off in this browser. Cherry still shows toasts and the count in the tab title.',
+  ask: 'Your browser asks once. Nothing leaves this machine.',
+  blocked: 'Blocked in the browser. Allow notifications for this site in the browser settings.',
+  unsupported: 'This browser has no desktop notifications.',
+};
+
+function NotifyRow() {
+  const [state, setState] = useState<NotifyState>(notifyState);
+  return (
+    <div className={styles.row}>
+      <span>
+        <strong>Desktop notifications</strong>
+        <span>{NOTIFY_HINT[state]}</span>
+      </span>
+      <Switch
+        label={state === 'on' ? 'On' : 'Off'}
+        checked={state === 'on'}
+        disabled={state === 'blocked' || state === 'unsupported'}
+        onChange={(v) => {
+          if (v) void turnOnNotifications().then(setState);
+          else {
+            turnOffNotifications();
+            setState(notifyState());
+          }
+        }}
+      />
+    </div>
   );
 }
 

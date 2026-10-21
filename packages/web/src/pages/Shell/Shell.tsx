@@ -10,6 +10,7 @@ import { queryClient, useConfig, useLiveProjects } from '../../api/queries.ts';
 import { socket } from '../../api/socket.ts';
 import { Lockup } from '../../components/Brand/Brand.tsx';
 import { ApprovalToasts } from '../../components/ApprovalToast/ApprovalToast.tsx';
+import { Notices } from '../../components/Notices/Notices.tsx';
 import { MagnetPanel } from '../../components/MagnetPanel/MagnetPanel.tsx';
 import { useLiveMagnet } from '../../api/magnet.ts';
 import styles from './Shell.module.css';
@@ -77,7 +78,10 @@ function Ready() {
     <>
       <Outlet />
       <MagnetPanel />
-      <ApprovalToasts />
+      <div className={styles.toasts}>
+        <Notices />
+        <ApprovalToasts />
+      </div>
     </>
   );
 }

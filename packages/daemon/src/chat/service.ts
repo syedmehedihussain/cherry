@@ -4,7 +4,7 @@ import path from 'node:path';
 import type { ChatMode, ChatSend, ChatState, Phase } from '@cherry/shared';
 import type { ConfigStore } from '../config.ts';
 import type { Db } from '../db.ts';
-import type { EventHub } from '../events.ts';
+import { notify, projectLink, type EventHub } from '../events.ts';
 import { conflict } from '../http.ts';
 import { DECISIONS_PROMPT, type AdrService } from '../adr/service.ts';
 import type { ApprovalBroker } from '../claude/approvals.ts';
@@ -246,6 +246,14 @@ export class ChatService {
           this.approvals.cancel(`chat:${current.conversationId}`, 'Turn ended');
           this.decisions.cancel(`chat:${current.conversationId}`);
           this.publishState(projectId, current);
+          if (!ev.stopped)
+            notify(this.hub, {
+              projectId,
+              kind: ev.ok ? 'chat.done' : 'chat.failed',
+              title: ev.ok ? `Claude replied in ${projectId}` : `Claude stopped in ${projectId}`,
+              body: ev.ok ? 'Your reply is ready.' : (ev.error ?? 'The turn ended with an error.'),
+              link: projectLink(projectId),
+            });
         }
       },
     });

@@ -8,6 +8,24 @@ import type { GitResult } from './workspace.ts';
 import type { Agent } from './agent.ts';
 import type { RunState } from './run.ts';
 
+export type NoticeKind =
+  | 'agent.done'
+  | 'agent.failed'
+  | 'scan.done'
+  | 'scan.failed'
+  | 'decision.proposed'
+  | 'chat.done'
+  | 'chat.failed';
+
+/** A short message about work that ended; `link` is the web route that shows it. */
+export interface Notice {
+  projectId: string;
+  kind: NoticeKind;
+  title: string;
+  body: string;
+  link: string;
+}
+
 /** Client → server over /ws. */
 export const ClientMessageSchema = z.object({
   type: z.literal('subscribe'),
@@ -62,6 +80,8 @@ export interface EventMap {
   'run.state': { projectId: string; state: Omit<RunState, 'output' | 'servers'> };
   /** New output from the project's app. */
   'run.output': { projectId: string; text: string };
+  /** Something finished or needs you, for desktop notifications (topic "notices"). */
+  notice: Notice;
   'approval.requested': { approval: Approval };
   'approval.resolved': { approval: Approval };
 }

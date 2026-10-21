@@ -1,0 +1,67 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  background: var(--s1);
+  border: 1px solid var(--b);
+  border-radius: var(--r-xl);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.icon {
+  color: var(--diff-add-text);
+  flex: none;
+}
+.toast[data-tone='failed'] .icon {
+  color: var(--danger-text);
+}
+.title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  font-size: var(--fs-base);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--t3);
+  cursor: pointer;
+}
+.close:hover {
+  background: var(--s2);
+}
+.body {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--t2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.project {
+  color: var(--t3);
+}
+.actions {
+  display: flex;
+  gap: 6px;
+}

@@ -140,7 +140,7 @@ Agents work without approval clicks and report back; Cherry tells you when it ne
 Built before the Plan section (the user's order, 2026-10-22).
 
 - [x] Scans list folds into one row in the Agents tab, closed by default.
-- [ ] Notifications: desktop notification and tab title count for agent done, failed or
+- [x] Notifications: desktop notification and tab title count for agent done, failed or
       needs you, scan done, decision proposed, and a chat reply while the tab is hidden.
 - [ ] Background agents always run in Auto. Push, publish and `rm -r` are skipped, not asked;
       the agent finishes the rest and ends as "needs you" with **Continue in chat**.

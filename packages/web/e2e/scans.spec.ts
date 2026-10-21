@@ -39,6 +39,11 @@ test('scan agent: run → report in the centre, with history', async ({ page }) 
   await expect(scans.getByRole('button', { name: 'Stop Security review' })).toBeVisible();
   await page.screenshot({ path: 'test-results/scans-running.png' });
 
+  // The finished scan says so in a toast; Open goes to the report.
+  const notices = page.getByRole('region', { name: 'Notifications' });
+  await expect(notices).toContainText('Security review finished');
+  await notices.getByRole('button', { name: 'Dismiss' }).click();
+
   await scans.getByRole('button', { name: 'Open the Security review report' }).click();
   await expect(page.getByRole('heading', { name: 'Security review', level: 1 })).toBeVisible();
   await expect(page.getByText('Needs work').first()).toBeVisible();

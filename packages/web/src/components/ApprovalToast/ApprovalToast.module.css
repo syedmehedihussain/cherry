@@ -1,12 +1,7 @@
 .stack {
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  z-index: 30;
-  width: 340px;
 }
 .toast {
   background: var(--s1);

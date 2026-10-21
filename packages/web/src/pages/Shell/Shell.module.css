@@ -29,3 +29,19 @@
   padding: 1px 6px;
   color: var(--t1);
 }
+
+/* Toasts: notices above approvals, bottom right. */
+.toasts {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 30;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.toasts > * {
+  pointer-events: auto;
+}

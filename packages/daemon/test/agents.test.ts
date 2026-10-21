@@ -69,11 +69,25 @@ describe('background agents', () => {
   });
 
   it('runs in its own worktree, edits without asking, commits on agent/<slug>', async () => {
+    const notices: unknown[] = [];
+    d.hub.listen((topic, ev) => {
+      if (topic === 'notices') notices.push(ev);
+    });
     const a = await startAgent();
     expect(a.branch).toBe('agent/tests-streak-service');
     const done = await until(a.id, (x) => x.status === 'done');
     expect(done.summary).toBe('Added tests for the streak service.');
     expect(done.changes).toEqual({ files: 1, added: 1, removed: 0 });
+    expect(notices).toEqual([
+      expect.objectContaining({
+        type: 'notice',
+        kind: 'agent.done',
+        projectId: 'core',
+        title: 'Agent done: Write tests for the streak service',
+        body: 'Added tests for the streak service.',
+        link: `/p/core/agents?agent=${a.id}`,
+      }),
+    ]);
     // The worktree lives outside the project, under the projects folder's dot-folder.
     const wt = path.join(d.projectsDir, '.cherry-worktrees', 'core', 'tests-streak-service');
     expect(log.requests[0]!.cwd).toBe(wt);

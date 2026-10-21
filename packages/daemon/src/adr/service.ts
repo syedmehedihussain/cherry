@@ -13,7 +13,7 @@ import type { ChatService } from '../chat/service.ts';
 import type { CustomTool } from '../claude/runner.ts';
 import type { ConfigStore } from '../config.ts';
 import type { Db } from '../db.ts';
-import type { EventHub } from '../events.ts';
+import { notify, projectLink, type EventHub } from '../events.ts';
 import { HttpError, badRequest, conflict, notFound } from '../http.ts';
 import { resolveInside } from '../paths.ts';
 import { readProjectFiles } from '../projects/scanner.ts';
@@ -107,6 +107,13 @@ export class AdrService {
     const { dir } = this.where(projectId);
     const { number } = writeProposal(dir, input, proposedBy);
     this.changed(projectId);
+    notify(this.hub, {
+      projectId,
+      kind: 'decision.proposed',
+      title: `Decision to approve: ${input.title}`,
+      body: `${proposedBy} proposed ADR-${nnnn(number)}.`,
+      link: projectLink(projectId, '/decisions'),
+    });
     return this.get(projectId, number);
   }
 

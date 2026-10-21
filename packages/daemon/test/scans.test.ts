@@ -77,6 +77,10 @@ describe('scan agents', () => {
       { tool: { name: 'Read', input: { file_path: 'src/app.ts' } } },
       { call: { name: 'submit_report', input: report } },
     ];
+    const notices: unknown[] = [];
+    d.hub.listen((topic, ev) => {
+      if (topic === 'notices') notices.push(ev);
+    });
     const r = await api('POST', '/api/projects/core/scans/security/run');
     expect(r.status).toBe(200);
     await idle('security');
@@ -94,6 +98,14 @@ describe('scan agents', () => {
       summary: report.summary,
       counts: report.counts,
     });
+    expect(notices).toEqual([
+      expect.objectContaining({
+        kind: 'scan.done',
+        title: 'Security review finished',
+        body: report.summary,
+        link: `/p/core/reports/security/${last.id}`,
+      }),
+    ]);
     const dir = path.join(d.projectsDir, 'core');
     expect(readFileSync(path.join(dir, '.gitignore'), 'utf8')).toContain('/cherry/');
     expect(readdirSync(path.join(dir, 'cherry', 'reports', 'security'))).toHaveLength(1);
