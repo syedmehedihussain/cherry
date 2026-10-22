@@ -157,26 +157,32 @@ tested and ready, Merge lands it, and a notification told you each step; commits
 their own with Auto commit on and by hand like VS Code with it off; a folder outside
 `~/Projects` opens with `cherry .`.
 
-## V2 — Plan section
+## V2 — Lifecycle (ADR-0034)
 
-Built last, after "Works on its own". Plan mode taken to the highest level.
+The phase bar becomes six stage tabs in a loop: Plan, Design, Preparation, Development,
+Deployment, Issues, and Issues feeds the next Plan. Each stage has its own agent (persona,
+rules, skills) and its own chat. Replaces the planned "Plan section"; its ideas (plan review,
+specs, exit checks) become Plan stage work.
 
-Make planning in Cherry fit real software engineering, from the Plan phase to Plan mode in the
-chat. The scope is agreed first; the items after the proposal are candidates until then.
+- [ ] l1 Agent profiles: one AGENT.md persona per stage, edit rules in code (Plan, Design and
+      Issues write docs only), the chat prompt built from the profile, no phase line.
+- [ ] l2 One chat per stage: sessions get a `stage` (migration), the chat API and events take
+      a stage, old chats become Development.
+- [ ] l3 Skills: bundled `stages/<stage>/skills/`, the user's `~/.cherry/skills/<stage>/`,
+      loaded as a skills-only plugin per turn; SOURCES.md for licences.
+- [ ] l4 Stage tabs in the top bar replace the phase bar; the chat follows the stage; each
+      stage remembers its chat; Home cards drop the phase bar.
+- [ ] l5 Each stage's panels: the file panel and the side panel show what that stage needs
+      (Plan: PRD, roadmap, decisions; Design: design docs; Preparation: readiness checklist;
+      Development: files, Source Control, agents; Deployment: GitHub, releases, CI).
+- [ ] l6 Issues stage and the loop: write issues, Plan this starts the next cycle in Plan
+      (storage decided with the user first).
+- [ ] l7 Bundle the skills the user picks (licence checked), Settings shows each stage's skills.
+- [ ] l8 Tests, docs, CHANGELOG; hands-on run of one full loop on a scratch project.
 
-- [ ] Audit planning today (survey, PRD and ADRs, plan-phase tasks, Plan mode, Live plan) and
-      list the gaps.
-- [ ] Agree the scope with the user.
-- [ ] Proposal and ADR: requirements with acceptance criteria, non-functional needs, risks,
-      scope and milestones.
-- [ ] Plan review card: comment on Claude's plan, Approve and build, or Send notes.
-- [ ] New feature spec: requirements, design and tasks with IDs and dependencies.
-- [ ] Analyze: check a plan or spec against CLAUDE.md and the ADRs.
-- [ ] Plan phase checklist and exit gate.
-- [ ] Next task from dependencies; start an agent from a task.
-
-**Done when:** a new feature on an existing project goes from idea to reviewed spec and ordered
-tasks inside Cherry, and Claude's plans can be reviewed and sent back with comments.
+**Done when:** each stage tab opens its own chat with its own agent; the Plan agent refuses to
+edit code and says to switch to Development; a bundled skill is used by its stage's agent; an
+issue written in Issues becomes the next plan in Plan.
 
 ## After the MVP
 
