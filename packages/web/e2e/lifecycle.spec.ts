@@ -38,3 +38,11 @@ test('stage tabs open each agent, and a picked issue becomes the next plan', asy
     /docs\/issues\/0001-cart-total-ignores-discounts\.md/,
   );
 });
+
+test('Settings lists the stage agents and their bundled skills', async ({ page }) => {
+  await page.goto('/settings/agents');
+  await expect(page.getByRole('heading', { name: 'Stage agents' })).toBeVisible();
+  await expect(page.getByText('Deployment: the Shipper')).toBeVisible();
+  await expect(page.getByText('release', { exact: true })).toBeVisible();
+  await expect(page.getByText('project-readiness', { exact: true })).toBeVisible();
+});

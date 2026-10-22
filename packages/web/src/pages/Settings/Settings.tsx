@@ -18,6 +18,7 @@ import {
 } from '../../lib/desktopNotify.ts';
 import { ThemePicker } from '../../components/ThemePicker/ThemePicker.tsx';
 import { useNow } from '../../lib/useNow.ts';
+import { useStageInfo } from '../../api/stages.ts';
 import styles from './Settings.module.css';
 
 const GROUPS: { title: string | null; items: [string, string][] }[] = [
@@ -37,7 +38,13 @@ const GROUPS: { title: string | null; items: [string, string][] }[] = [
       ['github', 'GitHub'],
     ],
   },
-  { title: 'Assistant', items: [['magnet', 'Magnet']] },
+  {
+    title: 'Assistant',
+    items: [
+      ['agents', 'Stage agents'],
+      ['magnet', 'Magnet'],
+    ],
+  },
 ];
 
 export function Settings() {
@@ -90,7 +97,9 @@ export function Settings() {
         </nav>
         <main className={styles.main}>
           <div className={styles.content}>
-            {section === 'magnet' ? (
+            {section === 'agents' ? (
+              <AgentsSection />
+            ) : section === 'magnet' ? (
               <MagnetSection />
             ) : section === 'folder' ? (
               <FolderSection />
@@ -305,6 +314,48 @@ function CheckAgain() {
     >
       {busy ? 'Checking…' : 'Check again'}
     </button>
+  );
+}
+
+/** The six stage agents and their skills (ADR-0034). */
+function AgentsSection() {
+  const stages = useStageInfo().data;
+  return (
+    <section className={styles.section}>
+      <h1>Stage agents</h1>
+      <p className={styles.lead}>
+        Each stage tab in a project has its own agent and chat. Skills that ship with Cherry are
+        marked bundled. To give an agent your own skill, put its folder (with a{' '}
+        <span className="mono">SKILL.md</span>) in{' '}
+        <span className="mono">~/.cherry/skills/&lt;stage&gt;/</span>; a skill with the same name
+        replaces the bundled one. Only the skill folder loads, never hooks or settings.
+      </p>
+      {stages?.map((s) => (
+        <div key={s.stage} className={styles.agent}>
+          <div className={styles.agentHead}>
+            <strong>
+              {s.label}: the {s.name}
+            </strong>
+            {s.docsOnly && <span className={styles.agentNote}>docs only</span>}
+          </div>
+          <p>{s.summary}</p>
+          {s.skills.length ? (
+            <ul className={styles.agentSkills}>
+              {s.skills.map((k) => (
+                <li key={k.name} title={k.description}>
+                  <span className="mono">{k.name}</span>
+                  <span className={styles.agentNote}>{k.source}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className={styles.agentNote}>
+              No skills yet. Add one in <span className="mono">~/.cherry/skills/{s.stage}/</span>.
+            </p>
+          )}
+        </div>
+      ))}
+    </section>
   );
 }
 

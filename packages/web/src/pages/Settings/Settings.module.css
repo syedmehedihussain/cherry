@@ -466,3 +466,46 @@
   color: var(--t3);
   flex: none;
 }
+
+.agent {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 0;
+  border-top: 1px solid var(--b);
+}
+.agent p {
+  margin: 0;
+  color: var(--t2);
+  font-size: var(--fs-sm);
+}
+.agentHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.agentNote {
+  color: var(--t3);
+  font-size: var(--fs-xs);
+}
+.agent p.agentNote {
+  color: var(--t3);
+  font-size: var(--fs-xs);
+}
+.agentSkills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.agentSkills li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--b);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+}

@@ -177,7 +177,8 @@ specs, exit checks) become Plan stage work.
       Development: files, Source Control, agents; Deployment: GitHub, releases, CI).
 - [x] l6 Issues stage and the loop: write issues, Plan this starts the next cycle in Plan
       (storage decided with the user first).
-- [ ] l7 Bundle the skills the user picks (licence checked), Settings shows each stage's skills.
+- [ ] l7 Bundle the skills the user picks (licence checked). Done: Settings → Stage agents lists
+      each agent and its skills; Cherry's own project-readiness and release skills ship.
 - [ ] l8 Tests, docs, CHANGELOG; hands-on run of one full loop on a scratch project.
 
 **Done when:** each stage tab opens its own chat with its own agent; the Plan agent refuses to
