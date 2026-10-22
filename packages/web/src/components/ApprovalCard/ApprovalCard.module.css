@@ -270,3 +270,21 @@
   color: var(--t3);
   white-space: nowrap;
 }
+
+.warning {
+  margin: 0 16px;
+  padding: 8px 12px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  border: 1px solid var(--danger);
+  border-radius: var(--r-lg);
+  background: var(--danger-fill);
+  color: var(--danger-text);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+.warning svg {
+  flex: none;
+  margin-top: 2px;
+}

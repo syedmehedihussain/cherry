@@ -219,14 +219,25 @@ describe('chat', () => {
     expect(d.approvals.list().filter((a) => a.kind === 'command')).toHaveLength(1);
   });
 
-  // Must-pass safety test 7.
-  it('denies blocked commands without ever showing an approval', async () => {
-    script = [{ tool: { name: 'Bash', input: { command: 'sudo rm -rf /' } } }];
+  // Must-pass safety test 7 (ADR-0033): serious commands ask with a warning, every time.
+  it('asks for serious commands with a warning, and every time', async () => {
+    script = [
+      { tool: { name: 'Bash', input: { command: 'sudo rm -rf /' } } },
+      { tool: { name: 'Bash', input: { command: 'sudo rm -rf /' } } },
+    ];
     await api('POST', '/api/projects/core/chat', { text: 'clean up' });
+    await until(() => pending().length === 1);
+    expect(pending()[0]).toMatchObject({
+      kind: 'command',
+      title: 'Claude wants to run a serious command',
+      detail: 'Runs as root (sudo).',
+    });
+    // Allow for this session makes no rule for a serious command: the second run asks again.
+    await api('POST', `/api/approvals/${pending()[0]!.id}`, { answer: 'allow_session' });
+    await until(() => pending().length === 1);
+    await api('POST', `/api/approvals/${pending()[0]!.id}`, { answer: 'deny' });
     await idle();
-    expect(d.approvals.list()).toHaveLength(0);
-    expect(log.permissions[0]).toMatchObject({ allowed: false });
-    expect(log.permissions[0]?.message).toContain('sudo is blocked');
+    expect(log.permissions.map((p) => p.allowed)).toEqual([true, false]);
   });
 
   it('refuses edits outside the project', async () => {
@@ -270,15 +281,18 @@ describe('chat', () => {
     });
 
     // The must-pass safety rules hold in every mode.
-    it('still blocks sudo, edits outside the project and secret files', async () => {
+    it('still asks for sudo, and blocks edits outside the project and secret files', async () => {
       script = [
         { tool: { name: 'Bash', input: { command: 'sudo rm -rf /' } } },
         { tool: { name: 'Write', input: { file_path: '../other/x.ts', content: 'x' } } },
         { tool: { name: 'Write', input: { file_path: '.env', content: 'KEY=x' } } },
       ];
       await api('POST', '/api/projects/core/chat', { text: 'go', mode: 'auto' });
+      await until(() => pending().length === 1);
+      expect(pending()[0]?.detail).toBe('Runs as root (sudo).');
+      await api('POST', `/api/approvals/${pending()[0]!.id}`, { answer: 'deny' });
       await idle();
-      expect(d.approvals.list()).toHaveLength(0);
+      expect(d.approvals.list()).toHaveLength(1);
       expect(log.permissions.map((p) => p.allowed)).toEqual([false, false, false]);
       expect(log.permissions[2]?.message).toMatch(/secret/);
     });
@@ -368,7 +382,7 @@ describe('classifyCommand', () => {
     'git push --force origin main',
     'git push -f',
     'git push origin +main',
-  ])('blocks %s', (cmd) => expect(classifyCommand(cmd, cwd).blocked).toBe(true));
+  ])('flags %s as serious', (cmd) => expect(classifyCommand(cmd, cwd).serious).toBe(true));
 
   it.each([
     'npm test',
@@ -378,7 +392,7 @@ describe('classifyCommand', () => {
     'git push origin main',
     'git push --force origin agent/x',
     'curl -s https://api.example.com',
-  ])('asks for %s', (cmd) => expect(classifyCommand(cmd, cwd).blocked).toBe(false));
+  ])('does not flag %s', (cmd) => expect(classifyCommand(cmd, cwd).serious).toBe(false));
 });
 
 describe('autoNeedsApproval', () => {

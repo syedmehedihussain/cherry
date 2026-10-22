@@ -64,7 +64,7 @@ export function slugify(task: string): string {
 }
 
 const SKIP_REASON =
-  'Only the user may run this (push, publish, deploy or rm -r). Do not try another way. Skip this step, finish the rest of the task, and list the skipped step under "Needs you" at the end of your report.';
+  'Only the user may run this (push, publish, deploy, rm -r, sudo or another serious command). Do not try another way. Skip this step, finish the rest of the task, and list the skipped step under "Needs you" at the end of your report.';
 
 function agentPrompt(task: string, branch: string): string {
   return [
@@ -73,7 +73,7 @@ function agentPrompt(task: string, branch: string): string {
     `You are a background agent working in your own git worktree on branch ${branch}. The user is not watching and will not answer; work on your own until the task is done.`,
     '- Read CLAUDE.md and the relevant code first.',
     '- You may edit files in this folder and run commands without asking (auto mode).',
-    '- Pushing, publishing, deploying and rm -r are refused for agents. If the task needs one, skip that step, finish the rest, and end your report with a "Needs you" list of the skipped steps.',
+    '- Pushing, publishing, deploying, rm -r, sudo and other serious commands are refused for agents. If the task needs one, skip that step, finish the rest, and end your report with a "Needs you" list of the skipped steps.',
     '- If the project has tests, run them before you finish and say the result.',
     DECISIONS_PROMPT,
     '- Keep .gitignore current: if your change makes build output, caches, dependencies or local env files, add them to .gitignore.',
@@ -322,14 +322,13 @@ export class AgentManager {
       },
       // Edits inside the worktree run without asking; anything outside is refused (guard).
       // Auto mode runs the rest. What only the user may do is refused, never asked: nobody is
-      // watching a background agent (ADR-0028). Blocked commands fall through to their rule.
+      // watching a background agent (ADR-0028), serious commands included (ADR-0033).
       policy: (tool, input) => {
         if (EDIT_TOOLS.has(tool)) return 'allow';
         const command = tool === 'Bash' && typeof input.command === 'string' ? input.command : '';
         if (
           command &&
-          !classifyCommand(command, r.worktree).blocked &&
-          autoNeedsApproval(command)
+          (classifyCommand(command, r.worktree).serious || autoNeedsApproval(command))
         ) {
           if (!live.skipped.includes(command)) live.skipped.push(command);
           return { deny: SKIP_REASON };

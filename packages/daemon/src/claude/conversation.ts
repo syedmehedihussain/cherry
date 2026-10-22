@@ -281,7 +281,7 @@ export class Conversation {
     if (item?.kind === 'tool') this.put({ ...item, ...patch });
   }
 
-  /** canUseTool: policy, blocked commands, session rules, then an approval card. */
+  /** canUseTool: policy, guards, session rules, then an approval card. */
   async permission(
     tool: string,
     input: Record<string, unknown>,
@@ -326,19 +326,20 @@ export class Conversation {
     } else if (tool === 'Bash') {
       const command = typeof input.command === 'string' ? input.command : '';
       const verdict = classifyCommand(command, this.o.cwd);
-      if (verdict.blocked) {
-        this.setTool(toolUseId, { status: 'denied', meta: verdict.reason });
-        return { allow: false, message: `${verdict.reason} Do not try to work around this rule.` };
-      }
       draft = {
         ...base,
         kind: 'command',
-        title: 'Claude wants to run a command',
+        title: verdict.serious
+          ? 'Claude wants to run a serious command'
+          : 'Claude wants to run a command',
         files: [],
         command,
-        detail: null,
+        // A command card's detail is the warning the card shows above the buttons.
+        detail: verdict.serious ? verdict.reason : null,
       };
-      ruleKeys = [`run:${command}`];
+      // No session rule ever covers a serious command: every run asks.
+      ruleKeys = verdict.serious ? [] : [`run:${command}`];
+      if (verdict.serious) autoOk = false;
       if (autoNeedsApproval(command)) autoOk = false;
     } else {
       draft = {

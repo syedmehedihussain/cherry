@@ -186,12 +186,12 @@ describe('background agents', () => {
           ];
     const a = await startAgent('Ship the release');
     const done = await until(a.id, (x) => x.status === 'done');
-    expect(done.needsYou).toEqual(['git push origin HEAD', 'npm publish']);
+    expect(done.needsYou).toEqual(['git push origin HEAD', 'npm publish', 'sudo rm -rf /']);
     expect(d.approvals.list()).toEqual([]);
     expect(log.permissions.map((p) => p.allowed)).toEqual([true, false, false, false]);
     expect(log.permissions[1]!.message).toMatch(/Skip this step/);
-    // A blocked command keeps its own refusal and is not offered to the user.
-    expect(log.permissions[3]!.message).not.toMatch(/Skip this step/);
+    // A serious command is skipped like a push (ADR-0033).
+    expect(log.permissions[3]!.message).toMatch(/Skip this step/);
     expect(notices).toEqual([
       expect.objectContaining({ kind: 'agent.needs', title: 'Agent needs you: Ship the release' }),
     ]);
@@ -203,6 +203,7 @@ describe('background agents', () => {
     expect(sent.prompt).toContain(`branch ${a.branch} (not merged yet)`);
     expect(sent.prompt).toContain('- git push origin HEAD');
     expect(sent.prompt).toContain('- npm publish');
+    expect(sent.prompt).toContain('- sudo rm -rf /');
   });
 
   it('refuses Continue in chat for an agent that skipped nothing', async () => {

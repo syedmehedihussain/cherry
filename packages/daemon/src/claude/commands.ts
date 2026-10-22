@@ -1,7 +1,7 @@
 import { homedir } from 'node:os';
 import path from 'node:path';
 
-export type CommandVerdict = { blocked: true; reason: string } | { blocked: false };
+export type CommandVerdict = { serious: true; reason: string } | { serious: false };
 
 /** Splits a shell line into simple commands on ; && || | and newlines (quotes kept as-is). */
 function segments(cmd: string): string[] {
@@ -23,17 +23,19 @@ function insideProject(target: string, cwd: string): boolean {
 }
 
 /**
- * Commands that are never even shown as an approval (docs/security.md → Command rules).
- * Everything else still needs the user's approval.
+ * Serious commands (docs/security.md → Command rules, ADR-0033). They always ask, also in Auto
+ * mode, with the reason shown on the card, and "Allow for this session" never covers them.
+ * Background agents skip them and list them under Needs you.
  */
 export function classifyCommand(command: string, cwd: string): CommandVerdict {
   if (/(curl|wget)\b[^|]*\|\s*(sudo\s+)?(ba|z|da|k)?sh\b/.test(command)) {
-    return { blocked: true, reason: 'Piping a download into a shell is blocked.' };
+    return { serious: true, reason: 'Pipes a download straight into a shell.' };
   }
   for (const seg of segments(command)) {
     const t = tokens(seg);
     const prog = t[0] ?? '';
-    if (prog === 'sudo' || prog === 'doas') return { blocked: true, reason: 'sudo is blocked.' };
+    if (prog === 'sudo' || prog === 'doas')
+      return { serious: true, reason: 'Runs as root (sudo).' };
     if (prog === 'rm') {
       const flags = t.filter((x) => x.startsWith('-')).join(' ');
       const recursive = /(^|\s)-[a-zA-Z]*[rR]|--recursive/.test(flags);
@@ -42,8 +44,8 @@ export function classifyCommand(command: string, cwd: string): CommandVerdict {
         const outside = targets.find((x) => !insideProject(x, cwd));
         if (targets.length === 0 || outside !== undefined) {
           return {
-            blocked: true,
-            reason: `rm -r outside the project is blocked (${outside ?? 'no target'}).`,
+            serious: true,
+            reason: `Deletes a folder outside the project (${outside ?? 'no target'}).`,
           };
         }
       }
@@ -58,11 +60,11 @@ export function classifyCommand(command: string, cwd: string): CommandVerdict {
       );
       const refspecs = t.slice(2).filter((x) => !x.startsWith('-'));
       if (force && (protectedRef || refspecs.length <= 1)) {
-        return { blocked: true, reason: 'Force-pushing to main or master is blocked.' };
+        return { serious: true, reason: 'Force-pushes to main or master.' };
       }
     }
   }
-  return { blocked: false };
+  return { serious: false };
 }
 
 const GH_WRITES: Record<string, string[]> = {
@@ -73,8 +75,8 @@ const GH_WRITES: Record<string, string[]> = {
 
 /**
  * In auto mode most commands run without asking (ADR-0025). These still ask: pushing, GitHub
- * writes, publishing and deploying, and deleting folders inside the project. Blocked commands
- * are checked first with classifyCommand.
+ * writes, publishing and deploying, and deleting folders inside the project. Serious commands
+ * (classifyCommand) always ask as well.
  */
 export function autoNeedsApproval(command: string): boolean {
   for (const seg of segments(command)) {

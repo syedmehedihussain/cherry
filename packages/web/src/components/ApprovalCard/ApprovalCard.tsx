@@ -1,4 +1,4 @@
-import { Check, ChevronRight, ShieldAlert, X } from 'lucide-react';
+import { Check, ChevronRight, ShieldAlert, TriangleAlert, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { relativeTime, type Approval, type ApprovalFile } from '@cherry/shared';
 import { tildify } from '../../lib/paths.ts';
@@ -23,6 +23,8 @@ export function ApprovalCard({ approval, now, onAnswer, autoFocus, compact }: Ap
   const [busy, setBusy] = useState(false);
   const [denying, setDenying] = useState(false);
   const [reason, setReason] = useState('');
+  /** A command card with a detail is a serious command (ADR-0033): warn, and no session allow. */
+  const serious = approval.kind === 'command' && !!approval.detail;
 
   useEffect(() => {
     if (autoFocus && approval.status === 'pending') ref.current?.focus();
@@ -70,6 +72,15 @@ export function ApprovalCard({ approval, now, onAnswer, autoFocus, compact }: Ap
           </code>
           <span className={styles.in}>in {tildify(approval.cwd)}</span>
         </div>
+      )}
+      {serious && (
+        <p className={styles.warning} role="note">
+          <TriangleAlert size={13} aria-hidden="true" />
+          <span>
+            <strong>Serious command.</strong> {approval.detail} Check it before you allow it; Cherry
+            asks every time.
+          </span>
+        </p>
       )}
       {(approval.kind === 'other' || approval.kind === 'push') && approval.detail && (
         <pre className={styles.detail}>{approval.detail}</pre>
@@ -122,7 +133,7 @@ export function ApprovalCard({ approval, now, onAnswer, autoFocus, compact }: Ap
             >
               Allow
             </button>
-            {approval.kind !== 'push' && (
+            {approval.kind !== 'push' && !serious && (
               <button
                 type="button"
                 className="btn btn-secondary btn-md"
