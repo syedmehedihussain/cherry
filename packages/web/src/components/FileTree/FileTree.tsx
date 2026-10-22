@@ -48,8 +48,12 @@ export function FileTree({ projectId, projectPath, selected, onOpen, touched }: 
   return (
     <aside aria-label="Files" className={styles.panel}>
       <div className={styles.head}>
-        <span className={styles.title}>{projectId}</span>
-        <span className={styles.path}>{projectPath}</span>
+        <span className={styles.title} title={projectId}>
+          {projectId}
+        </span>
+        <span className={styles.path} title={projectPath}>
+          {projectPath}
+        </span>
       </div>
       <div className={styles.scroll} role="tree" aria-label="Project files">
         <div className="label" style={{ padding: '4px 8px 6px' }}>

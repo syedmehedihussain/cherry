@@ -149,12 +149,21 @@ export function SourceControl({ projectId }: { projectId: string }) {
                   <span className={styles.spacer} />
                   <button
                     type="button"
-                    className="btn btn-primary btn-sm"
+                    className={`btn btn-primary btn-sm ${styles.commitBtn}`}
                     disabled={!!busy || !data.author || !data.staged.length || !message.trim()}
+                    title={
+                      data.author
+                        ? `Commit as ${data.author.name} <${data.author.email}>`
+                        : undefined
+                    }
                     onClick={() => void commit()}
                   >
-                    <GitCommitHorizontal size={13} aria-hidden="true" />
-                    {busy === 'commit' ? 'Committing…' : `Commit as ${data.author?.name ?? 'you'}`}
+                    <GitCommitHorizontal size={13} aria-hidden="true" style={{ flex: 'none' }} />
+                    <span className={styles.commitLabel}>
+                      {busy === 'commit'
+                        ? 'Committing…'
+                        : `Commit as ${data.author?.name ?? 'you'}`}
+                    </span>
                   </button>
                 </div>
               </div>

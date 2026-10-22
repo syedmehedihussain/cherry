@@ -65,8 +65,22 @@
 }
 .composeRow {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+}
+/* The commit label holds the author's name, which can be long: shrink and cut it, never
+   overflow the panel. */
+.commitBtn {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+.commitLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .spacer {
   flex: 1;
