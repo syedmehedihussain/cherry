@@ -105,3 +105,12 @@ Only:
 2. `git` and `gh` traffic to GitHub when the user pulls, pushes or creates a repo.
 
 No telemetry, no update checks in the MVP.
+
+## Stage skills (ADR-0034)
+
+Skills are markdown instructions, loaded per stage as a skills-only plugin: Cherry copies only
+skill folders into it, never a plugin's hooks, commands, agents or MCP servers. A skill cannot
+grant itself permissions; its scripts run through Bash and follow the command rules above.
+Bundled third-party skills need a licence that allows redistribution and are read in full
+before they ship (`packages/daemon/stages/SOURCES.md`).
+

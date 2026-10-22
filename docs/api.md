@@ -86,6 +86,12 @@ folder (see `security.md`).
 | POST | `/api/projects/:id/chat/new?stage=` | starts a fresh session for that stage only |
 | POST | `/api/decisions/:cardId` | `{ optionId? , custom? }` answer a decision card |
 
+## Stages (ADR-0034)
+
+| Method | Path | Does |
+| --- | --- | --- |
+| GET | `/api/stages` | `{ stages: [{ stage, label, name, summary, docsOnly, skills: [{ name, description, source }] }] }`: each stage agent and its skills (`source` is `bundled` or `user`) |
+
 ## Approvals
 
 | Method | Path | Does |

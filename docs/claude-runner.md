@@ -118,6 +118,14 @@ PreToolUse guard (`stageGuard`), not a prompt: an edit elsewhere is refused befo
 shows, and Claude is told the work belongs in the Development tab. Bash is not path-checked;
 commands keep the normal approval rules.
 
+**Skills.** A stage's skills are its bundled ones (`packages/daemon/stages/<stage>/skills/`)
+plus the user's (`~/.cherry/skills/<stage>/`; same name wins over bundled). Before a turn Cherry
+copies them into `~/.cherry/plugins/<stage>/skills/` with a `.claude-plugin/plugin.json`, and
+passes that folder with the SDK `plugins` option (`skipMcpDiscovery`). The folder holds nothing
+but skills, so no hooks, commands or MCP servers load from it, and `settingSources` stays empty
+(ADR-0004). The folder is rebuilt only when a SKILL.md changed. The `Skill` tool runs without
+asking; anything a skill runs through Bash still asks.
+
 ## Stop, resume, errors
 
 - **Stop** interrupts the current turn. Partial edits already approved stay; nothing else runs.

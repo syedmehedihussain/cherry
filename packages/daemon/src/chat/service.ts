@@ -16,6 +16,7 @@ import { Transcript } from '../claude/transcript.ts';
 import { projectDir } from '../projects/workspace.ts';
 import { recordUsage } from '../usage.ts';
 import { stageGuard, stageProfile } from '../stages/profiles.ts';
+import { buildStagePlugin } from '../stages/skills.ts';
 import { explainTurn } from './explain.ts';
 import { UPLOADS_DIR, saveUpload, uploadPath } from './uploads.ts';
 
@@ -244,6 +245,8 @@ export class ChatService {
 
     // Auto commit (ADR-0030): Claude commits through commit_changes, as the user.
     const autoCommit = !!this.commits?.autoCommit(projectId);
+    // The stage's skills, as a skills-only plugin; the Skill tool runs without asking.
+    const plugin = buildStagePlugin(this.home, stage);
     let finished = false;
     const handle = this.runner({
       cwd: dir,
@@ -254,7 +257,8 @@ export class ChatService {
       planMode: body.mode === 'plan',
       appendSystemPrompt:
         chatSystemPrompt(stage, body.mode) + (autoCommit ? `\n${AUTO_COMMIT_PROMPT}` : ''),
-      allowedTools: READ_TOOLS,
+      allowedTools: plugin ? [...READ_TOOLS, 'Skill'] : READ_TOOLS,
+      ...(plugin ? { plugins: [plugin] } : {}),
       guard: stageGuard(stage, dir),
       decisions: true,
       extraTools: [

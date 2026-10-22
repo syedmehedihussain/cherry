@@ -123,3 +123,59 @@ describe('a chat per stage', () => {
     expect(d.chat.state('core').conversationId).not.toBeNull();
   });
 });
+
+describe('stage skills', () => {
+  it('loads the user skills into a skills-only plugin, user over bundled', async () => {
+    const { tempDir } = await import('./helpers.ts');
+    const { existsSync, readdirSync, readFileSync } = await import('node:fs');
+    const { buildStagePlugin, stageSkills } = await import('../src/stages/skills.ts');
+    const home = tempDir();
+    const skill = path.join(home, 'skills', 'plan', 'specs');
+    write(path.join(skill, 'SKILL.md'), '---\nname: specs\ndescription: Write specs\n---\nBody\n');
+    write(path.join(skill, 'template.md'), 'T');
+    // Not a skill: no SKILL.md.
+    write(path.join(home, 'skills', 'plan', 'notes', 'README.md'), 'x');
+
+    expect(stageSkills(home, 'plan')).toContainEqual({
+      name: 'specs',
+      description: 'Write specs',
+      source: 'user',
+    });
+    expect(stageSkills(home, 'plan').some((s) => s.name === 'notes')).toBe(false);
+
+    const root = buildStagePlugin(home, 'plan')!;
+    expect(
+      JSON.parse(readFileSync(path.join(root, '.claude-plugin', 'plugin.json'), 'utf8')),
+    ).toMatchObject({ name: 'cherry-plan' });
+    expect(readdirSync(root).sort()).toEqual(['.cherry-signature', '.claude-plugin', 'skills']);
+    expect(existsSync(path.join(root, 'skills', 'specs', 'template.md'))).toBe(true);
+    // Same skills: the folder is reused, not rebuilt.
+    expect(buildStagePlugin(home, 'plan')).toBe(root);
+  });
+
+  it('passes the plugin and the Skill tool to the stage chat', async () => {
+    const log: FakeLog = { requests: [], permissions: [], decisions: [] };
+    const d = await testDaemon({ runner: fakeRunner(() => [{ text: 'ok' }], log) });
+    try {
+      write(path.join(d.projectsDir, 'core', 'README.md'), '# core\n');
+      write(path.join(d.home, 'skills', 'design', 'taste', 'SKILL.md'), '---\nname: taste\n---\n');
+      d.chat.send('core', { text: 'x', stage: 'design', mode: 'ask', attachments: [] });
+      d.chat.send('core', { text: 'y', stage: 'issues', mode: 'ask', attachments: [] });
+      const design = log.requests[0]!;
+      expect(design.plugins).toEqual([path.join(d.home, 'plugins', 'design')]);
+      expect(design.allowedTools).toContain('Skill');
+      // A stage with no skills gets no plugin.
+      expect(log.requests[1]?.plugins).toBeUndefined();
+      // Cherry's own skills ship in the stage folders.
+      const { stageSkills } = await import('../src/stages/skills.ts');
+      expect(stageSkills(d.home, 'deployment')).toContainEqual(
+        expect.objectContaining({ name: 'release', source: 'bundled' }),
+      );
+      expect(stageSkills(d.home, 'preparation')).toContainEqual(
+        expect.objectContaining({ name: 'project-readiness', source: 'bundled' }),
+      );
+    } finally {
+      await d.cleanup();
+    }
+  });
+});

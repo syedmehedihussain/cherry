@@ -168,7 +168,7 @@ specs, exit checks) become Plan stage work.
       Issues write docs only), the chat prompt built from the profile, no phase line.
 - [x] l2 One chat per stage: sessions get a `stage` (migration), the chat API and events take
       a stage, old chats become Development.
-- [ ] l3 Skills: bundled `stages/<stage>/skills/`, the user's `~/.cherry/skills/<stage>/`,
+- [x] l3 Skills: bundled `stages/<stage>/skills/`, the user's `~/.cherry/skills/<stage>/`,
       loaded as a skills-only plugin per turn; SOURCES.md for licences.
 - [ ] l4 Stage tabs in the top bar replace the phase bar; the chat follows the stage; each
       stage remembers its chat; Home cards drop the phase bar.

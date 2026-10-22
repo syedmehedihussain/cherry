@@ -48,6 +48,8 @@ export interface RunRequest {
   /** Tools Claude may not use at all. */
   disallowedTools?: string[];
   additionalDirectories?: string[];
+  /** Local plugin folders to load; Cherry only builds skills-only ones (ADR-0034). */
+  plugins?: string[];
   /** Offer the ask_decision tool. */
   decisions: boolean;
   /** More in-process tools (calibration's note_found / propose_files). */
@@ -245,6 +247,15 @@ export const sdkRunner: Runner = (req) => {
       ],
       ...(req.disallowedTools ? { disallowedTools: req.disallowedTools } : {}),
       ...(req.additionalDirectories ? { additionalDirectories: req.additionalDirectories } : {}),
+      ...(req.plugins?.length
+        ? {
+            plugins: req.plugins.map((p) => ({
+              type: 'local' as const,
+              path: p,
+              skipMcpDiscovery: true,
+            })),
+          }
+        : {}),
       ...(server ? { mcpServers: { cherry: server } } : {}),
       // No settings files: their allow rules would bypass Cherry's approvals (ADR-0004).
       settingSources: [],

@@ -34,6 +34,26 @@ export type Stage = z.infer<typeof StageSchema>;
 
 export const STAGE_LABEL: Record<Stage, string> = { ...PHASE_LABEL, issues: 'Issues' };
 
+/** A skill a stage agent can use (ADR-0034). */
+export const StageSkillSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  /** Shipped with Cherry, or the user's own in ~/.cherry/skills/<stage>/. */
+  source: z.enum(['bundled', 'user']),
+});
+export type StageSkill = z.infer<typeof StageSkillSchema>;
+
+/** What GET /api/stages returns per stage: the agent and its skills. */
+export const StageInfoSchema = z.object({
+  stage: StageSchema,
+  label: z.string(),
+  name: z.string(),
+  summary: z.string(),
+  docsOnly: z.boolean(),
+  skills: z.array(StageSkillSchema),
+});
+export type StageInfo = z.infer<typeof StageInfoSchema>;
+
 /** One error shape for every API failure (docs/api.md). */
 export const ApiErrorSchema = z.object({
   error: z.object({ code: z.string(), message: z.string() }),
