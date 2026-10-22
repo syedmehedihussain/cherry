@@ -117,13 +117,23 @@
   max-width: 480px;
   list-style: none;
 }
-.skills li {
+.skills button {
   padding: 2px 8px;
   border: 1px solid var(--b);
   border-radius: var(--r-pill);
+  background: transparent;
   font-family: var(--mono);
   font-size: var(--fs-2xs);
   color: var(--t2);
+  cursor: pointer;
+}
+.skills button:hover {
+  border-color: var(--bs);
+  color: var(--t1);
+}
+.skills button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .attachments {
   display: flex;

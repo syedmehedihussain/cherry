@@ -42,6 +42,7 @@ export function chatSystemPrompt(stage: Stage, mode: ChatMode = 'ask'): string {
     '- Keep answers short and plain. Name the file, then the change.',
     '- For work with more than one step, first record the steps with your task tool (TaskCreate), then do them one by one: mark a step in_progress when you start it and completed when it is done. The user follows this list live.',
     '- Keep .gitignore current: when you add something that makes build output, caches, dependencies, local env files or secrets, add it to .gitignore (create the file if it is missing).',
+    "- Skills: follow a skill's steps, but where it differs from this project's conventions, the project wins: decisions go through propose_decision and the project's ADR template, issues are files in docs/issues/, specs go in docs/specs/, plans in docs/roadmap.md. When a skill wants the OS temp folder or a place outside the project, use _project/tmp/ instead (for the brainstorming visual companion pass --project-dir _project/tmp). When a skill hands off to a skill you do not have, stop there and say which Cherry tab continues the work.",
     mode === 'auto'
       ? '- You are in auto mode: edits and most commands run without asking. Pushing, publishing and deleting folders still ask. If the user denies one, ask what they want instead.'
       : '- Every edit and command is shown to the user for approval. If they deny one, ask what they want instead.',

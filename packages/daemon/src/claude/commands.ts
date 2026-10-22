@@ -73,9 +73,20 @@ const GH_WRITES: Record<string, string[]> = {
   release: ['create'],
 };
 
+/** `reset --hard`, `clean -f…`, `branch -D`, `checkout .`, `restore .` (after `git`). */
+function destroysWork(args: string[]): boolean {
+  const [cmd, ...rest] = args;
+  if (cmd === 'reset') return rest.includes('--hard');
+  if (cmd === 'clean') return rest.some((x) => /^-[a-zA-Z]*f/.test(x) || x === '--force');
+  if (cmd === 'branch') return rest.some((x) => /^-[a-zA-Z]*D/.test(x));
+  if (cmd === 'checkout' || cmd === 'restore') return rest.includes('.') || rest.includes('--');
+  return false;
+}
+
 /**
  * In auto mode most commands run without asking (ADR-0025). These still ask: pushing, GitHub
- * writes, publishing and deploying, and deleting folders inside the project. Serious commands
+ * writes, publishing and deploying, deleting folders inside the project, and git commands that
+ * throw work away (reset --hard, clean -f, branch -D, checkout or restore of everything). Serious commands
  * (classifyCommand) always ask as well.
  */
 export function autoNeedsApproval(command: string): boolean {
@@ -88,6 +99,8 @@ export function autoNeedsApproval(command: string): boolean {
     const prog = path.basename(t[0] ?? '');
     const args = t.slice(1).filter((x) => !x.startsWith('-'));
     if (prog === 'git' && args[0] === 'push') return true;
+    // Commands that throw away work for good (the git-guardrails list, ADR-0034).
+    if (prog === 'git' && destroysWork(t.slice(1))) return true;
     if (prog === 'gh' && GH_WRITES[args[0] ?? '']?.includes(args[1] ?? '')) return true;
     if (['npm', 'pnpm', 'yarn', 'bun'].includes(prog) && args.includes('publish')) return true;
     if (['vercel', 'gh-pages', 'wrangler'].includes(prog)) return true;

@@ -177,8 +177,9 @@ specs, exit checks) become Plan stage work.
       Development: files, Source Control, agents; Deployment: GitHub, releases, CI).
 - [x] l6 Issues stage and the loop: write issues, Plan this starts the next cycle in Plan
       (storage decided with the user first).
-- [ ] l7 Bundle the skills the user picks (licence checked). Done: Settings → Stage agents lists
-      each agent and its skills; Cherry's own project-readiness and release skills ship.
+- [x] l7 Bundle the skills the user picked (docs/skill_link.md): 23 third-party skills, each read
+      and licence-checked, plus Cherry's own three; sources in `packages/daemon/stages/SOURCES.md`.
+      Open: the HyperFrames video skills (user decision) and installing the agent-browser CLI.
 - [x] l8 Tests, docs, CHANGELOG; real-Claude check (Plan guard refuses code, Deployment uses its
       skill); the Issues → Plan loop is covered end to end in e2e (lifecycle.spec.ts).
 

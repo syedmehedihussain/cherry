@@ -73,8 +73,9 @@ and most commands run without a card, but they still show as timeline rows. In A
 - **Still asks:** `git push`; GitHub writes (`gh pr create|merge|close`,
   `gh repo create|delete|edit`, `gh release create`); publishing and deploying (`npm`, `pnpm`,
   `yarn` or `bun publish`, `vercel`, `netlify deploy`, `fly deploy`, `firebase deploy`,
-  `gh-pages`, `wrangler`), also through `npx` or `pnpm dlx`; and any `rm -r`, even inside the
-  project.
+  `gh-pages`, `wrangler`), also through `npx` or `pnpm dlx`; any `rm -r`, even inside the
+  project; and git commands that throw work away: `git reset --hard`, `git clean -f`,
+  `git branch -D`, `git checkout .` and `git restore .` (ADR-0034).
 - The mode is sent with every message, so it can't carry over by mistake. The chat remembers it
   per project in the browser.
 
@@ -114,4 +115,7 @@ grant itself permissions: Cherry removes `allowed-tools` from each copied SKILL.
 scripts run through Bash and follow the command rules above.
 Bundled third-party skills need a licence that allows redistribution and are read in full
 before they ship (`packages/daemon/stages/SOURCES.md`).
+
+Every Claude session runs with `DO_NOT_TRACK=1`, `SUPERPOWERS_DISABLE_TELEMETRY=1` and
+`HYPERFRAMES_NO_TELEMETRY=1`, so tools that skills start do not report usage to their makers.
 

@@ -189,7 +189,13 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
       <div className={styles.scroll} ref={scroller} onScroll={onScroll}>
         <div className={styles.thread}>
           {chat.isPending && <span className="shimmer" style={{ height: 80 }} />}
-          {state && items.length === 0 && <EmptyChat stage={stage} mode={mode.mode} />}
+          {state && items.length === 0 && (
+            <EmptyChat
+              stage={stage}
+              mode={mode.mode}
+              onSkill={(name) => setDraft(projectId, `/cherry-${stage}:${name} `)}
+            />
+          )}
           {blocks.map((b) =>
             b.t === 'user' ? (
               <div key={b.item.id} className={styles.userRow}>
@@ -284,7 +290,16 @@ const MODE_NOTE: Record<ChatMode, string> = {
 };
 
 /** The stage's agent introduces itself: name, what it does, its skills (ADR-0034). */
-function EmptyChat({ stage, mode }: { stage: Stage; mode: ChatMode }) {
+function EmptyChat({
+  stage,
+  mode,
+  onSkill,
+}: {
+  stage: Stage;
+  mode: ChatMode;
+  /** Puts the skill's command in the composer (`/cherry-<stage>:<name> `). */
+  onSkill(name: string): void;
+}) {
   const agent = stageInfo(useStageInfo().data, stage);
   return (
     <div className={styles.empty}>
@@ -297,8 +312,14 @@ function EmptyChat({ stage, mode }: { stage: Stage; mode: ChatMode }) {
       {!!agent?.skills.length && (
         <ul className={styles.skills} aria-label="Skills">
           {agent.skills.map((s) => (
-            <li key={s.name} title={s.description}>
-              {s.name}
+            <li key={s.name}>
+              <button
+                type="button"
+                title={`${s.description}\n\nClick to start it: /cherry-${stage}:${s.name}`}
+                onClick={() => onSkill(s.name)}
+              >
+                {s.name}
+              </button>
             </li>
           ))}
         </ul>

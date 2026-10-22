@@ -13,6 +13,8 @@ export default tseslint.config(
       'test-results/**',
       '_project/**',
       'design-reference/**',
+      // Bundled skills are third-party files kept as published (ADR-0034).
+      'packages/daemon/stages/**',
     ],
   },
   js.configs.recommended,

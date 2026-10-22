@@ -410,6 +410,13 @@ describe('autoNeedsApproval', () => {
     'fly deploy',
     'rm -rf dist',
     'rm -r build',
+    // Throws work away (ADR-0034, the git-guardrails list).
+    'git reset --hard HEAD~1',
+    'git clean -fd',
+    'git clean -xdf',
+    'git branch -D feature',
+    'git checkout .',
+    'git restore .',
   ])('asks for %s', (cmd) => expect(autoNeedsApproval(cmd)).toBe(true));
 
   it.each([
@@ -421,5 +428,10 @@ describe('autoNeedsApproval', () => {
     'gh pr view 3',
     'rm file.txt',
     'npm run build',
+    'git reset HEAD~1',
+    'git clean -n',
+    'git branch -d merged',
+    'git checkout -b feature',
+    'git restore --staged src/a.ts',
   ])('runs %s', (cmd) => expect(autoNeedsApproval(cmd)).toBe(false));
 });

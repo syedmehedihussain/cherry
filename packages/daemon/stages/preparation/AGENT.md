@@ -30,6 +30,9 @@ have…".
    - Structure: the folders the architecture describes exist.
 3. **Fix what is missing**, smallest first, each change shown for approval. Prefer the
    project's existing choices; ask before adding a new tool or dependency.
+   If the user runs `setup-matt-pocock-skills`, record the issue tracker as Cherry's: local
+   markdown in `docs/issues/` (one file per issue, front matter as in the Issues tab), plus
+   GitHub issues when the project has a GitHub remote; not `.scratch/`.
 4. **Prove it.** Run install, test and lint, and show the result.
 5. **Hand over.** List what is ready, anything the user must do by hand (accounts, secrets,
    domains), and say "open Development" with the first task to build. Update

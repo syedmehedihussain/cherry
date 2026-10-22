@@ -34,6 +34,9 @@ describe('stage profiles', () => {
     ['package.json', false],
     ['lib/README.md', false],
     ['../other/docs/x.md', false],
+    ['.out-of-scope/dark-mode.md', true],
+    ['.out-of-scope/sub/x.md', false],
+    ['.out-of-scope/script.sh', false],
   ])('docs path %s → %s', (rel, ok) => expect(isDocsPath(rel)).toBe(ok));
 
   it('refuses code edits for Plan, Design and Issues, not for the others', () => {
@@ -190,8 +193,7 @@ describe('stage skills', () => {
       const design = log.requests[0]!;
       expect(design.plugins).toEqual([path.join(d.home, 'plugins', 'design')]);
       expect(design.allowedTools).toContain('Skill');
-      // A stage with no skills gets no plugin.
-      expect(log.requests[1]?.plugins).toBeUndefined();
+      expect(log.requests[1]?.plugins).toEqual([path.join(d.home, 'plugins', 'issues')]);
       // Cherry's own skills ship in the stage folders.
       const { stageSkills } = await import('../src/stages/skills.ts');
       expect(stageSkills(d.home, 'deployment')).toContainEqual(
@@ -249,5 +251,30 @@ describe('stage focus', () => {
     } finally {
       await d.cleanup();
     }
+  });
+});
+
+describe('bundled skills', () => {
+  it('every bundled skill has a licence and a row in SOURCES.md', async () => {
+    const { existsSync, readdirSync, readFileSync } = await import('node:fs');
+    const { STAGES_DIR } = await import('../src/stages/profiles.ts');
+    const sources = readFileSync(path.join(STAGES_DIR, 'SOURCES.md'), 'utf8');
+    let count = 0;
+    for (const stage of STAGES) {
+      const dir = path.join(STAGES_DIR, stage, 'skills');
+      const skills = existsSync(dir) ? readdirSync(dir) : [];
+      expect(skills.length, stage).toBeGreaterThan(0);
+      for (const name of skills) {
+        count++;
+        expect(existsSync(path.join(dir, name, 'SKILL.md')), name).toBe(true);
+        expect(sources, `${stage}/${name}`).toContain(`| ${stage} | ${name} |`);
+        const own = sources.includes(`| ${stage} | ${name} | Cherry`);
+        const licensed = ['LICENSE', 'LICENSE.txt'].some((f) =>
+          existsSync(path.join(dir, name, f)),
+        );
+        expect(own || licensed, `${stage}/${name} licence`).toBe(true);
+      }
+    }
+    expect(count).toBeGreaterThan(30);
   });
 });

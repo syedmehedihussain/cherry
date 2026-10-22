@@ -78,6 +78,17 @@ export type Runner = (req: RunRequest) => RunHandle;
 
 export const DECISION_TOOL = 'mcp__cherry__ask_decision';
 
+/**
+ * Turns off the usage telemetry of bundled skills' tools (ADR-0034): nothing leaves the machine
+ * except to Claude and GitHub. Superpowers' brainstorm page loads a logo from its site and
+ * HyperFrames sends PostHog events unless these are set.
+ */
+export const NO_TELEMETRY_ENV: Record<string, string> = {
+  DO_NOT_TRACK: '1',
+  SUPERPOWERS_DISABLE_TELEMETRY: '1',
+  HYPERFRAMES_NO_TELEMETRY: '1',
+};
+
 /** Refuses tools that would read a secret file (docs/security.md → Files never read). */
 export function secretGuard(
   cwd: string,
@@ -259,6 +270,7 @@ export const sdkRunner: Runner = (req) => {
       ...(server ? { mcpServers: { cherry: server } } : {}),
       // No settings files: their allow rules would bypass Cherry's approvals (ADR-0004).
       settingSources: [],
+      env: { ...process.env, ...NO_TELEMETRY_ENV },
       systemPrompt: { type: 'preset', preset: 'claude_code', append: req.appendSystemPrompt },
       hooks: {
         PreToolUse: [

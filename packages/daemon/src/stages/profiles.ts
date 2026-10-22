@@ -44,11 +44,16 @@ export function stageProfile(stage: Stage): StageProfile {
   return profile;
 }
 
-/** Folders and files a docs-only stage may write, relative to the project. */
+/**
+ * Folders and files a docs-only stage may write, relative to the project: docs/, design/,
+ * _project/, top-level .md files and .out-of-scope/*.md.
+ */
 export function isDocsPath(rel: string): boolean {
   const parts = rel.split(/[\\/]/);
   if (parts[0] === '..' || path.isAbsolute(rel)) return false;
   if (parts.length === 1) return /\.md$/i.test(rel);
+  // Rejected ideas, kept by the triage skill as markdown.
+  if (parts[0] === '.out-of-scope') return parts.length === 2 && /\.md$/i.test(rel);
   return ['docs', 'design', '_project'].includes(parts[0]!);
 }
 

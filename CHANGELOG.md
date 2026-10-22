@@ -14,13 +14,20 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
   Development. Each stage lists its key files first in the file panel; Preparation shows a
   readiness checklist with **Ask the Preparer to fix**. Your existing chat is now the
   Development chat.
-- **Skills ship with Cherry** (ADR-0034). Each agent loads its stage's skills: bundled ones
-  (Cherry's own `project-readiness` for Preparation and `release` for Deployment to start), and
-  your own in `~/.cherry/skills/<stage>/`. Only skill folders load, never hooks or settings,
+- **Skills ship with Cherry** (ADR-0034). Each agent loads its stage's skills: 23 bundled
+  skills from Matt Pocock, Superpowers, Anthropic and Vercel (grilling, domain modeling,
+  brainstorming and writing plans for Plan; frontend design and prototypes for Design;
+  TDD, bug diagnosis and a real browser for Development; verification and finishing a branch
+  for Deployment; tickets, triage and code review for Issues; handoff everywhere), Cherry's
+  own `project-readiness`, `release` and `write-a-skill`, and your own in
+  `~/.cherry/skills/<stage>/`. Click a skill in an empty chat to start it. Sources and
+  licences are in `packages/daemon/stages/SOURCES.md`. Only skill folders load, never hooks or settings,
   and a skill cannot skip an approval. **Settings → Stage agents** lists every agent and skill.
 - **Issues** (ADR-0035). The Issues stage keeps issues as files in `docs/issues/` (status, type,
   severity), shows the project's open GitHub issues with **Import**, and **Send to GitHub**
   after your approval. Tick issues and **Plan selected** to start the next round in Plan.
+- **Auto mode asks before git commands that throw work away**: `git reset --hard`,
+  `git clean -f`, `git branch -D`, `git checkout .` and `git restore .`. Agents skip them.
 - **Serious commands ask instead of being blocked** (ADR-0033). `sudo`, `curl … | sh`, `rm -r`
   outside the project and force-pushing to main show a card with a red warning, every time,
   even in Auto mode, and without "Allow for this session". Background agents skip them and
