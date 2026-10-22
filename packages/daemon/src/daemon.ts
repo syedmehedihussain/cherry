@@ -41,7 +41,7 @@ import { sdkRunner, type Runner } from './claude/runner.ts';
 import { buildServer } from './server.ts';
 import { RunService } from './run/service.ts';
 import { runRoutes } from './routes/run.ts';
-import { watchProjects } from './watcher.ts';
+import { watchFolders, watchProjects } from './watcher.ts';
 import pkg from '../package.json' with { type: 'json' };
 
 export interface Daemon {
@@ -201,14 +201,20 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     ],
   });
 
-  const watcher = opts.watch
-    ? watchProjects(config.projectsDir(), (ids) => {
-        void projects.rescan();
-        for (const id of ids) {
-          hub.publish(`project:${id}`, 'project.changed', { projectId: id, paths: [] });
-        }
-      })
-    : null;
+  const changed = (ids: Set<string>) => {
+    void projects.rescan();
+    for (const id of ids) {
+      hub.publish(`project:${id}`, 'project.changed', { projectId: id, paths: [] });
+    }
+  };
+  const watcher = opts.watch ? watchProjects(config.projectsDir(), changed) : null;
+  // Opened folders get their own watcher, made again when the list changes (ADR-0031).
+  let openedWatcher = opts.watch ? watchFolders(projects.opened(), changed) : null;
+  projects.onOpenedChange = () => {
+    if (!opts.watch) return;
+    void openedWatcher?.close();
+    openedWatcher = watchFolders(projects.opened(), changed);
+  };
 
   return {
     app,
@@ -240,6 +246,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       await calibration.stopAll();
       approvals.cancel(undefined, 'Cherry restarted');
       await watcher?.close();
+      await openedWatcher?.close();
       await app.close();
       db.close();
     },

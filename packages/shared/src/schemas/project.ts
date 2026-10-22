@@ -66,6 +66,8 @@ export const ProjectCardSchema = z.object({
   projectJsonError: z.boolean(),
   /** A new-project survey is in progress in this folder (it opens the survey, not calibration). */
   draft: z.boolean().default(false),
+  /** Opened from outside the projects folder (Open folder, `cherry .`; ADR-0031). */
+  opened: z.boolean().default(false),
 });
 export type ProjectCard = z.infer<typeof ProjectCardSchema>;
 

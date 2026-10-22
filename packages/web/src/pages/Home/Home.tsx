@@ -7,6 +7,7 @@ import { ClaudeMissingBanner } from '../../components/Banner/Banner.tsx';
 import { Wordmark } from '../../components/Brand/Brand.tsx';
 import { Ideas } from '../../components/Ideas/Ideas.tsx';
 import { MagnetAvatar } from '../../components/MagnetAvatar/MagnetAvatar.tsx';
+import { OpenFolderButton } from '../../components/OpenFolder/OpenFolder.tsx';
 import { ProjectCard, ProjectCardSkeleton } from '../../components/ProjectCard/ProjectCard.tsx';
 import { ProjectTable } from '../../components/ProjectTable/ProjectTable.tsx';
 import { PromptBox } from '../../components/PromptBox/PromptBox.tsx';
@@ -89,6 +90,7 @@ export function Home() {
                 <Plus size={15} strokeWidth={2.2} aria-hidden="true" />
                 Start project
               </Link>
+              <OpenFolderButton />
               <span className={styles.hint}>
                 A short survey first. Claude drafts the plan before any code.
               </span>
@@ -117,8 +119,9 @@ export function Home() {
                 <Plus size={15} strokeWidth={2.2} aria-hidden="true" />
                 Start project
               </Link>
-              <Link to="/settings/general" className="btn btn-secondary btn-lg">
-                Choose another folder
+              <OpenFolderButton />
+              <Link to="/settings/folder" className="btn btn-ghost btn-lg">
+                Choose another projects folder
               </Link>
             </div>
           </section>

@@ -143,9 +143,13 @@ The phase task graph, seeded from Core's preset (`lib/services/project-presets.t
   "claude": { "bin": "claude", "defaultModel": "opus" },
   "agents": { "maxRunning": 3, "worktreeDir": "~/Projects/.cherry-worktrees" },
   "magnet": { "readOnly": true },
-  "onboarded": true
+  "onboarded": true,
+  "openFolders": [{ "id": "billing", "path": "~/work/billing" }]
 }
 ```
+
+`openFolders` lists folders opened from outside the projects folder (Open folder, `cherry .`;
+ADR-0031). Each `id` is unique across the projects folder and this list. Missing means `[]`.
 
 `onboarded` is `false` only in a config.json the daemon has just created (a fresh install); the
 UI then shows the welcome screen until `POST /api/setup`. A config.json without the field counts

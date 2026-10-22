@@ -158,7 +158,8 @@ projects folder (default `~/Projects`), checks your tools and lets you pick a th
 | --- | --- |
 | `cherry` | Start and open the browser (`--no-open` only prints the link) |
 | `cherry down` / `cherry status` | Stop / show whether it runs |
-| `cherry open <project>` | Open a project's workspace |
+| `cherry .` | Open this folder in Cherry, like `code .` (it joins Home next to your projects) |
+| `cherry open <folder or project>` | Open a folder from anywhere, or a project by name |
 | `cherry doctor` | Check Node, git, gh and Claude Code |
 | `cherry logout` | End every browser session |
 | `cherry install-service` | Start at login (systemd user service) |

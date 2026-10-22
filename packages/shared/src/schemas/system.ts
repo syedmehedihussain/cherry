@@ -33,6 +33,8 @@ export const ConfigSchema = z.object({
   magnet: z.object({ readOnly: z.boolean().default(true) }).default({ readOnly: true }),
   /** False only on a fresh install, until the welcome screen is finished. */
   onboarded: z.boolean().default(true),
+  /** Folders opened from elsewhere on disk, next to the projects folder (ADR-0031). */
+  openFolders: z.array(z.object({ id: z.string().min(1), path: z.string().min(1) })).default([]),
 });
 export type Config = z.infer<typeof ConfigSchema>;
 

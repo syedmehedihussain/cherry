@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { relativeTime, type ProjectCard } from '@cherry/shared';
 import { PhaseBarCompact } from '../PhaseBar/PhaseBar.tsx';
 import { GitChip } from '../Pill/Pill.tsx';
 import { projectHref } from '../ProjectCard/ProjectCard.tsx';
+import { closeFolder } from '../OpenFolder/OpenFolder.tsx';
+import { tildify } from '../../lib/paths.ts';
 import styles from './ProjectTable.module.css';
 
 export function ProjectTable({
@@ -42,9 +45,16 @@ export function ProjectTable({
             <tr key={c.id}>
               <td>
                 <div className={styles.project}>
-                  <Link to={projectHref(c)} className={styles.name}>
-                    {c.name}
-                  </Link>
+                  <span className={styles.nameRow}>
+                    <Link to={projectHref(c)} className={styles.name}>
+                      {c.name}
+                    </Link>
+                    {c.opened && (
+                      <span className="tag" title={tildify(c.path)}>
+                        opened
+                      </span>
+                    )}
+                  </span>
                   <span className={styles.summary}>{c.summary}</span>
                 </div>
               </td>
@@ -86,11 +96,32 @@ export function ProjectTable({
                     </Link>
                   )
                 )}
+                {c.opened && <RemoveFromList id={c.id} name={c.name} />}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** Opened folders only: Home forgets the folder; nothing on disk changes (ADR-0031). */
+function RemoveFromList({ id, name }: { id: string; name: string }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <button
+      type="button"
+      className="btn btn-ghost btn-sm"
+      aria-label={`Remove ${name} from the list`}
+      title="Remove from the list. The folder stays on disk."
+      disabled={busy}
+      onClick={() => {
+        setBusy(true);
+        void closeFolder(id).finally(() => setBusy(false));
+      }}
+    >
+      Remove from list
+    </button>
   );
 }

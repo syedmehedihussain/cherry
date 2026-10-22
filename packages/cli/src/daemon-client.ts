@@ -47,12 +47,28 @@ export function readRunInfo(): RunInfo | null {
   }
 }
 
-export async function cliRequest<T>(info: RunInfo, method: string, route: string): Promise<T> {
+export async function cliRequest<T>(
+  info: RunInfo,
+  method: string,
+  route: string,
+  body?: unknown,
+): Promise<T> {
   const res = await fetch(`http://127.0.0.1:${info.port}${route}`, {
     method,
-    headers: { 'x-cherry-cli': info.cliSecret },
+    headers: {
+      'x-cherry-cli': info.cliSecret,
+      ...(body !== undefined ? { 'content-type': 'application/json' } : {}),
+    },
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   });
-  if (!res.ok) throw new Error(`${method} ${route} → ${res.status}`);
+  if (!res.ok) {
+    // The daemon explains refusals (for example "Cherry does not open your whole home folder").
+    const why = await res
+      .json()
+      .then((j) => (j as { error?: { message?: string } }).error?.message)
+      .catch(() => undefined);
+    throw new Error(why ?? `${method} ${route} → ${res.status}`);
+  }
   return (await res.json()) as T;
 }
 

@@ -56,6 +56,7 @@ cherry/
 | `cherry` (or `cherry up`) | Start the daemon in the background if not running, print the login link `http://127.0.0.1:4317/#login=<code>`, open it in the browser, and return to the prompt. |
 | `cherry down` | Stop the daemon. |
 | `cherry status` | Is it running, which port, how many projects, is `claude` found. |
+| `cherry .` / `cherry open <folder>` | Add a folder from anywhere to Home (ADR-0031) and open its workspace. |
 | `cherry open <project>` | Open the browser straight to a project's workspace. |
 | `cherry logout` | End every browser session. |
 | `cherry doctor` | Check Node, git, gh, claude, folder permissions; print fixes. |

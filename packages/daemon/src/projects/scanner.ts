@@ -75,8 +75,8 @@ function lastSessionTime(dir: string): number | null {
   }
 }
 
-export async function buildCard(dir: string): Promise<ProjectCard> {
-  const id = path.basename(dir);
+export async function buildCard(dir: string, openedId?: string): Promise<ProjectCard> {
+  const id = openedId ?? path.basename(dir);
   const files = readProjectFiles(dir);
   const { projectJson, status } = files;
   const state = projectJson ? 'ready' : status ? 'cctop' : 'uncalibrated';
@@ -105,6 +105,7 @@ export async function buildCard(dir: string): Promise<ProjectCard> {
     lastWorked,
     projectJsonError: files.projectJsonError,
     draft: draftIdea !== null,
+    opened: openedId !== undefined,
   };
 }
 
@@ -116,8 +117,20 @@ export function listProjectDirs(projectsDir: string, ignore: string[]): string[]
     .map((e) => path.join(projectsDir, e.name));
 }
 
-export async function scanProjects(projectsDir: string, ignore: string[]): Promise<ProjectCard[]> {
+export async function scanProjects(
+  projectsDir: string,
+  ignore: string[],
+  opened: { id: string; dir: string }[] = [],
+): Promise<ProjectCard[]> {
   const dirs = listProjectDirs(projectsDir, ignore);
-  const cards = await Promise.all(dirs.map((d) => buildCard(d)));
+  const openedIds = new Set(opened.map((f) => f.id));
+  // A folder removed while the scan runs is left out, not an error.
+  const safe = (p: Promise<ProjectCard>) => p.catch(() => null);
+  const found = await Promise.all([
+    // An opened folder wins when a projects-folder child has the same name (projectDir does too).
+    ...dirs.filter((d) => !openedIds.has(path.basename(d))).map((d) => safe(buildCard(d))),
+    ...opened.map((f) => safe(buildCard(f.dir, f.id))),
+  ]);
+  const cards = found.filter((c): c is ProjectCard => c !== null);
   return cards.sort((a, b) => (b.lastWorked ?? 0) - (a.lastWorked ?? 0));
 }

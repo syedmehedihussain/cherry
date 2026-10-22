@@ -29,7 +29,8 @@ Usage: cherry [command]
   (none), up         start Cherry and open it in the browser
   down               stop Cherry
   status             show whether Cherry is running
-  open <project>     open a project's workspace
+  .                  open this folder in Cherry (like \`code .\`)
+  open <folder>      open a folder from anywhere, or a project by name
   logout             end every browser session
   doctor             check Node, git, gh and claude
   install-service    start Cherry when you log in (systemd user service)
@@ -89,6 +90,26 @@ async function up(open: boolean, route = '/'): Promise<RunResult> {
     code: 0,
     out: `${head}\n\n  ${link}\n\nThe link logs you in once and works for 10 minutes. Bookmark ${info.webUrl}${route} for later.`,
   };
+}
+
+/** `cherry .` and `cherry open <path>`: adds the folder to Home and opens its workspace. */
+async function openFolder(open: boolean, folder: string): Promise<RunResult> {
+  const { info } = await ensureRunning();
+  const dir = path.resolve(folder.replace(/^~(?=$|\/)/, homedir()));
+  const { id } = await cliRequest<{ id: string }>(info, 'POST', '/api/cli/open-folder', {
+    path: dir,
+  });
+  return up(open, `/p/${encodeURIComponent(id)}`);
+}
+
+/** A folder on disk (`.`, `../app`, `~/code/app`, or a folder here), not a project name. */
+function isFolderArg(arg: string): boolean {
+  if (arg === '.' || arg === '..' || arg.includes('/') || arg.startsWith('~')) return true;
+  try {
+    return statSync(path.resolve(arg)).isDirectory();
+  } catch {
+    return false;
+  }
 }
 
 async function status(): Promise<RunResult> {
@@ -231,8 +252,11 @@ export async function run(argv: readonly string[]): Promise<RunResult> {
         return { code: 0, out: HELP };
       case 'up':
         return await up(open);
+      case '.':
+        return await openFolder(open, '.');
       case 'open':
-        if (!second) return { code: 2, out: 'Usage: cherry open <project>' };
+        if (!second) return { code: 2, out: 'Usage: cherry open <folder or project>' };
+        if (isFolderArg(second)) return await openFolder(open, second);
         return await up(open, `/p/${encodeURIComponent(second)}`);
       case 'down':
         return await down();

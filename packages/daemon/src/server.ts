@@ -5,7 +5,7 @@ import fastifyCookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';
 import fastifyWebsocket from '@fastify/websocket';
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
-import { ZodError } from 'zod';
+import { ZodError, z } from 'zod';
 import {
   ClientMessageSchema,
   ConfigPatchSchema,
@@ -169,6 +169,10 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     deps.auth.endAllSessions();
     return { ok: true };
   });
+  // `cherry .` / `cherry open <path>`: the CLI sends the folder; the browser then opens it.
+  app.post('/api/cli/open-folder', async (req) =>
+    deps.projects.open(z.object({ path: z.string().min(1).max(4096) }).parse(req.body).path),
+  );
   app.get('/api/cli/status', async () => {
     const cards = await deps.projects.list();
     return { version: deps.version, projects: cards.length, health: await deps.health.get() };
@@ -212,6 +216,14 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   });
 
   // --- Projects ---
+  // Open folder (ADR-0031): a folder from anywhere joins Home; Remove from list forgets it.
+  app.post('/api/projects/open', async (req) =>
+    deps.projects.open(z.object({ path: z.string().min(1).max(4096) }).parse(req.body).path),
+  );
+  app.post('/api/projects/:id/close', async (req) => {
+    await deps.projects.close(z.object({ id: z.string().min(1).max(200) }).parse(req.params).id);
+    return { ok: true };
+  });
   app.get('/api/projects', async () => ({
     projectsDir: deps.config.projectsDir(),
     cards: await deps.projects.list(),

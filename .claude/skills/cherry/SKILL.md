@@ -32,6 +32,7 @@ cherry                    # start, print a login link, open the browser
 | --- | --- |
 | `cherry` / `cherry up` | start the daemon (builds the UI if stale) and open the login link; `--no-open` only prints it |
 | `cherry down` / `status` | stop it / say if it runs, how many projects, Claude status |
+| `cherry .` / `cherry open <folder>` | add a folder from anywhere to Home and open it (ADR-0031) |
 | `cherry open <project>` | open that project's workspace |
 | `cherry doctor` | check Node, git, gh and claude |
 | `cherry logout` | end every browser (and api.sh) session |

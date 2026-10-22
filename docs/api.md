@@ -34,7 +34,9 @@ the projects folder (see `security.md`).
 
 | Method | Path | Returns / does |
 | --- | --- | --- |
-| GET | `/api/projects` | `ProjectCard[]` sorted by last worked |
+| GET | `/api/projects` | `ProjectCard[]` sorted by last worked; cards opened from elsewhere have `opened: true` |
+| POST | `/api/projects/open` | `{ path }` → `{ id }`: Open folder adds a folder from anywhere to Home. A direct child of the projects folder returns its own id. Refuses `/`, the home folder, `~/.cherry`, the projects folder and any folder holding it (ADR-0031) |
+| POST | `/api/projects/:id/close` | Remove from list: forgets an opened folder; the disk is not touched; 404 for other projects |
 | POST | `/api/projects/rescan` | starts a rescan; results arrive as events |
 | GET | `/api/projects/:id` | `ProjectDetail` (card + status + docs list + git) |
 | GET | `/api/projects/:id/tree?path=` | one directory level with git status per entry |

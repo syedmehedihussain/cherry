@@ -13,7 +13,7 @@ import {
 } from '@cherry/shared';
 import { z } from 'zod';
 import type { ConfigStore } from '../config.ts';
-import { isInside, tildify } from '../paths.ts';
+import { isInside, tildify, expandHome } from '../paths.ts';
 import type { Db } from '../db.ts';
 import type { EventHub } from '../events.ts';
 import { writeFileAtomic } from '../fsutil.ts';
@@ -237,6 +237,8 @@ export class MagnetService {
       ? `(I am looking at the project "${body.projectId}".)\n\n${body.text}`
       : body.text;
     const projectsDir = this.config.projectsDir();
+    // Folders opened from elsewhere are projects too (ADR-0031).
+    const opened = this.config.get().openFolders.map((f) => path.resolve(expandHome(f.path)));
     const magnet = this.dir();
     let finished = false;
     const handle = this.runner({
@@ -253,7 +255,7 @@ export class MagnetService {
         now: new Date(),
       }),
       allowedTools: READ_TOOLS,
-      additionalDirectories: [projectsDir],
+      additionalDirectories: [projectsDir, ...opened],
       decisions: false,
       guard: (tool, input) => {
         if (tool.startsWith('mcp__cherry__')) return null;
@@ -263,9 +265,9 @@ export class MagnetService {
           const inside = (root: string) => isInside(root, path.resolve(magnet, p));
           if (EDIT_TOOLS.has(tool))
             return inside(magnet) ? null : 'Magnet may only edit its own notes.';
-          return inside(projectsDir) || inside(magnet)
+          return inside(projectsDir) || inside(magnet) || opened.some(inside)
             ? null
-            : 'Magnet only reads the projects folder and its own notes.';
+            : 'Magnet only reads the projects, the folders opened in Cherry, and its own notes.';
         }
         return 'Magnet is read-only: it reads files and proposes actions, nothing else.';
       },

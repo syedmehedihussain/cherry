@@ -1,12 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
-import { ArrowUp, Folder } from 'lucide-react';
-import { useDeferredValue, useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Navigate, useNavigate } from 'react-router';
-import { ConfigSchema, FolderListSchema } from '@cherry/shared';
+import { ConfigSchema } from '@cherry/shared';
 import { api, ApiFailure } from '../../api/client.ts';
 import { keys, queryClient, recheckHealth, useConfig, useHealth } from '../../api/queries.ts';
 import { CherryBadge } from '../../components/Brand/Brand.tsx';
 import { ThemePicker } from '../../components/ThemePicker/ThemePicker.tsx';
+import { FolderPicker } from '../../components/FolderPicker/FolderPicker.tsx';
 import styles from './Welcome.module.css';
 
 const STEPS = 4;
@@ -64,7 +63,13 @@ export function Welcome() {
           <>
             <h1>Where are your projects?</h1>
             <p className={styles.lead}>Pick a folder, or type a new path and Cherry creates it.</p>
-            <FolderPicker value={folder} onChange={setDir} />
+            <FolderPicker
+              value={folder}
+              onChange={setDir}
+              label="Projects folder"
+              missingNote="This folder does not exist yet. Cherry will create it."
+              emptyNote="No folders inside. Projects you add will go here."
+            />
           </>
         )}
 
@@ -200,56 +205,6 @@ function ToolCheck() {
           <span className={styles.note}>
             You can go on and fix this later. Chat and agents need Claude Code.
           </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function FolderPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const query = useDeferredValue(value.trim());
-  const list = useQuery({
-    queryKey: ['folders', query],
-    queryFn: () =>
-      api('GET', `/api/folders?path=${encodeURIComponent(query)}`, undefined, FolderListSchema),
-    enabled: !!query,
-    placeholderData: (prev) => prev,
-  });
-  const data = list.data;
-  const join = (name: string) => `${(data?.path ?? value).replace(/\/$/, '')}/${name}`;
-
-  return (
-    <div className={styles.picker}>
-      <input
-        className="input mono"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label="Projects folder"
-        spellCheck={false}
-      />
-      <div className={styles.browser}>
-        <button
-          type="button"
-          className={styles.up}
-          disabled={!data?.parent}
-          onClick={() => data?.parent && onChange(data.parent)}
-        >
-          <ArrowUp size={14} /> Up
-        </button>
-        {data && !data.exists ? (
-          <p className={styles.note}>This folder does not exist yet. Cherry will create it.</p>
-        ) : data && data.dirs.length === 0 ? (
-          <p className={styles.note}>No folders inside. Projects you add will go here.</p>
-        ) : (
-          <ul className={styles.dirs}>
-            {data?.dirs.map((name) => (
-              <li key={name}>
-                <button type="button" onClick={() => onChange(join(name))}>
-                  <Folder size={14} /> {name}
-                </button>
-              </li>
-            ))}
-          </ul>
         )}
       </div>
     </div>

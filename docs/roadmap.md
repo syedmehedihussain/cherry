@@ -148,7 +148,7 @@ Built before the Plan section (the user's order, 2026-10-22).
       tests and reports "ready to merge"; Merge tries `git merge`, an agent resolves conflicts.
 - [x] Git: an Auto commit switch (Claude commits after each finished piece of work); off, a
       Source Control list with stage, unstage, message and Commit. The Haiku grouping goes.
-- [ ] Open any folder: **Open folder…** on Home and `cherry .` / `cherry open <path>`, next to
+- [x] Open any folder: **Open folder…** on Home and `cherry .` / `cherry open <path>`, next to
       the projects folder.
 - [ ] Tests, docs, CHANGELOG; hands-on run on a scratch project.
 

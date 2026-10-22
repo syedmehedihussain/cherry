@@ -3,6 +3,7 @@ import path from 'node:path';
 import { ConfigSchema, type Config, type ConfigPatch } from '@cherry/shared';
 import { readJsonFile, writeFileAtomic } from './fsutil.ts';
 import { expandHome } from './paths.ts';
+import { registerOpened } from './projects/opened.ts';
 
 const DEFAULT_WORKTREE_DIR = '~/Projects/.cherry-worktrees';
 
@@ -15,6 +16,24 @@ export class ConfigStore {
     chmodSync(home, 0o700);
     this.file = path.join(home, 'config.json');
     this.current = this.load();
+    this.register();
+  }
+
+  /** Lets projectDir() find opened folders (ADR-0031). */
+  private register(): void {
+    registerOpened(
+      this.projectsDir(),
+      this.current.openFolders.map((f) => ({ id: f.id, dir: path.resolve(expandHome(f.path)) })),
+    );
+  }
+
+  /** Replaces the list of opened folders (Open folder, `cherry .`, Remove from list). */
+  setOpenFolders(list: Config['openFolders']): Config {
+    const next = ConfigSchema.parse({ ...this.current, openFolders: list });
+    writeFileAtomic(this.file, JSON.stringify(next, null, 2) + '\n', 0o600);
+    this.current = next;
+    this.register();
+    return next;
   }
 
   private load(): Config {
@@ -59,6 +78,7 @@ export class ConfigStore {
     });
     writeFileAtomic(this.file, JSON.stringify(next, null, 2) + '\n', 0o600);
     this.current = next;
+    this.register();
     return next;
   }
 }
