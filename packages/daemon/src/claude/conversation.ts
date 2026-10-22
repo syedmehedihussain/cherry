@@ -22,7 +22,11 @@ import type { Transcript } from './transcript.ts';
 
 const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
 /** Cherry's own tools that show as timeline rows (the others have their own cards or views). */
-const SHOWN_CHERRY_TOOLS = new Set(['mcp__cherry__propose_decision', 'mcp__cherry__decision_done']);
+const SHOWN_CHERRY_TOOLS = new Set([
+  'mcp__cherry__propose_decision',
+  'mcp__cherry__decision_done',
+  'mcp__cherry__commit_changes',
+]);
 const READ_LIKE = new Set(['Read', 'Glob', 'Grep', 'LS', 'WebFetch', 'WebSearch']);
 
 export function verbFor(tool: string): ToolVerb {
@@ -172,6 +176,7 @@ export class Conversation {
     if (s('description')) return s('description');
     if (tool === 'TodoWrite') return 'to-do list';
     if (tool === 'mcp__cherry__propose_decision') return s('title') || 'a decision';
+    if (tool === 'mcp__cherry__commit_changes') return s('message').split('\n')[0] || 'a commit';
     if (tool === 'mcp__cherry__decision_done')
       return `ADR-${String(input.adr ?? '?').padStart(4, '0')}`;
     return tool;
@@ -240,6 +245,8 @@ export class Conversation {
         if (!ok) meta = (ev.output.split('\n').find((l) => l.trim()) ?? 'failed').slice(0, 120);
         else if (item.tool === 'mcp__cherry__propose_decision')
           meta = /ADR-\d+/.exec(ev.output)?.[0] ?? null;
+        else if (item.tool === 'mcp__cherry__commit_changes')
+          meta = /^Committed (\w+)/.exec(ev.output)?.[1] ?? null;
         else if (item.tool === 'Read') {
           const n = ev.output.split('\n').filter((l) => /^\s*\d+[→\t]/.test(l)).length;
           meta = n ? `${n} lines` : null;

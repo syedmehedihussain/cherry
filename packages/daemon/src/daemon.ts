@@ -108,6 +108,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
   const approvals = new ApprovalBroker(db, hub);
   const decisions = new DecisionBroker();
   const adrs = new AdrService(config, db, hub);
+  const commits = new CommitService(config, db, hub, opts.runner ?? sdkRunner);
   const chat = new ChatService(
     config,
     db,
@@ -117,6 +118,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     opts.runner ?? sdkRunner,
     opts.home,
     adrs,
+    commits,
   );
   const calibration = new CalibrationService(
     config,
@@ -156,7 +158,6 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     opts.home,
   );
   const notes = new NoteService(config, opts.runner ?? sdkRunner);
-  const commits = new CommitService(config, hub, opts.runner ?? sdkRunner);
   const runs = new RunService(config, hub);
   const gitActions = new GitActions(config, hub, approvals, gitInfo, opts.prList);
   const magnet = new MagnetService(

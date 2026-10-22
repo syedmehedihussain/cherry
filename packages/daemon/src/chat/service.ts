@@ -4,6 +4,7 @@ import path from 'node:path';
 import type { ChatMode, ChatSend, ChatState, Phase } from '@cherry/shared';
 import type { ConfigStore } from '../config.ts';
 import type { Db } from '../db.ts';
+import { AUTO_COMMIT_PROMPT, type CommitService } from '../projects/commits.ts';
 import { notify, projectLink, type EventHub } from '../events.ts';
 import { conflict } from '../http.ts';
 import { DECISIONS_PROMPT, type AdrService } from '../adr/service.ts';
@@ -75,6 +76,7 @@ export class ChatService {
     private readonly runner: Runner,
     private readonly home: string,
     private readonly adrs?: AdrService,
+    private readonly commits?: CommitService,
   ) {}
 
   private transcriptFile(conversationId: string): string {
@@ -216,6 +218,8 @@ export class ChatService {
     current.conversation.addUser(`u_${turnId}`, body.text, body.attachments);
 
     const phase = readProjectFiles(dir).projectJson?.phase ?? null;
+    // Auto commit (ADR-0030): Claude commits through commit_changes, as the user.
+    const autoCommit = !!this.commits?.autoCommit(projectId);
     let finished = false;
     const handle = this.runner({
       cwd: dir,
@@ -224,10 +228,14 @@ export class ChatService {
       model,
       ...(body.effort && model !== 'haiku' ? { effort: body.effort } : {}),
       planMode: body.mode === 'plan',
-      appendSystemPrompt: chatSystemPrompt(phase, body.mode),
+      appendSystemPrompt:
+        chatSystemPrompt(phase, body.mode) + (autoCommit ? `\n${AUTO_COMMIT_PROMPT}` : ''),
       allowedTools: READ_TOOLS,
       decisions: true,
-      ...(this.adrs ? { extraTools: this.adrs.tools(projectId, 'chat') } : {}),
+      extraTools: [
+        ...(this.adrs?.tools(projectId, 'chat') ?? []),
+        ...(autoCommit && this.commits ? [this.commits.tool(projectId)] : []),
+      ],
       onPermission: (tool, input, id) => current.conversation.permission(tool, input, id),
       onDecision: (input) => current.conversation.decision(input),
       onEvent: (ev) => {

@@ -1,159 +1,99 @@
-import { createHash } from 'node:crypto';
-import { readFileSync, statSync } from 'node:fs';
-import path from 'node:path';
 import { z } from 'zod';
-import type {
-  CommitBody,
-  CommitFile,
-  CommitPlan,
-  CommitResult,
-  CommitSuggestion,
-} from '@cherry/shared';
+import type { CommitFile, CommitResult, SourceControl, StageBody } from '@cherry/shared';
 import type { CustomTool, Runner } from '../claude/runner.ts';
 import type { ConfigStore } from '../config.ts';
+import type { Db } from '../db.ts';
 import type { EventHub } from '../events.ts';
 import { git } from '../git.ts';
 import { badRequest, conflict, HttpError } from '../http.ts';
 import { isSecretFile } from '../paths.ts';
 import { projectDir } from './workspace.ts';
 
-/** Diff text Claude sees: per file and in all. */
+/** Diff text Haiku sees when it writes a message: per file and in all. */
 const FILE_CHARS = 4_000;
-const TOTAL_CHARS = 60_000;
+const TOTAL_CHARS = 30_000;
 
-/** Parses `git status --porcelain=v1 -z --untracked-files=all`. */
-export function parsePorcelain(out: string): CommitFile[] {
-  const files: CommitFile[] = [];
+export const COMMIT_TOOL = 'commit_changes';
+
+/** Added to the chat prompt while Auto commit is on (ADR-0030). */
+export const AUTO_COMMIT_PROMPT = `- Auto commit is on. After each finished piece of work (a fix, a feature step, a doc change), call ${COMMIT_TOOL} with the files you changed for it and a short conventional commit message (feat:, fix:, docs:, test:, refactor:, chore:). Make small commits. Do not run git add or git commit yourself, and do not push.`;
+
+interface Entry extends CommitFile {
+  /** Index side of `git status` (staged). */
+  x: string;
+  /** Work-tree side (not staged yet). */
+  y: string;
+}
+
+const letterOf = (c: string): CommitFile['letter'] =>
+  c === 'A' ? 'A' : c === 'D' ? 'D' : c === 'R' || c === 'C' ? 'R' : 'M';
+
+/** Parses `git status --porcelain=v1 -z --untracked-files=all`, keeping both sides. */
+export function parseStatus(out: string): Entry[] {
+  const files: Entry[] = [];
   const recs = out.split('\0');
   for (let i = 0; i < recs.length; i++) {
     const rec = recs[i] ?? '';
     if (rec.length < 4) continue;
-    const xy = rec.slice(0, 2);
+    const x = rec[0]!;
+    const y = rec[1]!;
     const p = rec.slice(3);
-    if (xy === '!!') continue;
-    if (xy === '??') files.push({ path: p, letter: 'U', origPath: null });
-    else if (xy.includes('R') || xy.includes('C')) {
-      files.push({ path: p, letter: 'R', origPath: recs[i + 1] ?? null });
+    if (x === '!') continue;
+    let origPath: string | null = null;
+    if (x === 'R' || x === 'C') {
+      origPath = recs[i + 1] ?? null;
       i++;
-    } else if (xy.includes('D')) files.push({ path: p, letter: 'D', origPath: null });
-    else if (xy.includes('A')) files.push({ path: p, letter: 'A', origPath: null });
-    else files.push({ path: p, letter: 'M', origPath: null });
+    }
+    files.push({ path: p, letter: x === '?' ? 'U' : letterOf(x === ' ' ? y : x), origPath, x, y });
   }
   return files;
 }
 
-const SubmitSchema = z.object({
-  commits: z
-    .array(
-      z.object({
-        message: z.string().trim().min(1).max(200),
-        body: z.string().trim().max(2000).optional(),
-        explanation: z.string().trim().min(1).max(1500),
-        files: z.array(z.string()).min(1),
-      }),
-    )
-    .min(1)
-    .max(30),
-});
+/** The staged list and the not-staged list, as the Source Control view shows them. */
+export function splitStatus(entries: Entry[]): Pick<SourceControl, 'staged' | 'changes'> {
+  const staged: CommitFile[] = [];
+  const changes: CommitFile[] = [];
+  for (const e of entries) {
+    if (e.x === '?') {
+      changes.push({ path: e.path, letter: 'U', origPath: null });
+      continue;
+    }
+    if (e.x !== ' ') staged.push({ path: e.path, letter: letterOf(e.x), origPath: e.origPath });
+    if (e.y !== ' ') changes.push({ path: e.path, letter: letterOf(e.y), origPath: null });
+  }
+  return { staged, changes };
+}
+
+const firstLine = (s: string) => s.trim().split('\n')[0] ?? '';
 
 /**
- * Groups the given files into commits. Unknown files are dropped, a file is used once, and
- * files Claude left out go into a last group.
- */
-export function normaliseGroups(
-  offered: string[],
-  groups: z.infer<typeof SubmitSchema>['commits'],
-): CommitSuggestion[] {
-  const left = new Set(offered);
-  const out: CommitSuggestion[] = [];
-  for (const g of groups) {
-    const files = g.files.filter((f) => left.delete(f));
-    if (files.length === 0) continue;
-    out.push({
-      id: `c${out.length + 1}`,
-      message: g.message.split('\n')[0]!.trim(),
-      body: g.body?.trim() || null,
-      explanation: g.explanation,
-      files,
-    });
-  }
-  if (left.size > 0) {
-    out.push({
-      id: `c${out.length + 1}`,
-      message: 'chore: other changes',
-      body: null,
-      explanation: 'These files changed too. Claude did not put them in a group.',
-      files: [...left],
-    });
-  }
-  return out;
-}
-
-function commitsPrompt(files: CommitFile[], diff: string, recent: string): string {
-  return [
-    'Group these uncommitted changes into a few logical commits, then call propose_commits once.',
-    '',
-    '## Rules',
-    '- One commit per logical change. Put every file below in exactly one commit. Use the paths exactly as listed.',
-    "- message: one subject line, at most 72 characters. Follow the style of the project's recent commits (often conventional commits: feat:, fix:, docs:, test:, chore:).",
-    '- body: optional, 1 to 3 short lines when the subject is not enough.',
-    '- explanation: what this commit does and why, for the user who will commit it. Write it in ASD-STE100 Simplified Technical English: 2 to 4 sentences, max 20 words each, active voice, simple words, one idea per sentence. Keep code names and paths as they are.',
-    '- Order the commits so that each one makes sense after the ones before it.',
-    '',
-    '## Recent commits (style)',
-    recent.trim() || '(none yet)',
-    '',
-    '## Changed files',
-    ...files.map(
-      (f) => `- ${f.letter} ${f.path}${f.origPath ? ` (renamed from ${f.origPath})` : ''}`,
-    ),
-    '',
-    '## Diff',
-    diff,
-  ].join('\n');
-}
-
-interface Cached {
-  fingerprint: string;
-  plan: CommitPlan;
-}
-
-/**
- * "Ready to commit" on the GitHub view. Claude only reads the diff and suggests groups; the
- * commit itself is a plain `git commit` with the user's own identity (no Claude co-author).
+ * Commits in the GitHub view (ADR-0030): a VS Code style Source Control list where the user
+ * stages and commits by hand, or Auto commit, where Claude commits through `commit_changes`.
+ * Every commit is a plain `git commit` with the user's own identity (no Claude co-author).
  */
 export class CommitService {
-  private readonly cache = new Map<string, Cached>();
-  private readonly pending = new Map<string, Promise<CommitPlan>>();
-
   constructor(
     private readonly config: ConfigStore,
+    private readonly db: Db,
     private readonly hub: EventHub,
     private readonly runner: Runner,
   ) {}
 
-  private async snapshot(dir: string) {
-    const st = await git(dir, ['status', '--porcelain=v1', '-z', '--untracked-files=all']);
-    if (!st.ok) throw badRequest('This folder is not a git repository.');
-    const all = parsePorcelain(st.stdout);
-    const hidden = all.filter((f) => isSecretFile(f.path)).map((f) => f.path);
-    const files = all.filter((f) => !isSecretFile(f.path));
-    const diff = await git(dir, ['diff', 'HEAD', '--no-color', '--no-ext-diff']);
-    const hash = createHash('sha1')
-      .update(st.stdout)
-      .update(diff.ok ? diff.stdout : '');
-    for (const f of files.filter((x) => x.letter === 'U')) {
-      try {
-        const s = statSync(path.join(dir, f.path));
-        hash.update(`${f.path}:${s.size}:${s.mtimeMs}`);
-      } catch {
-        // gone since status
-      }
-    }
-    return { files, hidden, fingerprint: hash.digest('hex'), diff: diff.ok ? diff.stdout : '' };
+  private dir(projectId: string): string {
+    return projectDir(this.config.projectsDir(), projectId);
   }
 
-  private async author(dir: string): Promise<CommitPlan['author']> {
+  private changed(projectId: string): void {
+    this.hub.publish(`project:${projectId}`, 'project.changed', { projectId, paths: [] });
+  }
+
+  private async status(dir: string): Promise<Entry[]> {
+    const st = await git(dir, ['status', '--porcelain=v1', '-z', '--untracked-files=all']);
+    if (!st.ok) throw badRequest('This folder is not a git repository.');
+    return parseStatus(st.stdout);
+  }
+
+  private async author(dir: string): Promise<SourceControl['author']> {
     const [name, email] = await Promise.all([
       git(dir, ['config', 'user.name']),
       git(dir, ['config', 'user.email']),
@@ -162,103 +102,207 @@ export class CommitService {
     return n ? { name: n, email: email.stdout.trim() } : null;
   }
 
-  /** Diff text for Claude: tracked changes per file, then the start of each new file. */
-  private diffFor(dir: string, files: CommitFile[], full: string): string {
-    const parts: string[] = [];
-    const offered = new Set(files.map((f) => f.path));
-    for (const chunk of full.split(/^(?=diff --git )/m)) {
-      const m = /^diff --git a\/(.+?) b\/(.+)$/m.exec(chunk);
-      if (!m || !(offered.has(m[2]!) || offered.has(m[1]!))) continue;
-      parts.push(chunk.length > FILE_CHARS ? `${chunk.slice(0, FILE_CHARS)}\n…(cut)\n` : chunk);
+  private async needAuthor(dir: string): Promise<void> {
+    if (!(await this.author(dir)))
+      throw badRequest(
+        'Git does not know your name yet. Run: git config --global user.name "Your Name" and git config --global user.email you@example.com',
+      );
+  }
+
+  autoCommit(projectId: string): boolean {
+    const row = this.db
+      .prepare(`SELECT value FROM project_settings WHERE project_id = ? AND key = 'autoCommit'`)
+      .get(projectId) as { value: string } | undefined;
+    return row?.value === '1';
+  }
+
+  setAutoCommit(projectId: string, on: boolean): SourceControl['autoCommit'] {
+    this.dir(projectId);
+    this.db
+      .prepare(
+        `INSERT INTO project_settings (project_id, key, value) VALUES (?, 'autoCommit', ?)
+         ON CONFLICT (project_id, key) DO UPDATE SET value = excluded.value`,
+      )
+      .run(projectId, on ? '1' : '0');
+    this.changed(projectId);
+    return on;
+  }
+
+  async list(projectId: string): Promise<SourceControl> {
+    const dir = this.dir(projectId);
+    const entries = await this.status(dir);
+    const hidden = entries.filter((e) => isSecretFile(e.path)).map((e) => e.path);
+    const { staged, changes } = splitStatus(entries.filter((e) => !isSecretFile(e.path)));
+    return {
+      author: await this.author(dir),
+      staged,
+      changes,
+      hidden,
+      autoCommit: this.autoCommit(projectId),
+    };
+  }
+
+  /** `git add` these files (or every changed file). Secret files are never staged. */
+  async stage(projectId: string, body: StageBody): Promise<SourceControl> {
+    const dir = this.dir(projectId);
+    const entries = await this.status(dir);
+    const files = body.all
+      ? entries.filter((e) => e.y !== ' ' && !isSecretFile(e.path)).map((e) => e.path)
+      : [...new Set(body.files)];
+    for (const f of files)
+      if (isSecretFile(f)) throw badRequest(`${f} is a secret file. Cherry does not stage it.`);
+    if (files.length) {
+      const add = await git(dir, ['add', '-A', '--', ...files]);
+      if (!add.ok)
+        throw new HttpError(500, 'git_failed', firstLine(add.stderr) || 'git add failed.');
     }
-    for (const f of files.filter((x) => x.letter === 'U')) {
-      try {
-        const buf = readFileSync(path.join(dir, f.path));
-        if (buf.includes(0)) {
-          parts.push(`new binary file ${f.path}\n`);
-          continue;
-        }
-        const text = buf.toString('utf8');
-        parts.push(
-          `new file ${f.path}\n${text.length > FILE_CHARS ? `${text.slice(0, FILE_CHARS)}\n…(cut)` : text}\n`,
-        );
-      } catch {
-        // unreadable: the name alone is listed above
-      }
+    this.changed(projectId);
+    return this.list(projectId);
+  }
+
+  /** Takes files out of the next commit; their changes stay in the files. */
+  async unstage(projectId: string, body: StageBody): Promise<SourceControl> {
+    const dir = this.dir(projectId);
+    const entries = await this.status(dir);
+    const staged = new Set(entries.filter((e) => e.x !== ' ' && e.x !== '?').map((e) => e.path));
+    const files = body.all ? [...staged] : body.files.filter((f) => staged.has(f));
+    if (files.length) {
+      // Before the first commit there is no HEAD to restore from.
+      const hasHead = (await git(dir, ['rev-parse', '-q', '--verify', 'HEAD'])).ok;
+      const res = hasHead
+        ? await git(dir, ['restore', '--staged', '--', ...files])
+        : await git(dir, ['rm', '--cached', '-r', '-q', '--', ...files]);
+      if (!res.ok)
+        throw new HttpError(500, 'git_failed', firstLine(res.stderr) || 'git restore failed.');
     }
-    let out = '';
-    for (const p of parts) {
-      if (out.length + p.length > TOTAL_CHARS) {
-        out += '\n…(more changes cut)\n';
+    this.changed(projectId);
+    return this.list(projectId);
+  }
+
+  /** Commits what is staged, as the user. */
+  async commit(projectId: string, message: string): Promise<CommitResult> {
+    const dir = this.dir(projectId);
+    const staged = (await this.status(dir)).filter((e) => e.x !== ' ' && e.x !== '?');
+    if (!staged.length) throw conflict('Nothing is staged. Stage the files to commit first.');
+    const secret = staged.find((e) => isSecretFile(e.path));
+    if (secret)
+      throw badRequest(`${secret.path} is a secret file. Unstage it; Cherry does not commit it.`);
+    await this.needAuthor(dir);
+    return this.gitCommit(projectId, dir, message, []);
+  }
+
+  /** Commits exactly these files, whatever else is staged (Claude's commit_changes). */
+  async commitFiles(projectId: string, message: string, files: string[]): Promise<CommitResult> {
+    const dir = this.dir(projectId);
+    const byPath = new Map((await this.status(dir)).map((e) => [e.path, e]));
+    const wanted = [...new Set(files)];
+    if (!wanted.length) throw badRequest('Name the files to commit.');
+    for (const f of wanted) {
+      if (isSecretFile(f)) throw badRequest(`${f} is a secret file. Cherry does not commit it.`);
+      if (!byPath.has(f)) throw conflict(`${f} has no uncommitted changes.`);
+    }
+    await this.needAuthor(dir);
+    const pathspecs = wanted.flatMap((f) => {
+      const orig = byPath.get(f)?.origPath;
+      return orig ? [f, orig] : [f];
+    });
+    const add = await git(dir, ['add', '-A', '--', ...pathspecs]);
+    if (!add.ok) throw new HttpError(500, 'git_failed', firstLine(add.stderr) || 'git add failed.');
+    return this.gitCommit(projectId, dir, message, pathspecs);
+  }
+
+  private async gitCommit(
+    projectId: string,
+    dir: string,
+    message: string,
+    pathspecs: string[],
+  ): Promise<CommitResult> {
+    const [subject, ...rest] = message.trim().split('\n');
+    const extra = rest.join('\n').trim();
+    const res = await git(
+      dir,
+      [
+        'commit',
+        '-m',
+        subject!.trim(),
+        ...(extra ? ['-m', extra] : []),
+        ...(pathspecs.length ? ['--', ...pathspecs] : []),
+      ],
+      120_000,
+    );
+    if (!res.ok)
+      throw new HttpError(
+        409,
+        'commit_failed',
+        firstLine(res.stderr) || firstLine(res.stdout) || 'git commit failed.',
+      );
+    const hash = (await git(dir, ['rev-parse', '--short', 'HEAD'])).stdout.trim();
+    this.changed(projectId);
+    return { hash, message: subject!.trim() };
+  }
+
+  /** Haiku writes one message for the staged changes. Only on the user's click (ADR-0022). */
+  async writeMessage(projectId: string): Promise<{ message: string }> {
+    const dir = this.dir(projectId);
+    const staged = (await this.status(dir)).filter(
+      (e) => e.x !== ' ' && e.x !== '?' && !isSecretFile(e.path),
+    );
+    if (!staged.length) throw conflict('Nothing is staged. Stage the files to commit first.');
+    const diff = await git(dir, [
+      'diff',
+      '--cached',
+      '--no-color',
+      '--no-ext-diff',
+      '--',
+      ...staged.map((e) => e.path),
+    ]);
+    let text = '';
+    for (const chunk of (diff.ok ? diff.stdout : '').split(/^(?=diff --git )/m)) {
+      const part = chunk.length > FILE_CHARS ? `${chunk.slice(0, FILE_CHARS)}\n…(cut)\n` : chunk;
+      if (text.length + part.length > TOTAL_CHARS) {
+        text += '\n…(more changes cut)\n';
         break;
       }
-      out += p;
+      text += part;
     }
-    return out;
-  }
-
-  /**
-   * The changes as commits, grouped by Haiku (a small automatic job, ADR-0022). Reused while
-   * nothing changed; `refresh` groups again.
-   */
-  async plan(projectId: string, refresh = false): Promise<CommitPlan> {
-    const dir = projectDir(this.config.projectsDir(), projectId);
-    const snap = await this.snapshot(dir);
-    const cached = this.cache.get(projectId);
-    if (!refresh && cached?.fingerprint === snap.fingerprint) return cached.plan;
-    const key = `${projectId}:${snap.fingerprint}`;
-    const running = this.pending.get(key);
-    if (running && !refresh) return running;
-    const job = this.build(dir, snap).then((plan) => {
-      this.cache.set(projectId, { fingerprint: snap.fingerprint, plan });
-      return plan;
-    });
-    this.pending.set(key, job);
-    void job.finally(() => this.pending.delete(key)).catch(() => undefined);
-    return job;
-  }
-
-  private async build(
-    dir: string,
-    snap: Awaited<ReturnType<CommitService['snapshot']>>,
-  ): Promise<CommitPlan> {
-    const author = await this.author(dir);
-    const base = {
-      fingerprint: snap.fingerprint,
-      author,
-      files: snap.files,
-      hidden: snap.hidden,
-    };
-    if (snap.files.length === 0) return { ...base, commits: [], error: null };
-    const paths = snap.files.map((f) => f.path);
-
-    let proposed: z.infer<typeof SubmitSchema>['commits'] | null = null;
+    const recent = await git(dir, ['log', '-8', '--format=%s']);
+    let message: string | null = null;
     let error: string | null = null;
     const submit: CustomTool = {
-      name: 'propose_commits',
-      description: 'Propose the commits. Call once with every changed file in exactly one commit.',
-      shape: SubmitSchema.shape,
+      name: 'commit_message',
+      description: 'Give the commit message. Call once.',
+      shape: {
+        message: z.string().describe('Subject line, then optionally a blank line and a short body'),
+      },
       handler: async (args) => {
-        const parsed = SubmitSchema.safeParse(args);
-        if (!parsed.success) {
-          return {
-            ok: false,
-            text: `Not valid, fix it and call propose_commits again: ${parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`,
-          };
-        }
-        proposed = parsed.data.commits;
+        const raw = (args as { message?: unknown }).message;
+        const m = typeof raw === 'string' ? raw.trim() : '';
+        if (!m) return { ok: false, text: 'The message is empty. Call commit_message again.' };
+        message = m;
         return { ok: true, text: 'Saved. You are done; stop here.' };
       },
     };
-    const recent = await git(dir, ['log', '-8', '--format=%s']);
     const handle = this.runner({
       cwd: dir,
-      prompt: commitsPrompt(snap.files, this.diffFor(dir, snap.files, snap.diff), recent.stdout),
+      prompt: [
+        'Write one git commit message for these staged changes, then call commit_message once.',
+        "- Subject: one line, at most 72 characters, in the style of the project's recent commits (often conventional commits: feat:, fix:, docs:, test:, chore:).",
+        '- Body: optional, 1 to 3 short lines when the subject is not enough.',
+        '',
+        '## Recent commits (style)',
+        recent.stdout.trim() || '(none yet)',
+        '',
+        '## Staged files',
+        ...staged.map((e) => `- ${e.letter} ${e.path}`),
+        '',
+        '## Diff',
+        text,
+      ].join('\n'),
       resume: null,
       model: 'haiku',
       planMode: false,
       appendSystemPrompt:
-        'You group git changes into commits for Cherry. You only read what you are given. Finish by calling propose_commits.',
+        'You write git commit messages for Cherry. You only read what you are given. Finish by calling commit_message.',
       allowedTools: [],
       disallowedTools: [
         'Edit',
@@ -271,88 +315,48 @@ export class CommitService {
       ],
       decisions: false,
       extraTools: [submit],
-      onPermission: async () => ({ allow: false, message: 'Only propose_commits is allowed.' }),
+      onPermission: async () => ({ allow: false, message: 'Only commit_message is allowed.' }),
       onDecision: async () => ({ ok: false, error: 'You cannot ask questions here.' }),
       onEvent: (ev) => {
         if (ev.t === 'result' && !ev.ok) error = ev.error;
       },
     });
     await handle.done;
-
-    const groups = proposed as z.infer<typeof SubmitSchema>['commits'] | null;
-    if (!groups) {
-      return {
-        ...base,
-        commits: normaliseGroups(paths, []),
-        error: error ?? 'Claude did not group the changes.',
-      };
-    }
-    return { ...base, commits: normaliseGroups(paths, groups), error: null };
+    if (!message)
+      throw new HttpError(502, 'no_message', error ?? 'Claude did not write a message.');
+    return { message };
   }
 
-  /** `git add` and `git commit` exactly these files, as the user. */
-  async commit(projectId: string, body: CommitBody): Promise<CommitResult> {
-    const dir = projectDir(this.config.projectsDir(), projectId);
-    const snap = await this.snapshot(dir);
-    const byPath = new Map(snap.files.map((f) => [f.path, f]));
-    const wanted = [...new Set(body.files)];
-    for (const f of wanted) {
-      if (isSecretFile(f)) throw badRequest(`${f} is a secret file. Cherry does not commit it.`);
-      if (!byPath.has(f))
-        throw conflict(`${f} has no uncommitted changes any more. Refresh the list.`);
-    }
-    if (!(await this.author(dir)))
-      throw badRequest(
-        'Git does not know your name yet. Run: git config --global user.name "Your Name" and git config --global user.email you@example.com',
-      );
-    const pathspecs = wanted.flatMap((f) => {
-      const orig = byPath.get(f)?.origPath;
-      return orig ? [f, orig] : [f];
-    });
-    const add = await git(dir, ['add', '-A', '--', ...pathspecs]);
-    if (!add.ok) throw new HttpError(500, 'git_failed', firstLine(add.stderr) || 'git add failed.');
-    const [subject, ...rest] = body.message.split('\n');
-    const extra = rest.join('\n').trim();
-    const res = await git(
-      dir,
-      ['commit', '-m', subject!.trim(), ...(extra ? ['-m', extra] : []), '--', ...pathspecs],
-      120_000,
-    );
-    if (!res.ok) {
-      throw new HttpError(
-        409,
-        'commit_failed',
-        firstLine(res.stderr) || firstLine(res.stdout) || 'git commit failed.',
-      );
-    }
-    const hash = (await git(dir, ['rev-parse', '--short', 'HEAD'])).stdout.trim();
-
-    // Keep the other suggestions: drop the committed files, and match the new state.
-    const cached = this.cache.get(projectId);
-    if (cached) {
-      const done = new Set(wanted);
-      const next = await this.snapshot(dir);
-      const commits = cached.plan.commits
-        .map((c) => ({ ...c, files: c.files.filter((f) => !done.has(f)) }))
-        .filter((c) => c.files.length > 0);
-      this.cache.set(projectId, {
-        fingerprint: next.fingerprint,
-        plan: {
-          ...cached.plan,
-          fingerprint: next.fingerprint,
-          files: next.files,
-          hidden: next.hidden,
-          commits,
-        },
-      });
-    }
-    this.hub.publish(`project:${projectId}`, 'project.changed', { projectId, paths: wanted });
-    return { hash, message: subject!.trim() };
+  /** commit_changes for the chat while Auto commit is on. */
+  tool(projectId: string): CustomTool {
+    return {
+      name: COMMIT_TOOL,
+      description:
+        'Commit the files you changed for one finished piece of work, as the user. Cherry runs git add and git commit for exactly these files. Secret files are refused.',
+      shape: {
+        message: z
+          .string()
+          .describe('Conventional commit message, e.g. "fix(api): handle empty input"'),
+        files: z
+          .array(z.string())
+          .describe('Paths relative to the project, the files of this piece of work'),
+      },
+      handler: async (args) => {
+        const parsed = z
+          .object({
+            message: z.string().trim().min(1).max(5000),
+            files: z.array(z.string()).min(1),
+          })
+          .safeParse(args);
+        if (!parsed.success)
+          return { ok: false, text: 'Give a message and at least one file, then call again.' };
+        try {
+          const r = await this.commitFiles(projectId, parsed.data.message, parsed.data.files);
+          return { ok: true, text: `Committed ${r.hash} ${r.message}` };
+        } catch (e) {
+          return { ok: false, text: e instanceof Error ? e.message : String(e) };
+        }
+      },
+    };
   }
 }
-
-const firstLine = (s: string) =>
-  s
-    .split('\n')
-    .find((l) => l.trim())
-    ?.trim() ?? '';

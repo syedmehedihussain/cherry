@@ -8,8 +8,10 @@ import {
   GitInfoSchema,
   GitResultSchema,
   NotesSchema,
-  CommitPlanSchema,
+  CommitMessageSchema,
   CommitResultSchema,
+  SourceControlSchema,
+  type SourceControl,
   OrganisedNoteSchema,
   ProjectDetailSchema,
   PullRequestListSchema,
@@ -35,6 +37,7 @@ export const wk = {
   changes: (id: string) => ['project', id, 'changes'] as const,
   notes: (id: string) => ['project', id, 'notes'] as const,
   tasks: (id: string) => ['project', id, 'tasks'] as const,
+  sourceControl: (id: string) => ['project', id, 'source-control'] as const,
 };
 
 export const useProjectDetail = (id: string) =>
@@ -96,23 +99,40 @@ export const useTasks = (id: string) =>
     queryFn: () => api('GET', `${base(id)}/tasks`, undefined, TasksFileSchema),
   });
 
-/** Not under wk.all: file events must not re-run Claude; the view refreshes on demand. */
-export const commitPlanKey = (id: string) => ['commits', id] as const;
-
-export const useCommitPlan = (id: string) =>
+export const useSourceControl = (id: string) =>
   useQuery({
-    queryKey: commitPlanKey(id),
-    queryFn: () => api('GET', `${base(id)}/commits/plan`, undefined, CommitPlanSchema),
-    staleTime: Infinity,
+    queryKey: wk.sourceControl(id),
+    queryFn: () => api('GET', `${base(id)}/source-control`, undefined, SourceControlSchema),
   });
 
-export const refreshCommitPlan = (id: string) =>
-  api('GET', `${base(id)}/commits/plan?refresh=1`, undefined, CommitPlanSchema).then((plan) =>
-    queryClient.setQueryData(commitPlanKey(id), plan),
+const setSourceControl = (id: string) => (sc: SourceControl) => {
+  queryClient.setQueryData(wk.sourceControl(id), sc);
+  return sc;
+};
+
+export const stageFiles = (id: string, body: { files?: string[]; all?: boolean }) =>
+  api('POST', `${base(id)}/source-control/stage`, body, SourceControlSchema).then(
+    setSourceControl(id),
   );
 
-export const commitFiles = (id: string, message: string, files: string[]) =>
-  api('POST', `${base(id)}/commits`, { message, files }, CommitResultSchema);
+export const unstageFiles = (id: string, body: { files?: string[]; all?: boolean }) =>
+  api('POST', `${base(id)}/source-control/unstage`, body, SourceControlSchema).then(
+    setSourceControl(id),
+  );
+
+export const writeCommitMessage = (id: string) =>
+  api('POST', `${base(id)}/source-control/message`, undefined, CommitMessageSchema);
+
+export const setAutoCommit = (id: string, on: boolean) =>
+  api(
+    'PUT',
+    `${base(id)}/source-control/auto-commit`,
+    { on },
+    z.object({ autoCommit: z.boolean() }),
+  );
+
+export const commitStaged = (id: string, message: string) =>
+  api('POST', `${base(id)}/commits`, { message }, CommitResultSchema);
 
 export const addTask = (id: string, title: string) =>
   api('POST', `${base(id)}/tasks`, { title }, TasksFileSchema);

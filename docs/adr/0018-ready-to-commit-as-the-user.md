@@ -1,6 +1,6 @@
 # 0018 — Ready to commit, as the user
 
-- **Status:** Accepted
+- **Status:** Superseded by 0030
 - **Date:** 2026-10-11
 - **Decided by:** Meddy
 

@@ -30,6 +30,7 @@ function rowKind(t: ToolItem): RowKind {
 const TOOL_LABEL: Record<string, string> = {
   mcp__cherry__propose_decision: 'Proposed decision',
   mcp__cherry__decision_done: 'Decision done',
+  mcp__cherry__commit_changes: 'Committed',
 };
 const toolLabel = (t: ToolItem) => TOOL_LABEL[t.tool] ?? t.tool;
 

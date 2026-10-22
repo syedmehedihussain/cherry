@@ -97,7 +97,7 @@ decisions here, and Claude does the typing, only after you say yes.
 | **Workspace** | File tree with git letters, file viewer with diffs, Markdown preview, a built-in editor, Docs reader with ADR links, Notes & Tasks and a live Status report. |
 | **Chat** | Streaming, plan mode, model and effort pickers, attachments, decision cards, Stop and resume. |
 | **Background agents** | A task runs on its own git worktree and branch while you keep chatting. It works without asking; push and publish are left for you. Review the diff, then Merge or Discard; on a conflict, an agent can fix it. |
-| **Git and GitHub** | Branch, ahead and behind, pull, push after approval, open pull requests, and commits grouped by Haiku that you make as yourself. |
+| **Git and GitHub** | Branch, ahead and behind, pull, push after approval, open pull requests, and commits as yourself: stage and commit like in VS Code, or turn on Auto commit and Claude commits its work in small steps. |
 | **Themes** | Just black (default), Cherry dark, Cherry light and Classic. |
 | **First start** | A short welcome: pick the projects folder, check Claude Code, git and GitHub, choose a theme. |
 
@@ -184,8 +184,8 @@ Details: [`docs/security.md`](docs/security.md). To report a vulnerability, see
 
 ## Token use
 
-Cherry is built to be easy on your plan. Small automatic jobs (tidying a note, grouping
-commits, drafting a `.gitignore`) run on Haiku with capped prompts. Big jobs (reviews, scans,
+Cherry is built to be easy on your plan. Small automatic jobs (tidying a note, drafting a
+`.gitignore`) run on Haiku with capped prompts. Big jobs (reviews, scans,
 reports, explanations) run only when you click. Change summaries and the Run button cost no
 tokens at all. See [ADR-0022](docs/adr/0022-change-summary-and-click-only-claude.md).
 

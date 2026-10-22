@@ -135,38 +135,35 @@ export const CommitFileSchema = z.object({
 });
 export type CommitFile = z.infer<typeof CommitFileSchema>;
 
-/** A commit Claude suggests: a group of files, a message and a plain explanation. */
-export const CommitSuggestionSchema = z.object({
-  id: z.string(),
-  /** Subject line, e.g. "feat(web): add the Live view". */
-  message: z.string(),
-  /** Optional longer message under the subject. */
-  body: z.string().nullable(),
-  /** What the commit does, in ASD-STE100. */
-  explanation: z.string(),
-  files: z.array(z.string()),
-});
-export type CommitSuggestion = z.infer<typeof CommitSuggestionSchema>;
-
-/** GET /api/projects/:id/commits/plan: the uncommitted changes, grouped into commits. */
-export const CommitPlanSchema = z.object({
-  fingerprint: z.string(),
+/**
+ * GET /api/projects/:id/source-control: the uncommitted changes, VS Code style (ADR-0030).
+ * A file staged and then changed again is in both lists.
+ */
+export const SourceControlSchema = z.object({
   /** Your git identity (git config user.name / user.email); commits are made as you. */
   author: z.object({ name: z.string(), email: z.string() }).nullable(),
-  files: z.array(CommitFileSchema),
-  commits: z.array(CommitSuggestionSchema),
-  /** Secret files that changed; never sent to Claude, never offered for a commit. */
+  staged: z.array(CommitFileSchema),
+  changes: z.array(CommitFileSchema),
+  /** Secret files that changed; never staged, never sent to Claude. */
   hidden: z.array(z.string()),
-  /** Claude could not group the files; `commits` then has one group with everything. */
-  error: z.string().nullable(),
+  /** Claude commits after each finished piece of work in the chat. */
+  autoCommit: z.boolean(),
 });
-export type CommitPlan = z.infer<typeof CommitPlanSchema>;
+export type SourceControl = z.infer<typeof SourceControlSchema>;
 
-export const CommitBodySchema = z.object({
-  message: z.string().trim().min(1).max(5000),
-  files: z.array(z.string().min(1).max(4096)).min(1).max(2000),
+/** Stage or unstage: these files, or every file (`all`). */
+export const StageBodySchema = z.object({
+  files: z.array(z.string().min(1).max(4096)).max(2000).default([]),
+  all: z.boolean().optional(),
 });
+export type StageBody = z.infer<typeof StageBodySchema>;
+
+/** Commit what is staged. */
+export const CommitBodySchema = z.object({ message: z.string().trim().min(1).max(5000) });
 export type CommitBody = z.infer<typeof CommitBodySchema>;
+
+/** A commit message Haiku wrote for the staged changes (on a click). */
+export const CommitMessageSchema = z.object({ message: z.string() });
 
 export const CommitResultSchema = z.object({ hash: z.string(), message: z.string() });
 export type CommitResult = z.infer<typeof CommitResultSchema>;

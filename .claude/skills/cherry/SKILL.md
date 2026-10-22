@@ -71,7 +71,7 @@ files only get additions.
 - Centre tabs: **Chat**, **Docs** (reader for CLAUDE.md, docs/ and ADRs), **Notes & Tasks**, the
   open **file** (read-only, diff vs HEAD), and an open **report** (`/p/<id>/reports/<agent>`).
   The **Status** notch shows STATUS.md and can ask Claude to update it.
-- Right views: **Overview**, **GitHub** (branch, pull, push, PRs), **Agents**, **Magnet**, **Notes**.
+- Right views: **Overview**, **Live**, **GitHub** (branch, pull, push, PRs, and Commits: stage and commit as you, or the **Auto commit** switch, where Claude commits its work through `commit_changes`, ADR-0030). Centre tabs: Chat, Docs, Notes & Tasks, Agents, Decisions.
 
 **Chat composer**: attach files (paperclip, drop or paste, max 8 x 10 MB), **Plan mode** (Claude
 plans, no edits), model (Sonnet, Opus, Haiku), **Effort** (Default, Low to Max; hidden for

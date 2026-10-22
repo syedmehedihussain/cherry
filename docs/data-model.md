@@ -263,6 +263,14 @@ CREATE TABLE decision_links (
   PRIMARY KEY (project_id, adr_number)
 );
 
+-- Per-project switches kept by Cherry, not in the project (ADR-0030, migration 006).
+CREATE TABLE project_settings (
+  project_id    TEXT NOT NULL,
+  key           TEXT NOT NULL,          -- autoCommit
+  value         TEXT NOT NULL,          -- '1' | '0'
+  PRIMARY KEY (project_id, key)
+);
+
 CREATE TABLE usage_days (
   day           TEXT PRIMARY KEY,       -- YYYY-MM-DD local
   sessions      INTEGER NOT NULL DEFAULT 0,

@@ -146,7 +146,7 @@ Built before the Plan section (the user's order, 2026-10-22).
       the agent finishes the rest and ends as "needs you" with **Continue in chat**.
 - [x] Decisions: approve in the chat card; Approve only adds a task; Run with agent builds,
       tests and reports "ready to merge"; Merge tries `git merge`, an agent resolves conflicts.
-- [ ] Git: an Auto commit switch (Claude commits after each finished piece of work); off, a
+- [x] Git: an Auto commit switch (Claude commits after each finished piece of work); off, a
       Source Control list with stage, unstage, message and Commit. The Haiku grouping goes.
 - [ ] Open any folder: **Open folder…** on Home and `cherry .` / `cherry open <path>`, next to
       the projects folder.

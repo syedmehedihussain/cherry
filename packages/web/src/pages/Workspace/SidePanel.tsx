@@ -6,7 +6,7 @@ import { useTasks } from '../../api/workspace.ts';
 import { AgentsPanel } from '../../components/AgentsPanel/AgentsPanel.tsx';
 import { GitPanel } from '../../components/GitHubBox/GitPanel.tsx';
 import { PlanUsage } from '../../components/PlanUsage/PlanUsage.tsx';
-import { ReadyToCommit } from '../../components/ReadyToCommit/ReadyToCommit.tsx';
+import { SourceControl } from '../../components/SourceControl/SourceControl.tsx';
 import { LiveView } from './LiveView.tsx';
 import styles from './SidePanel.module.css';
 
@@ -106,7 +106,7 @@ export function SidePanel({
         {view === 'github' && (
           <div className={styles.scroll}>
             <GitPanel key={projectId} projectId={projectId} now={now} full />
-            <ReadyToCommit key={`commits-${projectId}`} projectId={projectId} />
+            <SourceControl key={`commits-${projectId}`} projectId={projectId} />
           </div>
         )}
       </div>

@@ -46,8 +46,11 @@ the projects folder (see `security.md`).
 | GET | `/api/projects/:id/tasks` | tasks.json |
 | PATCH | `/api/projects/:id/tasks/:taskId` | update a task status |
 | POST | `/api/projects/:id/tasks` | `{ title }` → adds a `todo` task in the current phase (first unfinished task's phase); creates tasks.json if missing; returns the tasks file |
-| GET | `/api/projects/:id/commits/plan?refresh=1` | uncommitted changes grouped into commits by Haiku (read-only; secret files never sent): `{ fingerprint, author, files, commits: [{ id, message, body, explanation }], hidden, error }`; runs on open, reused until the changes differ, `refresh=1` groups again (ADR-0018, ADR-0022) |
-| POST | `/api/projects/:id/commits` | `{ message, files }` → `git add -A` + `git commit` of exactly those files with the user's git identity, no Claude trailer; `{ hash, message }` |
+| GET | `/api/projects/:id/source-control` | `{ author, staged, changes, hidden, autoCommit }` from `git status`; a file staged and changed again is in both lists; secret files only in `hidden` (ADR-0030) |
+| POST | `/api/projects/:id/source-control/stage` · `/unstage` | `{ files }` or `{ all: true }` → `git add -A --` / `git restore --staged --`; secret files are never staged; returns the list |
+| POST | `/api/projects/:id/source-control/message` | Write message: Haiku writes one commit message from the staged diff, on a click → `{ message }` |
+| PUT | `/api/projects/:id/source-control/auto-commit` | `{ on }` → `{ autoCommit }`. While on, the chat has `commit_changes` and commits its work as the user |
+| POST | `/api/projects/:id/commits` | `{ message }` → `git commit` of what is staged, with the user's git identity, no Claude trailer; 409 when nothing is staged, 400 when a secret file is staged; `{ hash, message }` |
 | GET / PUT | `/api/projects/:id/notes` | notes.md (the only file the UI writes directly — it is the user's own notes) |
 | POST | `/api/projects/:id/notes/organise` | `{ text }` → the note-taker (Haiku, no tools but `save_note`) tidies the note and picks a `##` section; the daemon adds it there (additions only). `{ content, mtime, section }`; 502 `note_failed` leaves notes.md untouched (ADR-0016) |
 | POST | `/api/projects/:id/open-in-editor` | `{ path }` → runs `$EDITOR` / `code` |
