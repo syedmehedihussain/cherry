@@ -1,13 +1,13 @@
 import { DECISIONS_PROMPT, type AdrService } from '../adr/service.ts';
 import { randomUUID } from 'node:crypto';
-import { existsSync, mkdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import type { Agent, AgentStart, AgentStatus, ApprovalFile, ChatItem } from '@cherry/shared';
 import type { ConfigStore } from '../config.ts';
 import type { Db } from '../db.ts';
 import { notify, projectLink, type EventHub } from '../events.ts';
 import { git, gitStatus } from '../git.ts';
-import { conflict, notFound } from '../http.ts';
+import { HttpError, conflict, notFound } from '../http.ts';
 import { isInside, isSecretFile } from '../paths.ts';
 import type { ApprovalBroker } from '../claude/approvals.ts';
 import { autoNeedsApproval, classifyCommand } from '../claude/commands.ts';
@@ -48,6 +48,8 @@ interface Live {
   waiting: Agent['waiting'];
   /** Commands refused because only the user may run them. */
   skipped: string[];
+  /** Merge with agent: the files that had conflicts, checked again at the end. */
+  resolving: string[] | null;
 }
 
 /** "Write tests for the streak service" → "tests-streak-service". */
@@ -85,6 +87,28 @@ function agentPrompt(task: string, branch: string): string {
  * worktree on `agent/<slug>`. Edits inside the worktree are allowed; commands need approval.
  * Accept merges into the project's current branch; Discard removes worktree and branch.
  */
+function resolvePrompt(task: string, target: string, branch: string, files: string[]): string {
+  return [
+    `You are a background agent in the git worktree of branch ${branch}. Your earlier work on this task is on the branch: ${taskLine(task)}`,
+    `Cherry ran \`git merge ${target}\` here to bring in the user's newer work, and these files have conflicts:`,
+    ...files.map((f) => `- ${f}`),
+    '',
+    '- Fix every conflict. Keep the intent of both sides; remove all conflict markers.',
+    '- Do not run git commit, git merge --abort, push or switch branches. Cherry commits the merge when you finish.',
+    '- Then build the project and run its tests.',
+    '- End your report with what you changed, which checks you ran and their result, and the line "Ready to merge" only when they pass.',
+    '- Write the report in ASD-STE100 Simplified Technical English.',
+  ].join('\n');
+}
+
+function hasConflictMarkers(file: string): boolean {
+  try {
+    return /^(<{7}|>{7}) /m.test(readFileSync(file, 'utf8'));
+  } catch {
+    return false;
+  }
+}
+
 /** The task's first line, short enough for a notification title. */
 const taskLine = (task: string) => task.split('\n')[0]!.slice(0, 60);
 
@@ -233,7 +257,8 @@ export class AgentManager {
     return this.get(id);
   }
 
-  private run(id: string): void {
+  /** Runs the agent's task, or (Merge with agent) a conflict fix in the same worktree. */
+  private run(id: string, resolve?: { prompt: string; files: string[] }): void {
     const r = this.row(id);
     const source = `agent:${id}`;
     const live: Live = {
@@ -242,6 +267,7 @@ export class AgentManager {
       lastText: '',
       waiting: null,
       skipped: [],
+      resolving: resolve?.files ?? null,
     };
     const conversation = new Conversation({
       projectId: r.project_id,
@@ -293,7 +319,7 @@ export class AgentManager {
     let finished = false;
     const handle = this.runner({
       cwd: r.worktree,
-      prompt: agentPrompt(r.task, r.branch),
+      prompt: resolve?.prompt ?? agentPrompt(r.task, r.branch),
       resume: null,
       model: r.model,
       planMode: false,
@@ -339,6 +365,14 @@ export class AgentManager {
   ): Promise<void> {
     const r = this.row(id);
     if (r.status === 'discarded' || r.status === 'accepted') return;
+    const resolving = this.live.get(id)?.resolving ?? null;
+    if (ok && resolving) {
+      const left = resolving.filter((f) => hasConflictMarkers(path.join(r.worktree, f)));
+      if (left.length) {
+        ok = false;
+        error = `Conflicts are still in ${left.join(', ')}. Merge in a terminal, or discard.`;
+      }
+    }
     if (!ok) {
       const lastFailed = (JSON.parse(r.activity_json) as ChatItem[])
         .filter((x) => x.kind === 'tool' && x.status === 'failed')
@@ -360,7 +394,9 @@ export class AgentManager {
       // Commit whatever the agent changed so the branch holds the work.
       await git(r.worktree, ['add', '-A']);
       const staged = await git(r.worktree, ['diff', '--cached', '--quiet']);
-      if (!staged.ok) {
+      // A merge (Merge with agent) must be concluded even when it changed nothing.
+      const merging = (await git(r.worktree, ['rev-parse', '-q', '--verify', 'MERGE_HEAD'])).ok;
+      if (!staged.ok || merging) {
         const email = (await git(r.worktree, ['config', 'user.email'])).stdout.trim();
         const ident = email ? [] : ['-c', 'user.name=Cherry', '-c', 'user.email=cherry@localhost'];
         await git(r.worktree, [
@@ -380,10 +416,36 @@ export class AgentManager {
         ended_at: Date.now(),
       });
       const needs = JSON.parse(this.row(id).needs_json) as string[];
+      const decision = this.adrs?.decisionFor(id);
+      const ready = /ready to merge/i.test(lastText);
+      if (resolving && ready && !needs.length) {
+        // Merge with agent: conflicts fixed and checks passed, so finish the merge it was for.
+        this.live.delete(id);
+        try {
+          await this.accept(id);
+          notify(this.hub, {
+            projectId: r.project_id,
+            kind: 'agent.done',
+            title: `Merged: ${taskLine(r.task)}`,
+            body: 'The agent fixed the conflicts, the checks passed, and the work is merged.',
+            link: projectLink(r.project_id, '/agents'),
+          });
+          this.startQueued();
+          return;
+        } catch {
+          // Fall through: it stays done and the user merges by hand.
+        }
+      }
       notify(this.hub, {
         projectId: r.project_id,
         kind: needs.length ? 'agent.needs' : 'agent.done',
-        title: `${needs.length ? 'Agent needs you' : 'Agent done'}: ${taskLine(r.task)}`,
+        title: needs.length
+          ? `Agent needs you: ${taskLine(r.task)}`
+          : decision && ready
+            ? `Ready to merge: ADR-${String(decision.number).padStart(4, '0')} ${decision.title}`
+            : resolving
+              ? `Conflicts fixed: ${taskLine(r.task)}`
+              : `Agent done: ${taskLine(r.task)}`,
         body: needs.length
           ? `Skipped ${needs.length === 1 ? 'a step' : `${needs.length} steps`} only you may run: ${needs[0]}`
           : (summary ??
@@ -459,19 +521,24 @@ export class AgentManager {
   /** Merges the agent branch into the project's current branch (ff or merge commit, never force). */
   async accept(id: string): Promise<Agent> {
     const r = this.row(id);
-    if (r.status !== 'done') throw conflict('Only a finished agent can be accepted.');
+    if (r.status !== 'done') throw conflict('Only a finished agent can be merged.');
     const dir = projectDir(this.config.projectsDir(), r.project_id);
     const status = await gitStatus(dir);
     if (!status?.branch) throw conflict('Check out a branch in the project first.');
     const merge = await git(dir, ['merge', '--no-edit', r.branch], 60_000);
     if (!merge.ok) {
       await git(dir, ['merge', '--abort']);
-      const why = /would be overwritten/i.test(merge.stderr)
-        ? 'Your uncommitted changes touch the same files. Commit or stash them, then accept again.'
-        : /CONFLICT/i.test(merge.stdout + merge.stderr)
-          ? 'The agent branch conflicts with your branch. Nothing was changed. Ask Claude to merge it, or merge in a terminal.'
-          : (merge.stderr || merge.stdout).trim().split('\n')[0] || 'git merge failed.';
-      throw conflict(why);
+      if (/would be overwritten/i.test(merge.stderr))
+        throw conflict(
+          'Your uncommitted changes touch the same files. Commit or stash them, then merge again.',
+        );
+      if (/CONFLICT/i.test(merge.stdout + merge.stderr))
+        throw new HttpError(
+          409,
+          'merge_conflict',
+          'The agent branch conflicts with your branch. Nothing was changed. Merge with agent lets an agent fix the conflicts on its branch.',
+        );
+      throw conflict((merge.stderr || merge.stdout).trim().split('\n')[0] || 'git merge failed.');
     }
     await this.removeWorktree(r);
     this.set(id, { status: 'accepted', ended_at: Date.now() });
@@ -479,6 +546,46 @@ export class AgentManager {
     this.hub.publish(`project:${r.project_id}`, 'project.changed', {
       projectId: r.project_id,
       paths: [],
+    });
+    return this.get(id);
+  }
+
+  /**
+   * Merge with agent: merges the project's branch into the agent branch in its own worktree.
+   * With no conflicts the work merges at once; otherwise the agent fixes them, runs the checks,
+   * and Cherry merges when it reports "Ready to merge".
+   */
+  async resolve(id: string): Promise<Agent> {
+    const r = this.row(id);
+    if (r.status !== 'done') throw conflict('Only a finished agent can be merged.');
+    const dir = projectDir(this.config.projectsDir(), r.project_id);
+    const target = (await gitStatus(dir))?.branch;
+    if (!target) throw conflict('Check out a branch in the project first.');
+    const merge = await git(r.worktree, ['merge', '--no-edit', target], 60_000);
+    if (merge.ok) {
+      await this.refreshChanges(id);
+      return this.accept(id);
+    }
+    const conflicted = (await git(r.worktree, ['diff', '--name-only', '--diff-filter=U'])).stdout
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
+    if (!conflicted.length) {
+      await git(r.worktree, ['merge', '--abort']);
+      throw conflict((merge.stderr || merge.stdout).trim().split('\n')[0] || 'git merge failed.');
+    }
+    if (this.runningCount() >= this.config.get().agents.maxRunning)
+      throw conflict('All agent slots are busy. Try again when one finishes.');
+    this.set(id, {
+      status: 'running',
+      summary: null,
+      error: null,
+      needs_json: '[]',
+      ended_at: null,
+    });
+    this.run(id, {
+      prompt: resolvePrompt(r.task, target, r.branch, conflicted),
+      files: conflicted,
     });
     return this.get(id);
   }

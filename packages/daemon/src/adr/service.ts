@@ -17,6 +17,7 @@ import { notify, projectLink, type EventHub } from '../events.ts';
 import { HttpError, badRequest, conflict, notFound } from '../http.ts';
 import { resolveInside } from '../paths.ts';
 import { readProjectFiles } from '../projects/scanner.ts';
+import { addTask, readTasks, setTasksStatus, writeTasks } from '../projects/tasks.ts';
 import { projectDir } from '../projects/workspace.ts';
 import { adrDate, findAdr, listAdrs, updateAdr, writeProposal, type ParsedAdr } from './adr.ts';
 
@@ -28,6 +29,11 @@ export const DECISIONS_PROMPT =
   '- For a big project choice (stack, database, data format, architecture, renaming the project, removing a feature), call propose_decision instead of making the change. It is saved as a Proposed ADR and waits for the user in the Decisions tab. Do not make that change until it is approved; carry on with other work. For a small choice between options, use ask_decision.';
 
 const nnnn = (n: number) => String(n).padStart(4, '0');
+
+/** The task an "Approve only" adds (ADR-0029). The title links it to the decision. */
+const taskTitle = (number: number, title: string) => `Apply ADR-${nnnn(number)}: ${title}`;
+const isTaskFor = (number: number) => (title: string) =>
+  title.startsWith(`Apply ADR-${nnnn(number)}:`);
 
 /**
  * Project decisions (ADR-0026): Claude proposes a big change as an ADR, the user approves or
@@ -134,7 +140,13 @@ export class AdrService {
     if (adr.state !== 'pending') throw conflict(`ADR ${nnnn(number)} is not pending.`);
     this.edit(projectId, number, { Status: 'Accepted', Done: 'not yet' });
     this.changed(projectId);
-    if (apply === 'none') return { decision: this.get(projectId, number), warning: null };
+    if (apply === 'none') {
+      // Approved for later: it waits in the task list until someone does it.
+      const { project } = this.where(projectId);
+      if (!readTasks(project).tasks.some((t) => isTaskFor(number)(t.title)))
+        await addTask(project, taskTitle(number, adr.title));
+      return { decision: this.get(projectId, number), warning: null };
+    }
     return this.apply(projectId, number, apply);
   }
 
@@ -181,6 +193,11 @@ export class AdrService {
       'Rejected because': reason.trim() || 'No reason given.',
     });
     this.unlink(projectId, number);
+    // An open "Apply ADR-…" task has nothing left to do.
+    const { project } = this.where(projectId);
+    const tasks = readTasks(project);
+    const keep = tasks.tasks.filter((t) => t.status === 'done' || !isTaskFor(number)(t.title));
+    if (keep.length !== tasks.tasks.length) writeTasks(project, { ...tasks, tasks: keep });
     this.changed(projectId);
     return this.get(projectId, number);
   }
@@ -195,8 +212,35 @@ export class AdrService {
       );
     this.edit(projectId, number, { Done: adrDate() });
     this.unlink(projectId, number);
+    setTasksStatus(this.where(projectId).project, isTaskFor(number), 'done');
     this.changed(projectId);
     return this.get(projectId, number);
+  }
+
+  /** The user ticked an "Apply ADR-…" task: the approved decision is done too. */
+  taskDone(projectId: string, title: string): void {
+    const m = /^Apply ADR-(\d+):/.exec(title);
+    if (!m) return;
+    try {
+      if (this.get(projectId, Number(m[1])).state === 'approved')
+        this.markDone(projectId, Number(m[1]));
+    } catch {
+      // No such ADR, or it changed by hand; the task is enough.
+    }
+  }
+
+  /** The decision a background agent is applying, for its notification. */
+  decisionFor(agentId: string): { number: number; title: string } | null {
+    const row = this.db
+      .prepare(`SELECT project_id, adr_number FROM decision_links WHERE kind = 'agent' AND ref = ?`)
+      .get(agentId) as { project_id: string; adr_number: number } | undefined;
+    if (!row) return null;
+    try {
+      const adr = this.get(row.project_id, row.adr_number);
+      return { number: adr.number, title: adr.title };
+    } catch {
+      return null;
+    }
   }
 
   /** The user accepted an agent's work: a decision it was making is now done. */
@@ -284,6 +328,6 @@ function applyPrompt(adr: Adr, who: 'chat' | 'agent'): string {
     `Do not edit ${adr.file}; Cherry keeps its status.`,
     who === 'chat'
       ? `When the change is complete, call ${DONE_TOOL} with adr ${adr.number}.`
-      : 'When the change is complete, say so in your summary.',
+      : 'When the change is made, build the project and run its tests. End your report with what you changed, which checks you ran and their result, and the line "Ready to merge" only when they pass.',
   ].join('\n');
 }

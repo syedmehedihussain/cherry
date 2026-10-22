@@ -45,15 +45,20 @@ export const startAgent = (projectId: string, body: AgentStart) =>
     },
   );
 
-const action = (verb: 'accept' | 'discard' | 'retry' | 'stop') => (projectId: string, id: string) =>
-  api('POST', `/api/agents/${encodeURIComponent(id)}/${verb}`, undefined, AgentSchema).then((a) => {
-    void refresh(projectId);
-    return a;
-  });
+const action =
+  (verb: 'accept' | 'discard' | 'retry' | 'stop' | 'resolve') => (projectId: string, id: string) =>
+    api('POST', `/api/agents/${encodeURIComponent(id)}/${verb}`, undefined, AgentSchema).then(
+      (a) => {
+        void refresh(projectId);
+        return a;
+      },
+    );
 export const acceptAgent = action('accept');
 export const discardAgent = action('discard');
 export const retryAgent = action('retry');
 export const stopAgent = action('stop');
+/** Merge with agent: an agent fixes the conflicts on its branch, then Cherry merges. */
+export const resolveAgent = action('resolve');
 
 /** Sends the steps the agent skipped to the project chat as a new message. */
 export const continueAgentInChat = (projectId: string, id: string) =>

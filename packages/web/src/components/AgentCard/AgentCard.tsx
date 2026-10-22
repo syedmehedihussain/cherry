@@ -8,6 +8,7 @@ import {
   acceptAgent,
   continueAgentInChat,
   discardAgent,
+  resolveAgent,
   retryAgent,
   stopAgent,
 } from '../../api/agents.ts';
@@ -37,7 +38,7 @@ const LABEL: Record<Agent['status'], string> = {
   waiting: 'Waiting',
   done: 'Done',
   failed: 'Failed',
-  accepted: 'Accepted',
+  accepted: 'Merged',
   discarded: 'Discarded',
 };
 
@@ -75,6 +76,7 @@ export function AgentCard({ agent, now, last, focus, onReviewDiff }: AgentCardPr
   const [reviewing, setReviewing] = useState(!!focus);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [conflicted, setConflicted] = useState(false);
   const navigate = useNavigate();
   const needsYou = agent.status === 'done' && agent.needsYou.length > 0;
   const tools = agent.activity.filter((i): i is ToolItem => i.kind === 'tool');
@@ -82,9 +84,11 @@ export function AgentCard({ agent, now, last, focus, onReviewDiff }: AgentCardPr
   const act = async (name: string, fn: () => Promise<unknown>) => {
     setBusy(name);
     setError(null);
+    setConflicted(false);
     try {
       await fn();
     } catch (e) {
+      setConflicted(e instanceof ApiFailure && e.code === 'merge_conflict');
       setError(e instanceof ApiFailure ? e.message : `Could not ${name}.`);
     } finally {
       setBusy(null);
@@ -208,10 +212,23 @@ export function AgentCard({ agent, now, last, focus, onReviewDiff }: AgentCardPr
                 type="button"
                 className="btn btn-primary btn-sm"
                 disabled={!!busy || !agent.changes?.files}
-                onClick={() => void act('accept', () => acceptAgent(agent.projectId, agent.id))}
+                onClick={() => void act('merge', () => acceptAgent(agent.projectId, agent.id))}
               >
-                {busy === 'accept' ? 'Merging…' : 'Accept'}
+                {busy === 'merge' ? 'Merging…' : 'Merge'}
               </button>
+              {conflicted && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  disabled={!!busy}
+                  title="An agent merges your branch into its branch, fixes the conflicts, runs the checks, and Cherry merges when they pass."
+                  onClick={() =>
+                    void act('merge with an agent', () => resolveAgent(agent.projectId, agent.id))
+                  }
+                >
+                  Merge with agent
+                </button>
+              )}
               <span className={styles.spacer} />
               <button
                 type="button"

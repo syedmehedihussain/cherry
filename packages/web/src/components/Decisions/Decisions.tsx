@@ -19,12 +19,12 @@ import styles from './Decisions.module.css';
 const nnnn = (n: number) => String(n).padStart(4, '0');
 
 const APPROVE: { id: AdrApplyMode; label: string; detail: string }[] = [
-  { id: 'none', label: 'Approve only', detail: 'Accept it; make the change later' },
+  { id: 'none', label: 'Approve only', detail: 'Accept it; it waits in your tasks' },
   { id: 'chat', label: 'Approve & apply in chat', detail: 'Claude makes the change in the chat' },
   {
     id: 'agent',
-    label: 'Approve & start agent',
-    detail: 'A background agent makes it in a worktree',
+    label: 'Approve & run with agent',
+    detail: 'A background agent makes it, tests it and reports back',
   },
 ];
 
@@ -112,6 +112,13 @@ export function Decisions({ projectId }: { projectId: string }) {
 
 const docLink = (projectId: string, d: Adr) => `/p/${encodeURIComponent(projectId)}/docs/${d.file}`;
 
+/** The same decision card inside the chat, under Claude's "Proposed decision" row. */
+export function DecisionInChat({ projectId, number }: { projectId: string; number: number }) {
+  const adr = useDecisions(projectId).data?.decisions.find((d) => d.number === number);
+  if (!adr) return null;
+  return <DecisionItem projectId={projectId} adr={adr} />;
+}
+
 function DecisionItem({ projectId, adr }: { projectId: string; adr: Adr }) {
   const [menu, setMenu] = useState(false);
   const [rejecting, setRejecting] = useState(false);
@@ -154,7 +161,7 @@ function DecisionItem({ projectId, adr }: { projectId: string; adr: Adr }) {
         : 'Sent to the chat; mark it done if the change is made'
       : adr.applying?.kind === 'agent'
         ? agent
-          ? `Agent ${agent.status === 'done' ? 'finished; accept its work to finish' : agent.status}`
+          ? `Agent ${agent.status === 'done' ? 'finished; merge its work to finish' : agent.status}`
           : 'Agent finished or removed'
         : 'Not applied yet';
 
@@ -292,7 +299,7 @@ function DecisionItem({ projectId, adr }: { projectId: string; adr: Adr }) {
                       void run(() => applyDecision(projectId, adr.number, { apply: 'agent' }))
                     }
                   >
-                    Start agent
+                    Run with agent
                   </button>
                 </>
               )}

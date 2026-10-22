@@ -3,6 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-10-15
 - **Decided by:** Meddy
+- **Amended by:** 0029 (approve in the chat, Approve only adds a task, run and merge with an agent)
 
 ## Context
 

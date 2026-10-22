@@ -130,7 +130,8 @@ proposal and the create progress, and is pushed as `survey.updated` on every cha
 | GET | `/api/projects/:id/agents` | agent list |
 | POST | `/api/projects/:id/agents` | `{ task, model }` → the agent (queued when all slots are busy). Agents always run in Auto; push, publish, deploy and rm -r are skipped and listed in `needsYou` (ADR-0028). `auto` is accepted and ignored |
 | GET | `/api/agents/:agentId/diff` | `{ files: [{ path, isNew, added, removed, lines }] }`, agent branch vs where it started |
-| POST | `/api/agents/:agentId/accept` | `git merge --no-edit` into the current branch, then remove worktree and branch (ADR-0010) |
+| POST | `/api/agents/:agentId/accept` | Merge: `git merge --no-edit` into the current branch, then remove worktree and branch (ADR-0010). A conflict answers 409 with code `merge_conflict` and changes nothing |
+| POST | `/api/agents/:agentId/resolve` | Merge with agent: merges the current branch into the agent branch in its worktree; no conflicts → merged at once; conflicts → the agent fixes them and runs the checks, and Cherry merges when it reports "Ready to merge" (ADR-0029) |
 | POST | `/api/agents/:agentId/discard` | remove worktree + branch |
 | POST | `/api/agents/:agentId/retry` | new run with the same task |
 | POST | `/api/agents/:agentId/stop` | interrupt |
@@ -145,10 +146,10 @@ says otherwise), addressed by its number. The file holds the state; see
 | Method | Path | Does |
 | --- | --- | --- |
 | GET | `/api/projects/:id/decisions` | `{ dir, decisions: Adr[] }`, newest number first; `state` is pending, approved, done or rejected; `applying` names the chat turn or agent making an approved change |
-| POST | `/api/projects/:id/decisions/:n/approve` | `{ apply: none\|chat\|agent }` → Status Accepted, `Done: not yet`; chat or agent also starts the change. Returns `{ decision, warning }`; `warning` says why the change was not started (for example, the chat is busy) |
+| POST | `/api/projects/:id/decisions/:n/approve` | `{ apply: none\|chat\|agent }` → Status Accepted, `Done: not yet`. `none` adds the task "Apply ADR-NNNN: title" to tasks.json; chat or agent also starts the change (chat waits for the running turn to end). Returns `{ decision, warning }`; `warning` says why the change was not started (ADR-0029) |
 | POST | `/api/projects/:id/decisions/:n/apply` | `{ apply: chat\|agent }` → starts an approved change again |
 | POST | `/api/projects/:id/decisions/:n/reject` | `{ reason? }` → Status Rejected, `Rejected because: …`; the file stays |
-| POST | `/api/projects/:id/decisions/:n/done` | approved → `Done: YYYY-MM-DD` |
+| POST | `/api/projects/:id/decisions/:n/done` | approved → `Done: YYYY-MM-DD`; its "Apply ADR-NNNN:" task is ticked. Ticking that task (PATCH tasks) also marks the decision done |
 
 Claude proposes with the `propose_decision` tool (chat and agents) and closes an applied one with
 `decision_done` (chat only; an agent's decision is done when the user accepts its work).

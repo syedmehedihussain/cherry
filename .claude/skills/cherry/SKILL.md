@@ -88,8 +88,8 @@ Claude may ask a **decision card** with options and a recommendation.
 - **Tasks**: a background agent gets a free-text task and works in its own worktree on
   `agent/<slug>`. It always runs in Auto: edits and commands need no approval. Push, publish,
   deploy and `rm -r` are skipped and listed as **Needs you**; **Continue in chat** hands them to
-  the chat (ADR-0028). When done: Review diff, then Accept (merges into the current branch) or
-  Discard. Needs a git repo with one commit.
+  the chat (ADR-0028). When done: Review diff, then Merge (into the current branch; on a conflict
+  **Merge with agent** lets the agent fix it) or Discard. Needs a git repo with one commit.
 
 **Magnet** is the cross-project assistant: read-only across all projects; it can propose actions
 (start an agent, calibrate, new project) that run only after the user approves.

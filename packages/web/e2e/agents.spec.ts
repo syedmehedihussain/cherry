@@ -4,8 +4,8 @@ import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { E2E_PROJECTS, loginCode } from './fixture.ts';
 
-// E2E flow 5: an agent runs on its own (Auto), skips the push for you, and Accept lands it.
-test('agent: start → runs on its own → needs you → review diff → accept → commit on main', async ({
+// E2E flow 5: an agent runs on its own (Auto), skips the push for you, and Merge lands it.
+test('agent: start → runs on its own → needs you → review diff → merge → commit on main', async ({
   page,
 }) => {
   await page.goto(`/#login=${await loginCode()}`);
@@ -42,7 +42,7 @@ test('agent: start → runs on its own → needs you → review diff → accept 
 
   const dir = path.join(E2E_PROJECTS, 'core');
   expect(existsSync(path.join(dir, 'tests', 'streaks.test.ts'))).toBe(false);
-  await card.getByRole('button', { name: 'Accept' }).click();
+  await card.getByRole('button', { name: 'Merge', exact: true }).click();
   await expect(card).toHaveCount(0);
   expect(existsSync(path.join(dir, 'tests', 'streaks.test.ts'))).toBe(true);
   const log = execFileSync('git', ['log', '--format=%s', '-1', 'main'], {

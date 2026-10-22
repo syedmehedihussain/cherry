@@ -254,6 +254,7 @@ export class ChatService {
               body: ev.ok ? 'Your reply is ready.' : (ev.error ?? 'The turn ended with an error.'),
               link: projectLink(projectId),
             });
+          this.sendQueued(projectId, ev.stopped);
         }
       },
     });
@@ -265,10 +266,37 @@ export class ChatService {
     return { turnId, conversationId: current.conversationId };
   }
 
-  /** A message Cherry sends for the user (an approved decision), in the mode they used last. */
+  /** Messages Cherry sends for the user while Claude is busy; sent when the turn ends. */
+  private readonly queued = new Map<string, string[]>();
+
+  /**
+   * A message Cherry sends for the user (an approved decision, an agent's skipped steps), in the
+   * mode they used last. While Claude is still replying it waits and goes when the turn ends.
+   */
   sendAs(projectId: string, text: string): { turnId: string; conversationId: string } {
-    const mode = this.current(projectId)?.mode ?? 'ask';
-    return this.send(projectId, { text, mode, attachments: [] });
+    const live = this.current(projectId);
+    if (live?.running) {
+      this.queued.set(projectId, [...(this.queued.get(projectId) ?? []), text]);
+      return { turnId: 'queued', conversationId: live.conversationId };
+    }
+    return this.send(projectId, { text, mode: live?.mode ?? 'ask', attachments: [] });
+  }
+
+  /** Sends the next queued message, unless the user stopped the turn. */
+  private sendQueued(projectId: string, stopped: boolean): void {
+    const next = this.queued.get(projectId) ?? [];
+    if (stopped) next.length = 0;
+    const text = next.shift();
+    if (!next.length) this.queued.delete(projectId);
+    if (text === undefined) return;
+    // After the result event has been handled, so the turn is really over.
+    setImmediate(() => {
+      try {
+        this.sendAs(projectId, text);
+      } catch {
+        // The project is gone or the chat was replaced; nothing to do.
+      }
+    });
   }
 
   /** Summarises one turn's file changes with Haiku. Only on the user's click (ADR-0022). */
@@ -292,6 +320,7 @@ export class ChatService {
   }
 
   async newConversation(projectId: string): Promise<void> {
+    this.queued.delete(projectId);
     const live = this.current(projectId);
     if (live) {
       await this.stop(projectId);

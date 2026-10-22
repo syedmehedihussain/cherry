@@ -95,7 +95,7 @@ describe('decisions API', () => {
   let events: ServerEvent[];
   const adrDir = () => path.join(d.projectsDir, 'core', 'docs', 'adr');
 
-  const api = async (method: 'GET' | 'POST', url: string, payload?: unknown) => {
+  const api = async (method: 'GET' | 'POST' | 'PATCH', url: string, payload?: unknown) => {
     const res = await d.app.inject({
       method,
       url,
@@ -104,6 +104,8 @@ describe('decisions API', () => {
     });
     return { status: res.statusCode, body: res.json() };
   };
+  const tasks = async (): Promise<{ id: string; title: string; status: string }[]> =>
+    (await api('GET', '/api/projects/core/tasks')).body.tasks;
   const list = async (): Promise<Adr[]> =>
     (await api('GET', '/api/projects/core/decisions')).body.decisions;
   const idle = async () => {
@@ -201,7 +203,7 @@ describe('decisions API', () => {
               tool: { name: 'Write', input: { file_path: 'db.sql', content: 'create table x;\n' } },
             },
             { call: { name: 'decision_done', input: { adr: 1 } } },
-            { text: 'Moved to SQLite.' },
+            { text: 'Moved to SQLite. Tests pass.\nReady to merge' },
           ]
         : [{ text: 'ok' }];
     const r = await api('POST', '/api/projects/core/decisions/1/approve', { apply: 'agent' });
@@ -212,11 +214,76 @@ describe('decisions API', () => {
       if (Date.now() - start > 5000) throw new Error('agent timed out');
       await new Promise((res) => setTimeout(res, 10));
     }
+    expect(log.requests.at(-1)?.prompt).toMatch(/run its tests[\s\S]*Ready to merge/);
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        type: 'notice',
+        kind: 'agent.done',
+        title: 'Ready to merge: ADR-0001 Move storage to SQLite',
+      }),
+    );
     // An agent can't close it: the change is only on its branch until accepted.
     expect(log.calls?.at(-1)).toMatchObject({ name: 'decision_done', ok: false });
     expect((await list())[0]?.state).toBe('approved');
     expect((await api('POST', `/api/agents/${agentId}/accept`)).status).toBe(200);
     expect((await list())[0]).toMatchObject({ state: 'done', applying: null });
+  });
+
+  it('Approve only adds a task; ticking the task marks the decision done, and back', async () => {
+    await propose();
+    await api('POST', '/api/projects/core/decisions/1/approve', { apply: 'none' });
+    const [task] = await tasks();
+    expect(task).toMatchObject({ title: 'Apply ADR-0001: Move storage to SQLite', status: 'todo' });
+    const r = await api('PATCH', `/api/projects/core/tasks/${task!.id}`, { status: 'done' });
+    expect(r.status).toBe(200);
+    expect((await list())[0]?.state).toBe('done');
+
+    // Mark done in Decisions ticks the task too.
+    script = () => [
+      { call: { name: 'propose_decision', input: { ...proposal, title: 'Add a cache' } } },
+    ];
+    await api('POST', '/api/projects/core/chat', { text: 'cache?' });
+    await idle();
+    await api('POST', '/api/projects/core/decisions/2/approve', { apply: 'none' });
+    expect((await tasks())[1]).toMatchObject({
+      title: 'Apply ADR-0002: Add a cache',
+      status: 'todo',
+    });
+    await api('POST', '/api/projects/core/decisions/2/done');
+    expect((await tasks())[1]?.status).toBe('done');
+  });
+
+  it('Reject removes the open task of an approved decision', async () => {
+    await propose();
+    await api('POST', '/api/projects/core/decisions/1/approve', { apply: 'none' });
+    expect(await tasks()).toHaveLength(1);
+    await api('POST', '/api/projects/core/decisions/1/reject', { reason: 'no' });
+    expect(await tasks()).toEqual([]);
+  });
+
+  it('Approve in the chat while Claude is still replying: the change goes after the turn', async () => {
+    script = (prompt) =>
+      prompt.startsWith('Decision ADR-0001 was approved')
+        ? [{ text: 'Applying now.' }]
+        : [
+            { call: { name: 'propose_decision', input: proposal } },
+            { wait: 300 },
+            { text: 'Proposed; carrying on.' },
+          ];
+    await api('POST', '/api/projects/core/chat', { text: 'switch to sqlite', mode: 'auto' });
+    const start = Date.now();
+    while (!(await list()).length) {
+      if (Date.now() - start > 3000) throw new Error('no proposal');
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    expect(d.chat.state('core').running).toBe(true);
+    const r = await api('POST', '/api/projects/core/decisions/1/approve', { apply: 'chat' });
+    expect(r.body.warning).toBeNull();
+    await idle();
+    await new Promise((res) => setTimeout(res, 20));
+    await idle();
+    expect(log.requests).toHaveLength(2);
+    expect(log.requests[1]?.prompt).toMatch(/^Decision ADR-0001 was approved/);
   });
 
   it('decision_done is refused for a decision that is not approved', async () => {

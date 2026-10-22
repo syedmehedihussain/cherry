@@ -1,5 +1,5 @@
 import { FileText, MessageSquarePlus, RotateCcw } from 'lucide-react';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   ChatModeSchema,
   type ChatItem,
@@ -28,6 +28,7 @@ import { ApprovalCard } from '../../components/ApprovalCard/ApprovalCard.tsx';
 import { ChangeSummary } from '../../components/ChangeSummary/ChangeSummary.tsx';
 import { Composer } from '../../components/Composer/Composer.tsx';
 import { DecisionCard } from '../../components/DecisionCard/DecisionCard.tsx';
+import { DecisionInChat } from '../../components/Decisions/Decisions.tsx';
 import { Markdown } from '../../components/Markdown/Markdown.tsx';
 import { ReadGroup, TimelineRow, type ToolItem } from '../../components/Timeline/Timeline.tsx';
 import styles from './Chat.module.css';
@@ -69,6 +70,14 @@ export function toBlocks(items: ChatItem[]): Block[] {
     // projects / action items belong to Magnet's panel.
   }
   return blocks;
+}
+
+/** ADR numbers Claude proposed in these rows (propose_decision; the row's meta is "ADR-0012"). */
+function proposals(items: ToolItem[]): number[] {
+  return items
+    .filter((t) => t.tool === 'mcp__cherry__propose_decision' && t.status === 'ok')
+    .map((t) => Number(/ADR-(\d+)/.exec(t.meta ?? '')?.[1]))
+    .filter((n) => n > 0);
 }
 
 /** Splits a tool run into runs of reads (3+ collapse) and single rows. */
@@ -313,15 +322,21 @@ function ClaudeBlock({
             );
           case 'tools':
             return (
-              <div key={p.items[0]!.id} className={styles.timeline}>
-                {toolRuns(p.items).map((r, i, all) =>
-                  Array.isArray(r) ? (
-                    <ReadGroup key={r[0]!.id} items={r} />
-                  ) : (
-                    <TimelineRow key={r.id} item={r} last={i === all.length - 1} />
-                  ),
-                )}
-              </div>
+              <Fragment key={p.items[0]!.id}>
+                <div className={styles.timeline}>
+                  {toolRuns(p.items).map((r, i, all) =>
+                    Array.isArray(r) ? (
+                      <ReadGroup key={r[0]!.id} items={r} />
+                    ) : (
+                      <TimelineRow key={r.id} item={r} last={i === all.length - 1} />
+                    ),
+                  )}
+                </div>
+                {/* A big choice Claude proposed: approve it right here (ADR-0029). */}
+                {proposals(p.items).map((n) => (
+                  <DecisionInChat key={n} projectId={projectId} number={n} />
+                ))}
+              </Fragment>
             );
           case 'decision':
             return (

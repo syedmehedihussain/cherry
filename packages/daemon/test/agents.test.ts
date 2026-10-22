@@ -182,6 +182,79 @@ describe('background agents', () => {
     expect((await api('POST', `/api/agents/${a.id}/continue`)).status).toBe(409);
   });
 
+  it('Merge with agent: a conflict gets fixed on the agent branch, then it merges', async () => {
+    const notices: { title: string }[] = [];
+    d.hub.listen((topic, ev) => {
+      if (topic === 'notices') notices.push(ev as never);
+    });
+    script = (prompt) =>
+      prompt.includes('have conflicts')
+        ? [
+            {
+              tool: {
+                name: 'Write',
+                input: { file_path: 'lib/streaks.ts', content: 'export const s = 23;\n' },
+              },
+            },
+            { tool: { name: 'Bash', input: { command: 'npm test' } } },
+            { text: 'Kept both changes. Tests pass.\nReady to merge' },
+          ]
+        : [
+            {
+              tool: {
+                name: 'Write',
+                input: { file_path: 'lib/streaks.ts', content: 'export const s = 2;\n' },
+              },
+            },
+            { text: 'Set s to 2.' },
+          ];
+    const a = await startAgent('Change the streak');
+    await until(a.id, (x) => x.status === 'done');
+    // Meanwhile the user changed the same line on main.
+    write(path.join(dir, 'lib', 'streaks.ts'), 'export const s = 3;\n');
+    git(dir, 'commit', '-qam', 'three');
+
+    const merge = await api('POST', `/api/agents/${a.id}/accept`);
+    expect(merge.status).toBe(409);
+    expect(merge.body.error.code).toBe('merge_conflict');
+    expect(git(dir, 'status', '--porcelain')).toBe('');
+
+    const r = await api('POST', `/api/agents/${a.id}/resolve`);
+    expect(r.status).toBe(200);
+    expect(r.body.status).toBe('running');
+    expect(log.requests.at(-1)!.prompt).toMatch(/git merge main[\s\S]*- lib\/streaks.ts/);
+    expect(log.requests.at(-1)!.cwd).toBe(log.requests[0]!.cwd);
+    await until(a.id, (x) => x.status === 'accepted');
+    expect(readFileSync(path.join(dir, 'lib', 'streaks.ts'), 'utf8')).toBe(
+      'export const s = 23;\n',
+    );
+    expect(git(dir, 'status', '--porcelain')).toBe('');
+    expect(notices.at(-1)).toMatchObject({ title: 'Merged: Change the streak' });
+  });
+
+  it('Merge with agent stops when conflict markers are left', async () => {
+    script = (prompt) =>
+      prompt.includes('have conflicts')
+        ? [{ text: 'Could not fix it.' }]
+        : [
+            {
+              tool: {
+                name: 'Write',
+                input: { file_path: 'lib/streaks.ts', content: 'export const s = 2;\n' },
+              },
+            },
+            { text: 'Set s to 2.' },
+          ];
+    const a = await startAgent('Change the streak');
+    await until(a.id, (x) => x.status === 'done');
+    write(path.join(dir, 'lib', 'streaks.ts'), 'export const s = 3;\n');
+    git(dir, 'commit', '-qam', 'three');
+    await api('POST', `/api/agents/${a.id}/resolve`);
+    const failed = await until(a.id, (x) => x.status === 'failed');
+    expect(failed.error).toMatch(/Conflicts are still in lib\/streaks.ts/);
+    expect(readFileSync(path.join(dir, 'lib', 'streaks.ts'), 'utf8')).toBe('export const s = 3;\n');
+  });
+
   it('refuses edits outside the worktree', async () => {
     script = () => [
       { tool: { name: 'Write', input: { file_path: path.join(dir, 'hack.txt'), content: 'x' } } },

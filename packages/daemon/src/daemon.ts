@@ -184,7 +184,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     webDist: WEB_DIST,
     ...(opts.onShutdown ? { onShutdown: opts.onShutdown } : {}),
     routes: [
-      workspaceRoutes(config, gitInfo),
+      workspaceRoutes(config, gitInfo, adrs),
       chatRoutes(chat, approvals, decisions),
       calibrateRoutes(calibration),
       surveyRoutes(survey),

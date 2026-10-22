@@ -17,6 +17,8 @@ export function agentRoutes(agents: AgentManager, chat: ChatService) {
     app.get('/api/agents/:agentId/diff', async (req) => agents.diff(id(req)));
     app.post('/api/agents/:agentId/accept', async (req) => agents.accept(id(req)));
     app.post('/api/agents/:agentId/discard', async (req) => agents.discard(id(req)));
+    // Merge with agent: fixes conflicts with the project's branch, then merges (ADR-0029).
+    app.post('/api/agents/:agentId/resolve', async (req) => agents.resolve(id(req)));
     app.post('/api/agents/:agentId/retry', async (req) => agents.retry(id(req)));
     app.post('/api/agents/:agentId/stop', async (req) => agents.stop(id(req)));
     // Hands the steps the agent skipped to the project chat (a click, so a chat turn is fine).

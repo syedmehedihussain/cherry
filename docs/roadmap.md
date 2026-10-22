@@ -144,7 +144,7 @@ Built before the Plan section (the user's order, 2026-10-22).
       needs you, scan done, decision proposed, and a chat reply while the tab is hidden.
 - [x] Background agents always run in Auto. Push, publish and `rm -r` are skipped, not asked;
       the agent finishes the rest and ends as "needs you" with **Continue in chat**.
-- [ ] Decisions: approve in the chat card; Approve only adds a task; Run with agent builds,
+- [x] Decisions: approve in the chat card; Approve only adds a task; Run with agent builds,
       tests and reports "ready to merge"; Merge tries `git merge`, an agent resolves conflicts.
 - [ ] Git: an Auto commit switch (Claude commits after each finished piece of work); off, a
       Source Control list with stage, unstage, message and Commit. The Haiku grouping goes.

@@ -6,11 +6,10 @@ import {
   NewTaskSchema,
   TaskStatusSchema,
   TasksFileSchema,
-  type Phase,
   type ProjectDetail,
   type TasksFile,
 } from '@cherry/shared';
-import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { writeFileAtomic } from '../fsutil.ts';
 import { gitStatus } from '../git.ts';
 import { conflict, notFound } from '../http.ts';
@@ -19,6 +18,8 @@ import { resolveInside } from '../paths.ts';
 import { openInEditor } from '../projects/editor.ts';
 import type { GitInfoService } from '../projects/github.ts';
 import { buildCard, readProjectFiles } from '../projects/scanner.ts';
+import { addTask, readTasks, writeTasks } from '../projects/tasks.ts';
+import type { AdrService } from '../adr/service.ts';
 import {
   fileDiff,
   listDocs,
@@ -28,23 +29,10 @@ import {
   writeFileView,
 } from '../projects/workspace.ts';
 
-/** `t<n>` one above the highest numbered id. */
-function nextTaskId(tasks: TasksFile): string {
-  const ids = new Set(tasks.tasks.map((t) => t.id));
-  let n = Math.max(0, ...tasks.tasks.map((t) => Number(/^t(\d+)$/.exec(t.id)?.[1] ?? 0))) + 1;
-  while (ids.has(`t${n}`)) n++;
-  return `t${n}`;
-}
-
-/** The phase of the first task that is not finished: where the project is now. */
-function currentPhase(tasks: TasksFile): Phase | null {
-  return tasks.tasks.find((t) => t.status === 'todo' || t.status === 'doing')?.phase ?? null;
-}
-
 const IdParams = z.object({ id: z.string().min(1).max(200) });
 const PathQuery = z.object({ path: z.string().max(4096).default('') });
 
-export function workspaceRoutes(config: ConfigStore, gitInfo: GitInfoService) {
+export function workspaceRoutes(config: ConfigStore, gitInfo: GitInfoService, adrs?: AdrService) {
   return (app: FastifyInstance) => {
     const dirOf = (params: unknown) => projectDir(config.projectsDir(), IdParams.parse(params).id);
 
@@ -120,11 +108,9 @@ export function workspaceRoutes(config: ConfigStore, gitInfo: GitInfoService) {
       return { content: body.content, mtime: statSync(file).mtimeMs };
     });
 
-    app.get('/api/projects/:id/tasks', async (req): Promise<TasksFile> => {
-      const file = path.join(dirOf(req.params), '_project', 'tasks.json');
-      if (!existsSync(file)) return { schema: 1, tasks: [] };
-      return TasksFileSchema.parse(JSON.parse(readFileSync(file, 'utf8')));
-    });
+    app.get('/api/projects/:id/tasks', async (req): Promise<TasksFile> =>
+      readTasks(dirOf(req.params)),
+    );
 
     app.patch('/api/projects/:id/tasks/:taskId', async (req) => {
       const { taskId } = z.object({ taskId: z.string() }).parse(req.params);
@@ -135,28 +121,15 @@ export function workspaceRoutes(config: ConfigStore, gitInfo: GitInfoService) {
       const task = tasks.tasks.find((t) => t.id === taskId);
       if (!task) throw notFound(`No task ${taskId}`);
       task.status = status;
-      writeFileAtomic(file, JSON.stringify(tasks, null, 2) + '\n');
-      return tasks;
+      writeTasks(dirOf(req.params), tasks);
+      // "Apply ADR-0012: …" done by hand: the decision is done too (ADR-0029).
+      if (status === 'done') adrs?.taskDone(IdParams.parse(req.params).id, task.title);
+      return readTasks(dirOf(req.params));
     });
 
-    app.post('/api/projects/:id/tasks', async (req) => {
-      const dir = dirOf(req.params);
-      const { title } = NewTaskSchema.parse(req.body);
-      const file = path.join(dir, '_project', 'tasks.json');
-      const tasks: TasksFile = existsSync(file)
-        ? TasksFileSchema.parse(JSON.parse(readFileSync(file, 'utf8')))
-        : { schema: 1, tasks: [] };
-      tasks.tasks.push({
-        id: nextTaskId(tasks),
-        phase: currentPhase(tasks) ?? (await buildCard(dir)).phase ?? 'development',
-        title,
-        status: 'todo',
-        dependsOn: [],
-      });
-      mkdirSync(path.dirname(file), { recursive: true });
-      writeFileAtomic(file, JSON.stringify(tasks, null, 2) + '\n');
-      return tasks;
-    });
+    app.post('/api/projects/:id/tasks', async (req) =>
+      addTask(dirOf(req.params), NewTaskSchema.parse(req.body).title),
+    );
 
     app.post('/api/projects/:id/open-in-editor', async (req) => {
       const dir = dirOf(req.params);

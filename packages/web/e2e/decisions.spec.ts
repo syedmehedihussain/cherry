@@ -10,7 +10,7 @@ test.afterEach(() =>
   rmSync(path.join(E2E_PROJECTS, 'core', 'docs'), { recursive: true, force: true }),
 );
 
-test('decisions: Claude proposes, the user approves one into the chat and rejects the other', async ({
+test('decisions: Claude proposes, the user approves one in the chat and rejects the other', async ({
   page,
 }) => {
   await page.goto(`/#login=${await loginCode()}`);
@@ -25,18 +25,18 @@ test('decisions: Claude proposes, the user approves one into the chat and reject
   const tabs = page.getByRole('navigation', { name: 'Workspace tabs' });
   const tab = tabs.getByRole('link', { name: /^Decisions/ });
   await expect(tab).toContainText('2');
-  await tab.click();
-  const view = page.getByRole('region', { name: 'Project' });
 
-  const sqlite = view.getByRole('article', { name: 'Move streaks to SQLite' });
+  // Each proposal also shows as a card in the chat; approve one right there.
+  const sqlite = page.getByRole('article', { name: 'Move streaks to SQLite' });
   await expect(sqlite).toContainText('ADR-0001');
   await expect(sqlite).toContainText('Claude (chat)');
+  await expect(page.getByRole('article', { name: 'Rename core to hub' })).toBeVisible();
   await sqlite.getByRole('button', { name: /Approve/ }).click();
   await sqlite.getByRole('menuitem', { name: /Approve & apply in chat/ }).click();
-  await expect(sqlite).toHaveCount(0);
-  await tabs.getByRole('link', { name: /^Chat/ }).click();
   await expect(page.getByText('Switched to SQLite.')).toBeVisible();
   await tab.click();
+  const view = page.getByRole('region', { name: 'Project' });
+  await expect(view.getByRole('article', { name: 'Move streaks to SQLite' })).toHaveCount(0);
 
   const rename = view.getByRole('article', { name: 'Rename core to hub' });
   await rename.getByRole('button', { name: 'Reject' }).click();
