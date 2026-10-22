@@ -6,13 +6,28 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **Open any folder**: **Open folder…** on Home and `cherry .` / `cherry open <folder>` in a
+  terminal add a folder from anywhere next to your projects, like VS Code's Open Folder. It
+  shows as "opened"; **Remove from list** forgets it without touching the disk. Cherry refuses
+  `/`, your home folder, `~/.cherry` and any folder that holds your projects folder (ADR-0031).
+- **Notifications**: a toast, a desktop notification while the tab is in the background
+  (Settings → General, nothing leaves the machine) and a count in the tab title when an agent is
+  done, fails or needs you, a scan finishes, Claude proposes a decision, a chat reply is ready,
+  or something waits for your OK.
+- **Auto commit** switch in the GitHub view: Claude commits its work as you, in small
+  conventional commits, after each finished piece of work. Push still asks (ADR-0030).
+- **Source Control** in the GitHub view, like VS Code: Staged and Changes, stage or unstage per
+  file or all, a click opens the file, **Write message** (Haiku, on a click) and **Commit as
+  you**. Secret files are never staged or committed (ADR-0030).
+- **Merge with agent**: when an agent's branch conflicts with yours, an agent merges your branch
+  into its branch, fixes the conflicts, runs the checks, and Cherry merges when they pass
+  (ADR-0029).
 - **Upcoming** on Home: save a project idea (name and description) for later, edit or remove it,
   and click **Start** to open the new project survey with it filled in (ADR-0027).
 - **Auto mode**: the composer's Plan mode chip is now a mode menu with **Ask** (the default),
   **Auto** and **Plan**. In Auto mode, edits and most commands run without an approval card.
   `git push`, GitHub writes, publishing and deploying, and `rm -r` still ask. Blocked commands,
-  edits outside the project and secret files stay refused. Background agents have the same
-  Auto switch (ADR-0025).
+  edits outside the project and secret files stay refused (ADR-0025).
 - **Decisions**: Claude proposes big project choices (stack, database, data format,
   architecture, a rename) with `propose_decision` instead of making them. Each one is saved as
   a Proposed ADR and waits in a new **Decisions** pill with a pending count. **Approve only**,
@@ -23,6 +38,19 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Changed
 
+- **Background agents always run on their own** (ADR-0028). The Auto switch is gone. Push,
+  publish, deploy and `rm -r` are skipped instead of asked; the agent finishes the rest and ends
+  as **Needs you** with **Continue in chat**, which hands those steps to the chat. Agents run the
+  project's tests before they finish.
+- **Decisions** (ADR-0029): the decision card also shows in the chat under Claude's proposal.
+  **Approve only** adds the task "Apply ADR-NNNN: title"; ticking it marks the decision done,
+  and the other way round. **Approve & run with agent** builds, tests and reports "Ready to
+  merge". Apply in chat waits until Claude finishes the current reply.
+- Agent **Accept** is now **Merge**.
+- The Scans list in the Agents tab folds into one row, closed by default.
+- **Ready to commit** and its Haiku commit groups are replaced by Source Control and Auto
+  commit (ADR-0030 supersedes ADR-0018).
+
 - Home's project table has no State column; a folder not set up in Cherry yet shows
   **Calibrate** instead.
 - The centre tabs are Chat, Docs, Notes & Tasks, **Agents** (with a running count) and
@@ -30,6 +58,8 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
   Overview's task line, "See all" and quick add open the matching centre tab.
 
 ### Fixed
+
+- A project folder removed while Home scanned no longer stops the scan.
 
 - The new project survey showed `~/Projects/` before the folder name even when another projects
   folder was chosen. It now shows the folder from setup or Settings; so do the "already exists"

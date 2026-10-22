@@ -150,7 +150,7 @@ Built before the Plan section (the user's order, 2026-10-22).
       Source Control list with stage, unstage, message and Commit. The Haiku grouping goes.
 - [x] Open any folder: **Open folder…** on Home and `cherry .` / `cherry open <path>`, next to
       the projects folder.
-- [ ] Tests, docs, CHANGELOG; hands-on run on a scratch project.
+- [x] Tests, docs, CHANGELOG; hands-on run on a scratch project.
 
 **Done when:** an agent runs a decision to the end without one approval click, says it is
 tested and ready, Merge lands it, and a notification told you each step; commits happen on
