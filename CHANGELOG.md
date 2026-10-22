@@ -6,6 +6,25 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **Lifecycle stages with their own agents** (ADR-0034). The phase bar is gone: the top bar of a
+  project has six tabs, Plan, Design, Preparation, Development, Deployment and Issues, in a loop.
+  Each opens its own chat with its own agent: the Planner, Designer, Preparer, Builder, Shipper
+  and Triager, each with its own personality, way of working and skills. The Planner, Designer
+  and Triager write docs and notes only; asked to change code, they say it belongs in
+  Development. Each stage lists its key files first in the file panel; Preparation shows a
+  readiness checklist with **Ask the Preparer to fix**. Your existing chat is now the
+  Development chat.
+- **Skills ship with Cherry** (ADR-0034). Each agent loads its stage's skills: bundled ones
+  (Cherry's own `project-readiness` for Preparation and `release` for Deployment to start), and
+  your own in `~/.cherry/skills/<stage>/`. Only skill folders load, never hooks or settings,
+  and a skill cannot skip an approval. **Settings → Stage agents** lists every agent and skill.
+- **Issues** (ADR-0035). The Issues stage keeps issues as files in `docs/issues/` (status, type,
+  severity), shows the project's open GitHub issues with **Import**, and **Send to GitHub**
+  after your approval. Tick issues and **Plan selected** to start the next round in Plan.
+- **Serious commands ask instead of being blocked** (ADR-0033). `sudo`, `curl … | sh`, `rm -r`
+  outside the project and force-pushing to main show a card with a red warning, every time,
+  even in Auto mode, and without "Allow for this session". Background agents skip them and
+  list them under Needs you.
 - **Projects work like VS Code's recent projects** (ADR-0032). Cherry no longer lists every
   folder in `~/Projects`: it starts empty and lists only the projects you open or create.
   **Open folder…** on Home or `cherry .` / `cherry open <folder>` in a terminal opens a folder
@@ -63,6 +82,8 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Fixed
 
+- Long project names in the file panel and long author names on the commit button no longer
+  run out of their panel.
 - A project folder removed while Home scanned no longer stops the scan.
 
 - The new project survey showed `~/Projects/` before the folder name even when another projects

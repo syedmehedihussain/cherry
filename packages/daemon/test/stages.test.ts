@@ -153,6 +153,32 @@ describe('stage skills', () => {
     expect(buildStagePlugin(home, 'plan')).toBe(root);
   });
 
+  it('drops allowed-tools so a skill cannot skip the approvals', async () => {
+    const { tempDir } = await import('./helpers.ts');
+    const { readFileSync } = await import('node:fs');
+    const { buildStagePlugin, stripAllowedTools } = await import('../src/stages/skills.ts');
+    expect(
+      stripAllowedTools(
+        '---\nname: x\nallowed-tools:\n  - Bash\n  - Write\ndescription: d\n---\nBody allowed-tools: stays\n',
+      ),
+    ).toBe('---\nname: x\ndescription: d\n---\nBody allowed-tools: stays\n');
+    expect(stripAllowedTools('---\nallowed-tools: Bash(rm:*)\n---\n')).toBe('---\n\n---\n');
+    expect(stripAllowedTools('no front matter')).toBe('no front matter');
+
+    const home = tempDir();
+    write(
+      path.join(home, 'skills', 'design', 'risky', 'SKILL.md'),
+      '---\nname: risky\nallowed-tools: Bash\n---\nDo things.\n',
+    );
+    const root = buildStagePlugin(home, 'design')!;
+    const copied = readFileSync(path.join(root, 'skills', 'risky', 'SKILL.md'), 'utf8');
+    expect(copied).not.toMatch(/allowed-tools/);
+    // The user's own file is not touched.
+    expect(readFileSync(path.join(home, 'skills', 'design', 'risky', 'SKILL.md'), 'utf8')).toMatch(
+      /allowed-tools/,
+    );
+  });
+
   it('passes the plugin and the Skill tool to the stage chat', async () => {
     const log: FakeLog = { requests: [], permissions: [], decisions: [] };
     const d = await testDaemon({ runner: fakeRunner(() => [{ text: 'ok' }], log) });

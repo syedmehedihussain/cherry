@@ -179,7 +179,8 @@ specs, exit checks) become Plan stage work.
       (storage decided with the user first).
 - [ ] l7 Bundle the skills the user picks (licence checked). Done: Settings → Stage agents lists
       each agent and its skills; Cherry's own project-readiness and release skills ship.
-- [ ] l8 Tests, docs, CHANGELOG; hands-on run of one full loop on a scratch project.
+- [x] l8 Tests, docs, CHANGELOG; real-Claude check (Plan guard refuses code, Deployment uses its
+      skill); the Issues → Plan loop is covered end to end in e2e (lifecycle.spec.ts).
 
 **Done when:** each stage tab opens its own chat with its own agent; the Plan agent refuses to
 edit code and says to switch to Development; a bundled skill is used by its stage's agent; an

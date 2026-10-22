@@ -57,16 +57,41 @@ export function stageSkills(home: string, stage: Stage): StageSkill[] {
 }
 
 /**
+ * Removes `allowed-tools` from a SKILL.md front matter (with its YAML list lines). Claude Code
+ * would run those tools without asking while the skill is active; in Cherry everything a skill
+ * does goes through the normal approvals.
+ */
+export function stripAllowedTools(md: string): string {
+  const m = /^(---\r?\n)([\s\S]*?)(\r?\n---)/.exec(md);
+  if (!m) return md;
+  const out: string[] = [];
+  let skipping = false;
+  for (const line of m[2]!.split(/\r?\n/)) {
+    if (/^allowed[-_]tools\s*:/i.test(line)) {
+      skipping = true;
+      continue;
+    }
+    if (skipping && /^\s+(-|\S)/.test(line)) continue;
+    skipping = false;
+    out.push(line);
+  }
+  return m[1] + out.join('\n') + m[3] + md.slice(m[0].length);
+}
+
+/**
  * Builds `~/.cherry/plugins/<stage>/`, a plugin that holds only skill folders (ADR-0034), and
  * returns its path, or null when the stage has no skills. Only `skills/` is written: no hooks,
- * commands, agents or MCP servers, so nothing in a skill can bypass Cherry's approvals.
+ * commands, agents or MCP servers, and no `allowed-tools`, so nothing in a skill can bypass
+ * Cherry's approvals.
  */
 export function buildStagePlugin(home: string, stage: Stage): string | null {
   const skills = findSkills(home, stage);
   const root = path.join(home, 'plugins', stage);
   // Rebuilt only when a skill changed, so a turn in another project is not cut off mid-read.
-  const signature = skills
-    .map((s) => `${s.dir}:${statSync(path.join(s.dir, 'SKILL.md')).mtimeMs}`)
+  const signature = ['v2', ...skills]
+    .map((s) =>
+      typeof s === 'string' ? s : `${s.dir}:${statSync(path.join(s.dir, 'SKILL.md')).mtimeMs}`,
+    )
     .join('\n');
   const sigFile = path.join(root, '.cherry-signature');
   if (skills.length && existsSync(sigFile) && readFileSync(sigFile, 'utf8') === signature)
@@ -80,10 +105,10 @@ export function buildStagePlugin(home: string, stage: Stage): string | null {
   );
   for (const s of skills) {
     const folder = s.name.replace(/[^\w.-]+/g, '-');
-    cpSync(s.dir, path.join(root, 'skills', folder), {
-      recursive: true,
-      dereference: true,
-    });
+    const target = path.join(root, 'skills', folder);
+    cpSync(s.dir, target, { recursive: true, dereference: true });
+    const skillMd = path.join(target, 'SKILL.md');
+    writeFileSync(skillMd, stripAllowedTools(readFileSync(skillMd, 'utf8')));
   }
   writeFileSync(sigFile, signature);
   return root;
