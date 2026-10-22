@@ -101,6 +101,33 @@ function resolvePrompt(task: string, target: string, branch: string, files: stri
   ].join('\n');
 }
 
+/**
+ * Splits an agent's last message into the report and its "Needs you" list (the steps it left
+ * for the user). Accepts a heading or a "Needs you:" line, then bullets or numbered lines.
+ */
+export function splitReport(text: string): { body: string; needs: string[] } {
+  const lines = text.trim().split('\n');
+  const at = lines.findIndex((l) => /^\s*(#+\s*)?\**\s*needs you\b/i.test(l));
+  if (at < 0) return { body: text.trim(), needs: [] };
+  const clean = (l: string) =>
+    l
+      .replace(/^\s*([-*•]|\d+[.)])\s+/, '')
+      .replace(/^`(.*)`$/, '$1')
+      .trim();
+  const needs: string[] = [];
+  const inline = clean(lines[at]!.replace(/^\s*(#+\s*)?\**\s*needs you\s*\**\s*:?\s*\**/i, ''));
+  if (inline) needs.push(inline);
+  let end = at + 1;
+  for (; end < lines.length; end++) {
+    const l = lines[end]!;
+    if (!l.trim()) continue;
+    if (!/^\s*([-*•]|\d+[.)])\s+/.test(l)) break;
+    needs.push(clean(l));
+  }
+  const body = [...lines.slice(0, at), ...lines.slice(end)].join('\n').trim();
+  return { body, needs: needs.filter((n) => n && !/^(none|nothing)\.?$/i.test(n)) };
+}
+
 function hasConflictMarkers(file: string): boolean {
   try {
     return /^(<{7}|>{7}) /m.test(readFileSync(file, 'utf8'));
@@ -407,7 +434,17 @@ export class AgentManager {
           `agent: ${r.task.split('\n')[0]!.slice(0, 72)}`,
         ]);
       }
-      const summary = lastText.trim().split('\n').filter(Boolean).pop()?.slice(0, 240) ?? null;
+      // The report's "Needs you" list joins the commands that were refused (ADR-0028).
+      const report = splitReport(lastText);
+      const refused = JSON.parse(this.row(id).needs_json) as string[];
+      this.set(id, { needs_json: JSON.stringify([...new Set([...refused, ...report.needs])]) });
+      const summary =
+        report.body
+          .split('\n')
+          .filter((l) => l.trim())
+          .pop()
+          ?.trim()
+          .slice(0, 240) ?? null;
       await this.refreshChanges(id);
       const changes = this.changesCache.get(id);
       this.set(id, {
@@ -621,8 +658,8 @@ export class AgentManager {
       text: [
         `A background agent finished this task on branch ${r.branch} (not merged yet): ${taskLine(r.task)}`,
         r.summary ? `Its summary: ${r.summary}` : null,
-        'It skipped these steps because only I may run them:',
-        ...needs.map((c) => `- \`${c}\``),
+        'It left these steps for me (only I may run them):',
+        ...needs.map((c) => `- ${c}`),
         'Help me finish them. Check the branch first and tell me what each step will do before you run it.',
       ]
         .filter((l) => l !== null)

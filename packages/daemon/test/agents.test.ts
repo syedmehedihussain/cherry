@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, symlinkSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Agent } from '@cherry/shared';
-import { slugify } from '../src/agents/manager.ts';
+import { slugify, splitReport } from '../src/agents/manager.ts';
 import { fakeRunner, type FakeLog, type Step } from '../src/claude/fake-runner.ts';
 import { HOST, gitInit, tempDir, testDaemon, write, type TestDaemon } from './helpers.ts';
 
@@ -62,6 +62,35 @@ describe('background agents', () => {
     git(dir, 'commit', '-q', '-m', 'streaks');
   });
   afterEach(() => d.cleanup());
+
+  it('reads the "Needs you" list from an agent report', () => {
+    expect(
+      splitReport(
+        'Added split().\nTests pass.\n\n**Needs you:**\n- Push the branch with `git push origin HEAD`\n',
+      ),
+    ).toEqual({
+      body: 'Added split().\nTests pass.',
+      needs: ['Push the branch with `git push origin HEAD`'],
+    });
+    expect(splitReport('Done.\n## Needs you\n1. `npm publish`\n\nReady to merge')).toEqual({
+      body: 'Done.\nReady to merge',
+      needs: ['npm publish'],
+    });
+    expect(splitReport('Needs you: nothing')).toEqual({ body: '', needs: [] });
+    expect(splitReport('All done.')).toEqual({ body: 'All done.', needs: [] });
+  });
+
+  it('a "Needs you" list in the report shows as Needs you, with a clean summary', async () => {
+    script = () => [
+      {
+        text: 'Added the split function. Tests pass.\n\nNeeds you:\n- Push the branch with `git push origin HEAD`',
+      },
+    ];
+    const a = await startAgent('Add split and push');
+    const done = await until(a.id, (x) => x.status === 'done');
+    expect(done.needsYou).toEqual(['Push the branch with `git push origin HEAD`']);
+    expect(done.summary).toBe('Added the split function. Tests pass.');
+  });
 
   it('makes a slug from the task', () => {
     expect(slugify('Write tests for the streak service')).toBe('tests-streak-service');
@@ -146,7 +175,7 @@ describe('background agents', () => {
       if (topic === 'notices') notices.push(ev as never);
     });
     script = (prompt) =>
-      prompt.includes('skipped these steps')
+      prompt.includes('left these steps for me')
         ? [{ text: 'Here is what each step does.' }]
         : [
             { tool: { name: 'Bash', input: { command: 'npm test' } } },
@@ -172,8 +201,8 @@ describe('background agents', () => {
     const sent = log.requests.at(-1)!;
     expect(sent.cwd).toBe(dir);
     expect(sent.prompt).toContain(`branch ${a.branch} (not merged yet)`);
-    expect(sent.prompt).toContain('- `git push origin HEAD`');
-    expect(sent.prompt).toContain('- `npm publish`');
+    expect(sent.prompt).toContain('- git push origin HEAD');
+    expect(sent.prompt).toContain('- npm publish');
   });
 
   it('refuses Continue in chat for an agent that skipped nothing', async () => {

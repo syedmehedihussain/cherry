@@ -5,9 +5,10 @@ set -eu
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 BIN="${CHERRY_BIN_DIR:-$HOME/.local/bin}"
 mkdir -p "$BIN"
+# mise -C runs in the repo; CHERRY_CWD keeps the folder you ran it from (for `cherry .`).
 cat > "$BIN/cherry" <<SHIM
 #!/bin/sh
-exec mise exec -C "$REPO" -- node --import "$REPO/node_modules/tsx/dist/loader.mjs" "$REPO/packages/cli/src/index.ts" "\$@"
+CHERRY_CWD="\$PWD" exec mise exec -C "$REPO" -- node --import "$REPO/node_modules/tsx/dist/loader.mjs" "$REPO/packages/cli/src/index.ts" "\$@"
 SHIM
 chmod +x "$BIN/cherry"
 echo "Installed $BIN/cherry"

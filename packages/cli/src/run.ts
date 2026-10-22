@@ -95,18 +95,26 @@ async function up(open: boolean, route = '/'): Promise<RunResult> {
 /** `cherry .` and `cherry open <path>`: adds the folder to Home and opens its workspace. */
 async function openFolder(open: boolean, folder: string): Promise<RunResult> {
   const { info } = await ensureRunning();
-  const dir = path.resolve(folder.replace(/^~(?=$|\/)/, homedir()));
+  const dir = path.resolve(callerCwd(), folder.replace(/^~(?=$|\/)/, homedir()));
   const { id } = await cliRequest<{ id: string }>(info, 'POST', '/api/cli/open-folder', {
     path: dir,
   });
   return up(open, `/p/${encodeURIComponent(id)}`);
 }
 
+/**
+ * The folder `cherry` was run from. The installed command runs in the repo (mise -C) and passes
+ * the real one in CHERRY_CWD; `pnpm cherry` passes it in INIT_CWD.
+ */
+function callerCwd(): string {
+  return process.env.CHERRY_CWD || process.env.INIT_CWD || process.cwd();
+}
+
 /** A folder on disk (`.`, `../app`, `~/code/app`, or a folder here), not a project name. */
 function isFolderArg(arg: string): boolean {
   if (arg === '.' || arg === '..' || arg.includes('/') || arg.startsWith('~')) return true;
   try {
-    return statSync(path.resolve(arg)).isDirectory();
+    return statSync(path.resolve(callerCwd(), arg)).isDirectory();
   } catch {
     return false;
   }
