@@ -28,7 +28,7 @@
 </p>
 
 Cherry is a local workspace that drives [Claude Code](https://claude.com/claude-code) the way
-a senior engineer works: **survey, decide, document, then build.** It runs on your own computer
+a senior engineer works: **plan, decide, document, then build.** It runs on your own computer
 at `127.0.0.1`, works on the project folders you open in it, and every edit and command waits for
 your approval.
 
@@ -58,9 +58,9 @@ decisions here, and Claude does the typing, only after you say yes.
       Allow once, allow for the session, or deny with a reason.
     </td>
     <td width="50%" valign="top">
-      <img src="docs/images/survey.png" alt="A survey decision card with a recommended option" /><br />
-      <b>Survey before code.</b> Seven decision cards (users, scope, stack, data, quality bar),
-      then Claude writes CLAUDE.md, a PRD, ADRs, the architecture and the first commit.
+      <img src="docs/images/survey.png" alt="A decision card with a recommended option" /><br />
+      <b>Plan before code.</b> Give the idea and a name; the project opens in Plan, where the
+      Planner asks one question at a time and writes the PRD, the roadmap and ADRs.
     </td>
   </tr>
   <tr>
@@ -118,10 +118,9 @@ decisions here, and Claude does the typing, only after you say yes.
 
 ## How it works
 
-1. **Survey.** Describe the idea and answer seven short questions. Each has a recommended option
-   and its trade-off.
-2. **Decide.** Every real choice becomes an ADR. Change an answer later and Cherry marks what
-   needs a re-check.
+1. **Plan.** Describe the idea and pick a folder name. The project opens in the Plan stage,
+   where the Planner asks short questions, each with a recommended option and its trade-off.
+2. **Decide.** Every real choice becomes an ADR.
 3. **Document.** `CLAUDE.md`, the PRD, architecture, data model and `STATUS.md` are written
    before any code, with your approval.
 4. **Build.** Chat, agents and scans do the work. You approve, run it, and commit in small steps.

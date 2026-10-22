@@ -1,4 +1,4 @@
-import { rmSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { E2E_PROJECTS, loginCode } from './fixture.ts';
@@ -38,8 +38,20 @@ test('ideas: add, edit, remove, and start one as a project', async ({ page }) =>
   await bird.getByRole('button', { name: 'Start' }).click();
   await expect(page.getByRole('textbox', { name: 'Idea' })).toHaveValue('Bird log');
   await expect(page.getByLabel('Folder name')).toHaveValue('bird-log');
-  await page.getByRole('button', { name: 'Confirm' }).click();
-  await expect(page).toHaveURL(/\/new\/bird-log$/);
+  await page.getByRole('button', { name: 'Start planning' }).click();
+  // ADR-0036: no survey; the project opens on Plan with the idea ready to send.
+  await expect(page).toHaveURL(/\/p\/bird-log$/);
+  const stages = page.getByRole('navigation', { name: 'Lifecycle stages' });
+  await expect(stages.getByRole('button', { name: 'Plan' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByPlaceholder(/^Reply to Claude/)).toHaveValue(
+    /Bird log\n\nHelp me plan it\./,
+  );
+  expect(
+    readFileSync(path.join(E2E_PROJECTS, 'bird-log', '_project', 'STATUS.md'), 'utf8'),
+  ).toContain('Bird log');
 
   // Started: the idea leaves the Upcoming list.
   await page.goto('/');

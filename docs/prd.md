@@ -70,6 +70,9 @@ Priority: **P0** = MVP cannot ship without it. **P1** = MVP should have it. **P2
 
 ### New project survey
 
+> Replaced by ADR-0036: Start project is one form (idea, folder name, folder) and opens
+> the Plan stage. The survey is no longer built; this section is kept for history.
+
 | ID | Requirement | Pri |
 | --- | --- | --- |
 | S-1 | Seven steps: 1 Name & idea (typed), 2 Problem & users, 3 Scope, 4 Stack, 5 Data, 6 Quality bar, 7 Review. A **Quick** toggle on step 1 skips steps 5 and 6. | P0 |

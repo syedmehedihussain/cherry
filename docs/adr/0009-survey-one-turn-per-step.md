@@ -1,6 +1,6 @@
 # 0009 — The survey drafts each step in its own short Claude turn
 
-- **Status:** Accepted
+- **Status:** Superseded by 0036
 - **Date:** 2026-10-08
 - **Decided by:** Meddy (autonomous build, recorded for review)
 

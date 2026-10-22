@@ -7,7 +7,7 @@ import { notFound } from '../http.ts';
 
 /**
  * Project ideas for later (ADR-0027), kept in `~/.cherry/ideas.json` so they do not make empty
- * folders in the projects folder. Starting one opens the survey; the survey deletes it.
+ * folders in the projects folder. Starting one opens Start project, which deletes it.
  */
 export class IdeaStore {
   private readonly file: string;

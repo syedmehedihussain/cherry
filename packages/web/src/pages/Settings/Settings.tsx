@@ -171,7 +171,7 @@ function GeneralSection() {
         <label className={styles.row}>
           <span>
             <strong>Default model</strong>
-            <span>Used for new chats, calibration, the survey, agents and Magnet.</span>
+            <span>Used for new chats, calibration, agents and Magnet.</span>
           </span>
           <select
             value={c.claude.defaultModel}

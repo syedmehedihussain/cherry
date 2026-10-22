@@ -84,8 +84,7 @@
 .miniDot[data-state='uncalibrated'] {
   background: var(--warning);
 }
-.miniDot[data-state='cctop'],
-.miniDot[data-state='draft'] {
+.miniDot[data-state='cctop'] {
   background: var(--accent);
 }
 .miniName {

@@ -45,7 +45,7 @@ export function ensureMagnetFiles(home: string): void {
 export function projectLine(card: ProjectCard, now = Date.now()): string {
   const parts = [
     `${card.id} (${tildify(card.path)})`,
-    card.draft ? 'Survey draft (new project, not created yet)' : STATE_LABEL[card.state],
+    STATE_LABEL[card.state],
     card.phase ? PHASE_LABEL[card.phase].toLowerCase() : 'phase unknown',
   ];
   if (card.stack.length) parts.push(card.stack.join(', '));

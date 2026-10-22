@@ -26,7 +26,7 @@ import { workspaceRoutes } from './routes/workspace.ts';
 import { chatRoutes } from './routes/chat.ts';
 import { calibrateRoutes } from './routes/calibrate.ts';
 import { CalibrationService } from './calibrate/service.ts';
-import { surveyRoutes } from './routes/survey.ts';
+import { startRoutes } from './routes/start.ts';
 import { gitRoutes } from './routes/git.ts';
 import { agentRoutes } from './routes/agents.ts';
 import { scanRoutes } from './routes/scans.ts';
@@ -36,7 +36,6 @@ import { AgentManager } from './agents/manager.ts';
 import { MagnetService } from './magnet/service.ts';
 import { magnetRoutes } from './routes/magnet.ts';
 import { GitActions, type PrLister } from './projects/git-actions.ts';
-import { SurveyService, ghCli, type SurveyGitHub } from './survey/service.ts';
 import { ChatService } from './chat/service.ts';
 import { ApprovalBroker } from './claude/approvals.ts';
 import { DecisionBroker } from './claude/decisions.ts';
@@ -57,7 +56,6 @@ export interface Daemon {
   approvals: ApprovalBroker;
   decisions: DecisionBroker;
   calibration: CalibrationService;
-  survey: SurveyService;
   agents: AgentManager;
   adrs: AdrService;
   scans: ScanService;
@@ -86,8 +84,6 @@ export interface DaemonOptions {
   planUsage?: () => Promise<PlanUsage>;
   /** Replace the Claude runner (tests use the fake Claude). */
   runner?: Runner;
-  /** Replace gh for the survey's "Create a private GitHub repository" (tests). */
-  github?: SurveyGitHub;
   /** Replace `gh pr list` (tests). */
   prList?: PrLister;
   /** Stops the process (main.ts); enables POST /api/shutdown. */
@@ -131,14 +127,6 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     opts.runner ?? sdkRunner,
     projects,
     opts.home,
-  );
-
-  const survey = new SurveyService(
-    config,
-    hub,
-    opts.runner ?? sdkRunner,
-    projects,
-    opts.github ?? ghCli,
   );
 
   const agents = new AgentManager(
@@ -191,7 +179,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       workspaceRoutes(config, gitInfo, adrs),
       chatRoutes(chat, approvals, decisions),
       calibrateRoutes(calibration),
-      surveyRoutes(survey),
+      startRoutes(config, projects),
       gitRoutes(gitActions),
       agentRoutes(agents, chat),
       scanRoutes(scans),
@@ -235,7 +223,6 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     approvals,
     decisions,
     calibration,
-    survey,
     agents,
     adrs,
     scans,
@@ -243,7 +230,6 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     async close() {
       await runs.stopAll();
       await chat.stopAll();
-      await survey.stopAll();
       await agents.stopAll();
       await scans.stopAll();
       await magnet.stopAll();

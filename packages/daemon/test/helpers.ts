@@ -55,7 +55,6 @@ export interface TestDaemon extends Daemon {
 export async function testDaemon(
   opts: {
     runner?: import('../src/claude/runner.ts').Runner;
-    github?: import('../src/survey/service.ts').SurveyGitHub;
     prList?: import('../src/projects/git-actions.ts').PrLister;
     onShutdown?: () => void;
   } = {},
@@ -81,11 +80,6 @@ export async function testDaemon(
     }),
     // Never fall back to the real Claude in tests.
     runner: opts.runner ?? fakeRunner([{ text: 'No script given.' }]),
-    // Never fall back to the real gh either.
-    github: opts.github ?? {
-      owner: async () => null,
-      createRepo: async () => ({ ok: false, error: 'no gh in tests' }),
-    },
     prList: opts.prList ?? (async () => ({ prs: [], error: 'no gh in tests' })),
     ...(opts.onShutdown ? { onShutdown: opts.onShutdown } : {}),
   });

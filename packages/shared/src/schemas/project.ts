@@ -64,8 +64,6 @@ export const ProjectCardSchema = z.object({
   git: GitSummarySchema.nullable(),
   lastWorked: z.number().nullable(),
   projectJsonError: z.boolean(),
-  /** A new-project survey is in progress in this folder (it opens the survey, not calibration). */
-  draft: z.boolean().default(false),
   /** The folder is gone (moved or deleted); Home offers Remove from Cherry (ADR-0032). */
   missing: z.boolean().default(false),
 });

@@ -172,6 +172,9 @@ First run: amber icon, "Claude Code not found", one line why, **How to fix** (pr
 
 ## Survey and calibration
 
+> Replaced by ADR-0036: Start project is one form (idea, folder name, folder) and opens
+> the Plan stage. The survey is no longer built; this section is kept for history.
+
 ### `StepRail`
 Vertical list of steps with number circles: done (check, `--t2`), current (accent), future
 (`--t3`). Header "New project survey · 3 of 7 answered".

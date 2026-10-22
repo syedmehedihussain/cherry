@@ -6,6 +6,9 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **Start project opens Plan** (ADR-0036). The seven-step survey is gone. Start project asks
+  for the idea and a folder name, makes the folder, and opens the project on the Plan stage
+  with the idea in the composer: press Send and the Planner takes it from there.
 - **Lifecycle stages with their own agents** (ADR-0034). The phase bar is gone: the top bar of a
   project has six tabs, Plan, Design, Preparation, Development, Deployment and Issues, in a loop.
   Each opens its own chat with its own agent: the Planner, Designer, Preparer, Builder, Shipper

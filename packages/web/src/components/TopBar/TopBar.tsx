@@ -21,7 +21,7 @@ interface TopBarProps {
   centre?: ReactNode;
   /** A status pill after the crumbs ("Approval needed", "Claude is working"). */
   status?: ReactNode;
-  /** Replaces the right side (survey: "Draft saved", Save and exit). */
+  /** Replaces the right side. */
   right?: ReactNode;
   /** Overrides the health-based state (e.g. working while a turn runs). */
   claude?: ClaudeState;

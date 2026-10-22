@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-/** A project idea saved on Home for later (ADR-0027). Starting it opens the new project survey. */
+/** A project idea saved on Home for later (ADR-0027). Starting it opens Start project with the idea filled in. */
 export const IdeaSchema = z.object({
   id: z.string(),
   name: z.string(),

@@ -54,7 +54,7 @@ function describe(
     case 'new_project':
       return {
         title: 'Magnet wants to start a new project',
-        detail: `Opens the survey with this idea: ${task}. Nothing is created until you finish it.`,
+        detail: `Opens Start project with this idea: ${task}. Nothing is created until you click Start planning.`,
       };
     case 'push':
       return {
@@ -85,7 +85,7 @@ function magnetSystemPrompt(o: {
     o.projectsMd,
     '',
     '## How you work',
-    `- Each project's folder is in brackets in the list above (new projects are created in ${o.projectsDir}). For details read <folder>/_project/STATUS.md, <folder>/_project/project.json, <folder>/_project/survey.json and files in <folder>/docs/. Read only what you need.`,
+    `- Each project's folder is in brackets in the list above (new projects are created in ${o.projectsDir}). For details read <folder>/_project/STATUS.md, <folder>/_project/project.json, and files in <folder>/docs/. Read only what you need.`,
     '- You cannot run commands. Git state (changes, ahead, behind) and last activity are already in the projects list above; use it.',
     '- Answer in a few short sentences. Name the project first, then the problem.',
     '- When you talk about specific projects, call show_projects with their ids so the user sees cards they can click.',
@@ -441,7 +441,7 @@ export class MagnetService {
         case 'new_project':
           return this.settle(live, item, {
             status: 'approved',
-            result: 'Opening the survey.',
+            result: 'Opening Start project.',
             href: `/new?idea=${encodeURIComponent(a.task ?? '')}`,
           });
         case 'push':

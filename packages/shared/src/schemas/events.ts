@@ -3,7 +3,6 @@ import { ProjectCardSchema } from './project.ts';
 import { HealthSchema } from './system.ts';
 import type { Approval, ChatItem, PlanItem } from './chat.ts';
 import type { CalibrationState } from './calibration.ts';
-import type { SurveyState } from './survey.ts';
 import type { GitResult } from './workspace.ts';
 import type { Agent } from './agent.ts';
 import type { RunState } from './run.ts';
@@ -69,7 +68,6 @@ export interface EventMap {
   /** Claude's plan changed (a task was added, started or finished). */
   'chat.plan': { projectId: string; stage: Stage; conversationId: string; plan: PlanItem[] };
   'calibrate.updated': { projectId: string; state: CalibrationState };
-  'survey.updated': { projectId: string; state: SurveyState };
   /** Pull or Push finished (Push runs after its approval). */
   'git.result': { projectId: string } & GitResult;
   /** An agent was added or changed (upsert by id). */

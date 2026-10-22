@@ -222,7 +222,7 @@ function ItemView({
                   onGo(projectHref(c));
                 }}
               >
-                <span className={styles.miniDot} data-state={c.draft ? 'draft' : c.state} />
+                <span className={styles.miniDot} data-state={c.state} />
                 <span className={styles.miniName}>{c.name}</span>
                 <span className={styles.miniMeta}>{miniMeta(c)}</span>
               </Link>
@@ -253,7 +253,7 @@ function ItemView({
 }
 
 function miniMeta(c: ProjectCard): string {
-  const parts = [c.draft ? 'Survey draft' : STATE_LABEL[c.state]];
+  const parts = [STATE_LABEL[c.state]];
   const git = gitChip(c.git).label;
   if (c.git && git !== 'clean') parts.push(git);
   return parts.join(' · ');

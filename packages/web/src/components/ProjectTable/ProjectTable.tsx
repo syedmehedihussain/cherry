@@ -76,20 +76,14 @@ export function ProjectTable({
                 <GitChip git={c.git} />
               </td>
               <td className={styles.action}>
-                {c.missing ? null : c.draft ? (
-                  <Link to={projectHref(c)} className="btn btn-secondary btn-sm">
-                    Continue
+                {/* Not set up in Cherry yet (no project.json): one click to calibrate it. */}
+                {!c.missing && c.state !== 'ready' && (
+                  <Link
+                    to={`/p/${encodeURIComponent(c.id)}/calibrate`}
+                    className="btn btn-secondary btn-sm"
+                  >
+                    Calibrate
                   </Link>
-                ) : (
-                  // Not set up in Cherry yet (no project.json): one click to calibrate it.
-                  c.state !== 'ready' && (
-                    <Link
-                      to={`/p/${encodeURIComponent(c.id)}/calibrate`}
-                      className="btn btn-secondary btn-sm"
-                    >
-                      Calibrate
-                    </Link>
-                  )
                 )}
                 <RemoveFromCherry id={c.id} name={c.name} />
               </td>

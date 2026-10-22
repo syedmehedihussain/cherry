@@ -44,6 +44,9 @@ human-readable version. Every JSON file has a `schema` number so we can migrate 
 
 ## 2. `_project/survey.json`
 
+> Replaced by ADR-0036: Start project is one form (idea, folder name, folder) and opens
+> the Plan stage. The survey is no longer built; this section is kept for history.
+
 Written after **every** confirmed answer so a survey can pause and resume.
 
 ```json

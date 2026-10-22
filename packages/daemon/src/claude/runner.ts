@@ -125,7 +125,7 @@ const FILE_TOOLS = new Set([
 
 /**
  * Refuses file tools aimed outside the run's folders (cwd + additionalDirectories), with
- * symlinks resolved. Covers chat, scans, agents, calibration and survey alike.
+ * symlinks resolved. Covers chat, scans, agents, calibration and Magnet alike.
  */
 export function pathGuard(
   roots: string[],

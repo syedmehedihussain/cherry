@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 // M8: "What's stuck this week?" answers with project cards and a proposed action.
-test('Magnet answers, shows project cards, and an approved action opens the survey', async ({
+test('Magnet answers, shows project cards, and an approved action opens Start project', async ({
   page,
 }) => {
   await page.getByRole('button', { name: 'Open Magnet' }).click();

@@ -6,7 +6,7 @@ import { ApiFailure } from '../../api/client.ts';
 import { addIdea, removeIdea, updateIdea, useIdeas } from '../../api/ideas.ts';
 import styles from './Ideas.module.css';
 
-/** Where Start opens the survey: the idea's text, a folder name and the idea to remove after. */
+/** Where Start opens Start project: the idea's text, a folder name and the idea to remove after. */
 export function startHref(idea: Idea): string {
   const text = idea.description ? `${idea.name}: ${idea.description}` : idea.name;
   return `/new?${new URLSearchParams({ idea: text, name: idea.name, from: idea.id }).toString()}`;
@@ -130,7 +130,7 @@ function IdeaRow({
               type="button"
               className="btn btn-primary btn-sm"
               disabled={disabled}
-              title={disabled ? 'Connect Claude Code first' : 'Opens the new project survey'}
+              title={disabled ? 'Connect Claude Code first' : 'Opens Start project with this idea'}
               onClick={() => void navigate(startHref(idea))}
             >
               <Rocket size={13} aria-hidden="true" />

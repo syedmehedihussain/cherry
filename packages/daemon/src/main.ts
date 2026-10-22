@@ -5,7 +5,6 @@ import { fakeRunnerFromFile } from './claude/fake-runner.ts';
 import { createDaemon } from './daemon.ts';
 import pkg from '../package.json' with { type: 'json' };
 import { checkHealth } from './health.ts';
-import { noGitHub } from './survey/service.ts';
 import { noPlanUsage } from './plan-usage.ts';
 import { writeFileAtomic } from './fsutil.ts';
 import { migrateHome } from './migrate.ts';
@@ -20,13 +19,11 @@ const webUrl = process.env.CHERRY_WEB_URL || `http://${LOOPBACK_HOST}:${port}`;
 
 const fakeClaude = process.env.CHERRY_FAKE_CLAUDE;
 const daemon = createDaemon({
-  // The fake Claude (e2e) also turns GitHub off, so tests never create a real repo.
-  // It also stands in for the claude CLI, so health says Claude is ready even where none is
-  // installed (CI).
+  // The fake Claude (e2e) stands in for the claude CLI, so health says Claude is ready even
+  // where none is installed (CI).
   ...(fakeClaude
     ? {
         runner: fakeRunnerFromFile(fakeClaude),
-        github: noGitHub,
         planUsage: async () => noPlanUsage(),
         healthCheck: async () => {
           const h = await checkHealth(pkg.version, 'claude');

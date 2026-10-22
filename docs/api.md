@@ -120,21 +120,13 @@ folder (see `security.md`).
 | GET | `/api/ideas` | `{ ideas: Idea[] }`, newest first |
 | POST | `/api/ideas` | `{ name, description? }` → `{ idea }` |
 | PATCH | `/api/ideas/:id` | `{ name, description? }` → `{ idea }` |
-| DELETE | `/api/ideas/:id` | removes the idea; Home calls it once the survey for it has started |
+| DELETE | `/api/ideas/:id` | removes the idea; Start project calls it once the project is created |
 
-## Survey
+## Start project
 
 | Method | Path | Does |
 | --- | --- | --- |
-| POST | `/api/survey` | `{ name, idea, quick }` → creates the draft folder with only `_project/survey.json`, returns the survey state (id = folder name) |
-| GET | `/api/survey/:id` | survey state |
-| POST | `/api/survey/:id/next` | `{ fresh? }` asks Claude to draft the current card (or the files at review); `fresh` drops the kept draft |
-| POST | `/api/survey/:id/answer` | `{ step, optionId? , custom? }`, or `{ step: 1, idea, quick }` |
-| POST | `/api/survey/:id/change` | `{ step }` reopen a step |
-| POST | `/api/survey/:id/create` | `{ createRepo, gitignore = true }` writes every proposed file, a `.gitignore` for the stack (Haiku, unless one exists; ADR-0023), `git init`, first commit, optional `gh repo create --private` |
-
-The survey state (`GET /api/survey/:id`) carries the current card, the drafting flag, the
-proposal and the create progress, and is pushed as `survey.updated` on every change.
+| POST | `/api/projects/start` | `{ name, idea, parentDir? }` → `{ id, path }`. Makes the folder (in the new projects folder, or `parentDir`) with `_project/STATUS.md`, `project.json` (phase `plan`) and `tasks.json`, runs `git init` with `_project/` excluded, adds it to the list. 409 if the folder has files (ADR-0036) |
 
 ## Calibration
 
@@ -225,7 +217,6 @@ One socket at `/ws`. Every event: `{ type, at, ...payload }`. The client subscri
 | `tree.changed` | `{ paths: string[] }` | project:id |
 | `agent.updated` | `{ projectId, agent }` (status, last timeline rows, waiting approval, change size) | project:id |
 | `decisions.updated` | `{ projectId }` a decision was proposed, approved, rejected or done; re-fetch the list | project:id |
-| `survey.updated` | `{ projectId, state }` (full survey state) | project:id |
 | `calibrate.progress` | `{ step, rows, found }` | project:id |
 | `calibrate.proposal` | proposal | project:id |
 | `run.state` | `{ projectId, state }` the app started, stopped or printed its local address (no output, no servers) | project:id |

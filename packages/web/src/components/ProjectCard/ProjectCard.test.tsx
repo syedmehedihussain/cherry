@@ -18,7 +18,6 @@ const card: Card = {
   git: { branch: 'main', ahead: 0, behind: 0, changes: 3, remote: true },
   lastWorked: now - 2 * 3600_000,
   projectJsonError: false,
-  draft: false,
   missing: false,
 };
 

@@ -46,6 +46,9 @@ States
 
 ## 2. New project survey — `Survey-Stack.dc.html`, `Survey-Review.dc.html`
 
+> Replaced by ADR-0036: Start project is one form (idea, folder name, folder) and opens
+> the Plan stage. The survey is no longer built; this section is kept for history.
+
 Top bar: crumbs `Projects / review-qr`, "New" pill, phase bar on Plan, "Draft saved · 25 min
 ago", **Save and exit**.
 

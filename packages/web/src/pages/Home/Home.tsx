@@ -70,7 +70,7 @@ export function Home() {
           </div>
           <PromptBox
             disabled={claudeMissing}
-            calibratable={cards.filter((c) => c.state !== 'ready' && !c.draft)}
+            calibratable={cards.filter((c) => c.state !== 'ready')}
             onNewProject={(idea) => void navigate(`/new?idea=${encodeURIComponent(idea)}`)}
             onAskMagnet={(text) => openMagnet(text)}
             onCalibrate={(id) => void navigate(`/p/${encodeURIComponent(id)}/calibrate`)}
@@ -90,7 +90,7 @@ export function Home() {
               </Link>
               <OpenFolderButton />
               <span className={styles.hint}>
-                A short survey first. Claude drafts the plan before any code.
+                Give the idea and a name. The project opens in Plan.
               </span>
             </div>
           )}

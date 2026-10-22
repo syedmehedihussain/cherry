@@ -167,7 +167,7 @@ export function TaskList({ projectId }: { projectId: string }) {
       </div>
       {tasks.data && list.length === 0 && (
         <p className={styles.muted}>
-          No task graph yet. The survey and calibration create one in{' '}
+          No task graph yet. Start project and calibration create one in{' '}
           <span className="mono">_project/tasks.json</span>.
         </p>
       )}
