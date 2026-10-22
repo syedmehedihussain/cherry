@@ -33,7 +33,7 @@ human-readable version. Every JSON file has a `schema` number so we can migrate 
 | `schema` | `1` | required |
 | `name` | string | folder name by default; shown on cards |
 | `summary` | string ≤ 120 chars | one line |
-| `phase` | `plan \| design \| preparation \| development \| deployment` | required |
+| `phase` | `plan \| design \| preparation \| development \| deployment` | required; written by calibration and the survey, no longer shown or sent to Claude (ADR-0034) |
 | `calibrated` | ISO date | when the project became Ready |
 | `createdBy` | `survey \| calibration \| manual` | |
 | `repo` | `owner/name` or `null` | GitHub repo, if any |
@@ -223,6 +223,7 @@ CREATE TABLE projects (
 CREATE TABLE sessions (
   id            TEXT PRIMARY KEY,       -- claude session id
   project_id    TEXT NOT NULL,
+  stage         TEXT NOT NULL DEFAULT 'development', -- chat stage (ADR-0034, migration 007)
   kind          TEXT NOT NULL,          -- chat | agent | calibration | survey | magnet
   title         TEXT,
   model         TEXT,

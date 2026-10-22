@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
-import type { ChatMode, ChatSend, ChatState, Phase } from '@cherry/shared';
+import { STAGES, type ChatMode, type ChatSend, type ChatState, type Stage } from '@cherry/shared';
 import type { ConfigStore } from '../config.ts';
 import type { Db } from '../db.ts';
 import { AUTO_COMMIT_PROMPT, type CommitService } from '../projects/commits.ts';
@@ -13,9 +13,9 @@ import { Conversation } from '../claude/conversation.ts';
 import type { DecisionBroker } from '../claude/decisions.ts';
 import { READ_TOOLS, type RunHandle, type Runner } from '../claude/runner.ts';
 import { Transcript } from '../claude/transcript.ts';
-import { readProjectFiles } from '../projects/scanner.ts';
 import { projectDir } from '../projects/workspace.ts';
 import { recordUsage } from '../usage.ts';
+import { stageGuard, stageProfile } from '../stages/profiles.ts';
 import { explainTurn } from './explain.ts';
 import { UPLOADS_DIR, saveUpload, uploadPath } from './uploads.ts';
 
@@ -30,9 +30,11 @@ export function withAttachments(text: string, attachments: string[]): string {
   ].join('\n');
 }
 
-export function chatSystemPrompt(phase: Phase | null, mode: ChatMode = 'ask'): string {
+/** The common rules, then the stage agent's persona (ADR-0034). */
+export function chatSystemPrompt(stage: Stage, mode: ChatMode = 'ask'): string {
+  const profile = stageProfile(stage);
   return [
-    'You are working inside Cherry, a workspace that follows a strict engineering process.',
+    'You are working inside Cherry, a workspace that follows a strict engineering process: Plan, Design, Preparation, Development, Deployment and Issues, in a loop. Each stage has its own agent and its own chat; you are one of them, and the others hand work to you through the project files.',
     '- Read CLAUDE.md and _project/STATUS.md before anything else, when they exist.',
     '- When there is a real choice to make, call the ask_decision tool. Do not pick for the user.',
     DECISIONS_PROMPT,
@@ -42,13 +44,13 @@ export function chatSystemPrompt(phase: Phase | null, mode: ChatMode = 'ask'): s
     mode === 'auto'
       ? '- You are in auto mode: edits and most commands run without asking. Pushing, publishing and deleting folders still ask. If the user denies one, ask what they want instead.'
       : '- Every edit and command is shown to the user for approval. If they deny one, ask what they want instead.',
-    phase
-      ? `- Current phase: ${phase}. Do not write production code in the plan or design phase.`
-      : '- The project phase is unknown.',
+    '',
+    profile.persona,
   ].join('\n');
 }
 
 interface Live {
+  stage: Stage;
   conversationId: string;
   claudeSessionId: string | null;
   conversation: Conversation;
@@ -61,7 +63,13 @@ interface Live {
   turnId: string | null;
 }
 
-/** One chat conversation per project at a time; resumes across reloads and restarts. */
+/** `<projectId>:<stage>`: the key of one stage's chat. */
+const key = (projectId: string, stage: Stage) => `${projectId}:${stage}`;
+
+/**
+ * One chat conversation per project and stage at a time (ADR-0034); resumes across reloads and
+ * restarts.
+ */
 export class ChatService {
   private readonly live = new Map<string, Live>();
   /** Explain answers per turn, so a second click costs nothing. */
@@ -85,6 +93,7 @@ export class ChatService {
 
   private open(
     projectId: string,
+    stage: Stage,
     conversationId: string,
     claudeSessionId: string | null,
     model: string,
@@ -100,12 +109,22 @@ export class ChatService {
       transcript: new Transcript(this.transcriptFile(conversationId)),
       approvals: this.approvals,
       decisions: this.decisions,
-      onItem: (item) => this.hub.publish(topic, 'chat.item', { projectId, conversationId, item }),
+      onItem: (item) =>
+        this.hub.publish(topic, 'chat.item', { projectId, stage, conversationId, item }),
       onDelta: (itemId, turnId, text) =>
-        this.hub.publish(topic, 'chat.delta', { projectId, conversationId, itemId, turnId, text }),
-      onPlan: (plan) => this.hub.publish(topic, 'chat.plan', { projectId, conversationId, plan }),
+        this.hub.publish(topic, 'chat.delta', {
+          projectId,
+          stage,
+          conversationId,
+          itemId,
+          turnId,
+          text,
+        }),
+      onPlan: (plan) =>
+        this.hub.publish(topic, 'chat.plan', { projectId, stage, conversationId, plan }),
     });
     const live: Live = {
+      stage,
       conversationId,
       claudeSessionId,
       conversation,
@@ -116,29 +135,26 @@ export class ChatService {
       running: null,
       turnId: null,
     };
-    this.live.set(projectId, live);
+    this.live.set(key(projectId, stage), live);
     return live;
   }
 
   /** The current conversation, loading the latest one from disk after a restart. */
-  private current(projectId: string): Live | null {
-    const cached = this.live.get(projectId);
+  private current(projectId: string, stage: Stage): Live | null {
+    const cached = this.live.get(key(projectId, stage));
     if (cached) return cached;
     const row = this.db
       .prepare(
-        `SELECT id, claude_session_id, model, started_at, title FROM sessions WHERE project_id = ? AND kind = 'chat' AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1`,
+        `SELECT id, claude_session_id, model, started_at, title FROM sessions WHERE project_id = ? AND stage = ? AND kind = 'chat' AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1`,
       )
-      .get(projectId) as
+      .get(projectId, stage) as
       | { id: string; claude_session_id: string | null; model: string; started_at: number }
       | undefined;
     if (!row) return null;
-    const turns = (
-      this.db
-        .prepare(`SELECT COUNT(*) AS n FROM sessions WHERE project_id = ? AND kind = 'chat'`)
-        .get(projectId) as { n: number }
-    ).n;
+    const turns = this.sessionCount(projectId, stage);
     const live = this.open(
       projectId,
+      stage,
       row.id,
       row.claude_session_id,
       row.model,
@@ -151,14 +167,20 @@ export class ChatService {
     return live;
   }
 
-  state(projectId: string): ChatState {
-    projectDir(this.config.projectsDir(), projectId);
-    const live = this.current(projectId);
-    const sessionNumber = (
+  private sessionCount(projectId: string, stage: Stage): number {
+    return (
       this.db
-        .prepare(`SELECT COUNT(*) AS n FROM sessions WHERE project_id = ? AND kind = 'chat'`)
-        .get(projectId) as { n: number }
+        .prepare(
+          `SELECT COUNT(*) AS n FROM sessions WHERE project_id = ? AND stage = ? AND kind = 'chat'`,
+        )
+        .get(projectId, stage) as { n: number }
     ).n;
+  }
+
+  state(projectId: string, stage: Stage = 'development'): ChatState {
+    projectDir(this.config.projectsDir(), projectId);
+    const live = this.current(projectId, stage);
+    const sessionNumber = this.sessionCount(projectId, stage);
     return {
       conversationId: live?.conversationId ?? null,
       claudeSessionId: live?.claudeSessionId ?? null,
@@ -173,9 +195,10 @@ export class ChatService {
     };
   }
 
-  private publishState(projectId: string, live: Live | null): void {
+  private publishState(projectId: string, stage: Stage, live: Live | null): void {
     this.hub.publish(`project:${projectId}`, 'chat.state', {
       projectId,
+      stage,
       conversationId: live?.conversationId ?? null,
       running: !!live?.running,
       turnId: live?.turnId ?? null,
@@ -185,7 +208,8 @@ export class ChatService {
 
   send(projectId: string, body: ChatSend): { turnId: string; conversationId: string } {
     const dir = projectDir(this.config.projectsDir(), projectId);
-    let live = this.current(projectId);
+    const stage = body.stage;
+    let live = this.current(projectId, stage);
     if (live?.running)
       throw conflict('Claude is still working on the last message. Stop it first or wait.');
     for (const a of body.attachments) uploadPath(dir, a);
@@ -195,17 +219,18 @@ export class ChatService {
       const now = Date.now();
       this.db
         .prepare(
-          `INSERT INTO sessions (id, project_id, kind, title, model, started_at, transcript) VALUES (?, ?, 'chat', ?, ?, ?, ?)`,
+          `INSERT INTO sessions (id, project_id, stage, kind, title, model, started_at, transcript) VALUES (?, ?, ?, 'chat', ?, ?, ?, ?)`,
         )
         .run(
           conversationId,
           projectId,
+          stage,
           body.text.slice(0, 80),
           model,
           now,
           this.transcriptFile(conversationId),
         );
-      live = this.open(projectId, conversationId, null, model, now, 0);
+      live = this.open(projectId, stage, conversationId, null, model, now, 0);
       recordUsage(this.db, now, 0, true);
     }
     live.model = model;
@@ -217,7 +242,6 @@ export class ChatService {
     current.mode = body.mode;
     current.conversation.addUser(`u_${turnId}`, body.text, body.attachments);
 
-    const phase = readProjectFiles(dir).projectJson?.phase ?? null;
     // Auto commit (ADR-0030): Claude commits through commit_changes, as the user.
     const autoCommit = !!this.commits?.autoCommit(projectId);
     let finished = false;
@@ -229,8 +253,9 @@ export class ChatService {
       ...(body.effort && model !== 'haiku' ? { effort: body.effort } : {}),
       planMode: body.mode === 'plan',
       appendSystemPrompt:
-        chatSystemPrompt(phase, body.mode) + (autoCommit ? `\n${AUTO_COMMIT_PROMPT}` : ''),
+        chatSystemPrompt(stage, body.mode) + (autoCommit ? `\n${AUTO_COMMIT_PROMPT}` : ''),
       allowedTools: READ_TOOLS,
+      guard: stageGuard(stage, dir),
       decisions: true,
       extraTools: [
         ...(this.adrs?.tools(projectId, 'chat') ?? []),
@@ -253,23 +278,25 @@ export class ChatService {
           current.turnId = null;
           this.approvals.cancel(`chat:${current.conversationId}`, 'Turn ended');
           this.decisions.cancel(`chat:${current.conversationId}`);
-          this.publishState(projectId, current);
+          this.publishState(projectId, stage, current);
           if (!ev.stopped)
             notify(this.hub, {
               projectId,
               kind: ev.ok ? 'chat.done' : 'chat.failed',
-              title: ev.ok ? `Claude replied in ${projectId}` : `Claude stopped in ${projectId}`,
+              title: ev.ok
+                ? `${stageProfile(stage).name} replied in ${projectId}`
+                : `${stageProfile(stage).name} stopped in ${projectId}`,
               body: ev.ok ? 'Your reply is ready.' : (ev.error ?? 'The turn ended with an error.'),
               link: projectLink(projectId),
             });
-          this.sendQueued(projectId, ev.stopped);
+          this.sendQueued(projectId, stage, ev.stopped);
         }
       },
     });
     // A runner may finish before it returns (the fake Claude does); only mark running if not.
     if (!finished) {
       current.running = handle;
-      this.publishState(projectId, current);
+      this.publishState(projectId, stage, current);
     }
     return { turnId, conversationId: current.conversationId };
   }
@@ -281,26 +308,32 @@ export class ChatService {
    * A message Cherry sends for the user (an approved decision, an agent's skipped steps), in the
    * mode they used last. While Claude is still replying it waits and goes when the turn ends.
    */
-  sendAs(projectId: string, text: string): { turnId: string; conversationId: string } {
-    const live = this.current(projectId);
+  sendAs(
+    projectId: string,
+    text: string,
+    stage: Stage = 'development',
+  ): { turnId: string; conversationId: string } {
+    const live = this.current(projectId, stage);
+    const k = key(projectId, stage);
     if (live?.running) {
-      this.queued.set(projectId, [...(this.queued.get(projectId) ?? []), text]);
+      this.queued.set(k, [...(this.queued.get(k) ?? []), text]);
       return { turnId: 'queued', conversationId: live.conversationId };
     }
-    return this.send(projectId, { text, mode: live?.mode ?? 'ask', attachments: [] });
+    return this.send(projectId, { text, stage, mode: live?.mode ?? 'ask', attachments: [] });
   }
 
   /** Sends the next queued message, unless the user stopped the turn. */
-  private sendQueued(projectId: string, stopped: boolean): void {
-    const next = this.queued.get(projectId) ?? [];
+  private sendQueued(projectId: string, stage: Stage, stopped: boolean): void {
+    const k = key(projectId, stage);
+    const next = this.queued.get(k) ?? [];
     if (stopped) next.length = 0;
     const text = next.shift();
-    if (!next.length) this.queued.delete(projectId);
+    if (!next.length) this.queued.delete(k);
     if (text === undefined) return;
     // After the result event has been handled, so the turn is really over.
     setImmediate(() => {
       try {
-        this.sendAs(projectId, text);
+        this.sendAs(projectId, text, stage);
       } catch {
         // The project is gone or the chat was replaced; nothing to do.
       }
@@ -308,18 +341,22 @@ export class ChatService {
   }
 
   /** Summarises one turn's file changes with Haiku. Only on the user's click (ADR-0022). */
-  async explain(projectId: string, turnId: string): Promise<{ text: string }> {
+  async explain(
+    projectId: string,
+    turnId: string,
+    stage: Stage = 'development',
+  ): Promise<{ text: string }> {
     const dir = projectDir(this.config.projectsDir(), projectId);
     const cached = this.explained.get(turnId);
     if (cached) return { text: cached };
-    const items = this.current(projectId)?.conversation.list() ?? [];
+    const items = this.current(projectId, stage)?.conversation.list() ?? [];
     const text = await explainTurn(this.runner, dir, items, turnId);
     this.explained.set(turnId, text);
     return { text };
   }
 
-  async stop(projectId: string): Promise<void> {
-    const live = this.current(projectId);
+  async stop(projectId: string, stage: Stage = 'development'): Promise<void> {
+    const live = this.current(projectId, stage);
     if (!live?.running) return;
     const source = `chat:${live.conversationId}`;
     this.approvals.cancel(source, 'Stopped by the user');
@@ -327,18 +364,18 @@ export class ChatService {
     await live.running.interrupt();
   }
 
-  async newConversation(projectId: string): Promise<void> {
-    this.queued.delete(projectId);
-    const live = this.current(projectId);
+  async newConversation(projectId: string, stage: Stage = 'development'): Promise<void> {
+    this.queued.delete(key(projectId, stage));
+    const live = this.current(projectId, stage);
     if (live) {
-      await this.stop(projectId);
+      await this.stop(projectId, stage);
       this.db
         .prepare('UPDATE sessions SET ended_at = ? WHERE id = ?')
         .run(Date.now(), live.conversationId);
       this.approvals.clearSession(`chat:${live.conversationId}`);
-      this.live.delete(projectId);
+      this.live.delete(key(projectId, stage));
     }
-    this.publishState(projectId, null);
+    this.publishState(projectId, stage, null);
   }
 
   upload(projectId: string, name: string, data: Buffer) {
@@ -348,9 +385,11 @@ export class ChatService {
   /** Deletes an upload that was never sent (the user removed its chip). */
   discardUpload(projectId: string, id: string): void {
     const file = this.uploadFile(projectId, id);
-    const sent = this.current(projectId)
-      ?.conversation.list(Infinity)
-      .some((i) => i.kind === 'user' && i.attachments?.includes(id));
+    const sent = STAGES.some((stage) =>
+      this.current(projectId, stage)
+        ?.conversation.list(Infinity)
+        .some((i) => i.kind === 'user' && i.attachments?.includes(id)),
+    );
     if (sent) throw conflict('This file was already sent in a message, so it stays.');
     rmSync(file);
   }
@@ -361,6 +400,10 @@ export class ChatService {
 
   /** Stops every running turn (daemon shutdown). */
   async stopAll(): Promise<void> {
-    await Promise.all([...this.live.keys()].map((id) => this.stop(id)));
+    await Promise.all(
+      [...this.live.entries()].map(([k, live]) =>
+        this.stop(k.slice(0, k.length - live.stage.length - 1), live.stage),
+      ),
+    );
   }
 }

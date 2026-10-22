@@ -79,11 +79,11 @@ folder (see `security.md`).
 
 | Method | Path | Does |
 | --- | --- | --- |
-| GET | `/api/projects/:id/chat` | current session meta + last 200 transcript events + `plan` (Claude's checklist, in memory) |
-| POST | `/api/projects/:id/chat` | `{ text, mode?, model?, effort?, attachments? }` → starts a turn; `mode` is ask (default), auto or plan (ADR-0025); `effort` is low, medium, high, xhigh or max (ignored for Haiku); attachments are upload ids, listed for Claude to Read |
-| POST | `/api/projects/:id/chat/stop` | interrupts the running turn |
-| POST | `/api/projects/:id/chat/explain` | `{ turnId }` → `{ text }`: Haiku summary of what that turn changed (diff capped at 6 KB, no tools). Only on the user's click; cached per turn (ADR-0022) |
-| POST | `/api/projects/:id/chat/new` | starts a fresh session |
+| GET | `/api/projects/:id/chat?stage=` | the stage's chat (ADR-0034; default `development`): session meta + last 200 transcript events + `plan` (Claude's checklist, in memory) |
+| POST | `/api/projects/:id/chat` | `{ text, stage?, mode?, model?, effort?, attachments? }` → starts a turn in that stage's chat; `mode` is ask (default), auto or plan (ADR-0025); `effort` is low, medium, high, xhigh or max (ignored for Haiku); attachments are upload ids, listed for Claude to Read |
+| POST | `/api/projects/:id/chat/stop?stage=` | interrupts the stage's running turn |
+| POST | `/api/projects/:id/chat/explain?stage=` | `{ turnId }` → `{ text }`: Haiku summary of what that turn changed (diff capped at 6 KB, no tools). Only on the user's click; cached per turn (ADR-0022) |
+| POST | `/api/projects/:id/chat/new?stage=` | starts a fresh session for that stage only |
 | POST | `/api/decisions/:cardId` | `{ optionId? , custom? }` answer a decision card |
 
 ## Approvals
@@ -197,10 +197,10 @@ One socket at `/ws`. Every event: `{ type, at, ...payload }`. The client subscri
 | --- | --- | --- |
 | `projects.updated` | `{ cards: ProjectCard[] }` | projects |
 | `health.updated` | health object | projects |
-| `chat.item` | `{ projectId, conversationId, item: ChatItem }` (upsert by `item.id`: user message, text, tool row, decision, approval, turn end) | project:id |
-| `chat.delta` | `{ projectId, conversationId, itemId, turnId, text }` streamed text appended to a text item | project:id |
-| `chat.state` | `{ projectId, conversationId, running, turnId, touched }` | project:id |
-| `chat.plan` | `{ projectId, conversationId, plan: [{ id, title, activeForm, status }] }` — Claude's checklist changed (ADR-0017) | project:id |
+| `chat.item` | `{ projectId, stage, conversationId, item: ChatItem }` (upsert by `item.id`: user message, text, tool row, decision, approval, turn end) | project:id |
+| `chat.delta` | `{ projectId, stage, conversationId, itemId, turnId, text }` streamed text appended to a text item | project:id |
+| `chat.state` | `{ projectId, stage, conversationId, running, turnId, touched }` | project:id |
+| `chat.plan` | `{ projectId, stage, conversationId, plan: [{ id, title, activeForm, status }] }` — Claude's checklist changed (ADR-0017) | project:id |
 | `project.changed` | `{ projectId, paths }` files changed on disk | project:id |
 | `approval.requested` | `{ approval }` | approvals + project:id |
 | `approval.resolved` | `{ approval }` (with its final status) | approvals + project:id |

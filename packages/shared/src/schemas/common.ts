@@ -17,6 +17,23 @@ export const PHASE_LABEL: Record<Phase, string> = {
   deployment: 'Deployment',
 };
 
+/**
+ * The lifecycle stages (ADR-0034): tabs in the workspace, each with its own agent and chat.
+ * A loop: Issues feeds the next Plan.
+ */
+export const STAGES = [
+  'plan',
+  'design',
+  'preparation',
+  'development',
+  'deployment',
+  'issues',
+] as const;
+export const StageSchema = z.enum(STAGES);
+export type Stage = z.infer<typeof StageSchema>;
+
+export const STAGE_LABEL: Record<Stage, string> = { ...PHASE_LABEL, issues: 'Issues' };
+
 /** One error shape for every API failure (docs/api.md). */
 export const ApiErrorSchema = z.object({
   error: z.object({ code: z.string(), message: z.string() }),

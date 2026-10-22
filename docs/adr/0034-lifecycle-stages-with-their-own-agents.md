@@ -3,7 +3,6 @@
 - **Status:** Accepted
 - **Date:** 2026-10-22
 - **Decided by:** Meddy
-- **Done:** not yet
 
 ## Context
 

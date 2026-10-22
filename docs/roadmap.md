@@ -164,9 +164,9 @@ Deployment, Issues, and Issues feeds the next Plan. Each stage has its own agent
 rules, skills) and its own chat. Replaces the planned "Plan section"; its ideas (plan review,
 specs, exit checks) become Plan stage work.
 
-- [ ] l1 Agent profiles: one AGENT.md persona per stage, edit rules in code (Plan, Design and
+- [x] l1 Agent profiles: one AGENT.md persona per stage, edit rules in code (Plan, Design and
       Issues write docs only), the chat prompt built from the profile, no phase line.
-- [ ] l2 One chat per stage: sessions get a `stage` (migration), the chat API and events take
+- [x] l2 One chat per stage: sessions get a `stage` (migration), the chat API and events take
       a stage, old chats become Development.
 - [ ] l3 Skills: bundled `stages/<stage>/skills/`, the user's `~/.cherry/skills/<stage>/`,
       loaded as a skills-only plugin per turn; SOURCES.md for licences.

@@ -6,6 +6,7 @@ import {
   ChatSendSchema,
   DecisionAnswerSchema,
   MAX_UPLOAD_BYTES,
+  StageSchema,
 } from '@cherry/shared';
 import { contentTypeFor } from '../chat/uploads.ts';
 import type { ChatService } from '../chat/service.ts';
@@ -13,6 +14,9 @@ import type { ApprovalBroker } from '../claude/approvals.ts';
 import type { DecisionBroker } from '../claude/decisions.ts';
 
 const IdParams = z.object({ id: z.string().min(1).max(200) });
+/** `?stage=plan`: which stage's chat (ADR-0034); left out, Development. */
+const StageQuery = z.object({ stage: StageSchema.default('development') });
+const stageOf = (query: unknown) => StageQuery.parse(query ?? {}).stage;
 
 export function chatRoutes(
   chat: ChatService,
@@ -20,7 +24,9 @@ export function chatRoutes(
   decisions: DecisionBroker,
 ) {
   return (app: FastifyInstance) => {
-    app.get('/api/projects/:id/chat', async (req) => chat.state(IdParams.parse(req.params).id));
+    app.get('/api/projects/:id/chat', async (req) =>
+      chat.state(IdParams.parse(req.params).id, stageOf(req.query)),
+    );
 
     app.post('/api/projects/:id/chat', async (req) =>
       chat.send(IdParams.parse(req.params).id, ChatSendSchema.parse(req.body)),
@@ -64,16 +70,16 @@ export function chatRoutes(
 
     app.post('/api/projects/:id/chat/explain', async (req) => {
       const { turnId } = z.object({ turnId: z.string().min(1).max(100) }).parse(req.body);
-      return chat.explain(IdParams.parse(req.params).id, turnId);
+      return chat.explain(IdParams.parse(req.params).id, turnId, stageOf(req.query));
     });
 
     app.post('/api/projects/:id/chat/stop', async (req) => {
-      await chat.stop(IdParams.parse(req.params).id);
+      await chat.stop(IdParams.parse(req.params).id, stageOf(req.query));
       return { ok: true };
     });
 
     app.post('/api/projects/:id/chat/new', async (req) => {
-      await chat.newConversation(IdParams.parse(req.params).id);
+      await chat.newConversation(IdParams.parse(req.params).id, stageOf(req.query));
       return { ok: true };
     });
 

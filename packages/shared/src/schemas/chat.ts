@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DiffLineSchema } from './workspace.ts';
+import { StageSchema } from './common.ts';
 
 /** A structured question Claude asks (docs/data-model.md §3). */
 export const DecisionOptionSchema = z.object({
@@ -227,6 +228,8 @@ export type ChatMode = z.infer<typeof ChatModeSchema>;
 
 export const ChatSendSchema = z.object({
   text: z.string().min(1).max(20_000),
+  /** Which stage's agent and chat (ADR-0034). */
+  stage: StageSchema.default('development'),
   mode: ChatModeSchema.default('ask'),
   model: z.enum(['sonnet', 'opus', 'haiku']).optional(),
   /** Reasoning effort for this turn; left out, the model's default is used. */

@@ -100,15 +100,23 @@ tool("ask_decision", "Ask the user to choose between 2–4 options. Use for any 
 
 ## System prompt additions
 
-Appended to Claude Code's own system prompt for project chats:
+Appended to Claude Code's own system prompt for project chats (ADR-0034): Cherry's common rules
+(read CLAUDE.md and STATUS.md, ask_decision for real choices, the task list, .gitignore, the
+mode line), then the stage agent's persona from `packages/daemon/stages/<stage>/AGENT.md`:
 
-```
-You are working inside Cherry, a workspace that follows a strict engineering process.
-- Read CLAUDE.md and _project/STATUS.md before anything else.
-- When there is a real choice to make, call ask_decision. Do not pick for the user.
-- Keep answers short and plain. Name the file, then the change.
-- Current phase: {{phase}}. Do not write production code in the plan or design phase.
-```
+| Stage | Agent | Writes |
+| --- | --- | --- |
+| plan | Planner | docs and notes only |
+| design | Designer | docs and notes only |
+| preparation | Preparer | anything, with approvals |
+| development | Builder | anything, with approvals |
+| deployment | Shipper | anything, with approvals |
+| issues | Triager | docs and notes only |
+
+"Docs and notes" is `docs/`, `design/`, `_project/` and top-level `*.md`. The rule is a
+PreToolUse guard (`stageGuard`), not a prompt: an edit elsewhere is refused before any card
+shows, and Claude is told the work belongs in the Development tab. Bash is not path-checked;
+commands keep the normal approval rules.
 
 ## Stop, resume, errors
 

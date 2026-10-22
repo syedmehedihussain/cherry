@@ -7,6 +7,7 @@ import type { SurveyState } from './survey.ts';
 import type { GitResult } from './workspace.ts';
 import type { Agent } from './agent.ts';
 import type { RunState } from './run.ts';
+import type { Stage } from './common.ts';
 
 export type NoticeKind =
   | 'agent.done'
@@ -44,10 +45,11 @@ export interface EventMap {
   /** Files changed on disk in a project (tree, git, open file may be stale). */
   'project.changed': { projectId: string; paths: string[] };
   /** A transcript item was added or changed (upsert by id). */
-  'chat.item': { projectId: string; conversationId: string; item: ChatItem };
+  'chat.item': { projectId: string; stage: Stage; conversationId: string; item: ChatItem };
   /** Streaming text appended to a text item. */
   'chat.delta': {
     projectId: string;
+    stage: Stage;
     conversationId: string;
     itemId: string;
     turnId: string;
@@ -56,13 +58,14 @@ export interface EventMap {
   /** A turn started or stopped; also sent when the conversation is replaced. */
   'chat.state': {
     projectId: string;
+    stage: Stage;
     conversationId: string | null;
     running: boolean;
     turnId: string | null;
     touched: string[];
   };
   /** Claude's plan changed (a task was added, started or finished). */
-  'chat.plan': { projectId: string; conversationId: string; plan: PlanItem[] };
+  'chat.plan': { projectId: string; stage: Stage; conversationId: string; plan: PlanItem[] };
   'calibrate.updated': { projectId: string; state: CalibrationState };
   'survey.updated': { projectId: string; state: SurveyState };
   /** Pull or Push finished (Push runs after its approval). */
