@@ -169,7 +169,7 @@ function Prompt({ id, name, light }: { id: string; name: string; light: boolean 
             <span>1</span>Reads your code, README and git history.
           </li>
           <li>
-            <span>2</span>Asks you about anything it can't work out, like the current phase.
+            <span>2</span>Asks you about anything it can't work out from the code.
           </li>
           <li>
             <span>3</span>Proposes <code>CLAUDE.md</code>, docs and a status file for you to review.
@@ -394,10 +394,6 @@ function Review({ id, state }: { id: string; state: CalibrationState }) {
               <span>{a.answer}</span>
             </div>
           ))}
-          <div className={styles.answer}>
-            <span>Phase</span>
-            <span>{state.proposal?.phase}</span>
-          </div>
           <button type="button" className={styles.link} onClick={() => void startCalibration(id)}>
             Start again
           </button>

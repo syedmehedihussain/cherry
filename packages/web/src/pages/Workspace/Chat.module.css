@@ -107,6 +107,24 @@
   margin: 0 auto;
   max-width: 420px;
 }
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 16px auto 0;
+  padding: 0;
+  max-width: 480px;
+  list-style: none;
+}
+.skills li {
+  padding: 2px 8px;
+  border: 1px solid var(--b);
+  border-radius: var(--r-pill);
+  font-family: var(--mono);
+  font-size: var(--fs-2xs);
+  color: var(--t2);
+}
 .attachments {
   display: flex;
   flex-wrap: wrap;

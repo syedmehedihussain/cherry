@@ -79,7 +79,7 @@ function calibrationPrompt(opts: {
     'Do this in order:',
     '1. Read the project: README, package or build files, CLAUDE.md and _project/STATUS.md if they exist, the main source folders, and the git history (`git log --oneline -30`, `git status`). Do not read .env files or keys.',
     '2. While you read, call note_found with short tags for what you learn, e.g. "Node 20", "Express", "React". Mark gaps with gap: true, e.g. "no tests", "no deploy config".',
-    '3. Call ask_decision for what you cannot work out from the code, one question at a time, at most 3. Always ask for the current phase (plan, design, preparation, development or deployment) unless STATUS.md states it plainly. Ask who the users are only if it is unclear. Options must be concrete and based on what you read; mark one as recommended.',
+    '3. Call ask_decision for what you cannot work out from the code, one question at a time, at most 3. Ask who the users are only if it is unclear. Options must be concrete and based on what you read; mark one as recommended.',
     '4. Call propose_files exactly once with: summary (one line, at most 120 characters), phase, stack tags, and files:',
     opts.hasClaudeMd
       ? '   - CLAUDE.md already exists: use action "append" with only a short section to add at the end (e.g. "## Cherry" with Read first and Rules). Never rewrite it.'

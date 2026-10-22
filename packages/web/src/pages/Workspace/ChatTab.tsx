@@ -6,6 +6,7 @@ import {
   type ChatMode,
   type ChatState,
   type Effort,
+  type Stage,
 } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
 import {
@@ -24,6 +25,7 @@ import {
   useChatDraft,
 } from '../../api/chat.ts';
 import { queryClient } from '../../api/queries.ts';
+import { stageInfo, useStageInfo } from '../../api/stages.ts';
 import { ApprovalCard } from '../../components/ApprovalCard/ApprovalCard.tsx';
 import { ChangeSummary } from '../../components/ChangeSummary/ChangeSummary.tsx';
 import { Composer } from '../../components/Composer/Composer.tsx';
@@ -121,11 +123,13 @@ function storeMode(projectId: string, mode: ChatMode): void {
 
 interface ChatTabProps {
   projectId: string;
+  /** Which stage's agent and chat (ADR-0034). */
+  stage: Stage;
   now: number;
 }
 
-export function ChatTab({ projectId, now }: ChatTabProps) {
-  const chat = useChat(projectId);
+export function ChatTab({ projectId, stage, now }: ChatTabProps) {
+  const chat = useChat(projectId, stage);
   const draft = useChatDraft((s) => s.drafts[projectId]);
   const setDraft = useChatDraft((s) => s.set);
   const [model, setModel] = useState<string | null>(null);
@@ -168,9 +172,9 @@ export function ChatTab({ projectId, now }: ChatTabProps) {
     setError(null);
     stick.current = true;
     try {
-      await sendChat(projectId, text, chatMode, m, attachments, effort ?? undefined);
+      await sendChat(projectId, stage, text, chatMode, m, attachments, effort ?? undefined);
       if (!state?.conversationId)
-        await queryClient.invalidateQueries({ queryKey: chatKey(projectId) });
+        await queryClient.invalidateQueries({ queryKey: chatKey(projectId, stage) });
       return true;
     } catch (e) {
       setError(e instanceof ApiFailure ? e.message : 'Could not send the message.');
@@ -185,7 +189,7 @@ export function ChatTab({ projectId, now }: ChatTabProps) {
       <div className={styles.scroll} ref={scroller} onScroll={onScroll}>
         <div className={styles.thread}>
           {chat.isPending && <span className="shimmer" style={{ height: 80 }} />}
-          {state && items.length === 0 && <EmptyChat mode={mode.mode} />}
+          {state && items.length === 0 && <EmptyChat stage={stage} mode={mode.mode} />}
           {blocks.map((b) =>
             b.t === 'user' ? (
               <div key={b.item.id} className={styles.userRow}>
@@ -235,7 +239,7 @@ export function ChatTab({ projectId, now }: ChatTabProps) {
           draft={draft}
           onDraftUsed={() => setDraft(projectId, '')}
           onSend={send}
-          onStop={() => void stopChat(projectId)}
+          onStop={() => void stopChat(projectId, stage)}
           onUpload={(file) => uploadAttachment(projectId, file)}
           onDiscard={(file) => void discardAttachment(projectId, file).catch(() => undefined)}
           onModel={setModel}
@@ -279,11 +283,26 @@ const MODE_NOTE: Record<ChatMode, string> = {
   plan: 'Plan mode: Claude reads and plans, and changes nothing until you approve the plan.',
 };
 
-function EmptyChat({ mode }: { mode: ChatMode }) {
+/** The stage's agent introduces itself: name, what it does, its skills (ADR-0034). */
+function EmptyChat({ stage, mode }: { stage: Stage; mode: ChatMode }) {
+  const agent = stageInfo(useStageInfo().data, stage);
   return (
     <div className={styles.empty}>
-      <h2>Start a conversation</h2>
-      <p>Ask Claude to look into something or describe the next task. {MODE_NOTE[mode]}</p>
+      <h2>{agent ? `${agent.label}: the ${agent.name}` : 'Start a conversation'}</h2>
+      <p>
+        {agent?.summary ?? 'Ask Claude to look into something or describe the next task.'}{' '}
+        {agent?.docsOnly && 'It writes docs and notes only, never code. '}
+        {MODE_NOTE[mode]}
+      </p>
+      {!!agent?.skills.length && (
+        <ul className={styles.skills} aria-label="Skills">
+          {agent.skills.map((s) => (
+            <li key={s.name} title={s.description}>
+              {s.name}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -394,9 +413,11 @@ function ClaudeBlock({
 
 export function NewChatButton({
   projectId,
+  stage,
   state,
 }: {
   projectId: string;
+  stage: Stage;
   state: ChatState | undefined;
 }) {
   if (!state?.conversationId) return null;
@@ -404,7 +425,7 @@ export function NewChatButton({
     <button
       type="button"
       className="btn btn-ghost btn-sm"
-      onClick={() => void newChat(projectId)}
+      onClick={() => void newChat(projectId, stage)}
       title="Start a fresh conversation"
     >
       <MessageSquarePlus size={13} aria-hidden="true" />

@@ -60,7 +60,7 @@ test('a new project from Home gets its docs, a first commit and opens at Design'
   expect(pj.phase).toBe('design');
   const log = execFileSync('git', ['log', '--oneline'], { cwd: dir, encoding: 'utf8' });
   expect(log).toContain('docs: project plan');
-  await expect(page.getByRole('list', { name: 'Project phase' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Lifecycle stages' })).toBeVisible();
 });
 
 // The folder name sits under the projects folder from setup or Settings, not a fixed ~/Projects.

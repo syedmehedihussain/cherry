@@ -6,10 +6,10 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
 });
 
-test('opens a project with status, phase bar and git box', async ({ page }) => {
+test('opens a project with status, stage tabs and git box', async ({ page }) => {
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
   await expect(page).toHaveURL(/\/p\/core$/);
-  await expect(page.getByRole('list', { name: 'Project phase' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Lifecycle stages' })).toBeVisible();
   // Status is a pill in the top bar; a click opens the Status report in the centre.
   const notch = page.getByRole('banner').getByRole('button', { name: /^Open the status report/ });
   await expect(notch).toHaveText('Status');

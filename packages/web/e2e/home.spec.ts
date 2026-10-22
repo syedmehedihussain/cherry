@@ -20,7 +20,6 @@ test('Home lists the projects, with Calibrate on folders not set up', async ({ p
   await expect(table.getByRole('row')).toHaveCount(6);
   const row = (name: string) =>
     table.getByRole('row').filter({ has: page.getByRole('link', { name, exact: true }) });
-  await expect(row('core')).toContainText('Development');
   await expect(row('core')).toContainText('1 change');
   // No State column: a folder Cherry has not set up offers Calibrate instead.
   await expect(row('cctop').getByRole('link', { name: 'Calibrate' })).toBeVisible();

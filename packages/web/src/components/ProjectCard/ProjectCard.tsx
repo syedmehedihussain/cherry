@@ -1,6 +1,5 @@
 import { Link } from 'react-router';
 import { relativeTime, type ProjectCard as Card } from '@cherry/shared';
-import { PhaseBarCompact } from '../PhaseBar/PhaseBar.tsx';
 import { GitChip, Pill, StatePill } from '../Pill/Pill.tsx';
 import styles from './ProjectCard.module.css';
 
@@ -21,7 +20,6 @@ export function ProjectCard({ card, now }: { card: Card; now: number }) {
       <span className={styles.summary}>
         {card.summary || <span className={styles.muted}>No summary yet</span>}
       </span>
-      <PhaseBarCompact phase={card.phase} />
       <div className={styles.next}>
         Next:{' '}
         <span className={styles.nextText}>

@@ -41,9 +41,8 @@ describe('TopBar', () => {
     expect(screen.queryByRole('link', { name: 'core' })).not.toBeInTheDocument();
   });
 
-  it('shows the phase bar in the workspace', () => {
-    wrap(<TopBar crumbs={[]} claude="ok" phase="development" />);
-    expect(screen.getByRole('list', { name: 'Project phase' })).toBeInTheDocument();
-    expect(screen.getByText('Development').closest('li')).toHaveAttribute('aria-current', 'step');
+  it('shows the centre slot (the workspace stage tabs)', () => {
+    wrap(<TopBar crumbs={[]} claude="ok" centre={<nav aria-label="Lifecycle stages" />} />);
+    expect(screen.getByRole('navigation', { name: 'Lifecycle stages' })).toBeInTheDocument();
   });
 });

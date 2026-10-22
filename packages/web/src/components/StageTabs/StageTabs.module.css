@@ -1,0 +1,55 @@
+.stages {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--h-chip);
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--t2);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tab:hover {
+  background: var(--s2);
+  color: var(--t1);
+}
+.tab[aria-pressed='true'] {
+  background: var(--accent-fill);
+  border-color: var(--accent-border);
+  color: var(--accent-text-strong);
+  font-weight: 500;
+}
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.loop {
+  display: inline-flex;
+  margin-left: 2px;
+  color: var(--t3);
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    animation: none;
+  }
+}

@@ -7,9 +7,9 @@ with a test per state.
 ## Shell
 
 ### `TopBar`
-Props: `crumbs: {label, href?}[]`, `phase?: Phase`, `status?: "approval" | "working" | "calibrating" | …`
+Props: `crumbs: {label, href?}[]`, `centre?: ReactNode`, `status?: "approval" | "working" | "calibrating" | …`
 - Left: logo → Home, then `/`-separated crumbs. Last crumb is `--t1` 500.
-- Centre (workspace only): `PhaseBar` full variant.
+- Centre (workspace only): `StageTabs`.
 - Optional status pill after crumbs ("Approval needed" amber, "Claude is working" blue pulse).
 - Right: `ClaudeStatus`, Settings icon button, Magnet avatar button.
 
@@ -38,12 +38,11 @@ Mono 11.5 px, 6 px radius. Tone by content: `clean` green · `N ahead` blue · `
 Single letter in the file tree: `M` amber (modified), `A` green (added), `U` green-grey
 (untracked), `D` red (deleted, name struck through).
 
-### `PhaseBar`
-Variants:
-- **full** (top bar): five pills. Done = `--s3` fill with check icon. Current = accent fill +
-  accent border + dot. Future = dashed `--bs` border, `--t3` text.
-- **compact** (cards, tables): five 6 px segments with 3 px gaps. Done `--phase-done`, current
-  `--accent`, future = 1 px inset outline. Label under it ("Development", "Unknown").
+### `StageTabs` (ADR-0034, replaces `PhaseBar`)
+Top bar, workspace only: six pill buttons Plan · Design · Preparation · Development ·
+Deployment · Issues, then a small loop arrow (Issues feed the next Plan). Open stage = accent
+fill + accent border (`aria-pressed`). A pulsing accent dot shows while that stage's agent is
+working. Hover title: "Plan: the Planner". Clicking a stage opens its agent's chat.
 
 ## Chat
 
@@ -154,12 +153,12 @@ added lines get `--diff-add-bg`, removed lines are shown inline with `--diff-del
 ## Home
 
 ### `ProjectCard`
-196 px min height, 12 px radius. Name 16/600 + `StatePill`; summary; compact `PhaseBar`;
+196 px min height, 12 px radius. Name 16/600 + `StatePill`; summary;
 "Next: …" (top border); `GitChip` + "Last worked 2 h ago". Hover: border `--bs`, `--s2`
 background.
 
 ### `ProjectTable`
-Columns `1.9fr 140px 170px 1fr 110px 110px 104px`: Project (name + summary), State, Phase,
+Columns `1.9fr 140px 170px 1fr 110px 110px 104px`: Project (name + summary), State,
 Stack tags, Last worked, Git, action (**Calibrate** for uncalibrated). Scrolls horizontally
 below 900 px.
 

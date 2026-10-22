@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { z } from 'zod';
 import type { ChatItem } from '@cherry/shared';
 import { api, ApiFailure } from '../../api/client.ts';
+import { useStage } from '../../state/stage.ts';
 import { Markdown } from '../Markdown/Markdown.tsx';
 import styles from './ChangeSummary.module.css';
 
@@ -23,6 +24,8 @@ export function ChangeSummary({
   tools: Tool[];
   end: End;
 }) {
+  // The chat on screen is the open stage's.
+  const stage = useStage(projectId);
   const [open, setOpen] = useState(false);
   const [explain, setExplain] = useState<{ busy: boolean; text?: string; error?: string }>({
     busy: false,
@@ -52,7 +55,7 @@ export function ChangeSummary({
     try {
       const res = await api(
         'POST',
-        `/api/projects/${encodeURIComponent(projectId)}/chat/explain`,
+        `/api/projects/${encodeURIComponent(projectId)}/chat/explain?stage=${stage}`,
         { turnId: end.turnId },
         z.object({ text: z.string() }),
       );

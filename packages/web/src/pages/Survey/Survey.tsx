@@ -73,7 +73,6 @@ export function Survey() {
       <TopBar
         crumbs={[{ label: 'Projects', href: '/' }, { label: name || 'New project' }]}
         status={<Pill tone="neutral">New</Pill>}
-        phase="plan"
         right={right}
         claude={s?.drafting ? 'working' : undefined}
       />

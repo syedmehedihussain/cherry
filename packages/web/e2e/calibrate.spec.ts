@@ -34,6 +34,6 @@ test('calibrates torongo and writes only the ticked files', async ({ page }) => 
     .getByRole('table')
     .getByRole('row')
     .filter({ has: page.getByRole('link', { name: 'torongo', exact: true }) });
-  await expect(row).toContainText('Development');
+  await expect(row).toContainText('Real-time translation');
   await expect(row.getByRole('link', { name: 'Calibrate' })).toHaveCount(0);
 });

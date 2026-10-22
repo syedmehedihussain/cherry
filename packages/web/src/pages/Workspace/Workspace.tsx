@@ -12,6 +12,8 @@ import { RunButton } from '../../components/RunButton/RunButton.tsx';
 import { startRun, useLiveRun, useRun } from '../../api/run.ts';
 import { RunTab } from './RunTab.tsx';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
+import { StageTabs } from '../../components/StageTabs/StageTabs.tsx';
+import { useStage, useStages } from '../../state/stage.ts';
 import { tildify } from '../../lib/paths.ts';
 import { useNow } from '../../lib/useNow.ts';
 import {
@@ -84,7 +86,9 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
   const now = useNow(60_000);
   const detail = useProjectDetail(id);
   useLiveProject(id);
-  const chat = useChat(id);
+  const stage = useStage(id);
+  const setStage = useStages((s) => s.set);
+  const chat = useChat(id, stage);
   // Once per workspace: the Chat tab and the Live view both read this state.
   useLiveChat(id);
   const app = useRun(id);
@@ -126,7 +130,7 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
   const updateStatus = running
     ? undefined
     : () => {
-        void sendChat(id, UPDATE_STATUS_PROMPT, 'ask');
+        void sendChat(id, stage, UPDATE_STATUS_PROMPT, 'ask');
         void navigate(base);
       };
 
@@ -156,7 +160,17 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
     <div className={styles.page}>
       <TopBar
         crumbs={[{ label: 'Projects', href: '/' }, { label: card?.name ?? id }]}
-        phase={card ? card.phase : null}
+        centre={
+          <StageTabs
+            projectId={id}
+            active={stage}
+            onSelect={(s) => {
+              setStage(id, s);
+              // A stage opens its agent's chat.
+              void navigate(base);
+            }}
+          />
+        }
         claude={running ? 'working' : undefined}
         beforeClaude={
           <>
@@ -313,12 +327,12 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
             {tab === 'chat' && (
               <>
                 {sessionMeta && <span className={styles.sessionMeta}>{sessionMeta}</span>}
-                <NewChatButton projectId={id} state={chat.data} />
+                <NewChatButton projectId={id} stage={stage} state={chat.data} />
               </>
             )}
           </nav>
           <div className={styles.tabBody}>
-            {tab === 'chat' && <ChatTab projectId={id} now={now} />}
+            {tab === 'chat' && <ChatTab projectId={id} stage={stage} now={now} />}
             {tab === 'docs' && (
               <DocsTab
                 projectId={id}

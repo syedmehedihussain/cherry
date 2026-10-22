@@ -2,6 +2,7 @@ import { Check, ChevronRight } from 'lucide-react';
 import { relativeTime, type ChatItem, type PlanItem } from '@cherry/shared';
 import { useAgents } from '../../api/agents.ts';
 import { useChat } from '../../api/chat.ts';
+import { useStage } from '../../state/stage.ts';
 import styles from './LiveView.module.css';
 
 const VERB: Record<string, string> = { read: 'Reading', edit: 'Editing', run: 'Running' };
@@ -56,7 +57,8 @@ export function LiveView({
   now: number;
   onOpenAgents(): void;
 }) {
-  const chat = useChat(projectId);
+  const stage = useStage(projectId);
+  const chat = useChat(projectId, stage);
   const agents = useAgents(projectId);
   const state = chat.data;
   const plan = state?.plan ?? [];

@@ -2,7 +2,6 @@ import { ArrowUp, Square } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
-  PHASE_LABEL,
   STATE_LABEL,
   gitChip,
   type ChatItem,
@@ -255,7 +254,6 @@ function ItemView({
 
 function miniMeta(c: ProjectCard): string {
   const parts = [c.draft ? 'Survey draft' : STATE_LABEL[c.state]];
-  if (c.phase && !c.draft) parts.push(PHASE_LABEL[c.phase]);
   const git = gitChip(c.git).label;
   if (c.git && git !== 'clean') parts.push(git);
   return parts.join(' · ');

@@ -52,8 +52,9 @@ We chose **3**.
   redistribution (MIT, Apache-2.0, BSD, CC-BY) are bundled, with their LICENSE file next to
   them and a line in `packages/daemon/stages/SOURCES.md` (name, source URL, licence, commit).
 - **Background agents** use the Development profile. Calibration, the survey and scans are unchanged.
-- **`phase` in project.json** is no longer read for anything shown or sent to Claude. The field
-  stays valid in old files; nothing writes a new value.
+- **`phase` in project.json** is no longer shown or sent to Claude, and calibration no longer
+  asks for it. The field keeps its format (calibration and the survey still fill it with a
+  best guess), so no file format changes.
 
 ## Consequences
 

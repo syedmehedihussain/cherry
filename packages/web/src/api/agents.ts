@@ -63,7 +63,8 @@ export const resolveAgent = action('resolve');
 /** Sends the steps the agent skipped to the project chat as a new message. */
 export const continueAgentInChat = (projectId: string, id: string) =>
   api('POST', `/api/agents/${encodeURIComponent(id)}/continue`, undefined).then(() => {
-    void queryClient.invalidateQueries({ queryKey: chatKey(projectId) });
+    // Agents continue in the Development chat (ADR-0034).
+    void queryClient.invalidateQueries({ queryKey: chatKey(projectId, 'development') });
   });
 
 /** Keeps the agent list current from `agent.updated` events. */

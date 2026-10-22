@@ -170,7 +170,7 @@ specs, exit checks) become Plan stage work.
       a stage, old chats become Development.
 - [x] l3 Skills: bundled `stages/<stage>/skills/`, the user's `~/.cherry/skills/<stage>/`,
       loaded as a skills-only plugin per turn; SOURCES.md for licences.
-- [ ] l4 Stage tabs in the top bar replace the phase bar; the chat follows the stage; each
+- [x] l4 Stage tabs in the top bar replace the phase bar; the chat follows the stage; each
       stage remembers its chat; Home cards drop the phase bar.
 - [ ] l5 Each stage's panels: the file panel and the side panel show what that stage needs
       (Plan: PRD, roadmap, decisions; Design: design docs; Preparation: readiness checklist;

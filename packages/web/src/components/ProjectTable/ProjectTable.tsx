@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { relativeTime, type ProjectCard } from '@cherry/shared';
-import { PhaseBarCompact } from '../PhaseBar/PhaseBar.tsx';
 import { GitChip } from '../Pill/Pill.tsx';
 import { projectHref } from '../ProjectCard/ProjectCard.tsx';
 import { removeProject } from '../OpenFolder/OpenFolder.tsx';
@@ -23,7 +22,6 @@ export function ProjectTable({
         <thead>
           <tr>
             <th scope="col">Project</th>
-            <th scope="col">Phase</th>
             <th scope="col">Stack</th>
             <th scope="col">Last worked</th>
             <th scope="col">Git</th>
@@ -36,7 +34,7 @@ export function ProjectTable({
           {loading &&
             Array.from({ length: 5 }, (_, i) => (
               <tr key={i} aria-hidden="true">
-                <td colSpan={6}>
+                <td colSpan={5}>
                   <span className="shimmer" style={{ display: 'block', height: 28 }} />
                 </td>
               </tr>
@@ -57,9 +55,6 @@ export function ProjectTable({
                   </span>
                   <span className={styles.summary}>{c.summary}</span>
                 </div>
-              </td>
-              <td>
-                <PhaseBarCompact phase={c.phase} width={110} />
               </td>
               <td>
                 <div className={styles.stack}>

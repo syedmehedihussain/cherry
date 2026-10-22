@@ -60,7 +60,7 @@ Status pills use the colour as text on a 12 % fill of the same colour, with a 6 
 
 ## Layout
 
-- Top bar 56 px, bottom border. Left: logo + breadcrumb. Centre: phase bar (workspace only).
+- Top bar 56 px, bottom border. Left: logo + breadcrumb. Centre: stage tabs (workspace only, ADR-0034).
   Right: Claude Code status dot, Settings, Magnet avatar button.
 - Workspace grid: **280 px | flexible | 360 px**, each column scrolls on its own.
 - Survey grid: **240 px | flexible | 300 px** (step 7: 380 px right for the file preview).

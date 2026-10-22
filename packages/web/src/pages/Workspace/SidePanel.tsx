@@ -2,6 +2,7 @@ import { ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { create } from 'zustand';
 import { useChat } from '../../api/chat.ts';
+import { useStage } from '../../state/stage.ts';
 import { useTasks } from '../../api/workspace.ts';
 import { AgentsPanel } from '../../components/AgentsPanel/AgentsPanel.tsx';
 import { GitPanel } from '../../components/GitHubBox/GitPanel.tsx';
@@ -58,7 +59,8 @@ export function SidePanel({
   const view = useSideView((s) => s.view);
   const setView = useSideView((s) => s.set);
   const label = VIEWS.find(([id]) => id === view)?.[1];
-  const working = !!useChat(projectId).data?.running;
+  const stage = useStage(projectId);
+  const working = !!useChat(projectId, stage).data?.running;
   const navigate = useNavigate();
   const base = `/p/${encodeURIComponent(projectId)}`;
   const openNotes = () => void navigate(`${base}/notes`);

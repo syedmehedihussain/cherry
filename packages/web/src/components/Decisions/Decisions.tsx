@@ -145,7 +145,8 @@ function DecisionItem({ projectId, adr }: { projectId: string; adr: Adr }) {
     }
   };
 
-  const chatRunning = !!useChat(projectId).data?.running;
+  // Decisions are applied in the Development chat (ADR-0034).
+  const chatRunning = !!useChat(projectId, 'development').data?.running;
   // Apply again when the last try is over without the decision being done (agent discarded or
   // failed, or a chat turn that ended without calling decision_done).
   const inFlight =

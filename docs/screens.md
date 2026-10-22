@@ -89,7 +89,7 @@ Clinics in Bangladesh) + **Change answers**. Then `ProposalList` (400) and the p
 
 ## 4. Project workspace
 
-Top bar: crumbs, `PhaseBar` (full), status pill when needed, Claude status, Settings, Magnet.
+Top bar: crumbs, `StageTabs` (ADR-0034; the open stage picks the chat's agent), status pill when needed, Claude status, Settings, Magnet.
 
 **Left (280):** `FileTree` with header and filter chips, then the change counts at the bottom.
 

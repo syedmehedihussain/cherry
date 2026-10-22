@@ -11,6 +11,7 @@ import {
   type ChatMode,
   type ChatState,
   type DecisionAnswer,
+  type Stage,
   type UploadedFile,
 } from '@cherry/shared';
 import { z } from 'zod';
@@ -19,17 +20,20 @@ import { queryClient } from './queries.ts';
 import { socket } from './socket.ts';
 
 const base = (id: string) => `/api/projects/${encodeURIComponent(id)}`;
-export const chatKey = (id: string) => ['chat', id] as const;
+export const chatKey = (id: string, stage: Stage) => ['chat', id, stage] as const;
+const q = (stage: Stage) => `?stage=${stage}`;
 export const approvalsKey = ['approvals', 'pending'] as const;
 
-export const useChat = (id: string) =>
+/** One stage's chat (ADR-0034). */
+export const useChat = (id: string, stage: Stage) =>
   useQuery({
-    queryKey: chatKey(id),
-    queryFn: () => api('GET', `${base(id)}/chat`, undefined, ChatStateSchema),
+    queryKey: chatKey(id, stage),
+    queryFn: () => api('GET', `${base(id)}/chat${q(stage)}`, undefined, ChatStateSchema),
   });
 
 export const sendChat = (
   id: string,
+  stage: Stage,
   text: string,
   mode: ChatMode,
   model?: string,
@@ -38,6 +42,7 @@ export const sendChat = (
 ) =>
   api<{ turnId: string; conversationId: string }>('POST', `${base(id)}/chat`, {
     text,
+    stage,
     mode,
     ...(model ? { model } : {}),
     ...(attachments.length ? { attachments } : {}),
@@ -75,10 +80,11 @@ export const attachmentUrl = (id: string, file: string) =>
 export const attachmentLabel = (file: string) =>
   file.replace(/^\d{4}-\d{2}-\d{2}-[0-9a-f]{6}-/, '');
 export const isImageFile = (file: string) => /\.(png|jpe?g|gif|webp)$/i.test(file);
-export const stopChat = (id: string) => api('POST', `${base(id)}/chat/stop`);
-export const newChat = async (id: string) => {
-  await api('POST', `${base(id)}/chat/new`);
-  await queryClient.invalidateQueries({ queryKey: chatKey(id) });
+export const stopChat = (id: string, stage: Stage) =>
+  api('POST', `${base(id)}/chat/stop${q(stage)}`);
+export const newChat = async (id: string, stage: Stage) => {
+  await api('POST', `${base(id)}/chat/new${q(stage)}`);
+  await queryClient.invalidateQueries({ queryKey: chatKey(id, stage) });
 };
 export const answerDecision = (cardId: string, answer: DecisionAnswer) =>
   api('POST', `/api/decisions/${encodeURIComponent(cardId)}`, answer);
@@ -128,52 +134,54 @@ function upsert(items: ChatItem[], item: ChatItem): ChatItem[] {
 export function useLiveChat(id: string): void {
   useEffect(() => {
     const unsub = socket.subscribe(`project:${id}`);
-    let pending: { itemId: string; text: string }[] = [];
+    let pending: { stage: Stage; itemId: string; text: string }[] = [];
     let frame: number | null = null;
     const flush = () => {
       frame = null;
       const deltas = pending;
       pending = [];
-      queryClient.setQueryData<ChatState>(chatKey(id), (old) => {
-        if (!old) return old;
-        let items = old.items;
-        for (const d of deltas) {
-          const i = items.findIndex((x) => x.id === d.itemId);
-          const it = items[i];
-          if (it?.kind !== 'text') continue;
-          if (items === old.items) items = items.slice();
-          items[i] = { ...it, text: it.text + d.text };
-        }
-        return { ...old, items };
-      });
+      for (const stage of new Set(deltas.map((d) => d.stage)))
+        queryClient.setQueryData<ChatState>(chatKey(id, stage), (old) => {
+          if (!old) return old;
+          let items = old.items;
+          for (const d of deltas) {
+            if (d.stage !== stage) continue;
+            const i = items.findIndex((x) => x.id === d.itemId);
+            const it = items[i];
+            if (it?.kind !== 'text') continue;
+            if (items === old.items) items = items.slice();
+            items[i] = { ...it, text: it.text + d.text };
+          }
+          return { ...old, items };
+        });
     };
     const off = socket.on((event) => {
       if (event.type === 'chat.delta' && event.projectId === id) {
-        pending.push({ itemId: event.itemId, text: event.text });
+        pending.push({ stage: event.stage, itemId: event.itemId, text: event.text });
         frame ??= window.setTimeout(flush, STREAM_FLUSH_MS);
       } else if (event.type === 'chat.item' && event.projectId === id) {
         if (frame !== null) {
           window.clearTimeout(frame);
           flush();
         }
-        queryClient.setQueryData<ChatState>(chatKey(id), (old) =>
+        queryClient.setQueryData<ChatState>(chatKey(id, event.stage), (old) =>
           old && old.conversationId === event.conversationId
             ? { ...old, items: upsert(old.items, event.item) }
             : old,
         );
-        const cur = queryClient.getQueryData<ChatState>(chatKey(id));
+        const cur = queryClient.getQueryData<ChatState>(chatKey(id, event.stage));
         if (cur && cur.conversationId !== event.conversationId)
-          void queryClient.invalidateQueries({ queryKey: chatKey(id) });
+          void queryClient.invalidateQueries({ queryKey: chatKey(id, event.stage) });
       } else if (event.type === 'chat.plan' && event.projectId === id) {
-        queryClient.setQueryData<ChatState>(chatKey(id), (old) =>
+        queryClient.setQueryData<ChatState>(chatKey(id, event.stage), (old) =>
           old && old.conversationId === event.conversationId ? { ...old, plan: event.plan } : old,
         );
       } else if (event.type === 'chat.state' && event.projectId === id) {
-        const cur = queryClient.getQueryData<ChatState>(chatKey(id));
+        const cur = queryClient.getQueryData<ChatState>(chatKey(id, event.stage));
         if (!cur || cur.conversationId !== event.conversationId) {
-          void queryClient.invalidateQueries({ queryKey: chatKey(id) });
+          void queryClient.invalidateQueries({ queryKey: chatKey(id, event.stage) });
         } else {
-          queryClient.setQueryData<ChatState>(chatKey(id), {
+          queryClient.setQueryData<ChatState>(chatKey(id, event.stage), {
             ...cur,
             running: event.running,
             turnId: event.turnId,

@@ -1,14 +1,12 @@
 import { Fragment, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { SlidersHorizontal } from 'lucide-react';
-import type { Phase } from '@cherry/shared';
 import { useHealth } from '../../api/queries.ts';
 import { useSocketStatus } from '../../api/socket.ts';
 import { useUi } from '../../state/ui.ts';
 import { CherryBadge, Wordmark } from '../Brand/Brand.tsx';
 import { ClaudeStatus, type ClaudeState } from '../ClaudeStatus/ClaudeStatus.tsx';
 import { MagnetAvatar } from '../MagnetAvatar/MagnetAvatar.tsx';
-import { PhaseBarFull } from '../PhaseBar/PhaseBar.tsx';
 import { Pill } from '../Pill/Pill.tsx';
 import styles from './TopBar.module.css';
 
@@ -19,8 +17,8 @@ export interface Crumb {
 
 interface TopBarProps {
   crumbs: Crumb[];
-  /** Workspace only: the full phase bar in the centre. */
-  phase?: Phase | null;
+  /** Workspace only: the stage tabs in the centre (ADR-0034). */
+  centre?: ReactNode;
   /** A status pill after the crumbs ("Approval needed", "Claude is working"). */
   status?: ReactNode;
   /** Replaces the right side (survey: "Draft saved", Save and exit). */
@@ -37,7 +35,7 @@ export function useClaudeState(): ClaudeState {
   return health.data.claude.found && health.data.claude.loggedIn ? 'ok' : 'missing';
 }
 
-export function TopBar({ crumbs, phase, status, right, claude, beforeClaude }: TopBarProps) {
+export function TopBar({ crumbs, centre, status, right, claude, beforeClaude }: TopBarProps) {
   const healthState = useClaudeState();
   const socketStatus = useSocketStatus((s) => s.status);
   const openMagnet = useUi((s) => s.openMagnet);
@@ -78,7 +76,7 @@ export function TopBar({ crumbs, phase, status, right, claude, beforeClaude }: T
           </Pill>
         )}
       </div>
-      <div className={styles.centre}>{phase !== undefined && <PhaseBarFull phase={phase} />}</div>
+      <div className={styles.centre}>{centre}</div>
       <div className={styles.right}>
         {right ?? (
           <>
