@@ -93,6 +93,16 @@ folder (see `security.md`).
 | GET | `/api/stages` | `{ stages: [{ stage, label, name, summary, docsOnly, skills: [{ name, description, source }] }] }`: each stage agent and its skills (`source` is `bundled` or `user`) |
 | GET | `/api/projects/:id/stage?stage=` | `{ files, readiness }`: the stage's key files that exist (shown first in the file panel), and for `preparation` a file-only readiness checklist `[{ id, label, ok, detail }]` (no Claude, no commands); `readiness` is null for other stages |
 
+## Issues (ADR-0035)
+
+| Method | Path | Does |
+| --- | --- | --- |
+| GET | `/api/projects/:id/issues` | `{ issues, github }`: the files in `docs/issues/` (newest first) and, with a remote, open GitHub issues (`gh issue list`, cached 1 min; `local` = the file that links to it) or `github: null` |
+| POST | `/api/projects/:id/issues` | `{ title, type?, severity?, body? }` → writes the next `NNNN-name.md` (never replaces a file) |
+| PATCH | `/api/projects/:id/issues/:n` | `{ status }` → rewrites the front matter, keeps the body |
+| POST | `/api/projects/:id/issues/:n/github` | → `{ approvalId }`; after approval runs `gh issue create` and stores the link; notice `issue.sent` or `issue.failed` |
+| POST | `/api/projects/:id/issues/import` | `{ number }` → copies an open GitHub issue into a local file with its link |
+
 ## Approvals
 
 | Method | Path | Does |

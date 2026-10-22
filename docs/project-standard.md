@@ -14,6 +14,10 @@ tab, its session hook and its project-notes skill keep working on the same files
 │   ├── prd.md
 │   ├── architecture.md
 │   ├── data-model.md
+│   ├── roadmap.md
+│   ├── specs/                one spec per round of work (Plan stage)
+│   ├── issues/               one file per issue (Issues stage, ADR-0035)
+│   │   └── 0001-chat-scroll-jumps.md
 │   └── adr/
 │       ├── 0001-use-sqlite.md
 │       └── 0002-no-auth-in-v1.md
@@ -48,14 +52,35 @@ calibrated**, and the card shows a small "project.json has errors" note.
 Skipped while scanning: dot-folders (`.cherry-worktrees`, `.Trash` …) and anything in
 `config.json → scan.ignore`.
 
-## Phases
+## Stages (ADR-0034)
 
-Every project moves through five phases, taken from Core's development task graph:
+Work goes round a loop of six stages, each with its own agent and chat in Cherry:
 
-`plan` → `design` → `preparation` → `development` → `deployment`
+`plan` → `design` → `preparation` → `development` → `deployment` → `issues` → `plan` …
 
-The phase lives in `project.json → phase`. Phase changes are made by the user (or proposed by
-Claude and approved) — never silently.
+There is no "current stage" to keep up to date: the user opens whichever stage they work in.
+Agents hand work to each other through the files above: Plan writes `docs/prd.md` or
+`docs/specs/<name>.md` and the roadmap; Design writes the design and architecture docs;
+Development builds and ticks the roadmap; Deployment writes the CHANGELOG and runbook; Issues
+writes `docs/issues/`, which feeds the next Plan. `project.json → phase` is an old field: it is
+still written by calibration and the survey but no longer shown or used.
+
+## Issue files (ADR-0035)
+
+`docs/issues/NNNN-short-name.md`, numbered from 0001:
+
+```markdown
+---
+title: Chat scroll jumps on reply
+status: open        # open | planned | done
+type: bug           # bug | improvement | idea
+severity: annoying  # blocks | annoying | cosmetic
+cycle:              # the spec that took it, e.g. docs/specs/chat-polish.md
+github:             # the GitHub issue URL once sent or imported
+---
+
+What happened, steps to reproduce, what was expected, where.
+```
 
 ## `CLAUDE.md` template
 

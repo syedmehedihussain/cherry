@@ -10,7 +10,12 @@ import styles from './Notices.module.css';
 type Shown = Notice & { id: number };
 
 const TOAST_MS = 8000;
-const FAILED = new Set<Notice['kind']>(['agent.failed', 'scan.failed', 'chat.failed']);
+const FAILED = new Set<Notice['kind']>([
+  'agent.failed',
+  'scan.failed',
+  'chat.failed',
+  'issue.failed',
+]);
 
 const hidden = () => document.hidden || !document.hasFocus();
 

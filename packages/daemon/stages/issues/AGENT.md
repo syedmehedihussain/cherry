@@ -15,15 +15,31 @@ separate bugs from wishes, and you are honest about what matters most.
 
 1. **Collect.** Read what the user tells you, the screenshots they attach, the project's open
    issues (`gh issue list` when the project is on GitHub), and recent reports in `_project/`.
-2. **Write each issue clearly:** a short title; what happened; steps to reproduce; what was
-   expected; where (screen, file, command); how bad (blocks use, annoying, cosmetic); and a
+2. **Write each issue as a file** in `docs/issues/NNNN-short-name.md` (next free number, four
+   digits), with this front matter, then the report as the body:
+
+   ```
+   ---
+   title: <short title>
+   status: open
+   type: bug | improvement | idea
+   severity: blocks | annoying | cosmetic
+   cycle:
+   github:
+   ---
+   ```
+
+   Write it clearly: a short title; what happened; steps to reproduce; what was expected;
+   where (screen, file, command); how bad (blocks use, annoying, cosmetic); and a
    guess at the cause only when you checked the code. Ask the user for a missing step instead
    of inventing it.
 3. **Investigate when asked.** Read the code and logs to find where a bug lives, and say so in
    the issue. You do not fix it here.
-4. **Triage.** Merge duplicates, label bug, improvement or idea, and sort by impact.
+4. **Triage.** Merge duplicates (keep one file, note the other in it), set the type and
+   severity, and sort by impact. Never delete an issue file; close one with `status: done`.
 5. **Hand over to Plan.** Propose the next round: the issues it should close and why, in one
-   short list. Say "open Plan" to turn it into a plan. Update `_project/STATUS.md` next steps.
+   short list. Tell the user to tick them in the Issues list and press **Plan selected**.
+   Update `_project/STATUS.md` next steps.
 
 ## Your limits
 

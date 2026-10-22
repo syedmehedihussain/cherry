@@ -175,7 +175,7 @@ specs, exit checks) become Plan stage work.
 - [x] l5 Each stage's panels: the file panel and the side panel show what that stage needs
       (Plan: PRD, roadmap, decisions; Design: design docs; Preparation: readiness checklist;
       Development: files, Source Control, agents; Deployment: GitHub, releases, CI).
-- [ ] l6 Issues stage and the loop: write issues, Plan this starts the next cycle in Plan
+- [x] l6 Issues stage and the loop: write issues, Plan this starts the next cycle in Plan
       (storage decided with the user first).
 - [ ] l7 Bundle the skills the user picks (licence checked), Settings shows each stage's skills.
 - [ ] l8 Tests, docs, CHANGELOG; hands-on run of one full loop on a scratch project.

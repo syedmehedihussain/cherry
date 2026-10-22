@@ -27,6 +27,7 @@ import {
 import { Pill } from '../../components/Pill/Pill.tsx';
 import { ChatTab, NewChatButton, useSessionMeta } from './ChatTab.tsx';
 import { DocsTab } from './DocsTab.tsx';
+import { IssuesTab } from './IssuesTab.tsx';
 import { NotesTab } from './NotesTab.tsx';
 import { AgentsPanel } from '../../components/AgentsPanel/AgentsPanel.tsx';
 import { Decisions, usePendingDecisions } from '../../components/Decisions/Decisions.tsx';
@@ -38,7 +39,16 @@ import { SidePanel, useSideView, type View } from './SidePanel.tsx';
 import styles from './Workspace.module.css';
 
 type Tab =
-  'chat' | 'docs' | 'notes' | 'agents' | 'decisions' | 'file' | 'report' | 'status' | 'run';
+  | 'chat'
+  | 'docs'
+  | 'notes'
+  | 'agents'
+  | 'decisions'
+  | 'issues'
+  | 'file'
+  | 'report'
+  | 'status'
+  | 'run';
 
 /** The last file opened per project, so its tab stays while you visit other tabs. */
 const useOpenFiles = create<{
@@ -74,6 +84,7 @@ function parseSplat(splat: string): { tab: Tab; path: string | null } {
   if (splat === 'notes') return { tab: 'notes', path: null };
   if (splat === 'agents') return { tab: 'agents', path: null };
   if (splat === 'decisions') return { tab: 'decisions', path: null };
+  if (splat === 'issues') return { tab: 'issues', path: null };
   if (splat === 'status') return { tab: 'status', path: null };
   if (splat === 'run') return { tab: 'run', path: null };
   return { tab: 'chat', path: null };
@@ -176,8 +187,8 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
               };
               const v = side[s];
               if (v) setSideView(v);
-              // A stage opens its agent's chat.
-              void navigate(base);
+              // A stage opens its agent's chat; Issues opens the issue list.
+              void navigate(s === 'issues' ? `${base}/issues` : base);
             }}
           />
         }
@@ -257,6 +268,11 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
                 </span>
               )}
             </TabLink>
+            {(stage === 'issues' || tab === 'issues') && (
+              <TabLink to={`${base}/issues`} active={tab === 'issues'}>
+                Issues
+              </TabLink>
+            )}
             {openFile && (
               <>
                 <span className={styles.tabSep} aria-hidden="true" />
@@ -369,6 +385,23 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
               <div className={styles.pane}>
                 <Decisions projectId={id} />
               </div>
+            )}
+            {tab === 'issues' && (
+              <IssuesTab
+                projectId={id}
+                onPlan={(issues) => {
+                  // The loop (ADR-0034): chosen issues become the next round in Plan.
+                  setDraft(
+                    id,
+                    [
+                      'Plan the next round from these issues. Read each one, ask what you need, then write the spec and the roadmap milestone, and mark the issues planned with the spec as their cycle:',
+                      ...issues.map((i) => `- ${i.file} (${i.title})`),
+                    ].join('\n'),
+                  );
+                  setStage(id, 'plan');
+                  void navigate(base);
+                }}
+              />
             )}
             {tab === 'run' && <RunTab projectId={id} />}
             {tab === 'status' && (

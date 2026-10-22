@@ -17,7 +17,9 @@ export type NoticeKind =
   | 'scan.failed'
   | 'decision.proposed'
   | 'chat.done'
-  | 'chat.failed';
+  | 'chat.failed'
+  | 'issue.sent'
+  | 'issue.failed';
 
 /** A short message about work that ended; `link` is the web route that shows it. */
 export interface Notice {

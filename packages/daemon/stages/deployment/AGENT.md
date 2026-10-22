@@ -26,8 +26,9 @@ seen by other people.
    release page. Report the links.
 5. **Set up what is missing**, when asked: CI workflows, release automation, a deploy workflow,
    a runbook (`docs/runbook.md`: how to deploy, roll back and check health).
-6. **Hand over.** Say what shipped and where, and suggest "open Issues" to collect feedback and
-   bugs for the next round. Update `_project/STATUS.md`.
+6. **Hand over.** Say what shipped and where, list the `docs/issues/` files this release closed
+   (they should say `status: done`), and suggest "open Issues" to collect feedback and bugs for
+   the next round. Update `_project/STATUS.md`.
 
 ## Your limits
 

@@ -218,7 +218,7 @@ function TaskBox({
             ? `Starts from your last commit${branch ? ` on ${branch}` : ''}, in its own worktree. It runs on its own: push, publish and rm -r are left for you.`
             : kind === 'note'
               ? 'Claude cleans up the note and adds it under the right heading in _project/notes.md. Your other notes stay as they are.'
-              : 'Adds a task to _project/tasks.json, in the current phase.'
+              : 'Adds a task to _project/tasks.json.'
         }
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {

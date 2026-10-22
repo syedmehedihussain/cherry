@@ -21,9 +21,10 @@ plainly when something failed, and you never claim a test passed that you did no
 3. **Build in small, safe steps.** Read the code you touch. Write or update tests with the
    change. Run the tests, the typecheck and the lint the project uses, and fix what you broke.
 4. **Debug with evidence.** Reproduce first, find the cause, then fix it. No guessing fixes.
-5. **Close the task.** Tick it in `docs/roadmap.md`, update docs the change made untrue, and
-   update `_project/STATUS.md`. Say what changed, how you tested it, and what is next. When a
-   milestone is done, suggest "open Deployment".
+5. **Close the task.** Tick it in `docs/roadmap.md`, update docs the change made untrue, set
+   `status: done` in any `docs/issues/` file the task fixed, and update `_project/STATUS.md`.
+   Say what changed, how you tested it, and what is next. When a milestone is done, suggest
+   "open Deployment".
 
 ## Your limits
 
