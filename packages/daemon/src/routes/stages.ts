@@ -1,10 +1,14 @@
 import type { FastifyInstance } from 'fastify';
-import { STAGES, STAGE_LABEL, type StageInfo } from '@cherry/shared';
+import { z } from 'zod';
+import { STAGES, STAGE_LABEL, StageSchema, type StageFocus, type StageInfo } from '@cherry/shared';
+import type { ConfigStore } from '../config.ts';
+import { projectDir } from '../projects/workspace.ts';
+import { readiness, stageFiles } from '../stages/focus.ts';
 import { stageProfile } from '../stages/profiles.ts';
 import { stageSkills } from '../stages/skills.ts';
 
 /** The stage agents and their skills (ADR-0034). */
-export function stageRoutes(home: string) {
+export function stageRoutes(home: string, config: ConfigStore) {
   return (app: FastifyInstance) => {
     app.get('/api/stages', async (): Promise<{ stages: StageInfo[] }> => ({
       stages: STAGES.map((stage) => {
@@ -19,5 +23,15 @@ export function stageRoutes(home: string) {
         };
       }),
     }));
+
+    app.get('/api/projects/:id/stage', async (req): Promise<StageFocus> => {
+      const { id } = z.object({ id: z.string().min(1).max(200) }).parse(req.params);
+      const { stage } = z.object({ stage: StageSchema }).parse(req.query);
+      const dir = projectDir(config.projectsDir(), id);
+      return {
+        files: stageFiles(dir, stage),
+        readiness: stage === 'preparation' ? readiness(dir) : null,
+      };
+    });
   };
 }

@@ -169,6 +169,7 @@ export function useLiveProject(id: string): void {
           queryKey: wk.all(id),
           predicate: (query) => query.queryKey[2] !== 'notes',
         });
+        void queryClient.invalidateQueries({ queryKey: ['stage-focus', id] });
       }, 150);
     });
     return () => {

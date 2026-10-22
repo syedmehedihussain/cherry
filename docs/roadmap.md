@@ -172,7 +172,7 @@ specs, exit checks) become Plan stage work.
       loaded as a skills-only plugin per turn; SOURCES.md for licences.
 - [x] l4 Stage tabs in the top bar replace the phase bar; the chat follows the stage; each
       stage remembers its chat; Home cards drop the phase bar.
-- [ ] l5 Each stage's panels: the file panel and the side panel show what that stage needs
+- [x] l5 Each stage's panels: the file panel and the side panel show what that stage needs
       (Plan: PRD, roadmap, decisions; Design: design docs; Preparation: readiness checklist;
       Development: files, Source Control, agents; Deployment: GitHub, releases, CI).
 - [ ] l6 Issues stage and the loop: write issues, Plan this starts the next cycle in Plan

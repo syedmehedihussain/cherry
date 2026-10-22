@@ -179,3 +179,49 @@ describe('stage skills', () => {
     }
   });
 });
+
+describe('stage focus', () => {
+  it('lists each stage its own files and checks readiness from files only', async () => {
+    const { tempDir } = await import('./helpers.ts');
+    const { readiness, stageFiles } = await import('../src/stages/focus.ts');
+    const dir = tempDir();
+    write(path.join(dir, 'docs', 'prd.md'), '# PRD');
+    write(path.join(dir, 'docs', 'specs', 'search.md'), '# Search');
+    write(path.join(dir, 'docs', 'specs', 'notes.bin'), 'x');
+    write(path.join(dir, 'docs', 'architecture.md'), '# A');
+    write(path.join(dir, 'CHANGELOG.md'), '# Changes');
+    write(path.join(dir, 'package.json'), JSON.stringify({ scripts: { test: 'vitest' } }));
+    write(path.join(dir, '.github', 'workflows', 'ci.yml'), 'on: push');
+
+    expect(stageFiles(dir, 'plan')).toEqual(['docs/prd.md', 'docs/specs/search.md']);
+    expect(stageFiles(dir, 'design')).toEqual(['docs/architecture.md']);
+    expect(stageFiles(dir, 'deployment')).toEqual(['CHANGELOG.md', '.github/workflows/ci.yml']);
+    expect(stageFiles(dir, 'development')).toEqual([]);
+
+    const r = Object.fromEntries(readiness(dir).map((i) => [i.id, i.ok]));
+    expect(r).toMatchObject({ plan: true, tests: true, ci: true, git: false, gitignore: false });
+  });
+
+  it('serves the focus route, readiness only for Preparation', async () => {
+    const d = await testDaemon();
+    try {
+      write(path.join(d.projectsDir, 'core', 'docs', 'roadmap.md'), '# R');
+      const cookie = await d.login();
+      const get = (stage: string) =>
+        d.app.inject({
+          method: 'GET',
+          url: `/api/projects/core/stage?stage=${stage}`,
+          headers: { host: HOST, cookie },
+        });
+      const plan = (await get('plan')).json();
+      expect(plan).toEqual({ files: ['docs/roadmap.md'], readiness: null });
+      const prep = (await get('preparation')).json();
+      expect(prep.readiness.find((i: { id: string }) => i.id === 'roadmap')).toMatchObject({
+        ok: true,
+      });
+      expect((await get('nope')).statusCode).toBe(400);
+    } finally {
+      await d.cleanup();
+    }
+  });
+});

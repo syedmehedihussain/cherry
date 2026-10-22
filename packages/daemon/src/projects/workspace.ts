@@ -19,6 +19,7 @@ import type {
   Tree,
   TreeEntry,
 } from '@cherry/shared';
+import { fileTag } from '@cherry/shared';
 import { git, gitStatus } from '../git.ts';
 import { writeFileAtomic } from '../fsutil.ts';
 import { badRequest, conflict, notFound } from '../http.ts';
@@ -59,24 +60,6 @@ function safeReal(p: string): string {
 }
 
 const toPosix = (p: string) => p.split(path.sep).join('/');
-
-export function fileTag(name: string): string | null {
-  const lower = name.toLowerCase();
-  if (lower === 'dockerfile') return 'DOCK';
-  if (lower.startsWith('.env')) return 'ENV';
-  if (lower === 'license') return 'TXT';
-  const ext = path.extname(lower).slice(1);
-  if (!ext) return null;
-  const map: Record<string, string> = {
-    tsx: 'TSX',
-    jsx: 'JSX',
-    mjs: 'JS',
-    cjs: 'JS',
-    yaml: 'YML',
-    markdown: 'MD',
-  };
-  return map[ext] ?? ext.slice(0, 4).toUpperCase();
-}
 
 const LANGS: Record<string, string> = {
   ts: 'typescript',

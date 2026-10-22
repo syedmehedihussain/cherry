@@ -37,3 +37,24 @@ export function gitChip(git: GitSummary | null): { label: string; tone: GitChipT
   if (!git.remote) return { label: 'No remote', tone: 'none' };
   return { label: 'clean', tone: 'clean' };
 }
+
+/** The short type label in the file tree: "TS", "MD", "ENV", "DOCK"; null for none. */
+export function fileTag(name: string): string | null {
+  const lower = (name.split('/').pop() ?? name).toLowerCase();
+  if (lower === 'dockerfile') return 'DOCK';
+  if (lower.startsWith('.env')) return 'ENV';
+  if (lower === 'license') return 'TXT';
+  const dot = lower.lastIndexOf('.');
+  // A dotfile like .gitignore has no extension.
+  if (dot <= 0) return null;
+  const ext = lower.slice(dot + 1);
+  const map: Record<string, string> = {
+    tsx: 'TSX',
+    jsx: 'JSX',
+    mjs: 'JS',
+    cjs: 'JS',
+    yaml: 'YML',
+    markdown: 'MD',
+  };
+  return map[ext] ?? ext.slice(0, 4).toUpperCase();
+}

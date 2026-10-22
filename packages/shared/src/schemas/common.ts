@@ -54,6 +54,23 @@ export const StageInfoSchema = z.object({
 });
 export type StageInfo = z.infer<typeof StageInfoSchema>;
 
+/** One line of the Preparation readiness check (ADR-0034). */
+export const ReadinessItemSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  ok: z.boolean(),
+  /** What was found, or what is missing. */
+  detail: z.string(),
+});
+export type ReadinessItem = z.infer<typeof ReadinessItemSchema>;
+
+/** GET /api/projects/:id/stage?stage=: the stage's files, and readiness for Preparation. */
+export const StageFocusSchema = z.object({
+  files: z.array(z.string()),
+  readiness: z.array(ReadinessItemSchema).nullable(),
+});
+export type StageFocus = z.infer<typeof StageFocusSchema>;
+
 /** One error shape for every API failure (docs/api.md). */
 export const ApiErrorSchema = z.object({
   error: z.object({ code: z.string(), message: z.string() }),

@@ -199,7 +199,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       runRoutes(runs),
       adrRoutes(adrs),
       ideaRoutes(new IdeaStore(opts.home)),
-      stageRoutes(opts.home),
+      stageRoutes(opts.home, config),
     ],
   });
 

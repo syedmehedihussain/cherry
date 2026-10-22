@@ -1,7 +1,8 @@
-import { ChevronRight } from 'lucide-react';
+import { Check, ChevronRight, X } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { create } from 'zustand';
-import { useChat } from '../../api/chat.ts';
+import { useChat, useChatDraft } from '../../api/chat.ts';
+import { useStageFocus } from '../../api/stages.ts';
 import { useStage } from '../../state/stage.ts';
 import { useTasks } from '../../api/workspace.ts';
 import { AgentsPanel } from '../../components/AgentsPanel/AgentsPanel.tsx';
@@ -17,7 +18,7 @@ const VIEWS = [
   ['github', 'GitHub'],
 ] as const;
 
-type View = (typeof VIEWS)[number][0];
+export type View = (typeof VIEWS)[number][0];
 
 const KEY = 'cherry.sideView';
 
@@ -31,7 +32,7 @@ function readView(): View {
 }
 
 /** The chosen view stays the same across projects and reloads. */
-const useSideView = create<{ view: View; set(v: View): void }>((set) => ({
+export const useSideView = create<{ view: View; set(v: View): void }>((set) => ({
   view: readView(),
   set: (view) => {
     try {
@@ -65,6 +66,7 @@ export function SidePanel({
   const base = `/p/${encodeURIComponent(projectId)}`;
   const openNotes = () => void navigate(`${base}/notes`);
   const openAgents = () => void navigate(`${base}/agents`);
+  const openChat = () => void navigate(base);
 
   return (
     <>
@@ -89,6 +91,7 @@ export function SidePanel({
         {view === 'overview' && (
           <>
             <div className={styles.pad}>
+              {stage === 'preparation' && <Readiness projectId={projectId} onOpenChat={openChat} />}
               <GitPanel key={projectId} projectId={projectId} now={now} collapsible />
               <PlanUsage now={now} />
               <TasksLine projectId={projectId} onOpen={openNotes} />
@@ -133,5 +136,46 @@ function TasksLine({ projectId, onOpen }: { projectId: string; onOpen(): void })
       </span>
       <ChevronRight size={13} aria-hidden="true" />
     </button>
+  );
+}
+
+/** Preparation: a quick, file-only readiness check (ADR-0034); the Preparer fixes on request. */
+function Readiness({ projectId, onOpenChat }: { projectId: string; onOpenChat(): void }) {
+  const items = useStageFocus(projectId, 'preparation').data?.readiness ?? [];
+  const setDraft = useChatDraft((s) => s.set);
+  if (!items.length) return null;
+  const missing = items.filter((i) => !i.ok);
+  return (
+    <section className={styles.readiness} aria-label="Readiness">
+      <div className={styles.readinessHead}>
+        <span className="label">Readiness</span>
+        <span className={styles.readinessCount}>
+          {items.length - missing.length}/{items.length}
+        </span>
+      </div>
+      <ul>
+        {items.map((i) => (
+          <li key={i.id} data-ok={i.ok || undefined} title={i.detail}>
+            {i.ok ? <Check size={12} aria-label="ready" /> : <X size={12} aria-label="missing" />}
+            {i.label}
+          </li>
+        ))}
+      </ul>
+      {missing.length > 0 && (
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          onClick={() => {
+            setDraft(
+              projectId,
+              `Run the project-readiness check and set up what is missing. Cherry's quick check found: ${missing.map((m) => m.label).join(', ')}.`,
+            );
+            onOpenChat();
+          }}
+        >
+          Ask the Preparer to fix
+        </button>
+      )}
+    </section>
   );
 }

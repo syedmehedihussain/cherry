@@ -91,6 +91,7 @@ folder (see `security.md`).
 | Method | Path | Does |
 | --- | --- | --- |
 | GET | `/api/stages` | `{ stages: [{ stage, label, name, summary, docsOnly, skills: [{ name, description, source }] }] }`: each stage agent and its skills (`source` is `bundled` or `user`) |
+| GET | `/api/projects/:id/stage?stage=` | `{ files, readiness }`: the stage's key files that exist (shown first in the file panel), and for `preparation` a file-only readiness checklist `[{ id, label, ok, detail }]` (no Claude, no commands); `readiness` is null for other stages |
 
 ## Approvals
 

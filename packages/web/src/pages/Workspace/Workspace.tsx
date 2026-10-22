@@ -2,6 +2,7 @@ import { X } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { create } from 'zustand';
+import type { Stage } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
 import { useLiveProject, useProjectDetail } from '../../api/workspace.ts';
 import { FileTree } from '../../components/FileTree/FileTree.tsx';
@@ -33,7 +34,7 @@ import { useAgents, useLiveAgents } from '../../api/agents.ts';
 import { ReportTab } from './ReportTab.tsx';
 import { StatusTab, UPDATE_STATUS_PROMPT } from './StatusTab.tsx';
 import { useScanAgents } from '../../api/scans.ts';
-import { SidePanel } from './SidePanel.tsx';
+import { SidePanel, useSideView, type View } from './SidePanel.tsx';
 import styles from './Workspace.module.css';
 
 type Tab =
@@ -88,6 +89,7 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
   useLiveProject(id);
   const stage = useStage(id);
   const setStage = useStages((s) => s.set);
+  const setSideView = useSideView((s) => s.set);
   const chat = useChat(id, stage);
   // Once per workspace: the Chat tab and the Live view both read this state.
   useLiveChat(id);
@@ -166,6 +168,14 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
             active={stage}
             onSelect={(s) => {
               setStage(id, s);
+              // The side view that fits the stage: GitHub to ship, Live to build.
+              const side: Partial<Record<Stage, View>> = {
+                development: 'live',
+                deployment: 'github',
+                preparation: 'overview',
+              };
+              const v = side[s];
+              if (v) setSideView(v);
               // A stage opens its agent's chat.
               void navigate(base);
             }}
@@ -214,6 +224,7 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
           selected={tab === 'file' ? path : null}
           onOpen={(p) => void navigate(`${base}/files/${p}`)}
           touched={touched}
+          stage={stage}
         />
 
         <section aria-label="Project" className={styles.centre}>

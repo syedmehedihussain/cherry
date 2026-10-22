@@ -1,6 +1,7 @@
 import { ChevronRight, Folder } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import type { GitLetter, TreeEntry } from '@cherry/shared';
+import { STAGE_LABEL, fileTag, type GitLetter, type Stage, type TreeEntry } from '@cherry/shared';
+import { useStageFocus } from '../../api/stages.ts';
 import { useChanges, useTree } from '../../api/workspace.ts';
 import styles from './FileTree.module.css';
 
@@ -13,9 +14,20 @@ interface FileTreeProps {
   onOpen(path: string): void;
   /** Files Claude changed this session (M3). */
   touched?: Set<string>;
+  /** The open stage: its files show first (ADR-0034). */
+  stage?: Stage;
 }
 
-export function FileTree({ projectId, projectPath, selected, onOpen, touched }: FileTreeProps) {
+export function FileTree({
+  projectId,
+  projectPath,
+  selected,
+  onOpen,
+  touched,
+  stage,
+}: FileTreeProps) {
+  const focus = useStageFocus(projectId, stage ?? 'development');
+  const stageFiles = stage ? (focus.data?.files ?? []) : [];
   const [open, setOpen] = useState<Set<string>>(() => initialOpen(selected));
   const [filter, setFilter] = useState<'all' | 'changed' | 'touched'>('all');
   const root = useTree(projectId, '');
@@ -56,6 +68,32 @@ export function FileTree({ projectId, projectPath, selected, onOpen, touched }: 
         </span>
       </div>
       <div className={styles.scroll} role="tree" aria-label="Project files">
+        {!flat && stage && stageFiles.length > 0 && (
+          <>
+            <div className="label" style={{ padding: '4px 8px 6px' }}>
+              {STAGE_LABEL[stage]} files
+            </div>
+            {stageFiles.map((p) => (
+              <Row
+                key={`stage-${p}`}
+                entry={{
+                  name: p,
+                  path: p,
+                  type: 'file',
+                  tag: fileTag(p),
+                  git: null,
+                  ignored: false,
+                  changedInside: 0,
+                }}
+                depth={0}
+                selected={selected === p}
+                touched={touched?.has(p) ?? false}
+                onClick={() => onOpen(p)}
+              />
+            ))}
+            <div className={styles.divider} />
+          </>
+        )}
         <div className="label" style={{ padding: '4px 8px 6px' }}>
           {flat ? (filter === 'changed' ? 'Changed files' : 'Claude touched') : 'Project files'}
         </div>
@@ -68,7 +106,7 @@ export function FileTree({ projectId, projectPath, selected, onOpen, touched }: 
                 name: e.path,
                 path: e.path,
                 type: 'file',
-                tag: tagOf(e.path),
+                tag: fileTag(e.path),
                 git: e.letter,
                 ignored: false,
                 changedInside: 0,
@@ -165,11 +203,6 @@ function initialOpen(selected: string | null): Set<string> {
   const parts = selected.split('/');
   for (let i = 1; i < parts.length; i++) s.add(parts.slice(0, i).join('/'));
   return s;
-}
-
-function tagOf(p: string): string | null {
-  const ext = p.split('.').pop();
-  return ext && ext !== p ? ext.slice(0, 4).toUpperCase() : null;
 }
 
 interface NodeProps {
