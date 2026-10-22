@@ -84,7 +84,7 @@ test('saves notes to _project/notes.md', async ({ page }) => {
   await expect(page.getByLabel('Notes for this project')).toHaveValue('Remember the streaks bug.');
 });
 
-test('a missing project says the folder is gone', async ({ page }) => {
+test('a project not in Cherry says so', async ({ page }) => {
   await page.goto('/p/nope');
-  await expect(page.getByRole('heading', { name: 'This folder is gone' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'This project is not in Cherry' })).toBeVisible();
 });

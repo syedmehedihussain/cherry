@@ -41,6 +41,9 @@ export function gitInit(dir: string): void {
   run('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--allow-empty', '-m', 'init');
 }
 
+/** Project ids the tests use, listed in each test daemon's config.json. */
+export const TEST_PROJECTS = ['core', 'site', 'torongo', 'proj', 'web', 'notes', 'plain'];
+
 export interface TestDaemon extends Daemon {
   home: string;
   projectsDir: string;
@@ -59,7 +62,10 @@ export async function testDaemon(
 ): Promise<TestDaemon> {
   const home = tempDir('cherry-home-');
   const projectsDir = tempDir('cherry-projects-');
-  write(path.join(home, 'config.json'), JSON.stringify({ schema: 1, projectsDir }));
+  // Since ADR-0032 Cherry lists only the projects in config.json. These are the folders the
+  // tests make under projectsDir; a listed folder that does not exist shows as missing.
+  const projects = TEST_PROJECTS.map((id) => ({ id, path: path.join(projectsDir, id) }));
+  write(path.join(home, 'config.json'), JSON.stringify({ schema: 1, projectsDir, projects }));
   const daemon = createDaemon({
     home,
     port: PORT,

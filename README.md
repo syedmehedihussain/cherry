@@ -29,7 +29,8 @@
 
 Cherry is a local workspace that drives [Claude Code](https://claude.com/claude-code) the way
 a senior engineer works: **survey, decide, document, then build.** It runs on your own computer
-at `127.0.0.1`, reads your projects folder, and every edit and command waits for your approval.
+at `127.0.0.1`, works on the project folders you open in it, and every edit and command waits for
+your approval.
 
 It is not a code editor and not a vibe-coding tool. You read code and docs here, you make the
 decisions here, and Claude does the typing, only after you say yes.
@@ -92,14 +93,14 @@ decisions here, and Claude does the typing, only after you say yes.
 
 | | |
 | --- | --- |
-| **Home** | Every project in your projects folder with its phase, git state and next step. |
+| **Home** | The projects you opened or created, like VS Code's recent projects, with phase, git state and next step. **Open folder…** adds one from anywhere; **Remove** takes one out of Cherry and leaves the folder alone. |
 | **Calibration** | For an existing project: a read-only scan, a few questions, and docs you tick file by file. Existing files only get additions. |
 | **Workspace** | File tree with git letters, file viewer with diffs, Markdown preview, a built-in editor, Docs reader with ADR links, Notes & Tasks and a live Status report. |
 | **Chat** | Streaming, plan mode, model and effort pickers, attachments, decision cards, Stop and resume. |
 | **Background agents** | A task runs on its own git worktree and branch while you keep chatting. It works without asking; push and publish are left for you. Review the diff, then Merge or Discard; on a conflict, an agent can fix it. |
 | **Git and GitHub** | Branch, ahead and behind, pull, push after approval, open pull requests, and commits as yourself: stage and commit like in VS Code, or turn on Auto commit and Claude commits its work in small steps. |
 | **Themes** | Just black (default), Cherry dark, Cherry light and Classic. |
-| **First start** | A short welcome: pick the projects folder, check Claude Code, git and GitHub, choose a theme. |
+| **First start** | A short welcome: pick where new projects go, check Claude Code, git and GitHub, choose a theme. |
 
 <details>
 <summary><b>More screenshots</b></summary>
@@ -147,8 +148,9 @@ pnpm install
 cherry                     # starts Cherry and opens it in your browser
 ```
 
-`cherry` prints a one-time login link and opens it. On first start, Cherry asks for your
-projects folder (default `~/Projects`), checks your tools and lets you pick a theme.
+`cherry` prints a one-time login link and opens it. On first start, Cherry asks where new
+projects should go (default `~/Projects`), checks your tools and lets you pick a theme. Then open
+a project folder (**Open folder…** or `cherry .` in it) or start a new one.
 
 **Update:** `git pull && pnpm install`, then `cherry down && cherry`.
 

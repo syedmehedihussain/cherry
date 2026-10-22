@@ -144,12 +144,14 @@ The phase task graph, seeded from Core's preset (`lib/services/project-presets.t
   "agents": { "maxRunning": 3, "worktreeDir": "~/Projects/.cherry-worktrees" },
   "magnet": { "readOnly": true },
   "onboarded": true,
-  "openFolders": [{ "id": "billing", "path": "~/work/billing" }]
+  "projects": [{ "id": "billing", "path": "~/work/billing" }]
 }
 ```
 
-`openFolders` lists folders opened from outside the projects folder (Open folder, `cherry .`;
-ADR-0031). Each `id` is unique across the projects folder and this list. Missing means `[]`.
+`projects` is the list of projects in Cherry: folders opened (Open folder, `cherry .`) or
+created (Start project). Each `id` is unique; Remove from Cherry takes one out. `projectsDir` is
+the **new projects folder**, where Start project creates projects; Cherry does not scan it
+(ADR-0032). A fresh install has `projects: []`.
 
 `onboarded` is `false` only in a config.json the daemon has just created (a fresh install); the
 UI then shows the welcome screen until `POST /api/setup`. A config.json without the field counts
@@ -171,7 +173,7 @@ ADR-0010).
 `projects.md` line format, rebuilt on every scan:
 
 ```
-- core · Ready · development · Next.js, SQLite · git: 3 changes · last 2h ago · next: Build the Study Room floor
+- core (~/Projects/core) · Ready · development · Next.js, SQLite · git: 3 changes · last 2h ago · next: Build the Study Room floor
 ```
 
 On first run the app writes starter versions of the three user files with short placeholder text.

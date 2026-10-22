@@ -7,7 +7,7 @@ import { keys, queryClient, useConfig } from '../../api/queries.ts';
 import { FolderPicker } from '../FolderPicker/FolderPicker.tsx';
 import styles from './OpenFolder.module.css';
 
-/** Opens a folder from anywhere on disk, like VS Code's Open Folder (ADR-0031). */
+/** Opens a project folder from anywhere on disk, like VS Code's Open Folder (ADR-0032). */
 export function openFolder(path: string): Promise<{ id: string }> {
   return api('POST', '/api/projects/open', { path }, z.object({ id: z.string() })).then((r) => {
     void queryClient.invalidateQueries({ queryKey: keys.projects });
@@ -15,9 +15,9 @@ export function openFolder(path: string): Promise<{ id: string }> {
   });
 }
 
-/** Remove from list: Home forgets the folder; nothing on disk changes. */
-export function closeFolder(id: string): Promise<unknown> {
-  return api('POST', `/api/projects/${encodeURIComponent(id)}/close`, undefined).then(() =>
+/** Remove from Cherry: the project leaves the list; nothing on disk changes (ADR-0032). */
+export function removeProject(id: string): Promise<unknown> {
+  return api('POST', `/api/projects/${encodeURIComponent(id)}/remove`, undefined).then(() =>
     queryClient.invalidateQueries({ queryKey: keys.projects }),
   );
 }
@@ -80,8 +80,8 @@ function OpenFolderDialog({ onClose }: { onClose(): void }) {
           <div>
             <h3>Open folder</h3>
             <p className={styles.hint}>
-              A folder from anywhere on this machine joins Home as a project. Claude can read and
-              edit inside it, as in any project. From a terminal:{' '}
+              Pick a project folder anywhere on this machine. It joins your projects in Cherry, and
+              Claude can read and edit inside it. From a terminal:{' '}
               <span className="mono">cherry .</span>
             </p>
           </div>

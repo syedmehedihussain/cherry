@@ -216,12 +216,12 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   });
 
   // --- Projects ---
-  // Open folder (ADR-0031): a folder from anywhere joins Home; Remove from list forgets it.
+  // Open folder (ADR-0031, ADR-0032): a folder joins Cherry's list; Remove from Cherry forgets it.
   app.post('/api/projects/open', async (req) =>
     deps.projects.open(z.object({ path: z.string().min(1).max(4096) }).parse(req.body).path),
   );
-  app.post('/api/projects/:id/close', async (req) => {
-    await deps.projects.close(z.object({ id: z.string().min(1).max(200) }).parse(req.params).id);
+  app.post('/api/projects/:id/remove', async (req) => {
+    await deps.projects.remove(z.object({ id: z.string().min(1).max(200) }).parse(req.params).id);
     return { ok: true };
   });
   app.get('/api/projects', async () => ({

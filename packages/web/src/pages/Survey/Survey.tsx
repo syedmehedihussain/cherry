@@ -28,6 +28,7 @@ import { TopBar } from '../../components/TopBar/TopBar.tsx';
 import { tildify } from '../../lib/paths.ts';
 import { useNow } from '../../lib/useNow.ts';
 import { removeIdea } from '../../api/ideas.ts';
+import { FolderPicker } from '../../components/FolderPicker/FolderPicker.tsx';
 import styles from './Survey.module.css';
 
 const label = (n: number) => SURVEY_STEPS.find((s) => s.step === n)?.label ?? `Step ${n}`;
@@ -229,9 +230,15 @@ function IdeaStep({ state }: { state?: SurveyState }) {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const health = useHealth();
-  // The folder chosen at setup or in Settings → Projects folder, never a fixed ~/Projects.
+  // New projects go in the folder chosen at setup or in Settings (ADR-0032); Change picks
+  // another one for this project only.
   const config = useConfig();
-  const projectsDir = config.data ? `${tildify(config.data.resolvedProjectsDir)}/` : '…/';
+  const [parent, setParent] = useState<string | null>(null);
+  const [picking, setPicking] = useState(false);
+  const base = state
+    ? state.path.replace(/\/[^/]+\/?$/, '')
+    : (parent ?? config.data?.resolvedProjectsDir ?? null);
+  const projectsDir = base ? `${tildify(base)}/` : '…/';
   const [idea, setIdea] = useState(state?.idea ?? params.get('idea') ?? '');
   // From an idea on Home: its name becomes the folder name, and the idea goes once started.
   const fromIdea = state ? null : params.get('from');
@@ -257,7 +264,12 @@ function IdeaStep({ state }: { state?: SurveyState }) {
       if (state) {
         await answerStep(state.id, { step: 1, idea: idea.trim(), quick });
       } else {
-        const s = await startSurvey({ name: nameCheck.data, idea: idea.trim(), quick });
+        const s = await startSurvey({
+          name: nameCheck.data,
+          idea: idea.trim(),
+          quick,
+          ...(parent ? { parentDir: parent } : {}),
+        });
         void queryClient.invalidateQueries({ queryKey: ['projects'] });
         if (fromIdea) void removeIdea(fromIdea).catch(() => undefined);
         void navigate(`/new/${encodeURIComponent(s.id)}`, { replace: true });
@@ -317,6 +329,25 @@ function IdeaStep({ state }: { state?: SurveyState }) {
             <span className={styles.hint}>Lower case, digits and dashes.</span>
           )}
         </label>
+        {!state && (
+          <button
+            type="button"
+            className={styles.change}
+            aria-expanded={picking}
+            onClick={() => setPicking(!picking)}
+          >
+            {picking ? 'Done' : 'Change where it is created'}
+          </button>
+        )}
+        {picking && (
+          <FolderPicker
+            value={parent ?? config.data?.resolvedProjectsDir ?? '~'}
+            onChange={setParent}
+            label="Create the project in"
+            missingNote="This folder does not exist yet. Cherry will create it."
+            emptyNote="No folders inside."
+          />
+        )}
         <div className={styles.quick}>
           <Switch checked={quick} onChange={setQuick} label="Quick" />
           <span className={styles.hint}>

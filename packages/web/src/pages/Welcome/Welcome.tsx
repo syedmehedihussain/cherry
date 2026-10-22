@@ -52,7 +52,9 @@ export function Welcome() {
               A local workspace where Claude Code plans, documents and builds your projects.
             </p>
             <ul className={styles.points}>
-              <li>Every folder in your projects folder is a project.</li>
+              <li>
+                Open a project folder from anywhere, or start a new one. Cherry lists only those.
+              </li>
               <li>Chat with Claude. Nothing changes on disk until you approve it.</li>
               <li>Status and notes stay in each project&rsquo;s _project/ folder.</li>
             </ul>
@@ -61,14 +63,17 @@ export function Welcome() {
 
         {step === 1 && (
           <>
-            <h1>Where are your projects?</h1>
-            <p className={styles.lead}>Pick a folder, or type a new path and Cherry creates it.</p>
+            <h1>Where should new projects go?</h1>
+            <p className={styles.lead}>
+              Start project creates new projects here. You can pick another place for each one.
+              Cherry does not scan this folder.
+            </p>
             <FolderPicker
               value={folder}
               onChange={setDir}
-              label="Projects folder"
+              label="New projects folder"
               missingNote="This folder does not exist yet. Cherry will create it."
-              emptyNote="No folders inside. Projects you add will go here."
+              emptyNote="No folders inside. New projects will go here."
             />
           </>
         )}

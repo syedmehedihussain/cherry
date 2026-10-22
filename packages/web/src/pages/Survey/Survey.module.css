@@ -636,3 +636,16 @@
   flex-direction: column;
   gap: 8px;
 }
+
+.change {
+  align-self: flex-start;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent-text);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+.change:hover {
+  text-decoration: underline;
+}

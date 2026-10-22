@@ -5,6 +5,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  rmSync,
   writeFileSync,
 } from 'node:fs';
 import path from 'node:path';
@@ -30,7 +31,7 @@ import type { EventHub } from '../events.ts';
 import { run } from '../exec.ts';
 import { readJsonFile, writeFileAtomic } from '../fsutil.ts';
 import { badRequest, conflict, notFound } from '../http.ts';
-import { resolveInside, tildify } from '../paths.ts';
+import { expandHome, resolveInside, tildify } from '../paths.ts';
 import type { RunHandle, Runner } from '../claude/runner.ts';
 import type { ProjectService } from '../projects/service.ts';
 import {
@@ -294,17 +295,34 @@ export class SurveyService {
     }
   }
 
-  /** POST /api/survey: makes the folder with only `_project/survey.json` in it. */
-  async start(input: { name: string; idea: string; quick: boolean }): Promise<SurveyState> {
+  /**
+   * POST /api/survey: makes the folder (in the new projects folder, or `parentDir`) with only
+   * `_project/survey.json` in it, and adds it to Cherry's list (ADR-0032).
+   */
+  async start(input: {
+    name: string;
+    idea: string;
+    quick: boolean;
+    parentDir?: string;
+  }): Promise<SurveyState> {
+    const parent = input.parentDir
+      ? path.resolve(expandHome(input.parentDir))
+      : this.config.projectsDir();
     // The name passed ProjectNameSchema: no slashes, no leading dot, so this stays a direct child.
-    const dir = path.join(this.config.projectsDir(), ProjectNameSchema.parse(input.name));
-    if (existsSync(dir)) {
-      if (existsSync(this.file(input.name)))
-        throw conflict(`There is already a survey for ${input.name}. Open it from Home.`);
-      if (readdirSync(dir).length > 0)
-        throw conflict(`${tildify(dir)} already exists. Pick another name.`);
+    const dir = path.join(parent, ProjectNameSchema.parse(input.name));
+    if (existsSync(dir) && readdirSync(dir).length > 0) {
+      if (existsSync(path.join(dir, '_project', 'survey.json')))
+        throw conflict(`There is already a survey in ${tildify(dir)}. Open it from Home.`);
+      throw conflict(`${tildify(dir)} already exists. Pick another name.`);
     }
     mkdirSync(path.join(dir, '_project'), { recursive: true });
+    let id: string;
+    try {
+      ({ id } = this.projects.add(dir));
+    } catch (e) {
+      rmSync(dir, { recursive: true, force: true });
+      throw e;
+    }
     const now = isoNow();
     const file: SurveyFile = {
       schema: 1,
@@ -323,9 +341,10 @@ export class SurveyService {
       ],
       stale: [],
     };
-    this.save(input.name, file);
-    this.draft(input.name);
-    return this.state(input.name);
+    this.save(id, file);
+    void this.projects.rescan().catch(() => undefined);
+    this.draft(id);
+    return this.state(id);
   }
 
   /** Asks Claude for the current step's card (or the files at review). */

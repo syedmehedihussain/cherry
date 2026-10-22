@@ -57,6 +57,9 @@ describe('Magnet', () => {
       JSON.stringify({ schema: 1, name: 'core', phase: 'development' }),
     );
     write(path.join(core, '_project', 'STATUS.md'), '## Next steps\n- [ ] Ship it\n');
+    d.config.setProjects(
+      ['torongo', 'core'].map((id) => ({ id, path: path.join(d.projectsDir, id) })),
+    );
   });
   afterEach(() => d.cleanup());
 
@@ -76,9 +79,16 @@ describe('Magnet', () => {
     const s = await idle();
     const req = log.requests[0]!;
     expect(req.cwd).toBe(path.join(d.home, 'magnet'));
-    expect(req.additionalDirectories).toEqual([d.projectsDir]);
-    expect(req.appendSystemPrompt).toContain('- torongo · Not calibrated');
-    expect(req.appendSystemPrompt).toContain('- core · Ready · development');
+    expect(req.additionalDirectories).toEqual([
+      path.join(d.projectsDir, 'torongo'),
+      path.join(d.projectsDir, 'core'),
+    ]);
+    expect(req.appendSystemPrompt).toContain(
+      `- torongo (${path.join(d.projectsDir, 'torongo')}) · Not calibrated`,
+    );
+    expect(req.appendSystemPrompt).toContain(
+      `- core (${path.join(d.projectsDir, 'core')}) · Ready · development`,
+    );
     expect(s.items.find((i) => i.kind === 'projects')).toMatchObject({ ids: ['torongo'] });
     expect(s.items.some((i) => i.kind === 'text' && i.text.includes('not calibrated'))).toBe(true);
     expect(s.projects).toBe(2);

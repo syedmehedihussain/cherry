@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { SurveyFile, SurveyState } from '@cherry/shared';
@@ -149,6 +149,24 @@ describe('new project survey', () => {
     const r = await api('POST', '/api/survey', { name: 'taken', idea: 'x' });
     expect(r.status).toBe(409);
     expect(readFileSync(path.join(d.projectsDir, 'taken', 'README.md'), 'utf8')).toBe('hi');
+  });
+
+  it('creates in the new projects folder or a chosen one, and adds it to the list', async () => {
+    const r = await api('POST', '/api/survey', { name: 'review-qr', idea: 'QR codes' });
+    expect(r.body.path).toBe(path.join(d.projectsDir, 'review-qr'));
+    const elsewhere = path.join(d.home, '..', `cherry-elsewhere-${Date.now()}`);
+    const r2 = await api('POST', '/api/survey', {
+      name: 'review-qr',
+      idea: 'Another one',
+      parentDir: elsewhere,
+    });
+    // Same name in another folder: a new id, its own folder.
+    expect(r2.body).toMatchObject({ id: 'review-qr-2', path: path.join(elsewhere, 'review-qr') });
+    expect(existsSync(path.join(elsewhere, 'review-qr', '_project', 'survey.json'))).toBe(true);
+    expect(d.config.get().projects.map((p) => p.id)).toEqual(
+      expect.arrayContaining(['review-qr', 'review-qr-2']),
+    );
+    rmSync(elsewhere, { recursive: true, force: true });
   });
 
   it('saves every answer to survey.json and resumes after a restart', async () => {

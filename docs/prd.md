@@ -57,7 +57,7 @@ Priority: **P0** = MVP cannot ship without it. **P1** = MVP should have it. **P2
 
 | ID | Requirement | Pri |
 | --- | --- | --- |
-| H-1 | Scan the projects folder (default `~/Projects`) and list every direct sub-folder as a project. | P0 |
+| H-1 | List the projects in Cherry: folders the user opened or created (ADR-0032). Start empty; Open folder adds one, Remove from Cherry takes one out without touching the disk. | P0 |
 | H-2 | Sort each folder into **Ready**, **cctop**, or **Not calibrated** (rules in `project-standard.md`). | P0 |
 | H-3 | **Recent** section: 4 cards by last session, each with name, summary, state badge, phase bar, "Next:", git chip, "Last worked …". | P0 |
 | H-4 | **All projects** table: project, state, phase, stack tags, last worked, git, and a **Calibrate** button for not-calibrated rows. | P0 |

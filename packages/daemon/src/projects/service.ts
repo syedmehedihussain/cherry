@@ -1,4 +1,12 @@
 import { realpathSync } from 'node:fs';
+
+const safeReal = (p: string): string => {
+  try {
+    return realpathSync(p);
+  } catch {
+    return p;
+  }
+};
 import path from 'node:path';
 import type { ProjectCard } from '@cherry/shared';
 import type { ConfigStore } from '../config.ts';
@@ -8,7 +16,7 @@ import { writeProjectsMd } from '../magnet/files.ts';
 import { notFound } from '../http.ts';
 import { expandHome, tildify } from '../paths.ts';
 import { checkOpenable, folderId } from './opened.ts';
-import { listProjectDirs, scanProjects } from './scanner.ts';
+import { scanProjects } from './scanner.ts';
 
 /**
  * Owns the list of project cards: serves them from the SQLite cache, rescans in the background,
@@ -65,66 +73,49 @@ export class ProjectService {
     return this.scanning;
   }
 
-  /** Opened folders with absolute paths (ADR-0031). */
-  opened(): { id: string; dir: string }[] {
+  /** The projects in Cherry, with absolute paths (ADR-0032). */
+  listed(): { id: string; dir: string }[] {
     return this.config
       .get()
-      .openFolders.map((f) => ({ id: f.id, dir: path.resolve(expandHome(f.path)) }));
+      .projects.map((f) => ({ id: f.id, dir: path.resolve(expandHome(f.path)) }));
   }
 
   /**
-   * Open folder / `cherry .`: adds a folder from anywhere to Home. A direct child of the
-   * projects folder is already a project; its id comes back unchanged.
+   * Adds a folder to Cherry's list and returns its id: the folder name, made unique. A folder
+   * already listed keeps its id. Open folder, `cherry .` and Start project all come here.
    */
-  async open(raw: string): Promise<{ id: string }> {
-    const projectsDir = this.config.projectsDir();
-    const target = path.resolve(expandHome(raw.trim()));
-    let realProjects = projectsDir;
-    try {
-      realProjects = realpathSync(projectsDir);
-    } catch {
-      // not there yet
-    }
-    let realTarget = target;
-    try {
-      realTarget = realpathSync(target);
-    } catch {
-      // checkOpenable says it is not a folder
-    }
-    if (path.dirname(realTarget) === realProjects && !path.basename(realTarget).startsWith('.')) {
-      await this.rescan();
-      return { id: path.basename(realTarget) };
-    }
-    const dir = checkOpenable(target, { projectsDir, cherryHome: this.home });
-    const list = this.config.get().openFolders;
-    const known = list.find((f) => path.resolve(expandHome(f.path)) === dir);
+  add(raw: string): { id: string } {
+    const dir = checkOpenable(path.resolve(expandHome(raw.trim())), { cherryHome: this.home });
+    const list = this.config.get().projects;
+    const known = list.find((f) => safeReal(path.resolve(expandHome(f.path))) === dir);
     if (known) return { id: known.id };
-    const taken = new Set([
-      ...listProjectDirs(projectsDir, []).map((d) => path.basename(d)),
-      ...list.map((f) => f.id),
-    ]);
-    const id = folderId(path.basename(dir), taken);
-    this.config.setOpenFolders([...list, { id, path: tildify(dir) }]);
-    this.onOpenedChange?.();
-    await this.rescan();
+    const id = folderId(path.basename(dir), new Set(list.map((f) => f.id)));
+    this.config.setProjects([...list, { id, path: tildify(dir) }]);
+    this.onListChange?.();
     return { id };
   }
 
-  /** Remove from list: Home forgets the folder. Nothing on disk changes. */
-  async close(id: string): Promise<void> {
-    const list = this.config.get().openFolders;
-    if (!list.some((f) => f.id === id)) throw notFound(`${id} was not opened from another folder.`);
-    this.config.setOpenFolders(list.filter((f) => f.id !== id));
-    this.onOpenedChange?.();
+  /** Open folder / `cherry .`: adds the folder and refreshes Home. */
+  async open(raw: string): Promise<{ id: string }> {
+    const r = this.add(raw);
+    await this.rescan();
+    return r;
+  }
+
+  /** Remove from Cherry: the project leaves the list. Nothing on disk changes. */
+  async remove(id: string): Promise<void> {
+    const list = this.config.get().projects;
+    if (!list.some((f) => f.id === id)) throw notFound(`No project called ${id}`);
+    this.config.setProjects(list.filter((f) => f.id !== id));
+    this.onListChange?.();
     await this.rescan();
   }
 
-  /** The daemon re-watches opened folders when the list changes. */
-  onOpenedChange: (() => void) | null = null;
+  /** The daemon re-watches the project folders when the list changes. */
+  onListChange: (() => void) | null = null;
 
   private async doScan(): Promise<ProjectCard[]> {
-    const cfg = this.config.get();
-    const cards = await scanProjects(this.config.projectsDir(), cfg.scan.ignore, this.opened());
+    const cards = await scanProjects(this.listed());
     const changed = JSON.stringify(cards) !== JSON.stringify(this.cards);
     this.cards = cards;
     if (changed) {

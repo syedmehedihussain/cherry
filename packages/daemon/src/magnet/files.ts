@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
+import { tildify } from '../paths.ts';
 import { PHASE_LABEL, STATE_LABEL, gitChip, relativeTime, type ProjectCard } from '@cherry/shared';
 import { writeFileAtomic } from '../fsutil.ts';
 
@@ -43,7 +44,7 @@ export function ensureMagnetFiles(home: string): void {
 /** One line per project (docs/data-model.md §6). */
 export function projectLine(card: ProjectCard, now = Date.now()): string {
   const parts = [
-    card.id,
+    `${card.id} (${tildify(card.path)})`,
     card.draft ? 'Survey draft (new project, not created yet)' : STATE_LABEL[card.state],
     card.phase ? PHASE_LABEL[card.phase].toLowerCase() : 'phase unknown',
   ];

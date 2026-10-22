@@ -13,7 +13,7 @@ describe('folderId', () => {
   });
 });
 
-describe('Open folder (ADR-0031)', () => {
+describe('Project list (ADR-0032)', () => {
   let d: TestDaemon;
   let cookie: string;
   let outside: string;
@@ -30,6 +30,7 @@ describe('Open folder (ADR-0031)', () => {
 
   beforeEach(async () => {
     d = await testDaemon();
+    d.config.setProjects([]);
     cookie = await d.login();
     mkdirSync(path.join(d.projectsDir, 'core'));
     outside = tempDir('cherry-outside-');
@@ -40,41 +41,44 @@ describe('Open folder (ADR-0031)', () => {
     rmSync(outside, { recursive: true, force: true });
   });
 
-  it('opens a folder from anywhere; it works like any project; Remove from list forgets it', async () => {
+  it('starts empty: folders in the new projects folder are not listed', async () => {
+    expect(await cards()).toEqual([]);
+    expect((await api('GET', '/api/projects/core')).status).toBe(404);
+  });
+
+  it('Open folder adds a folder from anywhere; Remove from Cherry forgets it', async () => {
     const dir = path.join(outside, 'core');
-    const r = await api('POST', '/api/projects/open', { path: dir });
-    // "core" is taken by the projects folder, so the opened one gets core-2.
-    expect(r.body).toEqual({ id: 'core-2' });
-    const card = (await cards()).find((c) => c.id === 'core-2');
-    expect(card).toMatchObject({ opened: true, name: 'core-2' });
-    expect((await cards()).find((c) => c.id === 'core')).toMatchObject({ opened: false });
-    const tree = await api('GET', '/api/projects/core-2/tree');
+    expect((await api('POST', '/api/projects/open', { path: dir })).body).toEqual({ id: 'core' });
+    expect((await cards()).map((c) => c.id)).toEqual(['core']);
+    const tree = await api('GET', '/api/projects/core/tree');
     expect(tree.status).toBe(200);
     expect(JSON.stringify(tree.body)).toContain('README.md');
-    expect(JSON.parse(readFileSync(path.join(d.home, 'config.json'), 'utf8')).openFolders).toEqual([
-      { id: 'core-2', path: dir },
+    expect(JSON.parse(readFileSync(path.join(d.home, 'config.json'), 'utf8')).projects).toEqual([
+      { id: 'core', path: dir },
     ]);
+    // Opening it again gives the same id; another folder with the same name gets core-2.
+    expect((await api('POST', '/api/projects/open', { path: dir })).body).toEqual({ id: 'core' });
+    const r = await api('POST', '/api/projects/open', { path: path.join(d.projectsDir, 'core') });
+    expect(r.body).toEqual({ id: 'core-2' });
 
-    // Opening it again gives the same id.
-    expect((await api('POST', '/api/projects/open', { path: dir })).body).toEqual({ id: 'core-2' });
-
-    expect((await api('POST', '/api/projects/core-2/close')).status).toBe(200);
-    expect((await cards()).some((c) => c.id === 'core-2')).toBe(false);
-    expect((await api('GET', '/api/projects/core-2')).status).toBe(404);
+    expect((await api('POST', '/api/projects/core/remove')).status).toBe(200);
+    expect((await cards()).map((c) => c.id)).toEqual(['core-2']);
+    expect((await api('GET', '/api/projects/core')).status).toBe(404);
     expect(existsSync(path.join(dir, 'README.md'))).toBe(true);
-    // Only opened folders can be removed from the list.
-    expect((await api('POST', '/api/projects/core/close')).status).toBe(404);
+    expect((await api('POST', '/api/projects/nope/remove')).status).toBe(404);
   });
 
-  it('a folder inside the projects folder is already a project', async () => {
-    const r = await api('POST', '/api/projects/open', {
-      path: path.join(d.projectsDir, 'core'),
-    });
-    expect(r.body).toEqual({ id: 'core' });
-    expect(d.config.get().openFolders).toEqual([]);
+  it('a listed folder that was moved shows as missing and can be removed', async () => {
+    const dir = path.join(outside, 'core');
+    await api('POST', '/api/projects/open', { path: dir });
+    rmSync(dir, { recursive: true });
+    await d.projects.rescan();
+    expect((await cards())[0]).toMatchObject({ id: 'core', missing: true });
+    expect((await api('POST', '/api/projects/core/remove')).status).toBe(200);
+    expect(await cards()).toEqual([]);
   });
 
-  it("refuses the disk, Cherry's folder, a folder holding the projects folder, and files", async () => {
+  it("refuses the disk, Cherry's folder and anything that is not a folder", async () => {
     const refuse = async (p: string, msg: RegExp) => {
       const r = await api('POST', '/api/projects/open', { path: p });
       expect(r.status).toBe(400);
@@ -82,12 +86,9 @@ describe('Open folder (ADR-0031)', () => {
     };
     await refuse('/', /whole disk/);
     await refuse(d.home, /Cherry's own data/);
-    // /tmp holds both test folders, so either reason may come first.
-    await refuse(path.dirname(d.projectsDir), /holds your projects folder|Cherry's own data/);
-    await refuse(d.projectsDir, /your projects folder/);
     await refuse(path.join(outside, 'core', 'README.md'), /not a folder/);
     await refuse(path.join(outside, 'nope'), /not a folder/);
-    expect(d.config.get().openFolders).toEqual([]);
+    expect(d.config.get().projects).toEqual([]);
   });
 
   it('the CLI opens a folder with its secret', async () => {
@@ -97,7 +98,7 @@ describe('Open folder (ADR-0031)', () => {
       headers: { host: HOST, 'x-cherry-cli': d.cliSecret },
       payload: { path: path.join(outside, 'core') },
     });
-    expect(res.json()).toEqual({ id: 'core-2' });
+    expect(res.json()).toEqual({ id: 'core' });
     const denied = await d.app.inject({
       method: 'POST',
       url: '/api/cli/open-folder',

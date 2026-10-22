@@ -32,7 +32,7 @@ Routes are hash-free client routes served by the daemon.
 Behaviour
 - Typing in the prompt with **New project** selected and pressing send = start the survey with
   that text as the idea. **Ask Magnet** sends it to Magnet (opens the panel). **Calibrate a
-  folder** opens a folder picker limited to the projects folder.
+  folder** picks one of the projects in Cherry that is not set up yet.
 - Clicking a card: Ready/cctop → workspace. Not calibrated → calibration prompt.
 
 States

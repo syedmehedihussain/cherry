@@ -50,7 +50,7 @@ same `~/.cherry`); run `cherry down` first. The repo's `CLAUDE.md` has the dev r
 | `<project>/_project/` | personal notes, git-excluded: `STATUS.md` (where we left off, next steps), `project.json` (phase, stack), `tasks.json`, `notes.md`, `survey.json`, `decisions.md` |
 | `<project>/CLAUDE.md`, `docs/` | committed docs; the Docs tab lists them (ADRs in `docs/adr/`) |
 | `<project>/cherry/` | git-ignored: `uploads/` (chat attachments), `reports/<agent>/<date>.md` (scan reports) |
-| `~/.cherry/config.json` | projects folder, default model, agent limits |
+| `~/.cherry/config.json` | the project list (`projects`), the new projects folder, default model, agent limits |
 | `~/.cherry/agents/*.md` | custom scan agents |
 | `~/.cherry/magnet/` | Magnet's profile: `MAGNET.md`, `me.md`, `work.md`, generated `projects.md` |
 | `~/.cherry/run/daemon.json` | port, pid and CLI secret of the running daemon (0600) |
@@ -178,4 +178,4 @@ the report format, so its body does not need to repeat it.
 | "Claude Code not found" / not signed in | install Claude Code, run `claude auth login`, then "Check again" or `cherry doctor` |
 | Agent: "Agents need a git repository" / "Make a first commit" | `git init` and commit once in the project |
 | Scan ends "Did not finish" | open the report for the error; usually Claude sign-in or a stop; run it again |
-| Project missing on Home | it must be a folder directly in the projects folder; Home rescans on changes |
+| Project missing on Home | Cherry lists only opened or created projects: **Open folder…** on Home or `cherry .` in the folder (ADR-0032) |

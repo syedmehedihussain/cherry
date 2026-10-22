@@ -44,7 +44,7 @@ function describe(
     case 'calibrate':
       return {
         title: `Magnet wants to start calibration in ${projectId}`,
-        detail: `Reads ${tildify(path.join(projectsDir, projectId ?? ''))} and proposes project files. Nothing is written until you approve the files.`,
+        detail: `Reads ${projectId ? folderOf(projectsDir, projectId) : 'the project'} and proposes project files. Nothing is written until you approve the files.`,
       };
     case 'start_agent':
       return {
@@ -85,7 +85,7 @@ function magnetSystemPrompt(o: {
     o.projectsMd,
     '',
     '## How you work',
-    `- Projects live in ${o.projectsDir}/<id>. For details read <id>/_project/STATUS.md, <id>/_project/project.json, <id>/_project/survey.json and files in <id>/docs/. Read only what you need.`,
+    `- Each project's folder is in brackets in the list above (new projects are created in ${o.projectsDir}). For details read <folder>/_project/STATUS.md, <folder>/_project/project.json, <folder>/_project/survey.json and files in <folder>/docs/. Read only what you need.`,
     '- You cannot run commands. Git state (changes, ahead, behind) and last activity are already in the projects list above; use it.',
     '- Answer in a few short sentences. Name the project first, then the problem.',
     '- When you talk about specific projects, call show_projects with their ids so the user sees cards they can click.',
@@ -108,6 +108,15 @@ interface Live {
  * Magnet (prd.md M-1 to M-5): one conversation across all projects, read-only. Writes, agent
  * starts and pushes become proposed-action cards that call the real services after Approve.
  */
+/** A project's folder for a card text, or its id when it is not in the list any more. */
+function folderOf(projectsDir: string, id: string): string {
+  try {
+    return tildify(projectDir(projectsDir, id));
+  } catch {
+    return id;
+  }
+}
+
 export class MagnetService {
   private live: Live | null = null;
 
@@ -237,8 +246,8 @@ export class MagnetService {
       ? `(I am looking at the project "${body.projectId}".)\n\n${body.text}`
       : body.text;
     const projectsDir = this.config.projectsDir();
-    // Folders opened from elsewhere are projects too (ADR-0031).
-    const opened = this.config.get().openFolders.map((f) => path.resolve(expandHome(f.path)));
+    // Magnet reads the folders in Cherry's project list (ADR-0032).
+    const opened = this.config.get().projects.map((f) => path.resolve(expandHome(f.path)));
     const magnet = this.dir();
     let finished = false;
     const handle = this.runner({
@@ -255,7 +264,7 @@ export class MagnetService {
         now: new Date(),
       }),
       allowedTools: READ_TOOLS,
-      additionalDirectories: [projectsDir, ...opened],
+      additionalDirectories: opened,
       decisions: false,
       guard: (tool, input) => {
         if (tool.startsWith('mcp__cherry__')) return null;
@@ -265,9 +274,9 @@ export class MagnetService {
           const inside = (root: string) => isInside(root, path.resolve(magnet, p));
           if (EDIT_TOOLS.has(tool))
             return inside(magnet) ? null : 'Magnet may only edit its own notes.';
-          return inside(projectsDir) || inside(magnet) || opened.some(inside)
+          return inside(magnet) || opened.some(inside)
             ? null
-            : 'Magnet only reads the projects, the folders opened in Cherry, and its own notes.';
+            : "Magnet only reads the projects in Cherry's list and its own notes.";
         }
         return 'Magnet is read-only: it reads files and proposes actions, nothing else.';
       },

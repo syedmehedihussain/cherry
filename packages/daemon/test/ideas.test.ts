@@ -2,6 +2,7 @@ import { readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { HOST, ORIGIN, testDaemon, type TestDaemon } from './helpers.ts';
+import { TEST_PROJECTS } from './helpers.ts';
 
 describe('project ideas (ADR-0027)', () => {
   let d: TestDaemon | null = null;
@@ -53,8 +54,8 @@ describe('project ideas (ADR-0027)', () => {
     expect(saved.schema).toBe(1);
     expect(saved.ideas).toHaveLength(1);
     expect(statSync(file).mode & 0o777).toBe(0o600);
-    // No folder is made for an idea.
-    expect((await call('GET', '/api/projects')).json().cards).toEqual([]);
+    // No folder is made for an idea, and nothing joins the project list.
+    expect(d.config.get().projects.map((p) => p.id)).toEqual([...TEST_PROJECTS]);
   });
 
   it('refuses an empty name, a bad id and never overwrites a broken file', async () => {

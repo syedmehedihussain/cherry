@@ -32,7 +32,7 @@ const GROUPS: { title: string | null; items: [string, string][] }[] = [
   {
     title: 'Connections',
     items: [
-      ['folder', 'Projects folder'],
+      ['folder', 'New projects folder'],
       ['claude', 'Claude Code'],
       ['github', 'GitHub'],
     ],
@@ -241,10 +241,12 @@ function FolderSection() {
   const v = value ?? config.data.projectsDir;
   return (
     <section className={styles.section}>
-      <h1>Projects folder</h1>
+      <h1>New projects folder</h1>
       <p className={styles.lead}>
-        Every direct sub-folder is a project. Now reading{' '}
-        <span className="mono">{tildify(config.data.resolvedProjectsDir)}</span>.
+        Start project creates new projects in{' '}
+        <span className="mono">{tildify(config.data.resolvedProjectsDir)}</span>. You can pick
+        another place for each one. Cherry does not scan this folder; Home lists only the projects
+        you open or create.
       </p>
       <form
         className={styles.inline}
@@ -254,7 +256,7 @@ function FolderSection() {
         }}
       >
         <label className="sr-only" htmlFor="projects-dir">
-          Projects folder
+          New projects folder
         </label>
         <input
           id="projects-dir"

@@ -25,18 +25,23 @@ describe('project scanner', () => {
     );
     write(path.join(p('plain'), 'README.md'), '# plain');
     write(path.join(p('broken'), '_project', 'project.json'), '{ not json');
-    write(path.join(p('.hidden'), 'x'), 'x');
-    write(path.join(p('ignored-one'), 'x'), 'x');
+    write(path.join(p('not-listed'), 'x'), 'x');
     gitInit(p('repo'));
     write(path.join(p('repo'), 'new.txt'), 'x');
-    d.config.update({ scan: { ignore: ['ignored-one'] } });
+    // Only the projects in Cherry's list count (ADR-0032); "gone" was moved away.
+    d.config.setProjects(
+      ['ready', 'notes', 'plain', 'broken', 'repo', 'gone'].map((id) => ({ id, path: p(id) })),
+    );
   });
+  const listed = () => d.projects.listed();
   afterAll(() => d.cleanup());
 
-  it('sorts every folder into a state', async () => {
-    const cards = await scanProjects(d.projectsDir, ['ignored-one']);
+  it('sorts every listed folder into a state; a gone folder shows as missing', async () => {
+    const cards = await scanProjects(listed());
     const byId = Object.fromEntries(cards.map((c) => [c.id, c]));
-    expect(Object.keys(byId).sort()).toEqual(['broken', 'notes', 'plain', 'ready', 'repo']);
+    expect(Object.keys(byId).sort()).toEqual(['broken', 'gone', 'notes', 'plain', 'ready', 'repo']);
+    expect(byId.gone).toMatchObject({ missing: true, git: null });
+    expect(byId.ready?.missing).toBe(false);
     expect(byId.ready?.state).toBe('ready');
     expect(byId.ready?.phase).toBe('development');
     expect(byId.ready?.nextStep).toBe('Ship it');
@@ -49,7 +54,7 @@ describe('project scanner', () => {
   });
 
   it('reads git state', async () => {
-    const cards = await scanProjects(d.projectsDir, []);
+    const cards = await scanProjects(listed());
     const repo = cards.find((c) => c.id === 'repo');
     expect(repo?.git).toEqual({ branch: 'main', ahead: 0, behind: 0, changes: 1, remote: false });
     expect(cards.find((c) => c.id === 'plain')?.git).toBeNull();
@@ -63,9 +68,12 @@ describe('project scanner', () => {
       headers: { host: HOST, cookie },
     });
     expect(res.statusCode).toBe(200);
-    expect(res.json().cards).toHaveLength(5);
+    expect(res.json().cards).toHaveLength(6);
     const { readFileSync } = await import('node:fs');
     const md = readFileSync(path.join(d.home, 'magnet', 'projects.md'), 'utf8');
-    expect(md).toContain('- ready · Ready · development · Node 22 · git: No git');
+    expect(md).toContain(
+      `- ready (${path.join(d.projectsDir, 'ready')}) · Ready · development · Node 22 · git: No git`,
+    );
+    expect(md).not.toContain('not-listed');
   });
 });

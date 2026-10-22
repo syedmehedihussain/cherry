@@ -6,12 +6,14 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
-- **Open any folder**: **Open folder…** on Home and `cherry .` / `cherry open <folder>` in a
-  terminal add a folder from anywhere next to your projects, like VS Code's Open Folder. It
-  shows as "opened"; **Remove from list** forgets it without touching the disk. Cherry refuses
-  `/`, your home folder, `~/.cherry` and any folder that holds your projects folder (ADR-0031).
-  If you installed the `cherry` command before, run `scripts/install-cli.sh` again so `cherry .`
-  knows which folder you are in.
+- **Projects work like VS Code's recent projects** (ADR-0032). Cherry no longer lists every
+  folder in `~/Projects`: it starts empty and lists only the projects you open or create.
+  **Open folder…** on Home or `cherry .` / `cherry open <folder>` in a terminal opens a folder
+  from anywhere; **Remove** takes a project out of Cherry and leaves the folder alone. A folder
+  that was moved shows as "folder gone". The projects folder is now the **new projects folder**
+  where Start project creates projects, and the survey can create one somewhere else. After
+  this update Home is empty until you open your projects again. If you installed the `cherry`
+  command before, run `scripts/install-cli.sh` again so `cherry .` knows which folder you are in.
 - **Notifications**: a toast, a desktop notification while the tab is in the background
   (Settings → General, nothing leaves the machine) and a count in the tab title when an agent is
   done, fails or needs you, a scan finishes, Claude proposes a decision, a chat reply is ready,

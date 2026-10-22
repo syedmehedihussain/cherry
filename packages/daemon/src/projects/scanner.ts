@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import path from 'node:path';
 import {
   ProjectJsonSchema,
@@ -75,8 +75,8 @@ function lastSessionTime(dir: string): number | null {
   }
 }
 
-export async function buildCard(dir: string, openedId?: string): Promise<ProjectCard> {
-  const id = openedId ?? path.basename(dir);
+export async function buildCard(dir: string, listedId?: string): Promise<ProjectCard> {
+  const id = listedId ?? path.basename(dir);
   const files = readProjectFiles(dir);
   const { projectJson, status } = files;
   const state = projectJson ? 'ready' : status ? 'cctop' : 'uncalibrated';
@@ -105,32 +105,40 @@ export async function buildCard(dir: string, openedId?: string): Promise<Project
     lastWorked,
     projectJsonError: files.projectJsonError,
     draft: draftIdea !== null,
-    opened: openedId !== undefined,
+    missing: false,
   };
 }
 
-/** Direct sub-folders of the projects folder, minus dot-folders and `scan.ignore`. */
-export function listProjectDirs(projectsDir: string, ignore: string[]): string[] {
-  if (!existsSync(projectsDir)) return [];
-  return readdirSync(projectsDir, { withFileTypes: true })
-    .filter((e) => e.isDirectory() && !e.name.startsWith('.') && !ignore.includes(e.name))
-    .map((e) => path.join(projectsDir, e.name));
+function missingCard(id: string, dir: string): ProjectCard {
+  return {
+    id,
+    name: id,
+    path: dir,
+    state: 'uncalibrated',
+    phase: null,
+    summary: 'The folder is gone. It was moved or deleted.',
+    stack: [],
+    nextStep: null,
+    leftOff: null,
+    git: null,
+    lastWorked: null,
+    projectJsonError: false,
+    draft: false,
+    missing: true,
+  };
 }
 
+/** A card for every project in Cherry's list (ADR-0032). Folders that are gone are left out. */
 export async function scanProjects(
-  projectsDir: string,
-  ignore: string[],
-  opened: { id: string; dir: string }[] = [],
+  projects: { id: string; dir: string }[],
 ): Promise<ProjectCard[]> {
-  const dirs = listProjectDirs(projectsDir, ignore);
-  const openedIds = new Set(opened.map((f) => f.id));
-  // A folder removed while the scan runs is left out, not an error.
-  const safe = (p: Promise<ProjectCard>) => p.catch(() => null);
-  const found = await Promise.all([
-    // An opened folder wins when a projects-folder child has the same name (projectDir does too).
-    ...dirs.filter((d) => !openedIds.has(path.basename(d))).map((d) => safe(buildCard(d))),
-    ...opened.map((f) => safe(buildCard(f.dir, f.id))),
-  ]);
-  const cards = found.filter((c): c is ProjectCard => c !== null);
+  // A folder that is gone (or goes while the scan runs) still shows, so it can be removed.
+  const cards = await Promise.all(
+    projects.map((f) =>
+      existsSync(f.dir)
+        ? buildCard(f.dir, f.id).catch(() => missingCard(f.id, f.dir))
+        : missingCard(f.id, f.dir),
+    ),
+  );
   return cards.sort((a, b) => (b.lastWorked ?? 0) - (a.lastWorked ?? 0));
 }

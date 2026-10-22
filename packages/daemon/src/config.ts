@@ -3,7 +3,7 @@ import path from 'node:path';
 import { ConfigSchema, type Config, type ConfigPatch } from '@cherry/shared';
 import { readJsonFile, writeFileAtomic } from './fsutil.ts';
 import { expandHome } from './paths.ts';
-import { registerOpened } from './projects/opened.ts';
+import { registerProjects } from './projects/opened.ts';
 
 const DEFAULT_WORKTREE_DIR = '~/Projects/.cherry-worktrees';
 
@@ -19,17 +19,17 @@ export class ConfigStore {
     this.register();
   }
 
-  /** Lets projectDir() find opened folders (ADR-0031). */
+  /** Lets projectDir() find the projects in Cherry (ADR-0032). */
   private register(): void {
-    registerOpened(
+    registerProjects(
       this.projectsDir(),
-      this.current.openFolders.map((f) => ({ id: f.id, dir: path.resolve(expandHome(f.path)) })),
+      this.current.projects.map((f) => ({ id: f.id, dir: path.resolve(expandHome(f.path)) })),
     );
   }
 
-  /** Replaces the list of opened folders (Open folder, `cherry .`, Remove from list). */
-  setOpenFolders(list: Config['openFolders']): Config {
-    const next = ConfigSchema.parse({ ...this.current, openFolders: list });
+  /** Replaces the project list (Open folder, `cherry .`, Start project, Remove from Cherry). */
+  setProjects(list: Config['projects']): Config {
+    const next = ConfigSchema.parse({ ...this.current, projects: list });
     writeFileAtomic(this.file, JSON.stringify(next, null, 2) + '\n', 0o600);
     this.current = next;
     this.register();

@@ -14,8 +14,9 @@ Errors use one shape:
 { "error": { "code": "not_found", "message": "No project called atlas" } }
 ```
 
-Project ids are folder names. The path guard rejects any id or file path that resolves outside
-the projects folder (see `security.md`).
+Project ids come from Cherry's project list (`config.json` → `projects`, ADR-0032): the folder
+name, made unique. The path guard rejects any file path that resolves outside the project's
+folder (see `security.md`).
 
 ## System
 
@@ -34,9 +35,9 @@ the projects folder (see `security.md`).
 
 | Method | Path | Returns / does |
 | --- | --- | --- |
-| GET | `/api/projects` | `ProjectCard[]` sorted by last worked; cards opened from elsewhere have `opened: true` |
-| POST | `/api/projects/open` | `{ path }` → `{ id }`: Open folder adds a folder from anywhere to Home. A direct child of the projects folder returns its own id. Refuses `/`, the home folder, `~/.cherry`, the projects folder and any folder holding it (ADR-0031) |
-| POST | `/api/projects/:id/close` | Remove from list: forgets an opened folder; the disk is not touched; 404 for other projects |
+| GET | `/api/projects` | `ProjectCard[]` for the projects in Cherry's list, sorted by last worked; a folder that is gone has `missing: true` |
+| POST | `/api/projects/open` | `{ path }` → `{ id }`: Open folder adds a folder from anywhere to Cherry's list (an already listed folder keeps its id). Refuses `/`, the home folder and `~/.cherry` (ADR-0032) |
+| POST | `/api/projects/:id/remove` | Remove from Cherry: the project leaves the list; the disk is not touched |
 | POST | `/api/projects/rescan` | starts a rescan; results arrive as events |
 | GET | `/api/projects/:id` | `ProjectDetail` (card + status + docs list + git) |
 | GET | `/api/projects/:id/tree?path=` | one directory level with git status per entry |

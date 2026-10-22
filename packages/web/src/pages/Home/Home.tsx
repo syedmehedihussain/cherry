@@ -1,7 +1,6 @@
 import { ArrowDown, Plus, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { tildify } from '../../lib/paths.ts';
 import { recheckHealth, useHealth, useProjects } from '../../api/queries.ts';
 import { ClaudeMissingBanner } from '../../components/Banner/Banner.tsx';
 import { Wordmark } from '../../components/Brand/Brand.tsx';
@@ -34,7 +33,7 @@ export function Home() {
   const claudeMissing = health.data
     ? !(health.data.claude.found && health.data.claude.loggedIn)
     : false;
-  const recent = cards.slice(0, 4);
+  const recent = cards.filter((c) => !c.missing).slice(0, 4);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list = q
@@ -44,7 +43,6 @@ export function Home() {
       : cards;
     return sort === 'name' ? [...list].sort((a, b) => a.name.localeCompare(b.name)) : list;
   }, [cards, query, sort]);
-  const projectsDir = projects.data ? tildify(projects.data.projectsDir) : '~/Projects';
   const empty = projects.isSuccess && cards.length === 0;
 
   const checkAgain = async () => {
@@ -104,10 +102,11 @@ export function Home() {
               <MagnetAvatar size={48} display={38} />
             </span>
             <div className={styles.emptyText}>
-              <h2>
-                Your <span className="mono">{projectsDir}</span> folder is empty
-              </h2>
-              <p>Every folder you put there shows up here as a project.</p>
+              <h2>No projects yet</h2>
+              <p>
+                Open a project folder from anywhere, like in VS Code, or start a new one. Only the
+                projects you open or create show here.
+              </p>
             </div>
             <div className={styles.emptyActions}>
               <Link
@@ -120,9 +119,6 @@ export function Home() {
                 Start project
               </Link>
               <OpenFolderButton />
-              <Link to="/settings/folder" className="btn btn-ghost btn-lg">
-                Choose another projects folder
-              </Link>
             </div>
           </section>
         ) : null}
@@ -148,8 +144,8 @@ export function Home() {
                 <div className={styles.titleRow}>
                   <h2 id="all">All projects</h2>
                   <span className={styles.meta}>
-                    {cards.length} folder{cards.length === 1 ? '' : 's'} in{' '}
-                    <span className="mono">{projectsDir}</span>
+                    {cards.length} project{cards.length === 1 ? '' : 's'} in Cherry. Remove takes
+                    one off the list; the folder stays on disk.
                   </span>
                 </div>
                 <div className={styles.tools}>

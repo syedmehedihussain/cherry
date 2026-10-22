@@ -120,7 +120,10 @@ export const SurveyStateSchema = z.object({
 });
 export type SurveyState = z.infer<typeof SurveyStateSchema>;
 
-export const SurveyStartSchema = NameIdeaSchema;
+/** Start project: the name and idea, and where to create the folder (default: the new projects folder). */
+export const SurveyStartSchema = NameIdeaSchema.extend({
+  parentDir: z.string().trim().min(1).max(4096).optional(),
+});
 export const SurveyAnswerInputSchema = z.union([
   z.object({
     step: z.literal(1),

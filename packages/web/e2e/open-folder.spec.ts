@@ -10,8 +10,8 @@ test.beforeAll(() => {
 });
 test.afterAll(() => rmSync(path.join(E2E_ROOT, 'elsewhere'), { recursive: true, force: true }));
 
-// Open folder (ADR-0031): a folder outside the projects folder joins Home, then leaves it again.
-test('open a folder from anywhere, work in it, and remove it from the list', async ({ page }) => {
+// Open folder (ADR-0032): a folder from anywhere joins Cherry's list, then leaves it again.
+test('open a folder from anywhere, work in it, and remove it from Cherry', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
   await page.getByRole('button', { name: 'Open folder…' }).first().click();
   const dialog = page.getByRole('dialog', { name: 'Open folder' });
@@ -27,8 +27,7 @@ test('open a folder from anywhere, work in it, and remove it from the list', asy
     .getByRole('table')
     .getByRole('row')
     .filter({ has: page.getByRole('link', { name: 'notes-app', exact: true }) });
-  await expect(row).toContainText('opened');
-  await row.getByRole('button', { name: 'Remove notes-app from the list' }).click();
+  await row.getByRole('button', { name: 'Remove notes-app from Cherry' }).click();
   await expect(row).toHaveCount(0);
   expect(existsSync(path.join(outside, 'README.md'))).toBe(true);
 

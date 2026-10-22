@@ -20,8 +20,12 @@ const put = (s: SurveyState) => {
   return s;
 };
 
-export const startSurvey = (body: { name: string; idea: string; quick: boolean }) =>
-  api('POST', '/api/survey', body, SurveyStateSchema).then(put);
+export const startSurvey = (body: {
+  name: string;
+  idea: string;
+  quick: boolean;
+  parentDir?: string;
+}) => api('POST', '/api/survey', body, SurveyStateSchema).then(put);
 export const nextCard = (id: string, fresh = false) =>
   api('POST', `${base(id)}/next`, { fresh }, SurveyStateSchema).then(put);
 export const answerStep = (id: string, body: SurveyAnswerInput) =>

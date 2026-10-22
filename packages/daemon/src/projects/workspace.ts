@@ -23,7 +23,7 @@ import { git, gitStatus } from '../git.ts';
 import { writeFileAtomic } from '../fsutil.ts';
 import { badRequest, conflict, notFound } from '../http.ts';
 import { isSecretFile, resolveInside } from '../paths.ts';
-import { openedDir } from './opened.ts';
+import { registeredDir } from './opened.ts';
 
 export const IGNORED_DIRS = new Set([
   'node_modules',
@@ -40,24 +40,14 @@ export const IGNORED_DIRS = new Set([
 ]);
 const MAX_FILE_BYTES = 1024 * 1024;
 
-/**
- * The project folder for an id: a folder opened from elsewhere (ADR-0031), or a direct child of
- * the projects folder.
- */
+/** The folder of a project in Cherry's list (ADR-0032), or 404. */
 export function projectDir(projectsDir: string, id: string): string {
   if (!id || id.startsWith('.') || id.includes('/') || id.includes('\\'))
     throw notFound(`No project called ${id}`);
-  const opened = openedDir(projectsDir, id);
-  if (opened) {
-    if (!existsSync(opened) || !statSync(opened).isDirectory())
-      throw notFound(`No project called ${id}`);
-    return safeReal(opened);
-  }
-  const dir = resolveInside(projectsDir, id);
-  if (path.dirname(dir) !== safeReal(path.resolve(projectsDir)))
+  const dir = registeredDir(projectsDir, id);
+  if (!dir || !existsSync(dir) || !statSync(dir).isDirectory())
     throw notFound(`No project called ${id}`);
-  if (!existsSync(dir) || !statSync(dir).isDirectory()) throw notFound(`No project called ${id}`);
-  return dir;
+  return safeReal(dir);
 }
 
 function safeReal(p: string): string {

@@ -1,6 +1,6 @@
 # 0031 — Open any folder, next to the projects folder
 
-- **Status:** Accepted
+- **Status:** Superseded by 0032
 - **Date:** 2026-10-22
 - **Decided by:** Meddy
 

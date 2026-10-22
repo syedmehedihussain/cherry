@@ -18,6 +18,7 @@ export type Health = z.infer<typeof HealthSchema>;
 /** `~/.cherry/config.json` (docs/data-model.md §5). */
 export const ConfigSchema = z.object({
   schema: z.literal(1).default(1),
+  /** Where Start project creates new projects (ADR-0032). Cherry does not scan it. */
   projectsDir: z.string().default('~/Projects'),
   port: z.number().int().default(4317),
   scan: z.object({ ignore: z.array(z.string()).default([]) }).default({ ignore: [] }),
@@ -33,8 +34,8 @@ export const ConfigSchema = z.object({
   magnet: z.object({ readOnly: z.boolean().default(true) }).default({ readOnly: true }),
   /** False only on a fresh install, until the welcome screen is finished. */
   onboarded: z.boolean().default(true),
-  /** Folders opened from elsewhere on disk, next to the projects folder (ADR-0031). */
-  openFolders: z.array(z.object({ id: z.string().min(1), path: z.string().min(1) })).default([]),
+  /** The projects in Cherry: opened (Open folder, `cherry .`) or created (ADR-0032). */
+  projects: z.array(z.object({ id: z.string().min(1), path: z.string().min(1) })).default([]),
 });
 export type Config = z.infer<typeof ConfigSchema>;
 

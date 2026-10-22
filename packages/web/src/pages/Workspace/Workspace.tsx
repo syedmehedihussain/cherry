@@ -136,10 +136,10 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
       <div className={styles.page}>
         <TopBar crumbs={[{ label: 'Projects', href: '/' }, { label: id }]} />
         <div className={styles.gone}>
-          <h1>{gone ? 'This folder is gone' : 'Could not open this project'}</h1>
+          <h1>{gone ? 'This project is not in Cherry' : 'Could not open this project'}</h1>
           <p>
             {gone
-              ? `There is no folder called ${id} in your projects folder any more.`
+              ? `${id} is not in Cherry's list, or its folder was moved. Open it again from Home.`
               : (detail.error as Error).message}
           </p>
           <Link to="/" className="btn btn-secondary btn-md">

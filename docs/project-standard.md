@@ -1,6 +1,6 @@
 # The project folder standard
 
-Every direct sub-folder of the projects folder (default `~/Projects`) is a project. Cherry
+A project is a folder in Cherry's list: one you opened or created (ADR-0032). Cherry
 **extends cctop's `_project/` convention** instead of inventing a new one, so cctop's Projects
 tab, its session hook and its project-notes skill keep working on the same files.
 

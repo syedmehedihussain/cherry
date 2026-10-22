@@ -22,12 +22,20 @@ function git(dir: string, ...args: string[]) {
   });
 }
 
-/** A projects folder with one project in each state (docs/testing.md E2E flow 1). */
+/** Projects in each state, all in Cherry's list (docs/testing.md E2E flow 1). */
 export function createFixture(): void {
   rmSync(E2E_ROOT, { recursive: true, force: true });
   write(
     path.join(E2E_HOME, 'config.json'),
-    JSON.stringify({ schema: 1, projectsDir: E2E_PROJECTS }),
+    JSON.stringify({
+      schema: 1,
+      projectsDir: E2E_PROJECTS,
+      // Cherry lists only these (ADR-0032); a folder in projectsDir alone is not a project.
+      projects: ['core', 'cctop', 'torongo', 'atlas', 'shop'].map((id) => ({
+        id,
+        path: path.join(E2E_PROJECTS, id),
+      })),
+    }),
   );
 
   const core = path.join(E2E_PROJECTS, 'core');
@@ -71,6 +79,8 @@ export function createFixture(): void {
   );
   mkdirSync(path.join(E2E_PROJECTS, 'cctop', 'node_modules'), { recursive: true });
   write(path.join(E2E_PROJECTS, 'torongo', 'README.md'), '# torongo\nReal-time translation.\n');
+  // In the new projects folder but never opened: Home must not list it (ADR-0032).
+  write(path.join(E2E_PROJECTS, 'stray', 'README.md'), '# stray\n');
 
   // A Ready project with a local "remote" and one commit to push (M6).
   const atlas = path.join(E2E_PROJECTS, 'atlas');
