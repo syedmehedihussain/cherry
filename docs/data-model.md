@@ -143,7 +143,7 @@ The phase task graph, seeded from Core's preset (`lib/services/project-presets.t
   "projectsDir": "~/Projects",
   "port": 4317,
   "scan": { "ignore": ["archive", "scratch"] },
-  "claude": { "bin": "claude", "defaultModel": "opus" },
+  "claude": { "bin": "claude", "defaultModel": "opus", "chrome": false },
   "agents": { "maxRunning": 3, "worktreeDir": "~/Projects/.cherry-worktrees" },
   "magnet": { "readOnly": true },
   "onboarded": true,
@@ -159,6 +159,8 @@ the **new projects folder**, where Start project creates projects; Cherry does n
 `onboarded` is `false` only in a config.json the daemon has just created (a fresh install); the
 UI then shows the welcome screen until `POST /api/setup`. A config.json without the field counts
 as onboarded, so existing installs skip it (ADR-0020).
+
+`claude.chrome` lets project chats use Claude in Chrome; agents never do (ADR-0037).
 
 `agents.worktreeDir` left at its default follows `projectsDir` (`<projectsDir>/.cherry-worktrees`,
 ADR-0010).

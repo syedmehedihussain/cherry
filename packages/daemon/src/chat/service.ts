@@ -31,6 +31,10 @@ export function withAttachments(text: string, attachments: string[]): string {
   ].join('\n');
 }
 
+/** Added when Settings → Claude Code → Claude in Chrome is on (ADR-0037). */
+export const CHROME_PROMPT =
+  "- You can use the user's Chrome through the mcp__claude-in-chrome__ tools: open the app you built on localhost, click through it, read the console and take screenshots to check your work. It is the user's real browser, signed in to their accounts: work in a new tab, do not read or touch their other tabs, never submit payments, passwords or messages, and say what you will do before you do it. Every action asks the user first.";
+
 /** The common rules, then the stage agent's persona (ADR-0034). */
 export function chatSystemPrompt(stage: Stage, mode: ChatMode = 'ask'): string {
   const profile = stageProfile(stage);
@@ -248,6 +252,8 @@ export class ChatService {
     const autoCommit = !!this.commits?.autoCommit(projectId);
     // The stage's skills, as a skills-only plugin; the Skill tool runs without asking.
     const plugin = buildStagePlugin(this.home, stage);
+    // Claude in Chrome (ADR-0037): project chats only, when the setting is on.
+    const chrome = this.config.get().claude.chrome;
     let finished = false;
     const handle = this.runner({
       cwd: dir,
@@ -256,8 +262,11 @@ export class ChatService {
       model,
       ...(body.effort && model !== 'haiku' ? { effort: body.effort } : {}),
       planMode: body.mode === 'plan',
+      chrome,
       appendSystemPrompt:
-        chatSystemPrompt(stage, body.mode) + (autoCommit ? `\n${AUTO_COMMIT_PROMPT}` : ''),
+        chatSystemPrompt(stage, body.mode) +
+        (autoCommit ? `\n${AUTO_COMMIT_PROMPT}` : '') +
+        (chrome ? `\n${CHROME_PROMPT}` : ''),
       allowedTools: plugin ? [...READ_TOOLS, 'Skill'] : READ_TOOLS,
       ...(plugin ? { plugins: [plugin] } : {}),
       guard: stageGuard(stage, dir),

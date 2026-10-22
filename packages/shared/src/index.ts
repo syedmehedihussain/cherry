@@ -3,6 +3,7 @@ export * from './schemas/project.ts';
 export * from './schemas/system.ts';
 export * from './schemas/events.ts';
 export * from './format.ts';
+export * from './chrome.ts';
 export * from './schemas/workspace.ts';
 export * from './schemas/chat.ts';
 export * from './schemas/calibration.ts';

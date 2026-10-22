@@ -23,8 +23,13 @@ export const ConfigSchema = z.object({
   port: z.number().int().default(4317),
   scan: z.object({ ignore: z.array(z.string()).default([]) }).default({ ignore: [] }),
   claude: z
-    .object({ bin: z.string().default('claude'), defaultModel: z.string().default('opus') })
-    .default({ bin: 'claude', defaultModel: 'opus' }),
+    .object({
+      bin: z.string().default('claude'),
+      defaultModel: z.string().default('opus'),
+      /** Project chats may use Claude in Chrome (ADR-0037). Agents never do. */
+      chrome: z.boolean().default(false),
+    })
+    .default({ bin: 'claude', defaultModel: 'opus', chrome: false }),
   agents: z
     .object({
       maxRunning: z.number().int().min(1).max(10).default(3),
@@ -42,7 +47,7 @@ export type Config = z.infer<typeof ConfigSchema>;
 export const ConfigPatchSchema = z.object({
   projectsDir: z.string().min(1).optional(),
   scan: z.object({ ignore: z.array(z.string()) }).optional(),
-  claude: z.object({ defaultModel: z.string() }).partial().optional(),
+  claude: z.object({ defaultModel: z.string(), chrome: z.boolean() }).partial().optional(),
   agents: z
     .object({ maxRunning: z.number().int().min(1).max(10) })
     .partial()

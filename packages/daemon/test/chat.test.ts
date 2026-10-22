@@ -307,6 +307,47 @@ describe('chat', () => {
       await idle();
     });
 
+    // ADR-0037: Chrome acts in the user's real browser; only reads follow Auto.
+    it('asks before Chrome actions, runs Chrome reads, and asks every time for JavaScript', async () => {
+      const chrome = (n: string) => `mcp__claude-in-chrome__${n}`;
+      script = [
+        { tool: { name: chrome('read_page'), input: { tabId: 1 } } },
+        { tool: { name: chrome('navigate'), input: { url: 'http://localhost:5173' } } },
+        { tool: { name: chrome('navigate'), input: { url: 'http://localhost:5173/a' } } },
+        { tool: { name: chrome('javascript_tool'), input: { text: '1' } } },
+        { tool: { name: chrome('javascript_tool'), input: { text: '2' } } },
+      ];
+      await api('POST', '/api/projects/core/chat', { text: 'check it', mode: 'auto' });
+      await until(() => pending().length === 1);
+      expect(pending()[0]).toMatchObject({
+        kind: 'other',
+        title: 'Claude wants to use Chrome: open http://localhost:5173',
+      });
+      // A session rule covers the next navigate; JavaScript asks both times.
+      await api('POST', `/api/approvals/${pending()[0]!.id}`, { answer: 'allow_session' });
+      await until(() => pending().length === 1);
+      expect(pending()[0]?.title).toBe('Claude wants to use Chrome: run JavaScript in the page');
+      await api('POST', `/api/approvals/${pending()[0]!.id}`, { answer: 'allow_session' });
+      await until(() => pending().length === 1);
+      await api('POST', `/api/approvals/${pending()[0]!.id}`, { answer: 'deny' });
+      await idle();
+      expect(log.permissions.map((p) => p.allowed)).toEqual([true, true, true, true, false]);
+      expect(d.approvals.list()).toHaveLength(3);
+    });
+
+    it('turns Claude in Chrome on for chats only when the setting is on', async () => {
+      script = [{ text: 'ok' }];
+      await api('POST', '/api/projects/core/chat', { text: 'a' });
+      await idle();
+      expect(log.requests[0]?.chrome).toBe(false);
+      expect(log.requests[0]?.appendSystemPrompt).not.toMatch(/claude-in-chrome/);
+      d.config.update({ claude: { chrome: true } });
+      await api('POST', '/api/projects/core/chat', { text: 'b' });
+      await idle();
+      expect(log.requests[1]?.chrome).toBe(true);
+      expect(log.requests[1]?.appendSystemPrompt).toMatch(/mcp__claude-in-chrome__/);
+    });
+
     it('Plan mode is the SDK plan permission mode', async () => {
       script = [{ text: 'ok' }];
       await api('POST', '/api/projects/core/chat', { text: 'a', mode: 'plan' });

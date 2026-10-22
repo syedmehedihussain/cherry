@@ -42,6 +42,8 @@ export interface RunRequest {
   /** Reasoning effort; left out, the model's default. */
   effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
   planMode: boolean;
+  /** Turn on the CLI's built-in Claude in Chrome tools (ADR-0037). Off: `--no-chrome`. */
+  chrome?: boolean;
   appendSystemPrompt: string;
   /** Tools that run without asking (read-only ones). */
   allowedTools: string[];
@@ -270,6 +272,8 @@ export const sdkRunner: Runner = (req) => {
       ...(server ? { mcpServers: { cherry: server } } : {}),
       // No settings files: their allow rules would bypass Cherry's approvals (ADR-0004).
       settingSources: [],
+      // Claude in Chrome only when the caller asks; every Chrome tool still asks (ADR-0037).
+      extraArgs: { [req.chrome ? 'chrome' : 'no-chrome']: null },
       env: { ...process.env, ...NO_TELEMETRY_ENV },
       systemPrompt: { type: 'preset', preset: 'claude_code', append: req.appendSystemPrompt },
       hooks: {

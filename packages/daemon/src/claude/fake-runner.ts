@@ -90,7 +90,8 @@ export function fakeRunner(
             req.onEvent({ t: 'tool_end', id, ok: false, output: refused });
             continue;
           }
-          let allowed = !NEEDS_PERMISSION.has(name) || req.allowedTools.includes(name);
+          const asks = NEEDS_PERMISSION.has(name) || name.startsWith('mcp__claude-in-chrome__');
+          let allowed = !asks || req.allowedTools.includes(name);
           if (!allowed) {
             const answer = await req.onPermission(name, input, id);
             allowed = answer.allow;

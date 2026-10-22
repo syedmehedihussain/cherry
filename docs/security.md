@@ -102,10 +102,18 @@ ports, and the working folder and command line of the user's own processes) and 
 ## What leaves the machine
 
 Only:
-1. Claude Code's own traffic to Anthropic (prompts and the files Claude reads).
+1. Claude Code's own traffic to Anthropic (prompts, the files Claude reads, and, with Claude in
+   Chrome on, the pages it reads).
 2. `git` and `gh` traffic to GitHub when the user pulls, pushes or creates a repo.
 
 No telemetry, no update checks in the MVP.
+
+## Claude in Chrome (ADR-0037)
+
+Off by default. With Settings → General → Claude in Chrome on, project chats get the CLI's Chrome
+tools; every other session runs with `--no-chrome`. Chrome is the user's signed-in browser, so
+actions (navigate, click, type, tabs) ask in every mode, also in Auto, and JavaScript and file
+uploads ask every time with no session rule. Only reading a page follows Auto.
 
 ## Stage skills (ADR-0034)
 

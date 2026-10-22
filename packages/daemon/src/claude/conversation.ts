@@ -1,6 +1,8 @@
 import path from 'node:path';
 import {
   DecisionCardInputSchema,
+  chromeTool,
+  classifyChrome,
   type Approval,
   type ChatItem,
   type PlanItem,
@@ -341,6 +343,20 @@ export class Conversation {
       ruleKeys = verdict.serious ? [] : [`run:${command}`];
       if (verdict.serious) autoOk = false;
       if (autoNeedsApproval(command)) autoOk = false;
+    } else if (chromeTool(tool)) {
+      // Claude in Chrome acts in the user's real, signed-in browser (ADR-0037): only reads
+      // follow Auto, and code or file uploads ask every time.
+      const verdict = classifyChrome(chromeTool(tool)!, input);
+      draft = {
+        ...base,
+        kind: 'other',
+        title: verdict.title,
+        files: [],
+        command: null,
+        detail: JSON.stringify(input, null, 2).slice(0, 4000),
+      };
+      ruleKeys = verdict.sessionOk ? [`tool:${tool}`] : [];
+      if (!verdict.read) autoOk = false;
     } else {
       draft = {
         ...base,

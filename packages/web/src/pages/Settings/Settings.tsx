@@ -202,6 +202,21 @@ function GeneralSection() {
             ))}
           </select>
         </label>
+        <div className={styles.row}>
+          <span>
+            <strong>Claude in Chrome</strong>
+            <span>
+              Project chats may use your Chrome to open and check the app, through the Claude in
+              Chrome extension. Every click and page change asks first, also in Auto. Agents never
+              use it.
+            </span>
+          </span>
+          <Switch
+            label={c.claude.chrome ? 'On' : 'Off'}
+            checked={c.claude.chrome}
+            onChange={(v) => void save.run(() => patchConfig({ claude: { chrome: v } }))}
+          />
+        </div>
         <NotifyRow />
       </div>
       <Saved at={save.savedAt} />
