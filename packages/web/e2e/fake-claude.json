@@ -1,5 +1,52 @@
 [
   {
+    "match": "^Build the approved plan",
+    "steps": [
+      {
+        "text": "Starting with the cache."
+      },
+      {
+        "call": {
+          "name": "stage_checklist",
+          "input": {
+            "done": ["t22"]
+          }
+        }
+      },
+      {
+        "text": "Cache done."
+      }
+    ]
+  },
+  {
+    "match": "^Plan offline mode",
+    "steps": [
+      {
+        "tool": {
+          "name": "Write",
+          "input": {
+            "file_path": "docs/specs/offline.md",
+            "content": "# Offline mode\n\nWorks without a network.\n"
+          }
+        }
+      },
+      {
+        "call": {
+          "name": "propose_plan",
+          "input": {
+            "title": "Offline mode",
+            "summary": "Works without a network.",
+            "spec": "docs/specs/offline.md",
+            "tasks": ["Cache the data", "Sync on reconnect"]
+          }
+        }
+      },
+      {
+        "text": "The plan is ready for you."
+      }
+    ]
+  },
+  {
     "match": "^Finish the plan",
     "steps": [
       {

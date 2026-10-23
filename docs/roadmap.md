@@ -107,7 +107,7 @@ New feedback is added here in build order.
 - [x] w4 File panel per stage: stage files open, project files folded, Collapse all.
 - [x] w5 Stage progress on Overview: a checklist per stage kept by its agent (stage_checklist),
       a bar with what is left, Recheck, Move to the next stage, progress on the stage tabs.
-- [ ] w5b Approve plan: the Planner proposes the plan as a card; Approve writes the tasks,
+- [x] w5b Approve plan: the Planner proposes the plan as a card; Approve writes the tasks,
       opens Development in Auto and starts the Builder. Docs-only stages default to Auto.
 - [ ] w6 A calmer chat: a finished reply folds its tool rows into one "Worked … · N steps" line.
 - [ ] w7 Claude Code CLI parity: slash commands, @ file mentions, context meter and compact,

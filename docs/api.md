@@ -82,6 +82,7 @@ folder (see `security.md`).
 | --- | --- | --- |
 | GET | `/api/projects/:id/chat?stage=` | the stage's chat (ADR-0034; default `development`): session meta + last 200 transcript events + `plan` (Claude's checklist, in memory) |
 | POST | `/api/projects/:id/chat` | `{ text, stage?, mode?, model?, effort?, attachments? }` → starts a turn in that stage's chat; `mode` is ask (default), auto or plan (ADR-0025); `effort` is low, medium, high, xhigh or max (ignored for Haiku); attachments are upload ids, listed for Claude to Read |
+| POST | `/api/projects/:id/chat/plans/:itemId/approve` · `/dismiss` | Approve plan: Development tasks, phase, the Builder starts in Auto · Keep planning (ADR-0041) |
 | POST | `/api/projects/:id/chat/stop?stage=` | interrupts the stage's running turn |
 | POST | `/api/projects/:id/chat/explain?stage=` | `{ turnId }` → `{ text }`: Haiku summary of what that turn changed (diff capped at 6 KB, no tools). Only on the user's click; cached per turn (ADR-0022) |
 | POST | `/api/projects/:id/chat/new?stage=` | starts a fresh session for that stage only |

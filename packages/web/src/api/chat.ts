@@ -86,6 +86,14 @@ export const newChat = async (id: string, stage: Stage) => {
   await api('POST', `${base(id)}/chat/new${q(stage)}`);
   await queryClient.invalidateQueries({ queryKey: chatKey(id, stage) });
 };
+/** Approve plan (ADR-0041): the tasks join Development and the Builder starts in Auto. */
+export const approvePlan = async (id: string, itemId: string) => {
+  await api('POST', `${base(id)}/chat/plans/${encodeURIComponent(itemId)}/approve`);
+  void queryClient.invalidateQueries({ queryKey: ['project', id] });
+  void queryClient.invalidateQueries({ queryKey: chatKey(id, 'development') });
+};
+export const dismissPlan = (id: string, itemId: string) =>
+  api('POST', `${base(id)}/chat/plans/${encodeURIComponent(itemId)}/dismiss`);
 export const answerDecision = (cardId: string, answer: DecisionAnswer) =>
   api('POST', `/api/decisions/${encodeURIComponent(cardId)}`, answer);
 export const answerApproval = (approvalId: string, answer: ApprovalAnswer) =>

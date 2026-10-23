@@ -34,6 +34,9 @@ export type Stage = z.infer<typeof StageSchema>;
 
 export const STAGE_LABEL: Record<Stage, string> = { ...PHASE_LABEL, issues: 'Issues' };
 
+/** Stages whose agent writes docs and notes only (ADR-0034); their chat opens in Auto. */
+export const DOCS_ONLY_STAGES: ReadonlySet<Stage> = new Set(['plan', 'design', 'issues']);
+
 /** A skill a stage agent can use (ADR-0034). */
 export const StageSkillSchema = z.object({
   name: z.string(),

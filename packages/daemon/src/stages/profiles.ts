@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { STAGE_LABEL, type Stage } from '@cherry/shared';
+import { DOCS_ONLY_STAGES, STAGE_LABEL, type Stage } from '@cherry/shared';
 import { frontMatter } from '../projects/status.ts';
 
 /** Bundled stage folders: `stages/<stage>/AGENT.md` and `stages/<stage>/skills/` (ADR-0034). */
@@ -23,7 +23,7 @@ export interface StageProfile {
   docsOnly: boolean;
 }
 
-const DOCS_ONLY: ReadonlySet<Stage> = new Set(['plan', 'design', 'issues']);
+const DOCS_ONLY = DOCS_ONLY_STAGES;
 
 const cache = new Map<Stage, StageProfile>();
 

@@ -181,6 +181,21 @@ export const ChatItemSchema = z.discriminatedUnion('kind', [
     turnId: z.string(),
     ids: z.array(z.string()),
   }),
+  /** Plan: the Planner's finished plan, waiting for Approve plan (ADR-0041). */
+  z.object({
+    kind: z.literal('plan'),
+    id: z.string(),
+    at: z.number(),
+    turnId: z.string(),
+    title: z.string(),
+    summary: z.string().nullable(),
+    /** The spec it is written in, project-relative (docs/specs/x.md or docs/prd.md). */
+    spec: z.string().nullable(),
+    tasks: z.array(z.string()),
+    status: z.enum(['open', 'approved', 'dismissed']),
+    /** Development task ids made on Approve. */
+    taskIds: z.array(z.string()).default([]),
+  }),
   /** Magnet: a proposed action card. */
   z.object({
     kind: z.literal('action'),

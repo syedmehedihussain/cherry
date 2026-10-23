@@ -1,0 +1,80 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+  background: var(--s1);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--r-xl);
+}
+.card[data-status='dismissed'] {
+  border-color: var(--b);
+  opacity: 0.75;
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-text);
+}
+.kicker {
+  font-size: var(--fs-xs);
+  font-weight: 500;
+}
+.title {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  color: var(--t1);
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+.summary {
+  margin: 0;
+  color: var(--t2);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+.tasks {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 3px;
+  color: var(--t1);
+  font-size: var(--fs-sm);
+}
+.id {
+  margin-right: 6px;
+  font-family: var(--mono);
+  font-size: var(--fs-2xs);
+  color: var(--t3);
+}
+.spec {
+  align-self: flex-start;
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  color: var(--accent-text);
+}
+.error {
+  margin: 0;
+  color: var(--danger-text);
+  font-size: var(--fs-sm);
+}
+.foot {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+}
+.done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--success);
+  font-size: var(--fs-sm);
+}
+.muted {
+  color: var(--t3);
+  font-size: var(--fs-sm);
+}

@@ -13,7 +13,7 @@ import type { ConfigStore } from '../config.ts';
 import type { Db } from '../db.ts';
 import { AUTO_COMMIT_PROMPT, type CommitService } from '../projects/commits.ts';
 import { notify, projectLink, type EventHub } from '../events.ts';
-import { conflict } from '../http.ts';
+import { conflict, notFound } from '../http.ts';
 import { DECISIONS_PROMPT, type AdrService } from '../adr/service.ts';
 import type { ApprovalBroker } from '../claude/approvals.ts';
 import { Conversation } from '../claude/conversation.ts';
@@ -24,7 +24,14 @@ import { projectDir } from '../projects/workspace.ts';
 import { recordUsage } from '../usage.ts';
 import { stageGuard, stageProfile } from '../stages/profiles.ts';
 import { buildStagePlugin } from '../stages/skills.ts';
-import { CHECKLIST_TOOL, checklistTool } from '../stages/checklist.ts';
+import { CHECKLIST_TOOL, checklistTool, setPhase } from '../stages/checklist.ts';
+import {
+  PROPOSE_PLAN_TOOL,
+  applyPlan,
+  buildPrompt,
+  proposePlanTool,
+  type PlanItem,
+} from '../stages/plan-proposal.ts';
 import { explainTurn } from './explain.ts';
 import { UPLOADS_DIR, saveUpload, uploadPath } from './uploads.ts';
 
@@ -58,6 +65,11 @@ export function chatSystemPrompt(stage: Stage, mode: ChatMode = 'ask'): string {
     ...(stage !== 'issues'
       ? [
           `- Your ${STAGE_LABEL[stage]} checklist (the ${CHECKLIST_TOOL} tool) is the progress bar the user sees on the Overview. Read it before you start. As you work, add what is still left to decide or write in this stage, mark items done once the project files cover them, and drop items that do not apply. Keep items short. Never mark an item done that the files do not show. When every item is finished, say the stage is ready and what the next stage is.`,
+        ]
+      : []),
+    ...(stage === 'plan'
+      ? [
+          `- When the plan is written (the spec or PRD and the roadmap milestone), call ${PROPOSE_PLAN_TOOL} with the build tasks in order. The user approves it with one click, which starts Development. Do not tell the user to switch tabs.`,
         ]
       : []),
     mode === 'auto'
@@ -288,6 +300,10 @@ export class ChatService {
         ...(this.adrs?.tools(projectId, 'chat') ?? []),
         // The stage checklist behind the Overview bar (V2.1 w5); Issues counts issues instead.
         ...(stage !== 'issues' ? [checklistTool(dir, stage)] : []),
+        // The Planner hands over with Approve plan (ADR-0041).
+        ...(stage === 'plan'
+          ? [proposePlanTool(dir, (item) => current.conversation.put({ ...item, turnId }))]
+          : []),
         ...(autoCommit && this.commits ? [this.commits.tool(projectId)] : []),
       ],
       onPermission: (tool, input, id) => current.conversation.permission(tool, input, id),
@@ -367,6 +383,46 @@ export class ChatService {
         // The project is gone or the chat was replaced; nothing to do.
       }
     });
+  }
+
+  private planItem(projectId: string, itemId: string): { live: Live; item: PlanItem } {
+    const live = this.current(projectId, 'plan');
+    const item = live?.conversation.items.get(itemId);
+    if (!live || item?.kind !== 'plan') throw notFound(`No plan ${itemId}`);
+    if (item.status !== 'open') throw conflict(`This plan was already ${item.status}.`);
+    return { live, item };
+  }
+
+  /**
+   * Approve plan (ADR-0041): the tasks join Development, the project moves to Development, and
+   * the Builder starts in Auto. The click is the user's go-ahead for that turn (rule 10).
+   */
+  approvePlan(projectId: string, itemId: string): { taskIds: string[]; conversationId: string } {
+    const dir = projectDir(this.config.projectsDir(), projectId);
+    const { live, item } = this.planItem(projectId, itemId);
+    if (this.current(projectId, 'development')?.running)
+      throw conflict('The Development chat is busy. Wait for it or stop it, then approve.');
+    const taskIds = applyPlan(dir, item);
+    try {
+      setPhase(dir, 'development');
+    } catch {
+      // No project.json (an opened folder that was never set up): the tasks are enough.
+    }
+    const approved: PlanItem = { ...item, status: 'approved', taskIds };
+    live.conversation.put(approved);
+    const { conversationId } = this.send(projectId, {
+      stage: 'development',
+      mode: 'auto',
+      text: buildPrompt(approved),
+      attachments: [],
+    });
+    return { taskIds, conversationId };
+  }
+
+  /** Keep planning: the card closes; the Planner asks what to change. */
+  dismissPlan(projectId: string, itemId: string): void {
+    const { live, item } = this.planItem(projectId, itemId);
+    live.conversation.put({ ...item, status: 'dismissed' });
   }
 
   /** Summarises one turn's file changes with Haiku. Only on the user's click (ADR-0022). */

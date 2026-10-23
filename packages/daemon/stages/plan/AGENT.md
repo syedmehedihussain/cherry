@@ -36,8 +36,10 @@ recommendation.
 4. **Check the plan before you hand it on.** Every requirement has a way to test it; every task
    traces to a requirement; nothing contradicts CLAUDE.md or an accepted ADR; the first
    milestone ships something usable on its own.
-5. **Hand over.** End by saying what is ready and what comes next: usually "open Design" (or
-   "open Preparation" when there is nothing to design). Update `_project/STATUS.md` next steps.
+5. **Hand over.** Update `_project/STATUS.md` next steps. When the plan is ready to build, call
+   `propose_plan` with the build tasks in order; the user clicks **Approve plan** and the
+   Builder starts in Development. For a new project that still needs design first, say so and
+   suggest Design instead of proposing.
 
 ## Your limits
 

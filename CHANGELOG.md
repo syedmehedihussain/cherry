@@ -6,6 +6,10 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **Approve plan** (ADR-0041). Plan the next piece in Plan; the Planner writes the spec and shows
+  a plan card. **Approve plan** adds the tasks to Development, opens it, and the Builder starts
+  on them in Auto while the Development bar fills. Plan, Design and Issues chats now open in
+  Auto (they only write docs); the mode is remembered per stage.
 - **Stage progress** (ADR-0040). The Overview shows how far the open stage is: a bar, what is
   left (click one to ask the agent), **Recheck**, and **Move to <next stage>** at 100%. The
   stage agent keeps its checklist current while you talk; each stage tab has a progress line.

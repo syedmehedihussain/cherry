@@ -73,6 +73,20 @@ export function chatRoutes(
       return chat.explain(IdParams.parse(req.params).id, turnId, stageOf(req.query));
     });
 
+    // Approve plan / Keep planning on the Planner's card (ADR-0041).
+    app.post('/api/projects/:id/chat/plans/:itemId/approve', async (req) => {
+      const { id, itemId } = z
+        .object({ id: z.string().min(1), itemId: z.string().min(1).max(80) })
+        .parse(req.params);
+      return chat.approvePlan(id, itemId);
+    });
+    app.post('/api/projects/:id/chat/plans/:itemId/dismiss', async (req) => {
+      const { id, itemId } = z
+        .object({ id: z.string().min(1), itemId: z.string().min(1).max(80) })
+        .parse(req.params);
+      chat.dismissPlan(id, itemId);
+      return { ok: true };
+    });
     app.post('/api/projects/:id/chat/stop', async (req) => {
       await chat.stop(IdParams.parse(req.params).id, stageOf(req.query));
       return { ok: true };

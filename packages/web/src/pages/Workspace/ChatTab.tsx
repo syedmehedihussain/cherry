@@ -2,6 +2,7 @@ import { ChevronRight, FileText, Globe, MessageSquarePlus, RotateCcw } from 'luc
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   ChatModeSchema,
+  DOCS_ONLY_STAGES,
   chromeTool,
   type ChatItem,
   type ChatMode,
@@ -11,6 +12,8 @@ import {
 } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
 import {
+  approvePlan,
+  dismissPlan,
   answerApproval,
   answerDecision,
   chatKey,
@@ -34,6 +37,8 @@ import { DecisionCard } from '../../components/DecisionCard/DecisionCard.tsx';
 import { DecisionInChat } from '../../components/Decisions/Decisions.tsx';
 import { Markdown } from '../../components/Markdown/Markdown.tsx';
 import { ReadGroup, TimelineRow, type ToolItem } from '../../components/Timeline/Timeline.tsx';
+import { PlanProposal } from '../../components/PlanProposal/PlanProposal.tsx';
+import { useStages } from '../../state/stage.ts';
 import { useSideView } from './SidePanel.tsx';
 import styles from './Chat.module.css';
 
@@ -47,6 +52,7 @@ type Part =
   /** Claude in Chrome steps of this reply, as one row; the steps show in Live (ADR-0038). */
   | { t: 'chrome'; items: ToolItem[] }
   | { t: 'decision'; item: Extract<ChatItem, { kind: 'decision' }> }
+  | { t: 'plan'; item: Extract<ChatItem, { kind: 'plan' }> }
   | { t: 'approval'; item: Extract<ChatItem, { kind: 'approval' }> }
   | { t: 'end'; item: Extract<ChatItem, { kind: 'turn-end' }> };
 
@@ -75,6 +81,7 @@ export function toBlocks(items: ChatItem[]): Block[] {
       if (last?.t === 'tools') last.items.push(item);
       else claude.parts.push({ t: 'tools', items: [item] });
     } else if (item.kind === 'decision') claude.parts.push({ t: 'decision', item });
+    else if (item.kind === 'plan') claude.parts.push({ t: 'plan', item });
     else if (item.kind === 'approval') claude.parts.push({ t: 'approval', item });
     else if (item.kind === 'turn-end') claude.parts.push({ t: 'end', item });
     // projects / action items belong to Magnet's panel.
@@ -110,20 +117,28 @@ function toolRuns(items: ToolItem[]): (ToolItem | ToolItem[])[] {
   return out;
 }
 
-const modeKey = (projectId: string) => `cherry.chatMode.${projectId}`;
+const modeKey = (projectId: string, stage: Stage) => `cherry.chatMode.${projectId}.${stage}`;
 
-/** The chat mode is remembered per project; Ask when nothing is stored. */
-function readMode(projectId: string): ChatMode {
+/**
+ * The chat mode is remembered per project and stage. Nothing stored: docs-only stages (Plan,
+ * Design, Issues) open in Auto, since their agent can only write docs (ADR-0041); the others
+ * use the project's older single setting, or Ask.
+ */
+export function readMode(projectId: string, stage: Stage): ChatMode {
+  const fallback: ChatMode = DOCS_ONLY_STAGES.has(stage) ? 'auto' : 'ask';
   try {
-    return ChatModeSchema.catch('ask').parse(localStorage.getItem(modeKey(projectId)));
+    const stored =
+      localStorage.getItem(modeKey(projectId, stage)) ??
+      (DOCS_ONLY_STAGES.has(stage) ? null : localStorage.getItem(`cherry.chatMode.${projectId}`));
+    return ChatModeSchema.catch(fallback).parse(stored ?? fallback);
   } catch {
-    return 'ask';
+    return fallback;
   }
 }
 
-function storeMode(projectId: string, mode: ChatMode): void {
+export function storeMode(projectId: string, stage: Stage, mode: ChatMode): void {
   try {
-    localStorage.setItem(modeKey(projectId), mode);
+    localStorage.setItem(modeKey(projectId, stage), mode);
   } catch {
     // Private window: the mode just isn't remembered.
   }
@@ -142,15 +157,16 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
   const setDraft = useChatDraft((s) => s.set);
   const [model, setModel] = useState<string | null>(null);
   const [effort, setEffort] = useState<Effort | null>(null);
-  const [mode, setMode] = useState<{ projectId: string; mode: ChatMode }>(() => ({
-    projectId,
-    mode: readMode(projectId),
+  const scope = `${projectId}:${stage}`;
+  const [mode, setMode] = useState<{ scope: string; mode: ChatMode }>(() => ({
+    scope,
+    mode: readMode(projectId, stage),
   }));
-  // Another project: load its mode while rendering, so the menu never shows the old one.
-  if (mode.projectId !== projectId) setMode({ projectId, mode: readMode(projectId) });
+  // Another project or stage: load its mode while rendering, so the menu never shows the old one.
+  if (mode.scope !== scope) setMode({ scope, mode: readMode(projectId, stage) });
   const changeMode = (m: ChatMode) => {
-    storeMode(projectId, m);
-    setMode({ projectId, mode: m });
+    storeMode(projectId, stage, m);
+    setMode({ scope, mode: m });
   };
   const [error, setError] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
@@ -388,6 +404,8 @@ function ClaudeBlock({
             );
           case 'chrome':
             return <ChromeRow key={p.items[0]!.id} items={p.items} />;
+          case 'plan':
+            return <PlanCard key={p.item.id} projectId={projectId} plan={p.item} />;
           case 'decision':
             return (
               <DecisionCard
@@ -439,6 +457,33 @@ function ClaudeBlock({
       })}
       {end && <ChangeSummary projectId={projectId} tools={tools} end={end} />}
     </div>
+  );
+}
+
+/** Approve plan opens Development in Auto, where the Builder has already started (ADR-0041). */
+function PlanCard({
+  projectId,
+  plan,
+}: {
+  projectId: string;
+  plan: Extract<ChatItem, { kind: 'plan' }>;
+}) {
+  const setStage = useStages((s) => s.set);
+  const setView = useSideView((s) => s.set);
+  return (
+    <PlanProposal
+      plan={plan}
+      projectId={projectId}
+      onApprove={async () => {
+        await approvePlan(projectId, plan.id);
+        storeMode(projectId, 'development', 'auto');
+        setStage(projectId, 'development');
+        setView('live');
+      }}
+      onDismiss={async () => {
+        await dismissPlan(projectId, plan.id);
+      }}
+    />
   );
 }
 

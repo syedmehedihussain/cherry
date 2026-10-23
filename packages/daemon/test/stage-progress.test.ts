@@ -25,7 +25,7 @@ describe('Stage checklist and phase', () => {
     });
     return { status: res.statusCode, body: res.json() };
   };
-  const idle = async (stage: 'plan' | 'issues') => {
+  const idle = async (stage: 'plan' | 'issues' | 'development') => {
     const start = Date.now();
     while (d.chat.state('core', stage).running) {
       if (Date.now() - start > 3000) throw new Error('still running');
@@ -97,5 +97,85 @@ describe('Stage checklist and phase', () => {
     const pj = JSON.parse(readFileSync(path.join(dir(), '_project', 'project.json'), 'utf8'));
     expect(pj).toMatchObject({ name: 'core', phase: 'design' });
     expect((await api('PATCH', '/api/projects/core/phase', { phase: 'nope' })).status).toBe(400);
+  });
+
+  // ADR-0041: the Planner proposes; Approve plan makes the tasks and starts the Builder.
+  it('Approve plan adds Development tasks, moves the phase and starts the Builder in Auto', async () => {
+    write(path.join(dir(), 'docs', 'specs', 'offline.md'), '# Offline\n');
+    script = [
+      {
+        call: {
+          name: 'propose_plan',
+          input: { title: 'Offline', spec: 'docs/nope.md', tasks: ['x'] },
+        },
+      },
+      {
+        call: {
+          name: 'propose_plan',
+          input: {
+            title: 'Offline mode',
+            summary: 'Works without a network.',
+            spec: 'docs/specs/offline.md',
+            tasks: ['Cache the data', 'Sync on reconnect'],
+          },
+        },
+      },
+      { text: 'Here is the plan.' },
+    ];
+    await api('POST', '/api/projects/core/chat', { text: 'plan offline', stage: 'plan' });
+    await idle('plan');
+    expect(log.calls?.[0]).toMatchObject({
+      ok: false,
+      text: expect.stringMatching(/does not exist/),
+    });
+    const chat = await api('GET', '/api/projects/core/chat?stage=plan');
+    const plan = chat.body.items.find((i: { kind: string }) => i.kind === 'plan');
+    expect(plan).toMatchObject({
+      title: 'Offline mode',
+      spec: 'docs/specs/offline.md',
+      status: 'open',
+    });
+
+    script = [{ text: 'Building.' }];
+    const r = await api('POST', `/api/projects/core/chat/plans/${plan.id}/approve`);
+    expect(r.body.taskIds).toEqual(['t22', 't23']);
+    await idle('development');
+    const dev = tasks()
+      .tasks.filter((t) => t.phase === 'development')
+      .slice(-2);
+    expect(dev.map((t) => [t.id, t.title, t.status])).toEqual([
+      ['t22', 'Cache the data', 'todo'],
+      ['t23', 'Sync on reconnect', 'todo'],
+    ]);
+    expect(
+      tasks()
+        .tasks.filter((t) => t.phase === 'plan')
+        .every((t) => t.status === 'done'),
+    ).toBe(true);
+    const pj = JSON.parse(readFileSync(path.join(dir(), '_project', 'project.json'), 'utf8'));
+    expect(pj.phase).toBe('development');
+    const start = log.requests.at(-1)!;
+    expect(start.prompt).toBe(
+      'Build the approved plan "Offline mode" in docs/specs/offline.md. Work through the Development checklist items t22 to t23 in order: build each one, test it, and mark it done with stage_checklist before the next. Ask me only for real choices.',
+    );
+    expect(start.appendSystemPrompt).toMatch(/auto mode/);
+    // Approved once: a second click is refused.
+    expect((await api('POST', `/api/projects/core/chat/plans/${plan.id}/approve`)).status).toBe(
+      409,
+    );
+  });
+
+  it('Keep planning closes the card without changes', async () => {
+    script = [{ call: { name: 'propose_plan', input: { title: 'X', tasks: ['a'] } } }];
+    await api('POST', '/api/projects/core/chat', { text: 'plan', stage: 'plan' });
+    await idle('plan');
+    const chat = await api('GET', '/api/projects/core/chat?stage=plan');
+    const plan = chat.body.items.find((i: { kind: string }) => i.kind === 'plan');
+    await api('POST', `/api/projects/core/chat/plans/${plan.id}/dismiss`);
+    const after = await api('GET', '/api/projects/core/chat?stage=plan');
+    expect(after.body.items.find((i: { kind: string }) => i.kind === 'plan').status).toBe(
+      'dismissed',
+    );
+    expect(tasks().tasks.filter((t) => t.phase === 'development')).toHaveLength(3);
   });
 });
