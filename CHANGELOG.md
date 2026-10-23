@@ -6,6 +6,9 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **A calmer chat.** Like the CLI, a finished reply folds its steps into one line ("Read 4 files ·
+  edited 2 files · ran 1 command", failures named); a click opens it. While Claude works only
+  the newest steps show, and anything waiting for you always shows.
 - **Approve plan** (ADR-0041). Plan the next piece in Plan; the Planner writes the spec and shows
   a plan card. **Approve plan** adds the tasks to Development, opens it, and the Builder starts
   on them in Auto while the Development bar fills. Plan, Design and Issues chats now open in

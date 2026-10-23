@@ -36,7 +36,12 @@ import { Composer } from '../../components/Composer/Composer.tsx';
 import { DecisionCard } from '../../components/DecisionCard/DecisionCard.tsx';
 import { DecisionInChat } from '../../components/Decisions/Decisions.tsx';
 import { Markdown } from '../../components/Markdown/Markdown.tsx';
-import { ReadGroup, TimelineRow, type ToolItem } from '../../components/Timeline/Timeline.tsx';
+import {
+  ReadGroup,
+  StepsGroup,
+  TimelineRow,
+  type ToolItem,
+} from '../../components/Timeline/Timeline.tsx';
 import { PlanProposal } from '../../components/PlanProposal/PlanProposal.tsx';
 import { useStages } from '../../state/stage.ts';
 import { useSideView } from './SidePanel.tsx';
@@ -372,6 +377,39 @@ function ClaudeBlock({
   );
   const end = block.parts.find((p) => p.t === 'end')?.item;
   const tools = block.parts.flatMap((p) => (p.t === 'tools' ? p.items : []));
+  const lastTools = block.parts.findLast((p) => p.t === 'tools');
+  /** Rows for a run of steps: reads of 3+ collapse, the rest one row each. */
+  const rowsOf = (list: ToolItem[]) =>
+    toolRuns(list).map((r, i, all) =>
+      Array.isArray(r) ? (
+        <ReadGroup key={r[0]!.id} items={r} />
+      ) : (
+        <TimelineRow key={r.id} item={r} last={i === all.length - 1} />
+      ),
+    );
+  /**
+   * Calmer chat (V2.1 w6): finished steps fold into one line. While Claude works, only the
+   * newest few steps show as rows; anything waiting for you always shows.
+   */
+  const LIVE_ROWS = 3;
+  const renderTools = (list: ToolItem[], live: boolean) => {
+    const keep = list.findIndex((i) => i.status === 'waiting' || i.status === 'running');
+    const cut = live
+      ? Math.max(0, Math.min(keep < 0 ? list.length : keep, list.length - LIVE_ROWS))
+      : list.length;
+    const folded = list.slice(0, cut);
+    const shown = list.slice(cut);
+    return (
+      <>
+        {folded.length >= 2 ? (
+          <StepsGroup items={folded}>{rowsOf(folded)}</StepsGroup>
+        ) : (
+          rowsOf(folded)
+        )}
+        {rowsOf(shown)}
+      </>
+    );
+  };
   return (
     <div className={styles.claude}>
       <div className={styles.claudeLabel}>Claude</div>
@@ -388,13 +426,7 @@ function ClaudeBlock({
             return (
               <Fragment key={p.items[0]!.id}>
                 <div className={styles.timeline}>
-                  {toolRuns(p.items).map((r, i, all) =>
-                    Array.isArray(r) ? (
-                      <ReadGroup key={r[0]!.id} items={r} />
-                    ) : (
-                      <TimelineRow key={r.id} item={r} last={i === all.length - 1} />
-                    ),
-                  )}
+                  {renderTools(p.items, !end && p === lastTools)}
                 </div>
                 {/* A big choice Claude proposed: approve it right here (ADR-0029). */}
                 {proposals(p.items).map((n) => (

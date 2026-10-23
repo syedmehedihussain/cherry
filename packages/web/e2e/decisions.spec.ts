@@ -19,7 +19,7 @@ test('decisions: Claude proposes, the user approves one in the chat and rejects 
   await page.getByLabel('Message Claude').fill('Propose: storage and name');
   await page.getByLabel('Message Claude').press('Enter');
   await expect(page.getByText('I proposed two decisions.')).toBeVisible();
-  await expect(page.getByText('Proposed decision').first()).toBeVisible();
+  await expect(page.getByText('Proposed 2 decisions')).toBeVisible();
 
   // Decisions is a tab in the centre, with the pending count on it.
   const tabs = page.getByRole('navigation', { name: 'Workspace tabs' });

@@ -131,3 +131,64 @@ export function ReadGroup({ items }: { items: ToolItem[] }) {
     </div>
   );
 }
+
+/** "Read 3 files · edited 2 files · ran 1 command": what a run of steps did, in words. */
+export function stepsSummary(items: ToolItem[]): string {
+  const plural = (k: number, one: string, many: string) => `${k} ${k === 1 ? one : many}`;
+  const count = (pick: (i: ToolItem) => boolean) => items.filter(pick).length;
+  const cherry = (tool: string) => count((i) => i.tool === tool);
+  const known = new Set(Object.keys(SUMMARY_NOUN));
+  const parts = [
+    ['read', count((i) => i.verb === 'read'), 'file', 'files'],
+    ['edited', count((i) => i.verb === 'edit'), 'file', 'files'],
+    ['ran', count((i) => i.verb === 'run'), 'command', 'commands'],
+    ...Object.entries(SUMMARY_NOUN).map(([tool, [verb, one, many]]) => [
+      verb,
+      cherry(tool),
+      one,
+      many,
+    ]),
+    ['used', count((i) => i.verb === 'other' && !known.has(i.tool)), 'tool', 'tools'],
+  ] as [string, number, string, string][];
+  const text = parts
+    .filter(([, k]) => k > 0)
+    .map(([verb, k, one, many]) => `${verb} ${plural(k, one, many)}`)
+    .join(' · ');
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** Cherry's own tools in the folded line: "proposed 2 decisions". */
+const SUMMARY_NOUN: Record<string, [string, string, string]> = {
+  mcp__cherry__propose_decision: ['proposed', 'decision', 'decisions'],
+  mcp__cherry__decision_done: ['finished', 'decision', 'decisions'],
+  mcp__cherry__commit_changes: ['made', 'commit', 'commits'],
+};
+
+/**
+ * A run of finished steps folded into one line, like the CLI (V2.1 w6). It opens on a click;
+ * failures are named on the line so they are not missed.
+ */
+export function StepsGroup({ items, children }: { items: ToolItem[]; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const failed = items.filter((i) => i.status === 'failed').length;
+  return (
+    <div className={styles.group}>
+      <button
+        type="button"
+        className={styles.groupHead}
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        <ChevronRight
+          size={12}
+          strokeWidth={2}
+          aria-hidden="true"
+          style={{ transform: open ? 'rotate(90deg)' : undefined }}
+        />
+        <span className={styles.groupTitle}>{stepsSummary(items)}</span>
+        {failed > 0 && <span className={styles.groupFailed}>{failed} failed</span>}
+      </button>
+      {open && <div className={styles.groupBody}>{children}</div>}
+    </div>
+  );
+}
