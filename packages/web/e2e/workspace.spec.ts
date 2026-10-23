@@ -88,3 +88,34 @@ test('a project not in Cherry says so', async ({ page }) => {
   await page.goto('/p/nope');
   await expect(page.getByRole('heading', { name: 'This project is not in Cherry' })).toBeVisible();
 });
+
+// V2.1 w4: each stage shows its own files; the project tree folds away, and Collapse all.
+test('the file panel shows the stage files and folds the project tree', async ({ page }) => {
+  await page.goto('/p/core');
+  const files = page.getByRole('complementary', { name: 'Files' });
+  const project = files.getByRole('button', { name: 'Project files' });
+  // Development: the whole project, open.
+  await expect(project).toHaveAttribute('aria-expanded', 'true');
+  await expect(files.getByRole('treeitem', { name: /lib/ })).toBeVisible();
+
+  const stages = page.getByRole('navigation', { name: 'Lifecycle stages' });
+  await stages.getByRole('button', { name: 'Plan' }).click();
+  await expect(files.getByRole('button', { name: 'Plan files' })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  );
+  await expect(project).toHaveAttribute('aria-expanded', 'false');
+  await expect(files.getByRole('treeitem', { name: /lib/ })).toHaveCount(0);
+
+  await project.click();
+  await expect(files.getByRole('treeitem', { name: /lib/ })).toBeVisible();
+  await files.getByRole('button', { name: 'Collapse all' }).click();
+  await expect(files.getByRole('button', { name: 'Plan files' })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+  await expect(project).toHaveAttribute('aria-expanded', 'false');
+  // Remembered per stage: Development still shows the project open.
+  await stages.getByRole('button', { name: 'Development' }).click();
+  await expect(project).toHaveAttribute('aria-expanded', 'true');
+});

@@ -232,3 +232,38 @@
   padding: 0 8px;
   font-size: var(--fs-sm2);
 }
+
+/* Foldable sections and Collapse all (V2.1 w4) */
+.collapseAll {
+  flex: none;
+  align-self: center;
+  margin-top: -6px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+}
+.collapseAll:hover {
+  background: var(--s2);
+  color: var(--t1);
+}
+.section {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 4px 8px 6px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+  text-align: left;
+}
+.section:hover {
+  color: var(--t1);
+}

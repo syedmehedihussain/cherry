@@ -104,7 +104,7 @@ New feedback is added here in build order.
 - [x] w1 Claude in Chrome runs without asking when the setting is on.
 - [x] w2 Chrome steps show in one box in Live; the chat shows one compact row.
 - [x] w3 Side panel Chat tab: Magnet chat for this project and the Task / Note / Agent box.
-- [ ] w4 File panel per stage: stage files open, project files folded, Collapse all.
+- [x] w4 File panel per stage: stage files open, project files folded, Collapse all.
 - [ ] w5 Stage progress on Overview: a checklist per stage kept by its agent (stage_checklist),
       a bar with what is left, Recheck, Move to the next stage, progress on the stage tabs.
 - [ ] w5b Approve plan: the Planner proposes the plan as a card; Approve writes the tasks,

@@ -6,6 +6,9 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **File panel per stage.** Plan, Design, Preparation, Deployment and Issues show their own files
+  open and fold the project tree away; each section folds with a click, **Collapse all** folds
+  everything, and the choice is remembered per stage. Development shows the whole project.
 - **Chat tab in the side panel** (ADR-0039). Next to Overview, Live and GitHub: Magnet answers
   questions about this project in its own conversation (Where are we? What is left?), and the
   Task / Note / Agent box moved here from the bottom of Overview.

@@ -1,4 +1,4 @@
-import { ChevronRight, Folder } from 'lucide-react';
+import { ChevronRight, ChevronsDownUp, Folder } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { STAGE_LABEL, fileTag, type GitLetter, type Stage, type TreeEntry } from '@cherry/shared';
 import { useStageFocus } from '../../api/stages.ts';
@@ -6,6 +6,29 @@ import { useChanges, useTree } from '../../api/workspace.ts';
 import styles from './FileTree.module.css';
 
 const PINNED = new Set(['CLAUDE.md', 'docs', '_project']);
+
+type Fold = { stage: boolean; project: boolean };
+const foldKey = (stage: Stage) => `cherry.treeFold.${stage}`;
+
+/** Folded sections per stage: the stage's files open, the project tree folded (except in
+ * Development, which has no stage files). Remembered in this browser. */
+function readFold(stage: Stage): Fold {
+  const fallback = { stage: false, project: stage !== 'development' };
+  try {
+    const raw = JSON.parse(localStorage.getItem(foldKey(stage)) ?? 'null') as Partial<Fold> | null;
+    return raw ? { ...fallback, ...raw } : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function storeFold(stage: Stage, fold: Fold): void {
+  try {
+    localStorage.setItem(foldKey(stage), JSON.stringify(fold));
+  } catch {
+    // Private window: the fold is not remembered.
+  }
+}
 
 interface FileTreeProps {
   projectId: string;
@@ -30,6 +53,16 @@ export function FileTree({
   const stageFiles = stage ? (focus.data?.files ?? []) : [];
   const [open, setOpen] = useState<Set<string>>(() => initialOpen(selected));
   const [filter, setFilter] = useState<'all' | 'changed' | 'touched'>('all');
+  const foldStage = stage ?? 'development';
+  const [folds, setFolds] = useState<Partial<Record<Stage, Fold>>>({});
+  const fold = folds[foldStage] ?? readFold(foldStage);
+  const setFold = (next: Fold) => {
+    storeFold(foldStage, next);
+    setFolds((f) => ({ ...f, [foldStage]: next }));
+  };
+  // A file opened from outside the stage's files keeps the project tree open.
+  const projectFolded =
+    fold.project && !(selected && stageFiles.length > 0 && !stageFiles.includes(selected));
   const root = useTree(projectId, '');
   const changes = useChanges(projectId);
 
@@ -66,38 +99,64 @@ export function FileTree({
         <span className={styles.path} title={projectPath}>
           {projectPath}
         </span>
+        <button
+          type="button"
+          className={styles.collapseAll}
+          aria-label="Collapse all"
+          title="Collapse all"
+          onClick={() => {
+            setOpen(new Set());
+            setFold({ stage: true, project: true });
+          }}
+        >
+          <ChevronsDownUp size={14} aria-hidden="true" />
+        </button>
       </div>
       <div className={styles.scroll} role="tree" aria-label="Project files">
-        {!flat && stage && stageFiles.length > 0 && (
+        {!flat && stage && stage !== 'development' && (
           <>
-            <div className="label" style={{ padding: '4px 8px 6px' }}>
-              {STAGE_LABEL[stage]} files
-            </div>
-            {stageFiles.map((p) => (
-              <Row
-                key={`stage-${p}`}
-                entry={{
-                  name: p,
-                  path: p,
-                  type: 'file',
-                  tag: fileTag(p),
-                  git: null,
-                  ignored: false,
-                  changedInside: 0,
-                }}
-                depth={0}
-                selected={selected === p}
-                touched={touched?.has(p) ?? false}
-                onClick={() => onOpen(p)}
-              />
-            ))}
+            <SectionHead
+              label={`${STAGE_LABEL[stage]} files`}
+              folded={fold.stage}
+              onToggle={() => setFold({ ...fold, stage: !fold.stage })}
+            />
+            {!fold.stage && stageFiles.length === 0 && (
+              <p className={styles.empty}>No {STAGE_LABEL[stage]} files yet.</p>
+            )}
+            {!fold.stage &&
+              stageFiles.map((p) => (
+                <Row
+                  key={`stage-${p}`}
+                  entry={{
+                    name: p,
+                    path: p,
+                    type: 'file',
+                    tag: fileTag(p),
+                    git: null,
+                    ignored: false,
+                    changedInside: 0,
+                  }}
+                  depth={0}
+                  selected={selected === p}
+                  touched={touched?.has(p) ?? false}
+                  onClick={() => onOpen(p)}
+                />
+              ))}
             <div className={styles.divider} />
           </>
         )}
-        <div className="label" style={{ padding: '4px 8px 6px' }}>
-          {flat ? (filter === 'changed' ? 'Changed files' : 'Claude touched') : 'Project files'}
-        </div>
-        {root.isPending && <TreeSkeleton />}
+        {flat ? (
+          <div className="label" style={{ padding: '4px 8px 6px' }}>
+            {filter === 'changed' ? 'Changed files' : 'Claude touched'}
+          </div>
+        ) : (
+          <SectionHead
+            label="Project files"
+            folded={projectFolded}
+            onToggle={() => setFold({ ...fold, project: !projectFolded })}
+          />
+        )}
+        {root.isPending && !projectFolded && <TreeSkeleton />}
         {flat ? (
           flat.map((e) => (
             <Row
@@ -117,7 +176,7 @@ export function FileTree({
               onClick={() => onOpen(e.path)}
             />
           ))
-        ) : (
+        ) : projectFolded ? null : (
           <>
             {pinned.map((e) => (
               <Node
@@ -178,6 +237,29 @@ export function FileTree({
         </FilterChip>
       </div>
     </aside>
+  );
+}
+
+/** A foldable section title in the file panel ("Plan files", "Project files"). */
+function SectionHead({
+  label,
+  folded,
+  onToggle,
+}: {
+  label: string;
+  folded: boolean;
+  onToggle(): void;
+}) {
+  return (
+    <button type="button" className={styles.section} aria-expanded={!folded} onClick={onToggle}>
+      <ChevronRight
+        size={12}
+        strokeWidth={2}
+        aria-hidden="true"
+        style={{ transform: folded ? undefined : 'rotate(90deg)' }}
+      />
+      <span className="label">{label}</span>
+    </button>
   );
 }
 
