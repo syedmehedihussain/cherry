@@ -79,3 +79,30 @@ test('chat: Auto mode runs commands without a card, but git push still asks', as
   await page.getByRole('button', { name: 'Mode: Auto' }).click();
   await page.getByRole('menuitemradio', { name: /Ask/ }).click();
 });
+
+// V2.1 w7.1: slash commands, like the CLI.
+test('chat: slash commands switch the model, the mode and expand /review', async ({ page }) => {
+  await page.goto('/p/core');
+  const box = page.getByLabel('Message Claude');
+  await box.fill('/');
+  const menu = page.getByRole('listbox', { name: 'Commands' });
+  await expect(menu.getByRole('option', { name: /\/clear/ })).toBeVisible();
+  await expect(menu.getByRole('option', { name: /\/compact/ })).toBeVisible();
+  await box.fill('/mod');
+  await box.press('Enter');
+  await expect(box).toHaveValue('/model ');
+  await box.pressSequentially('haiku');
+  await box.press('Enter');
+  await expect(box).toHaveValue('');
+  await expect(page.getByRole('button', { name: /Model: Haiku/ })).toBeVisible();
+
+  await box.fill('/aut');
+  await box.press('Enter');
+  await expect(page.getByRole('button', { name: /Mode: Auto/ })).toBeVisible();
+
+  await box.fill('/review the streak code');
+  await box.press('Escape');
+  await box.press('Enter');
+  await expect(page.getByText(/^Review the uncommitted changes/)).toBeVisible();
+  await expect(page.getByText('Focus: the streak code')).toBeVisible();
+});

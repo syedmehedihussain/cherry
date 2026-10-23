@@ -32,6 +32,7 @@ import {
   proposePlanTool,
   type PlanItem,
 } from '../stages/plan-proposal.ts';
+import { expandCommand } from './commands.ts';
 import { explainTurn } from './explain.ts';
 import { UPLOADS_DIR, saveUpload, uploadPath } from './uploads.ts';
 
@@ -282,7 +283,8 @@ export class ChatService {
     let finished = false;
     const handle = this.runner({
       cwd: dir,
-      prompt: withAttachments(body.text, body.attachments),
+      // The user's message stays as typed; a project command is expanded for Claude.
+      prompt: withAttachments(expandCommand(dir, body.text), body.attachments),
       resume: current.claudeSessionId,
       model,
       ...(body.effort && model !== 'haiku' ? { effort: body.effort } : {}),
@@ -461,6 +463,11 @@ export class ChatService {
       this.live.delete(key(projectId, stage));
     }
     this.publishState(projectId, stage, null);
+  }
+
+  /** The project's folder (throws 404 for a project not in Cherry's list). */
+  dirOf(projectId: string): string {
+    return projectDir(this.config.projectsDir(), projectId);
   }
 
   upload(projectId: string, name: string, data: Buffer) {

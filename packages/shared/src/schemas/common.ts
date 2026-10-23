@@ -37,6 +37,10 @@ export const STAGE_LABEL: Record<Stage, string> = { ...PHASE_LABEL, issues: 'Iss
 /** Stages whose agent writes docs and notes only (ADR-0034); their chat opens in Auto. */
 export const DOCS_ONLY_STAGES: ReadonlySet<Stage> = new Set(['plan', 'design', 'issues']);
 
+/** A project's own slash command, from `.claude/commands/<name>.md` (V2.1 w7.1). */
+export const ProjectCommandSchema = z.object({ name: z.string(), description: z.string() });
+export type ProjectCommand = z.infer<typeof ProjectCommandSchema>;
+
 /** A skill a stage agent can use (ADR-0034). */
 export const StageSkillSchema = z.object({
   name: z.string(),

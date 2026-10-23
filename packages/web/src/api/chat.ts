@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import {
   ApprovalSchema,
   ChatStateSchema,
+  ProjectCommandSchema,
   UploadedFileSchema,
   type Approval,
   type ApprovalAnswer,
@@ -86,6 +87,19 @@ export const newChat = async (id: string, stage: Stage) => {
   await api('POST', `${base(id)}/chat/new${q(stage)}`);
   await queryClient.invalidateQueries({ queryKey: chatKey(id, stage) });
 };
+/** The project's own slash commands, `.claude/commands/*.md` (V2.1 w7.1). */
+export const useProjectCommands = (id: string) =>
+  useQuery({
+    queryKey: ['project', id, 'commands'],
+    queryFn: () =>
+      api(
+        'GET',
+        `${base(id)}/commands`,
+        undefined,
+        z.object({ commands: z.array(ProjectCommandSchema) }),
+      ).then((r) => r.commands),
+  });
+
 /** Approve plan (ADR-0041): the tasks join Development and the Builder starts in Auto. */
 export const approvePlan = async (id: string, itemId: string) => {
   await api('POST', `${base(id)}/chat/plans/${encodeURIComponent(itemId)}/approve`);

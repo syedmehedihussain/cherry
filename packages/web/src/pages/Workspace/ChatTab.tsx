@@ -1,5 +1,6 @@
 import { ChevronRight, FileText, Globe, MessageSquarePlus, RotateCcw } from 'lucide-react';
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
 import {
   ChatModeSchema,
   DOCS_ONLY_STAGES,
@@ -27,12 +28,13 @@ import {
   isImageFile,
   useChat,
   useChatDraft,
+  useProjectCommands,
 } from '../../api/chat.ts';
 import { queryClient } from '../../api/queries.ts';
 import { stageInfo, useStageInfo } from '../../api/stages.ts';
 import { ApprovalCard } from '../../components/ApprovalCard/ApprovalCard.tsx';
 import { ChangeSummary } from '../../components/ChangeSummary/ChangeSummary.tsx';
-import { Composer } from '../../components/Composer/Composer.tsx';
+import { Composer, type SlashCommand } from '../../components/Composer/Composer.tsx';
 import { DecisionCard } from '../../components/DecisionCard/DecisionCard.tsx';
 import { DecisionInChat } from '../../components/Decisions/Decisions.tsx';
 import { Markdown } from '../../components/Markdown/Markdown.tsx';
@@ -212,6 +214,13 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
   };
 
   const lastUserText = [...items].reverse().find((i) => i.kind === 'user')?.text;
+  const commands = useSlashCommands({
+    projectId,
+    stage,
+    onMode: changeMode,
+    onModel: setModel,
+    onError: setError,
+  });
 
   return (
     <div className={styles.chat}>
@@ -279,6 +288,7 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
           onDiscard={(file) => void discardAttachment(projectId, file).catch(() => undefined)}
           onModel={setModel}
           onEffort={setEffort}
+          commands={commands}
         />
       </div>
     </div>
@@ -490,6 +500,116 @@ function ClaudeBlock({
       {end && <ChangeSummary projectId={projectId} tools={tools} end={end} />}
     </div>
   );
+}
+
+/** INIT and REVIEW follow the CLI's /init and /review, in Cherry's words. */
+const INIT_PROMPT =
+  'Read the project and write CLAUDE.md for it, or update the one there: a one-paragraph summary, the stack, the commands to install, run, test and lint, the folder layout, and the project rules. Keep it short. Then tell me what you wrote.';
+const REVIEW_PROMPT =
+  'Review the uncommitted changes and the commits not yet on main for bugs, security problems and missing tests. List the findings most serious first, each with the file and line and a fix. Do not change anything.';
+
+/**
+ * The composer's slash commands (V2.1 w7.1), like the Claude Code CLI: Cherry's own actions,
+ * Claude's /compact, the stage's skills, and the project's `.claude/commands`.
+ */
+function useSlashCommands({
+  projectId,
+  stage,
+  onMode,
+  onModel,
+  onError,
+}: {
+  projectId: string;
+  stage: Stage;
+  onMode(m: ChatMode): void;
+  onModel(m: string): void;
+  onError(e: string | null): void;
+}): SlashCommand[] {
+  const navigate = useNavigate();
+  const skills = stageInfo(useStageInfo().data, stage)?.skills ?? [];
+  const project = useProjectCommands(projectId).data ?? [];
+  const base = `/p/${encodeURIComponent(projectId)}`;
+  const models = ['opus', 'sonnet', 'haiku'];
+  return [
+    {
+      name: 'clear',
+      description: 'Start a new chat (this one stays in history)',
+      group: 'Cherry',
+      instant: true,
+      run: () => void newChat(projectId, stage),
+    },
+    {
+      name: 'stop',
+      description: 'Stop Claude',
+      group: 'Cherry',
+      instant: true,
+      run: () => void stopChat(projectId, stage),
+    },
+    ...(['ask', 'auto', 'plan'] as const).map((m) => ({
+      name: m,
+      description:
+        m === 'ask'
+          ? 'Ask mode: every edit and command asks first'
+          : m === 'auto'
+            ? 'Auto mode: runs without asking; push and serious commands still ask'
+            : 'Plan mode: Claude plans and does not edit',
+      group: 'Cherry' as const,
+      instant: true,
+      run: () => onMode(m),
+    })),
+    {
+      name: 'model',
+      description: 'Switch the model: /model opus, sonnet or haiku',
+      group: 'Cherry',
+      run: (args: string) => {
+        const m = args.toLowerCase();
+        if (models.includes(m)) {
+          onModel(m);
+          onError(null);
+        } else onError('Use /model opus, /model sonnet or /model haiku.');
+      },
+    },
+    {
+      name: 'status',
+      description: 'Open the status report',
+      group: 'Cherry',
+      instant: true,
+      run: () => void navigate(`${base}/status`),
+    },
+    {
+      name: 'compact',
+      description: 'Summarise the conversation so far to free up context',
+      group: 'Claude',
+    },
+    { name: 'context', description: 'Show how full the context window is', group: 'Claude' },
+    {
+      name: 'security-review',
+      description: 'Security review of the pending changes',
+      group: 'Claude',
+    },
+    {
+      name: 'init',
+      description: 'Write or update CLAUDE.md for this project',
+      group: 'Claude',
+      expand: (args: string) => (args ? `${INIT_PROMPT}\n\n${args}` : INIT_PROMPT),
+    },
+    {
+      name: 'review',
+      description: 'Review the changes for bugs, security and tests',
+      group: 'Claude',
+      expand: (args: string) => (args ? `${REVIEW_PROMPT}\n\nFocus: ${args}` : REVIEW_PROMPT),
+    },
+    ...skills.map((k) => ({
+      name: `cherry-${stage}:${k.name}`,
+      description: k.description,
+      group: 'Skill' as const,
+    })),
+    ...project.map((c) => ({
+      name: c.name,
+      description: c.description,
+      group: 'Project' as const,
+    })),
+  ];
 }
 
 /** Approve plan opens Development in Auto, where the Builder has already started (ADR-0041). */

@@ -6,6 +6,10 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **Slash commands** in the chat, like the CLI. Type `/` for a menu: `/clear`, `/stop`, `/ask`,
+  `/auto`, `/plan`, `/model haiku`, `/status`, Claude's `/compact`, `/context`, `/init`,
+  `/review` and `/security-review`, the stage's skills, and the project's own
+  `.claude/commands/*.md` (with `$ARGUMENTS`).
 - **A calmer chat.** Like the CLI, a finished reply folds its steps into one line ("Read 4 files ·
   edited 2 files · ran 1 command", failures named); a click opens it. While Claude works only
   the newest steps show, and anything waiting for you always shows.

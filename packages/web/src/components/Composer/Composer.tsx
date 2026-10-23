@@ -47,6 +47,23 @@ const MODES: { id: ChatMode; label: string; detail: string; Icon: typeof Hand }[
   },
 ];
 
+/**
+ * A slash command in the composer menu (V2.1 w7.1). `run` acts at once in Cherry; `expand`
+ * turns `/name args` into the prompt that is sent; neither: the text goes to Claude as typed
+ * (/compact, skills, the project's own commands).
+ */
+export interface SlashCommand {
+  name: string;
+  description: string;
+  group: 'Cherry' | 'Claude' | 'Skill' | 'Project';
+  run?(args: string): void;
+  expand?(args: string): string;
+  /** Runs as soon as it is picked (no arguments). */
+  instant?: boolean;
+}
+
+const SLASH = /^\/([\w:.-]*)$/;
+
 interface ComposerProps {
   running: boolean;
   /** Claude waits for an approval or decision above. */
@@ -67,6 +84,7 @@ interface ComposerProps {
   onStop(): void;
   onModel(model: string): void;
   onEffort(effort: Effort | null): void;
+  commands?: SlashCommand[];
 }
 
 export function Composer({
@@ -85,8 +103,34 @@ export function Composer({
   onEffort,
   onUpload,
   onDiscard,
+  commands = [],
 }: ComposerProps) {
   const [text, setText] = useState('');
+  const [slashIndex, setSlashIndex] = useState(0);
+  const [slashClosed, setSlashClosed] = useState<string | null>(null);
+  const query = SLASH.exec(text)?.[1]?.toLowerCase();
+  const matches =
+    query === undefined || slashClosed === text
+      ? []
+      : commands
+          .filter((c) => c.name.toLowerCase().includes(query))
+          .sort(
+            (a, b) =>
+              Number(!a.name.toLowerCase().startsWith(query)) -
+              Number(!b.name.toLowerCase().startsWith(query)),
+          )
+          .slice(0, 12);
+  const slashActive = Math.min(slashIndex, Math.max(0, matches.length - 1));
+  const pick = (c: SlashCommand) => {
+    setSlashIndex(0);
+    if (c.instant && c.run) {
+      c.run('');
+      setText('');
+      return;
+    }
+    setText(`/${c.name} `);
+    area.current?.focus();
+  };
   const [menu, setMenu] = useState<'mode' | 'model' | 'effort' | null>(null);
   const [sending, setSending] = useState(false);
   const id = useId();
@@ -166,10 +210,19 @@ export function Composer({
   const hasContent = text.trim().length > 0 || ready.length > 0;
   const canSend = !disabled && !running && !sending && !uploading && hasContent;
   const send = async () => {
+    // A Cherry command acts here, also while Claude works (/stop); an expanding one sends its
+    // prompt (V2.1 w7.1).
+    const cmdMatch = /^\/([\w:.-]+)(?:\s+([\s\S]*))?$/.exec(text.trim());
+    const cmd = cmdMatch && commands.find((c) => c.name === cmdMatch[1]);
+    if (cmd?.run && !disabled) {
+      cmd.run((cmdMatch?.[2] ?? '').trim());
+      setText('');
+      return;
+    }
     if (!canSend) return;
     setSending(true);
     const body =
-      text.trim() ||
+      (cmd?.expand ? cmd.expand((cmdMatch?.[2] ?? '').trim()) : text.trim()) ||
       (ready.length === 1
         ? 'Have a look at the attached file.'
         : 'Have a look at the attached files.');
@@ -199,6 +252,24 @@ export function Composer({
     addFiles(e.dataTransfer.files);
   };
   const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (matches.length > 0) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const step = e.key === 'ArrowDown' ? 1 : -1;
+        setSlashIndex((slashActive + step + matches.length) % matches.length);
+        return;
+      }
+      if (e.key === 'Tab' || (e.key === 'Enter' && !e.shiftKey)) {
+        e.preventDefault();
+        pick(matches[slashActive]!);
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setSlashClosed(text);
+        return;
+      }
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       void send();
@@ -266,6 +337,28 @@ export function Composer({
             ))}
           </ul>
         )}
+        {matches.length > 0 && (
+          <div className={styles.slash} role="listbox" aria-label="Commands">
+            {matches.map((c, i) => (
+              <button
+                key={`${c.group}-${c.name}`}
+                type="button"
+                role="option"
+                aria-selected={i === slashActive}
+                className={styles.slashItem}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  pick(c);
+                }}
+                onMouseEnter={() => setSlashIndex(i)}
+              >
+                <span className={styles.slashName}>/{c.name}</span>
+                <span className={styles.slashDesc}>{c.description}</span>
+                <span className={styles.slashGroup}>{c.group}</span>
+              </button>
+            ))}
+          </div>
+        )}
         <label htmlFor={id} className="sr-only">
           Message Claude
         </label>
@@ -282,7 +375,10 @@ export function Composer({
           }
           value={text}
           disabled={!!disabled}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            setSlashIndex(0);
+          }}
           onKeyDown={onKey}
           onPaste={onPaste}
         />
@@ -354,6 +450,7 @@ export function Composer({
               className={styles.chip}
               aria-haspopup="menu"
               aria-expanded={menu === 'model'}
+              aria-label={`Model: ${modelLabel}`}
               onClick={() => setMenu(menu === 'model' ? null : 'model')}
             >
               {modelLabel}

@@ -8,6 +8,7 @@ import {
   MAX_UPLOAD_BYTES,
   StageSchema,
 } from '@cherry/shared';
+import { projectCommands } from '../chat/commands.ts';
 import { contentTypeFor } from '../chat/uploads.ts';
 import type { ChatService } from '../chat/service.ts';
 import type { ApprovalBroker } from '../claude/approvals.ts';
@@ -27,6 +28,13 @@ export function chatRoutes(
     app.get('/api/projects/:id/chat', async (req) =>
       chat.state(IdParams.parse(req.params).id, stageOf(req.query)),
     );
+
+    // The project's own slash commands for the composer menu (V2.1 w7.1).
+    app.get('/api/projects/:id/commands', async (req) => ({
+      commands: projectCommands(chat.dirOf(IdParams.parse(req.params).id)).map(
+        ({ name, description }) => ({ name, description }),
+      ),
+    }));
 
     app.post('/api/projects/:id/chat', async (req) =>
       chat.send(IdParams.parse(req.params).id, ChatSendSchema.parse(req.body)),
