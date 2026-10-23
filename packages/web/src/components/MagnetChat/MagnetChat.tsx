@@ -1,5 +1,5 @@
 import { ArrowUp, Square } from 'lucide-react';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
   STATE_LABEL,
@@ -26,6 +26,8 @@ import { projectHref } from '../ProjectCard/ProjectCard.tsx';
 import styles from './MagnetChat.module.css';
 
 const CHIPS = ["What's stuck this week?", 'Start a project', 'Summarise today'] as const;
+/** The project's side Chat tab (ADR-0039): questions about this one project. */
+const PROJECT_CHIPS = ['Where are we?', 'What is left in this stage?', 'What changed today?'];
 
 type Row = { t: 'item'; item: ChatItem } | { t: 'looked'; id: string; n: number; running: boolean };
 
@@ -49,12 +51,13 @@ export function MagnetChat({
   projectId,
   onNavigate,
 }: {
-  /** The project being looked at (workspace tab). */
+  /** The project's side Chat tab: its own conversation about this project (ADR-0039). */
   projectId?: string;
   /** Called before following a link (the Home panel closes itself). */
   onNavigate?: () => void;
 }) {
-  const magnet = useMagnet();
+  const magnet = useMagnet(projectId);
+  const inputId = useId();
   const projects = useProjects();
   const navigate = useNavigate();
   const now = useNow(60_000);
@@ -71,7 +74,7 @@ export function MagnetChat({
     if (!v || running) return;
     setError(null);
     try {
-      await sendMagnet(v, projectId);
+      await sendMagnet(v, projectId, true);
       setText('');
     } catch (e) {
       setError(e instanceof ApiFailure ? e.message : 'Magnet could not be reached.');
@@ -95,8 +98,9 @@ export function MagnetChat({
           <div className={styles.empty}>
             <MagnetAvatar size={48} />
             <p>
-              Ask about any project. Magnet reads your projects and proposes actions; nothing
-              changes until you approve.
+              {projectId
+                ? `Ask about ${projectId}: where it stands, what is left, what changed. Magnet reads the project and changes nothing.`
+                : 'Ask about any project. Magnet reads your projects and proposes actions; nothing changes until you approve.'}
             </p>
           </div>
         )}
@@ -119,25 +123,37 @@ export function MagnetChat({
       </div>
       <div className={styles.foot}>
         <div className={styles.chips}>
-          {CHIPS.map((c) => (
-            <button
-              key={c}
-              type="button"
-              className={styles.chip}
-              disabled={running && c !== 'Start a project'}
-              onClick={() =>
-                c === 'Start a project'
-                  ? go('/new')
-                  : void send(
-                      c === 'Summarise today'
-                        ? 'Summarise what happened today across my projects.'
-                        : c,
-                    )
-              }
-            >
-              {c}
-            </button>
-          ))}
+          {projectId
+            ? PROJECT_CHIPS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={styles.chip}
+                  disabled={running}
+                  onClick={() => void send(c)}
+                >
+                  {c}
+                </button>
+              ))
+            : CHIPS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={styles.chip}
+                  disabled={running && c !== 'Start a project'}
+                  onClick={() =>
+                    c === 'Start a project'
+                      ? go('/new')
+                      : void send(
+                          c === 'Summarise today'
+                            ? 'Summarise what happened today across my projects.'
+                            : c,
+                        )
+                  }
+                >
+                  {c}
+                </button>
+              ))}
         </div>
         <form
           className={styles.input}
@@ -146,11 +162,11 @@ export function MagnetChat({
             void send(text);
           }}
         >
-          <label htmlFor="magnet-input" className="sr-only">
+          <label htmlFor={inputId} className="sr-only">
             Ask Magnet
           </label>
           <input
-            id="magnet-input"
+            id={inputId}
             value={text}
             placeholder={
               projectId ? `Ask Magnet about ${projectId}…` : 'Ask Magnet about any project…'
@@ -162,7 +178,7 @@ export function MagnetChat({
               type="button"
               className={styles.send}
               aria-label="Stop Magnet"
-              onClick={() => void stopMagnet()}
+              onClick={() => void stopMagnet(projectId)}
             >
               <Square size={12} aria-hidden="true" />
             </button>

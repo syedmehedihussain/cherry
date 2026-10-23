@@ -23,6 +23,7 @@ export function AgentsPanel({
   onSeeAll,
   kinds,
   onDone,
+  box = true,
 }: {
   projectId: string;
   branch: string | null;
@@ -33,6 +34,8 @@ export function AgentsPanel({
   /** Offer Task and Note in the box as well as Agent (the Overview). */
   kinds?: boolean;
   onDone?(kind: BoxKind): void;
+  /** The task box at the bottom; the Overview leaves it to the side Chat tab (ADR-0039). */
+  box?: boolean;
 }) {
   const agents = useAgents(projectId);
   useLiveAgents(projectId);
@@ -59,7 +62,11 @@ export function AgentsPanel({
         )}
         {list.length === 0 ? (
           <p className={styles.empty}>
-            {kinds ? 'Choose Agent in the box below to start one.' : 'Give an agent a task below.'}{' '}
+            {!box
+              ? 'Start one from the Chat tab (Agent in the box).'
+              : kinds
+                ? 'Choose Agent in the box below to start one.'
+                : 'Give an agent a task below.'}{' '}
             It works on its own branch while you keep chatting, and you review the diff before
             anything lands.
           </p>
@@ -81,15 +88,42 @@ export function AgentsPanel({
           </button>
         )}
       </div>
-      <TaskBox
-        projectId={projectId}
-        branch={branch}
-        full={!!agents.data && running >= agents.data.maxRunning}
-        kinds={kinds}
-        onDone={onDone}
-      />
+      {box && (
+        <TaskBox
+          projectId={projectId}
+          branch={branch}
+          full={!!agents.data && running >= agents.data.maxRunning}
+          kinds={kinds}
+          onDone={onDone}
+        />
+      )}
       {diffOf && <DiffDialog agent={diffOf} onClose={() => setDiffOf(null)} />}
     </section>
+  );
+}
+
+/** The Task / Note / Agent box on its own (the side Chat tab, ADR-0039). */
+export function QuickAdd({
+  projectId,
+  branch,
+  onDone,
+}: {
+  projectId: string;
+  branch: string | null;
+  onDone?(kind: BoxKind): void;
+}) {
+  const agents = useAgents(projectId);
+  const running = (agents.data?.agents ?? []).filter(
+    (a) => a.status === 'running' || a.status === 'waiting',
+  ).length;
+  return (
+    <TaskBox
+      projectId={projectId}
+      branch={branch}
+      full={!!agents.data && running >= agents.data.maxRunning}
+      kinds
+      onDone={onDone}
+    />
   );
 }
 

@@ -77,9 +77,10 @@ export interface EventMap {
   /** A scan agent started, made progress, or saved a report. */
   'scan.updated': { projectId: string; agentId: string };
   /** Magnet's conversation (topic "magnet"). */
-  'magnet.item': { conversationId: string; item: ChatItem };
-  'magnet.delta': { conversationId: string; itemId: string; text: string };
-  'magnet.state': { conversationId: string | null; running: boolean };
+  /** scope: `home`, or `project:<id>` for a project's side Chat tab (ADR-0039). */
+  'magnet.item': { scope: string; conversationId: string; item: ChatItem };
+  'magnet.delta': { scope: string; conversationId: string; itemId: string; text: string };
+  'magnet.state': { scope: string; conversationId: string | null; running: boolean };
   /** The project's app started, stopped or printed its address (no output, no other servers). */
   'run.state': { projectId: string; state: Omit<RunState, 'output' | 'servers'> };
   /** New output from the project's app. */

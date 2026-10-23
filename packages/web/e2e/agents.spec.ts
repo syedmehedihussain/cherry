@@ -12,10 +12,10 @@ test('agent: start → runs on its own → needs you → review diff → merge �
   await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
 
-  // Started from the Overview box; the Agents tab in the centre then opens.
-  const box = page
-    .getByRole('complementary', { name: 'Repository and agents' })
-    .getByRole('region', { name: 'Agents' });
+  // Started from the box in the side Chat tab (ADR-0039); the Agents tab in the centre opens.
+  const aside = page.getByRole('complementary', { name: 'Repository and agents' });
+  await aside.getByRole('tab', { name: 'Chat' }).click();
+  const box = aside.getByRole('form', { name: 'Quick add' });
   await box.getByRole('button', { name: /^Type/ }).click();
   await page.getByRole('menuitemradio', { name: /Agent/ }).click();
   await box.getByLabel('Task').fill('Write tests for the streak service');

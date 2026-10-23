@@ -6,7 +6,8 @@ import { useChat, useChatDraft } from '../../api/chat.ts';
 import { useStageFocus } from '../../api/stages.ts';
 import { useStage } from '../../state/stage.ts';
 import { useTasks } from '../../api/workspace.ts';
-import { AgentsPanel } from '../../components/AgentsPanel/AgentsPanel.tsx';
+import { AgentsPanel, QuickAdd } from '../../components/AgentsPanel/AgentsPanel.tsx';
+import { MagnetChat } from '../../components/MagnetChat/MagnetChat.tsx';
 import { GitPanel } from '../../components/GitHubBox/GitPanel.tsx';
 import { PlanUsage } from '../../components/PlanUsage/PlanUsage.tsx';
 import { SourceControl } from '../../components/SourceControl/SourceControl.tsx';
@@ -17,6 +18,7 @@ const VIEWS = [
   ['overview', 'Overview'],
   ['live', 'Live'],
   ['github', 'GitHub'],
+  ['chat', 'Chat'],
 ] as const;
 
 export type View = (typeof VIEWS)[number][0];
@@ -115,12 +117,22 @@ export function SidePanel({
               now={now}
               limit={3}
               onSeeAll={openAgents}
-              kinds
-              onDone={(kind) => (kind === 'agent' ? openAgents() : openNotes())}
+              box={false}
             />
           </>
         )}
         {view === 'live' && <LiveView projectId={projectId} now={now} onOpenAgents={openAgents} />}
+        {view === 'chat' && (
+          // Magnet about this project, and the Task / Note / Agent box (ADR-0039).
+          <div className={styles.chatView}>
+            <MagnetChat key={projectId} projectId={projectId} />
+            <QuickAdd
+              projectId={projectId}
+              branch={branch}
+              onDone={(kind) => (kind === 'agent' ? openAgents() : openNotes())}
+            />
+          </div>
+        )}
         {view === 'github' && (
           <div className={styles.scroll}>
             <GitPanel key={projectId} projectId={projectId} now={now} full />

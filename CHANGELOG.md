@@ -6,6 +6,9 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **Chat tab in the side panel** (ADR-0039). Next to Overview, Live and GitHub: Magnet answers
+  questions about this project in its own conversation (Where are we? What is left?), and the
+  Task / Note / Agent box moved here from the bottom of Overview.
 - **Claude in Chrome** (ADR-0037, ADR-0038). Settings → General → Claude in Chrome lets project
   chats use your Chrome to open the app and check it, without approval cards. The chat shows one
   "Used Chrome" row; the steps, the page and any failures show in a Chrome box in Live, which

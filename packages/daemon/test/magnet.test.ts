@@ -186,6 +186,32 @@ describe('Magnet', () => {
     expect((await api('GET', '/api/magnet/chat')).body.items).toEqual([]);
   });
 
+  // ADR-0039: a project's side Chat tab has its own conversation, apart from Home's.
+  it('keeps a separate conversation per project, about that project', async () => {
+    magnetScript = [{ text: 'hi' }];
+    await api('POST', '/api/magnet/chat', { text: 'home question' });
+    await idle();
+    await api('POST', '/api/magnet/chat', {
+      text: 'core question',
+      projectId: 'core',
+      scope: 'project',
+    });
+    const start = Date.now();
+    while ((await d.magnet.state('project:core')).running && Date.now() - start < 3000)
+      await new Promise((r) => setTimeout(r, 10));
+    expect(log.requests[1]!.resume).toBeNull();
+    expect(log.requests[1]!.prompt).toMatch(/side chat of the project "core"/);
+    const users = async (q: string) =>
+      (await api('GET', `/api/magnet/chat${q}`)).body.items
+        .filter((i: ChatItem) => i.kind === 'user')
+        .map((i: { text: string }) => i.text);
+    expect(await users('')).toEqual(['home question']);
+    expect(await users('?project=core')).toEqual(['core question']);
+    await api('POST', '/api/magnet/chat/new?project=core');
+    expect(await users('?project=core')).toEqual([]);
+    expect(await users('')).toEqual(['home question']);
+  });
+
   it('serves and saves the knowledge files, with stats', async () => {
     const info = await api('GET', '/api/magnet');
     expect(info.body.files.map((f: { name: string }) => f.name)).toEqual([

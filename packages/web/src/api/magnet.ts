@@ -14,13 +14,23 @@ import { api } from './client.ts';
 import { keys, queryClient } from './queries.ts';
 import { socket } from './socket.ts';
 
+/**
+ * Magnet's conversations (ADR-0039): `home` (the Home panel) or `project:<id>` (that project's
+ * side Chat tab). Pass a project id to `useMagnet` for the project's own conversation.
+ */
+export const HOME_SCOPE = 'home';
+const scopeOf = (projectId?: string) => (projectId ? `project:${projectId}` : HOME_SCOPE);
+const query = (projectId?: string) =>
+  projectId ? `?project=${encodeURIComponent(projectId)}` : '';
+/** Every Magnet conversation (to invalidate them all). */
 export const magnetKey = ['magnet', 'chat'] as const;
+export const magnetChatKey = (scope: string) => ['magnet', 'chat', scope] as const;
 export const magnetInfoKey = ['magnet', 'info'] as const;
 
-export const useMagnet = () =>
+export const useMagnet = (projectId?: string) =>
   useQuery({
-    queryKey: magnetKey,
-    queryFn: () => api('GET', '/api/magnet/chat', undefined, MagnetStateSchema),
+    queryKey: magnetChatKey(scopeOf(projectId)),
+    queryFn: () => api('GET', `/api/magnet/chat${query(projectId)}`, undefined, MagnetStateSchema),
   });
 
 export const useMagnetInfo = () =>
@@ -29,12 +39,18 @@ export const useMagnetInfo = () =>
     queryFn: () => api('GET', '/api/magnet', undefined, MagnetInfoSchema),
   });
 
-export const sendMagnet = (text: string, projectId?: string) =>
-  api('POST', '/api/magnet/chat', { text, ...(projectId ? { projectId } : {}) });
-export const stopMagnet = () => api('POST', '/api/magnet/chat/stop');
-export const newMagnet = async () => {
-  await api('POST', '/api/magnet/chat/new');
-  await queryClient.invalidateQueries({ queryKey: magnetKey });
+/** `own`: the project's own conversation (side Chat tab); else Home's, about this project. */
+export const sendMagnet = (text: string, projectId?: string, own = false) =>
+  api('POST', '/api/magnet/chat', {
+    text,
+    ...(projectId ? { projectId } : {}),
+    ...(own && projectId ? { scope: 'project' } : {}),
+  });
+export const stopMagnet = (projectId?: string) =>
+  api('POST', `/api/magnet/chat/stop${query(projectId)}`);
+export const newMagnet = async (projectId?: string) => {
+  await api('POST', `/api/magnet/chat/new${query(projectId)}`);
+  await queryClient.invalidateQueries({ queryKey: magnetChatKey(scopeOf(projectId)) });
 };
 export const approveAction = (id: string) =>
   api(
@@ -74,24 +90,22 @@ const upsert = (items: ChatItem[], item: ChatItem) => {
 export function useLiveMagnet(): void {
   useEffect(() => {
     const unsub = socket.subscribe('magnet');
-    let pending: { itemId: string; text: string }[] = [];
+    let pending: { scope: string; itemId: string; text: string }[] = [];
     let timer: number | null = null;
     const flush = () => {
       timer = null;
       const batch = pending;
       pending = [];
-      queryClient.setQueryData<MagnetState>(magnetKey, (old) => {
-        if (!old) return old;
-        let items = old.items;
-        for (const d of batch) {
+      for (const d of batch)
+        queryClient.setQueryData<MagnetState>(magnetChatKey(d.scope), (old) => {
+          if (!old) return old;
+          const items = old.items.slice();
           const i = items.findIndex((x) => x.id === d.itemId);
           const it = items[i];
-          if (it?.kind !== 'text') continue;
-          if (items === old.items) items = items.slice();
+          if (it?.kind !== 'text') return old;
           items[i] = { ...it, text: it.text + d.text };
-        }
-        return { ...old, items };
-      });
+          return { ...old, items };
+        });
     };
     const off = socket.on((event) => {
       if (event.type === 'magnet.item') {
@@ -99,7 +113,7 @@ export function useLiveMagnet(): void {
           window.clearTimeout(timer);
           flush();
         }
-        queryClient.setQueryData<MagnetState>(magnetKey, (old) =>
+        queryClient.setQueryData<MagnetState>(magnetChatKey(event.scope), (old) =>
           old
             ? { ...old, conversationId: event.conversationId, items: upsert(old.items, event.item) }
             : old,
@@ -109,7 +123,7 @@ export function useLiveMagnet(): void {
         pending.push(event);
         timer ??= window.setTimeout(flush, 100);
       } else if (event.type === 'magnet.state') {
-        queryClient.setQueryData<MagnetState>(magnetKey, (old) =>
+        queryClient.setQueryData<MagnetState>(magnetChatKey(event.scope), (old) =>
           old
             ? {
                 ...old,

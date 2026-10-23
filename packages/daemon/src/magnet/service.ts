@@ -97,7 +97,20 @@ function magnetSystemPrompt(o: {
   ].join('\n');
 }
 
+/** `home` for the Home panel; `project:<id>` for that project's side Chat tab (ADR-0039). */
+export type MagnetScope = string;
+export const HOME_SCOPE = 'home';
+export const projectScope = (projectId: string): MagnetScope => `project:${projectId}`;
+const scopeProject = (scope: MagnetScope) =>
+  scope.startsWith('project:') ? scope.slice('project:'.length) : null;
+/** The sessions row of a scope: Home keeps `magnet`/`magnet`; a project is `magnet_project`/<id>. */
+const rowOf = (scope: MagnetScope) => {
+  const id = scopeProject(scope);
+  return id ? { kind: 'magnet_project', project: id } : { kind: 'magnet', project: 'magnet' };
+};
+
 interface Live {
+  scope: MagnetScope;
   conversationId: string;
   claudeSessionId: string | null;
   conversation: Conversation;
@@ -105,7 +118,8 @@ interface Live {
 }
 
 /**
- * Magnet (prd.md M-1 to M-5): one conversation across all projects, read-only. Writes, agent
+ * Magnet (prd.md M-1 to M-5): one conversation across all projects on Home, and one per project
+ * in its side Chat tab (ADR-0039), read-only. Writes, agent
  * starts and pushes become proposed-action cards that call the real services after Approve.
  */
 /** A project's folder for a card text, or its id when it is not in the list any more. */
@@ -118,7 +132,7 @@ function folderOf(projectsDir: string, id: string): string {
 }
 
 export class MagnetService {
-  private live: Live | null = null;
+  private readonly live = new Map<MagnetScope, Live>();
 
   constructor(
     private readonly config: ConfigStore,
@@ -140,7 +154,7 @@ export class MagnetService {
     return magnetDir(this.home);
   }
 
-  private open(conversationId: string, claudeSessionId: string | null): Live {
+  private open(scope: MagnetScope, conversationId: string, claudeSessionId: string | null): Live {
     const conversation = new Conversation({
       projectId: 'magnet',
       cwd: this.dir(),
@@ -150,9 +164,9 @@ export class MagnetService {
       ),
       approvals: this.approvals,
       decisions: this.decisions,
-      onItem: (item) => this.hub.publish('magnet', 'magnet.item', { conversationId, item }),
+      onItem: (item) => this.hub.publish('magnet', 'magnet.item', { scope, conversationId, item }),
       onDelta: (itemId, _turnId, text) =>
-        this.hub.publish('magnet', 'magnet.delta', { conversationId, itemId, text }),
+        this.hub.publish('magnet', 'magnet.delta', { scope, conversationId, itemId, text }),
       policy: (tool, input) => {
         if (READ_TOOLS.includes(tool)) return 'allow';
         if (EDIT_TOOLS.has(tool) && !this.config.get().magnet.readOnly) {
@@ -167,25 +181,28 @@ export class MagnetService {
         return { deny: 'Magnet is read-only. Propose an action instead.' };
       },
     });
-    this.live = { conversationId, claudeSessionId, conversation, running: null };
-    return this.live;
+    const live: Live = { scope, conversationId, claudeSessionId, conversation, running: null };
+    this.live.set(scope, live);
+    return live;
   }
 
-  private current(): Live | null {
-    if (this.live) return this.live;
+  private current(scope: MagnetScope): Live | null {
+    const cached = this.live.get(scope);
+    if (cached) return cached;
     const row = this.db
       .prepare(
-        `SELECT id, claude_session_id FROM sessions WHERE kind = 'magnet' AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1`,
+        `SELECT id, claude_session_id FROM sessions WHERE kind = ? AND project_id = ? AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1`,
       )
-      .get() as { id: string; claude_session_id: string | null } | undefined;
+      .get(rowOf(scope).kind, rowOf(scope).project) as
+      { id: string; claude_session_id: string | null } | undefined;
     if (!row) return null;
-    const live = this.open(row.id, row.claude_session_id);
+    const live = this.open(scope, row.id, row.claude_session_id);
     live.conversation.closeInterrupted('Cherry restarted while Magnet was answering. Ask again.');
     return live;
   }
 
-  async state(): Promise<MagnetState> {
-    const live = this.current();
+  async state(scope: MagnetScope = HOME_SCOPE): Promise<MagnetState> {
+    const live = this.current(scope);
     return {
       conversationId: live?.conversationId ?? null,
       running: !!live?.running,
@@ -195,10 +212,12 @@ export class MagnetService {
     };
   }
 
-  private publishState(): void {
+  private publishState(scope: MagnetScope): void {
+    const live = this.live.get(scope);
     this.hub.publish('magnet', 'magnet.state', {
-      conversationId: this.live?.conversationId ?? null,
-      running: !!this.live?.running,
+      scope,
+      conversationId: live?.conversationId ?? null,
+      running: !!live?.running,
     });
   }
 
@@ -215,24 +234,29 @@ export class MagnetService {
   }
 
   async send(body: MagnetSend): Promise<{ turnId: string; conversationId: string }> {
-    let live = this.current();
-    if (live?.running) throw conflict('Magnet is still answering. Wait or stop it.');
     if (body.projectId) projectDir(this.config.projectsDir(), body.projectId);
+    // The project's side Chat tab has its own conversation; Home has one across projects.
+    const scope =
+      body.scope === 'project' && body.projectId ? projectScope(body.projectId) : HOME_SCOPE;
+    let live = this.current(scope);
+    if (live?.running) throw conflict('Magnet is still answering. Wait or stop it.');
     if (!live) {
       const id = randomUUID();
       const now = Date.now();
       this.db
         .prepare(
-          `INSERT INTO sessions (id, project_id, kind, title, model, started_at, transcript) VALUES (?, 'magnet', 'magnet', ?, ?, ?, ?)`,
+          `INSERT INTO sessions (id, project_id, kind, title, model, started_at, transcript) VALUES (?, ?, ?, ?, ?, ?, ?)`,
         )
         .run(
           id,
+          rowOf(scope).project,
+          rowOf(scope).kind,
           body.text.slice(0, 80),
           this.config.get().claude.defaultModel,
           now,
           path.join(this.home, 'transcripts', `magnet_${id}.jsonl`),
         );
-      live = this.open(id, null);
+      live = this.open(scope, id, null);
       recordUsage(this.db, now, 0, true);
     }
     // Fresh project lines for this turn.
@@ -242,9 +266,11 @@ export class MagnetService {
     const cur = live;
     cur.conversation.startTurn(turnId);
     cur.conversation.addUser(`u_${turnId}`, body.text);
-    const prompt = body.projectId
-      ? `(I am looking at the project "${body.projectId}".)\n\n${body.text}`
-      : body.text;
+    const prompt = scopeProject(scope)
+      ? `(This is the side chat of the project "${scopeProject(scope)}". Answer about this project unless I ask about others.)\n\n${body.text}`
+      : body.projectId
+        ? `(I am looking at the project "${body.projectId}".)\n\n${body.text}`
+        : body.text;
     const projectsDir = this.config.projectsDir();
     // Magnet reads the folders in Cherry's project list (ADR-0032).
     const opened = this.config.get().projects.map((f) => path.resolve(expandHome(f.path)));
@@ -364,41 +390,44 @@ export class MagnetService {
           cur.running = null;
           recordUsage(this.db, Date.now(), ev.durationMs, false);
           this.approvals.cancel(`magnet:${cur.conversationId}`, 'Magnet finished');
-          this.publishState();
+          this.publishState(scope);
         }
       },
     });
     if (!finished) {
       cur.running = handle;
-      this.publishState();
+      this.publishState(scope);
     }
     return { turnId, conversationId: cur.conversationId };
   }
 
-  async stop(): Promise<void> {
-    const live = this.current();
+  async stop(scope: MagnetScope = HOME_SCOPE): Promise<void> {
+    const live = this.current(scope);
     if (!live?.running) return;
     this.approvals.cancel(`magnet:${live.conversationId}`, 'Stopped');
     await live.running.interrupt();
   }
 
-  async newConversation(): Promise<void> {
-    const live = this.current();
+  async newConversation(scope: MagnetScope = HOME_SCOPE): Promise<void> {
+    const live = this.current(scope);
     if (live) {
-      await this.stop();
+      await this.stop(scope);
       this.db
         .prepare('UPDATE sessions SET ended_at = ? WHERE id = ?')
         .run(Date.now(), live.conversationId);
-      this.live = null;
+      this.live.delete(scope);
     }
-    this.publishState();
+    this.publishState(scope);
   }
 
   private findAction(actionId: string): {
     live: Live;
     item: Extract<ChatItem, { kind: 'action' }>;
   } {
-    const live = this.current();
+    // Actions live in whichever conversation proposed them.
+    const live = [...this.live.values()].find(
+      (l) => l.conversation.items.get(actionId)?.kind === 'action',
+    );
     const item = live?.conversation.items.get(actionId);
     if (!live || item?.kind !== 'action') throw notFound(`No action ${actionId}`);
     if (item.action.status !== 'proposed')
@@ -497,7 +526,7 @@ export class MagnetService {
   }
 
   async stopAll(): Promise<void> {
-    await this.stop();
+    await Promise.all([...this.live.keys()].map((scope) => this.stop(scope)));
   }
 }
 

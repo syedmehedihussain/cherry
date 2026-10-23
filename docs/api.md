@@ -188,9 +188,9 @@ progress or saves a report.
 | --- | --- | --- |
 | GET | `/api/magnet` | profile files, read-only flag, stats and usage (Settings → Magnet) |
 | PUT | `/api/magnet/files/:name` | save `MAGNET.md`, `me.md` or `work.md` |
-| GET | `/api/magnet/chat` | `{ conversationId, running, items, readOnly, projects }` |
-| POST | `/api/magnet/chat` | `{ text, projectId? }` |
-| POST | `/api/magnet/chat/stop` · `/new` | stop the answer · start a new conversation |
+| GET | `/api/magnet/chat?project=` | `{ conversationId, running, items, readOnly, projects }`; with `project`, that project's side chat (ADR-0039) |
+| POST | `/api/magnet/chat` | `{ text, projectId?, scope? }`; `scope: 'project'` uses the project's own conversation |
+| POST | `/api/magnet/chat/stop` · `/new` (`?project=`) | stop the answer · start a new conversation |
 | POST | `/api/magnet/actions/:id/approve` | runs the proposed action (ADR-0011), returns it with `result` and `href` |
 | POST | `/api/magnet/actions/:id/cancel` | marks it cancelled |
 
@@ -222,6 +222,6 @@ One socket at `/ws`. Every event: `{ type, at, ...payload }`. The client subscri
 | `run.state` | `{ projectId, state }` the app started, stopped or printed its local address (no output, no servers) | project:id |
 | `run.output` | `{ projectId, text }` new output, colour codes removed, sent at most every 100 ms | project:id |
 | `notice` | `{ projectId, kind, title, body, link }` work ended or needs you: `agent.done`, `agent.failed`, `scan.done`, `scan.failed`, `decision.proposed`, `chat.done`, `chat.failed`; `link` is the web route. The web shows a toast, a desktop notification while the tab is in the background, and a count in the tab title | notices |
-| `magnet.item` / `magnet.delta` / `magnet.state` | Magnet's conversation (items include `projects` and `action`) | magnet |
+| `magnet.item` / `magnet.delta` / `magnet.state` | Magnet's conversations; `scope` is `home` or `project:<id>` (items include `projects` and `action`) | magnet |
 
 On reconnect the client re-subscribes and re-fetches state with GET calls. Events are not replayed.

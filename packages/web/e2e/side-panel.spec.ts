@@ -16,18 +16,21 @@ test('side panel switches between views and remembers the choice', async ({ page
   await expect(aside.getByRole('region', { name: 'Agents' })).toHaveCount(0);
 
   // Agents, Decisions and Notes & Tasks are centre tabs, not side views.
-  await expect(views.getByRole('tab')).toHaveText(['Overview', 'Live', 'GitHub']);
+  await expect(views.getByRole('tab')).toHaveText(['Overview', 'Live', 'GitHub', 'Chat']);
 
   await page.reload();
   await expect(views.getByRole('tab', { name: 'GitHub' })).toHaveAttribute('aria-selected', 'true');
 });
 
 // The Overview box adds a task to the task list and opens the Notes & Tasks tab in the centre.
-test('overview box adds a task and opens Notes & Tasks', async ({ page }) => {
+test('side Chat tab adds a task, and Magnet answers about this project', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
   const aside = page.getByRole('complementary', { name: 'Repository and agents' });
+  // The box moved from Overview to the Chat tab (ADR-0039).
   await aside.getByRole('tab', { name: 'Overview' }).click();
+  await expect(aside.getByRole('form', { name: 'Quick add' })).toHaveCount(0);
+  await aside.getByRole('tab', { name: 'Chat' }).click();
 
   await aside.getByRole('button', { name: /^Type/ }).click();
   await aside.getByRole('menuitemradio', { name: /Task/ }).click();
@@ -38,10 +41,14 @@ test('overview box adds a task and opens Notes & Tasks', async ({ page }) => {
   await expect(page).toHaveURL(/\/p\/core\/notes$/);
   await expect(page.getByRole('button', { name: /Fix the hero section/ })).toBeVisible();
 
-  await aside.getByRole('tab', { name: 'Overview' }).click();
   await aside.getByRole('button', { name: /^Type/ }).click();
   await aside.getByRole('menuitemradio', { name: /Agent/ }).click();
   await expect(aside.getByRole('button', { name: 'Model: Opus' })).toBeVisible();
+
+  // Magnet, in this project's own conversation.
+  await aside.getByRole('button', { name: 'Where are we?' }).click();
+  await expect(aside.getByText('Where are we?').last()).toBeVisible();
+  await expect(aside.getByText('I have no script for that.')).toBeVisible();
 });
 
 // The Overview boxes minimize to one line and stay that way after a reload.

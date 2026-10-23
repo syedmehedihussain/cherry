@@ -19,6 +19,8 @@ export const MagnetSendSchema = z.object({
   text: z.string().trim().min(1).max(8000),
   /** The project the user is looking at, if any. */
   projectId: z.string().max(200).optional(),
+  /** `project`: the project's own side chat (ADR-0039); default the Home conversation. */
+  scope: z.enum(['home', 'project']).default('home'),
 });
 export type MagnetSend = z.infer<typeof MagnetSendSchema>;
 
