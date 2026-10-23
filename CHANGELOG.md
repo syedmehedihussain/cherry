@@ -6,9 +6,10 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
-- **Claude in Chrome** (ADR-0037). Settings → General → Claude in Chrome lets project chats
-  use your Chrome to open the app and check it. Clicks, typing and page changes always ask,
-  also in Auto; JavaScript and uploads ask every time. Agents never use it.
+- **Claude in Chrome** (ADR-0037, ADR-0038). Settings → General → Claude in Chrome lets project
+  chats use your Chrome to open the app and check it, without approval cards. The chat shows one
+  "Used Chrome" row; the steps, the page and any failures show in a Chrome box in Live, which
+  opens by itself. Agents never use it.
 - **Start project opens Plan** (ADR-0036). The seven-step survey is gone. Start project asks
   for the idea and a folder name, makes the folder, and opens the project on the Plan stage
   with the idea in the composer: press Send and the Planner takes it from there.

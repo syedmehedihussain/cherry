@@ -108,12 +108,13 @@ Only:
 
 No telemetry, no update checks in the MVP.
 
-## Claude in Chrome (ADR-0037)
+## Claude in Chrome (ADR-0037, ADR-0038)
 
 Off by default. With Settings → General → Claude in Chrome on, project chats get the CLI's Chrome
-tools; every other session runs with `--no-chrome`. Chrome is the user's signed-in browser, so
-actions (navigate, click, type, tabs) ask in every mode, also in Auto, and JavaScript and file
-uploads ask every time with no session rule. Only reading a page follows Auto.
+tools and they run without approval cards (the user's choice: one user, loopback only). Every
+other session runs with `--no-chrome`, so background agents in Auto never touch the browser. The
+chat prompt tells Claude to use a new tab, leave other tabs alone and never submit payments,
+passwords or messages.
 
 ## Stage skills (ADR-0034)
 

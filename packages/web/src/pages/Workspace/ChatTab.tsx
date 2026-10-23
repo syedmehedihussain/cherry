@@ -1,7 +1,8 @@
-import { FileText, MessageSquarePlus, RotateCcw } from 'lucide-react';
+import { ChevronRight, FileText, Globe, MessageSquarePlus, RotateCcw } from 'lucide-react';
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   ChatModeSchema,
+  chromeTool,
   type ChatItem,
   type ChatMode,
   type ChatState,
@@ -33,6 +34,7 @@ import { DecisionCard } from '../../components/DecisionCard/DecisionCard.tsx';
 import { DecisionInChat } from '../../components/Decisions/Decisions.tsx';
 import { Markdown } from '../../components/Markdown/Markdown.tsx';
 import { ReadGroup, TimelineRow, type ToolItem } from '../../components/Timeline/Timeline.tsx';
+import { useSideView } from './SidePanel.tsx';
 import styles from './Chat.module.css';
 
 type Block =
@@ -42,6 +44,8 @@ type Block =
 type Part =
   | { t: 'text'; item: Extract<ChatItem, { kind: 'text' }> }
   | { t: 'tools'; items: ToolItem[] }
+  /** Claude in Chrome steps of this reply, as one row; the steps show in Live (ADR-0038). */
+  | { t: 'chrome'; items: ToolItem[] }
   | { t: 'decision'; item: Extract<ChatItem, { kind: 'decision' }> }
   | { t: 'approval'; item: Extract<ChatItem, { kind: 'approval' }> }
   | { t: 'end'; item: Extract<ChatItem, { kind: 'turn-end' }> };
@@ -63,6 +67,10 @@ export function toBlocks(items: ChatItem[]): Block[] {
     const last = claude.parts[claude.parts.length - 1];
     if (item.kind === 'text') {
       if (item.text.trim()) claude.parts.push({ t: 'text', item });
+    } else if (item.kind === 'tool' && chromeTool(item.tool)) {
+      const chrome = claude.parts.find((p) => p.t === 'chrome');
+      if (chrome?.t === 'chrome') chrome.items.push(item);
+      else claude.parts.push({ t: 'chrome', items: [item] });
     } else if (item.kind === 'tool') {
       if (last?.t === 'tools') last.items.push(item);
       else claude.parts.push({ t: 'tools', items: [item] });
@@ -378,6 +386,8 @@ function ClaudeBlock({
                 ))}
               </Fragment>
             );
+          case 'chrome':
+            return <ChromeRow key={p.items[0]!.id} items={p.items} />;
           case 'decision':
             return (
               <DecisionCard
@@ -429,6 +439,30 @@ function ClaudeBlock({
       })}
       {end && <ChangeSummary projectId={projectId} tools={tools} end={end} />}
     </div>
+  );
+}
+
+/** One row for every Chrome step of a reply; Live shows them (ADR-0038). */
+function ChromeRow({ items }: { items: ToolItem[] }) {
+  const setView = useSideView((s) => s.set);
+  const running = items.some((i) => i.status === 'running' || i.status === 'waiting');
+  const failed = items.filter((i) => i.status === 'failed').length;
+  const last = items.at(-1)!;
+  return (
+    <button type="button" className={styles.chromeRow} onClick={() => setView('live')}>
+      <Globe size={13} aria-hidden="true" className={running ? styles.chromeBusy : undefined} />
+      <span className={styles.chromeTitle}>
+        {running ? 'Using Chrome' : 'Used Chrome'} · {items.length} step
+        {items.length === 1 ? '' : 's'}
+        {failed > 0 && ` · ${failed} failed`}
+      </span>
+      <span className={styles.chromeLast} title={last.target}>
+        {last.target}
+      </span>
+      <span className={styles.chromeOpen}>
+        Live <ChevronRight size={12} aria-hidden="true" />
+      </span>
+    </button>
   );
 }
 

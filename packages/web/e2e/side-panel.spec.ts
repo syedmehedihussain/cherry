@@ -78,3 +78,24 @@ test("live view follows Claude's plan", async ({ page }) => {
   await expect(plan.getByText('2 of 2 done')).toBeVisible();
   await expect(aside.getByText('Claude is idle')).toBeVisible();
 });
+
+// ADR-0038: Chrome steps are one row in the chat; Live shows them, and opens by itself.
+test('Chrome steps show in Live, not as rows in the chat', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'core', exact: true }).first().click();
+  const aside = page.getByRole('complementary', { name: 'Repository and agents' });
+  await aside.getByRole('tab', { name: /^Overview/ }).click();
+
+  await page.getByLabel('Message Claude').fill('Check the app in Chrome');
+  await page.getByRole('button', { name: 'Send' }).click();
+
+  const chrome = aside.getByRole('region', { name: 'Chrome' });
+  await expect(chrome.getByText('Chrome is in use')).toBeVisible();
+  await expect(aside.getByRole('tab', { name: /^Live/ })).toHaveAttribute('aria-selected', 'true');
+  await expect(chrome.getByText('Last Chrome session')).toBeVisible();
+  await expect(chrome).toContainText('On http://localhost:5173');
+  await expect(chrome).toContainText('4 steps');
+  await expect(chrome).toContainText('left click in the page');
+  await expect(page.getByRole('button', { name: /Used Chrome · 4 steps/ })).toBeVisible();
+  await expect(page.getByText('The page loads and the console is clean.')).toBeVisible();
+});

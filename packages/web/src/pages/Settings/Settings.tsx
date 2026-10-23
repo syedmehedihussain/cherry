@@ -207,8 +207,7 @@ function GeneralSection() {
             <strong>Claude in Chrome</strong>
             <span>
               Project chats may use your Chrome to open and check the app, through the Claude in
-              Chrome extension. Every click and page change asks first, also in Auto. Agents never
-              use it.
+              Chrome extension. It runs without asking; its steps show in Live. Agents never use it.
             </span>
           </span>
           <Switch

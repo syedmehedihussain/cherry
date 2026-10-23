@@ -1,5 +1,5 @@
-import { Check, ChevronRight } from 'lucide-react';
-import { relativeTime, type ChatItem, type PlanItem } from '@cherry/shared';
+import { Check, ChevronRight, Globe, X } from 'lucide-react';
+import { chromeTool, relativeTime, type ChatItem, type PlanItem } from '@cherry/shared';
 import { useAgents } from '../../api/agents.ts';
 import { useChat } from '../../api/chat.ts';
 import { useStage } from '../../state/stage.ts';
@@ -18,6 +18,78 @@ function nowDoing(items: ChatItem[]): string | null {
     }
   }
   return null;
+}
+
+type ToolItem = Extract<ChatItem, { kind: 'tool' }>;
+
+/** The Chrome steps of the last turn that used Chrome (ADR-0038). */
+export function chromeSteps(items: ChatItem[]): ToolItem[] {
+  const all = items.filter((i): i is ToolItem => i.kind === 'tool' && !!chromeTool(i.tool));
+  const turn = all.at(-1)?.turnId;
+  return turn ? all.filter((i) => i.turnId === turn) : [];
+}
+
+/** The turn of the newest item, while Claude is working; else null. */
+export function currentTurn(items: ChatItem[], running: boolean): string | null {
+  const last = items.findLast((i) => 'turnId' in i);
+  return running && last && 'turnId' in last ? last.turnId : null;
+}
+
+/** The page Chrome is on: the last page it opened. */
+function currentPage(steps: ToolItem[]): string | null {
+  const nav = steps.filter(
+    (s) => chromeTool(s.tool) === 'navigate' && s.target.startsWith('open '),
+  );
+  return nav.at(-1)?.target.slice(5) ?? null;
+}
+
+const SHOWN_STEPS = 8;
+
+function ChromeCard({ steps, busy }: { steps: ToolItem[]; busy: boolean }) {
+  const page = currentPage(steps);
+  const failed = steps.filter((s) => s.status === 'failed');
+  const shown = steps.slice(-SHOWN_STEPS);
+  return (
+    <section className={styles.card} aria-label="Chrome">
+      <div className={styles.head}>
+        <span className={styles.state} data-running={busy || undefined}>
+          <Globe size={13} aria-hidden="true" />
+          {busy ? 'Chrome is in use' : 'Last Chrome session'}
+        </span>
+        <span className={styles.muted}>
+          {steps.length} step{steps.length === 1 ? '' : 's'}
+          {failed.length > 0 && ` · ${failed.length} failed`}
+        </span>
+      </div>
+      {page && (
+        <p className={styles.chromePage}>
+          On <span className="mono">{page}</span>
+        </p>
+      )}
+      <ol className={styles.chromeSteps}>
+        {shown.map((s) => (
+          <li key={s.id} data-status={s.status}>
+            <span className={styles.mark} aria-hidden="true">
+              {s.status === 'ok' ? (
+                <Check size={11} strokeWidth={3} />
+              ) : s.status === 'failed' || s.status === 'denied' ? (
+                <X size={11} strokeWidth={3} />
+              ) : (
+                <span className={styles.spin} />
+              )}
+            </span>
+            <span className={styles.stepText}>
+              <span className={styles.stepTitle}>{s.target}</span>
+              {s.meta && <span className={styles.active}>{s.meta}</span>}
+            </span>
+          </li>
+        ))}
+      </ol>
+      {steps.length > SHOWN_STEPS && (
+        <p className={styles.muted}>and {steps.length - SHOWN_STEPS} earlier steps</p>
+      )}
+    </section>
+  );
 }
 
 function Step({ step }: { step: PlanItem }) {
@@ -65,6 +137,7 @@ export function LiveView({
   const running = !!state?.running;
   const done = plan.filter((s) => s.status === 'completed').length;
   const doing = running ? nowDoing(state?.items ?? []) : null;
+  const chrome = chromeSteps(state?.items ?? []);
   const busyAgents = (agents.data?.agents ?? []).filter(
     (a) => a.status === 'running' || a.status === 'waiting' || a.status === 'queued',
   );
@@ -83,6 +156,13 @@ export function LiveView({
         </div>
         {doing && <p className={styles.doing}>{doing}</p>}
       </section>
+
+      {chrome.length > 0 && (
+        <ChromeCard
+          steps={chrome}
+          busy={chrome[0]!.turnId === currentTurn(state?.items ?? [], running)}
+        />
+      )}
 
       <section className={styles.card} aria-label="Plan">
         <div className={styles.head}>

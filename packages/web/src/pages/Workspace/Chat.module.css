@@ -164,3 +164,48 @@
 .attachFile:hover {
   border-color: var(--bs);
 }
+
+/* Claude in Chrome: one row per reply; the steps are in Live (ADR-0038). */
+.chromeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--b);
+  border-radius: var(--r-md);
+  background: var(--s1);
+  color: var(--t2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.chromeRow:hover {
+  border-color: var(--bs);
+  color: var(--t1);
+}
+.chromeBusy {
+  animation: ap-pulse 1.2s ease-in-out infinite;
+  color: var(--accent-text);
+}
+.chromeTitle {
+  flex: none;
+  font-weight: 500;
+}
+.chromeLast {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--t3);
+}
+.chromeOpen {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--accent-text);
+}

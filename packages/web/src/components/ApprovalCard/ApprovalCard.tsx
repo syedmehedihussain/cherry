@@ -1,6 +1,6 @@
 import { Check, ChevronRight, ShieldAlert, TriangleAlert, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
-import { chromeSessionOk, relativeTime, type Approval, type ApprovalFile } from '@cherry/shared';
+import { relativeTime, type Approval, type ApprovalFile } from '@cherry/shared';
 import { tildify } from '../../lib/paths.ts';
 import { Pill } from '../Pill/Pill.tsx';
 import styles from './ApprovalCard.module.css';
@@ -25,8 +25,6 @@ export function ApprovalCard({ approval, now, onAnswer, autoFocus, compact }: Ap
   const [reason, setReason] = useState('');
   /** A command card with a detail is a serious command (ADR-0033): warn, and no session allow. */
   const serious = approval.kind === 'command' && !!approval.detail;
-  // Chrome code and uploads ask every time (ADR-0037).
-  const sessionOk = !serious && chromeSessionOk(approval.tool);
 
   useEffect(() => {
     if (autoFocus && approval.status === 'pending') ref.current?.focus();
@@ -135,7 +133,7 @@ export function ApprovalCard({ approval, now, onAnswer, autoFocus, compact }: Ap
             >
               Allow
             </button>
-            {approval.kind !== 'push' && sessionOk && (
+            {approval.kind !== 'push' && !serious && (
               <button
                 type="button"
                 className="btn btn-secondary btn-md"

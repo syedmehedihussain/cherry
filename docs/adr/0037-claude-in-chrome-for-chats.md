@@ -1,6 +1,6 @@
 # 0037 — Project chats may use Claude in Chrome, behind a switch
 
-- **Status:** Accepted
+- **Status:** Accepted; approval rules amended by 0038
 - **Date:** 2026-10-23
 - **Decided by:** Meddy
 

@@ -1,7 +1,11 @@
-/** Claude in Chrome (ADR-0037): the CLI's built-in browser tools, named mcp__claude-in-chrome__*. */
+/**
+ * Claude in Chrome (ADR-0037, ADR-0038): the CLI's built-in browser tools, named
+ * mcp__claude-in-chrome__*. With the setting on they run without asking; these helpers name
+ * each step for the chat row and the Live view.
+ */
 export const CHROME_PREFIX = 'mcp__claude-in-chrome__';
 
-/** Tools that only look at the browser. They follow Auto mode and Allow for this session. */
+/** Tools that only look at the browser. */
 const READS = new Set([
   'tabs_context_mcp',
   'list_connected_browsers',
@@ -13,16 +17,13 @@ const READS = new Set([
   'shortcuts_list',
 ]);
 
-/** Tools that run code or send files from your disk: they ask every time, no session rule. */
-const EVERY_TIME = new Set(['javascript_tool', 'file_upload', 'upload_image']);
-
 export interface ChromeVerdict {
-  /** Card title. */
+  /** What Claude does, e.g. "Claude wants to use Chrome: open http://localhost:5173". */
   title: string;
-  /** Only reads: Auto may run it. */
+  /** What it does, short: "open http://localhost:5173". */
+  action: string;
+  /** Only looks at the browser. */
   read: boolean;
-  /** A session rule may cover it. */
-  sessionOk: boolean;
 }
 
 /** The short tool name (`navigate`), or null when the tool is not a Chrome tool. */
@@ -57,16 +58,7 @@ function what(name: string, input: Record<string, unknown>): string {
   }
 }
 
-/** An approval card for this tool may offer Allow for this session. */
-export function chromeSessionOk(tool: string): boolean {
-  const name = chromeTool(tool);
-  return !name || !EVERY_TIME.has(name);
-}
-
 export function classifyChrome(name: string, input: Record<string, unknown>): ChromeVerdict {
-  return {
-    title: `Claude wants to use Chrome: ${what(name, input)}`,
-    read: READS.has(name),
-    sessionOk: !EVERY_TIME.has(name),
-  };
+  const action = what(name, input);
+  return { title: `Claude wants to use Chrome: ${action}`, action, read: READS.has(name) };
 }

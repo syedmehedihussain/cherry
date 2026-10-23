@@ -93,6 +93,32 @@ branch.
 
 **Done when:** "What's stuck this week?" gives a correct answer from your real projects.
 
+## V2.1 — Workspace polish
+
+From using Cherry day to day (2026-10-23): each stage says how far it is, Plan hands a plan to
+Development in one click, the chat gets quieter, and the chat gains Claude Code CLI features.
+New feedback is added here in build order.
+
+- [x] w0 Start project is one form and opens Plan (ADR-0036); project chats may use Claude in
+      Chrome (ADR-0037).
+- [x] w1 Claude in Chrome runs without asking when the setting is on.
+- [x] w2 Chrome steps show in one box in Live; the chat shows one compact row.
+- [ ] w3 Side panel Chat tab: Magnet chat for this project and the Task / Note / Agent box.
+- [ ] w4 File panel per stage: stage files open, project files folded, Collapse all.
+- [ ] w5 Stage progress on Overview: a checklist per stage kept by its agent (stage_checklist),
+      a bar with what is left, Recheck, Move to the next stage, progress on the stage tabs.
+- [ ] w5b Approve plan: the Planner proposes the plan as a card; Approve writes the tasks,
+      opens Development in Auto and starts the Builder. Docs-only stages default to Auto.
+- [ ] w6 A calmer chat: a finished reply folds its tool rows into one "Worked … · N steps" line.
+- [ ] w7 Claude Code CLI parity: slash commands, @ file mentions, context meter and compact,
+      thinking, subagents, chat history and resume, remembered allow rules, keys
+      (Esc, ↑, paste image); later rewind.
+
+**Done when:** in Plan you say "next I want X", the Planner fills the Plan bar, Approve plan
+opens Development and the Builder works through the tasks while the Development bar fills;
+Chrome checks the app without one approval card and its steps show in Live; the side Chat tab
+answers questions about the project.
+
 ## After the MVP: scan agents
 
 - [x] Ready-made scan agents (Security review, Test runner, Code health, Dependency audit),

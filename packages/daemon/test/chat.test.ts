@@ -307,32 +307,28 @@ describe('chat', () => {
       await idle();
     });
 
-    // ADR-0037: Chrome acts in the user's real browser; only reads follow Auto.
-    it('asks before Chrome actions, runs Chrome reads, and asks every time for JavaScript', async () => {
+    // ADR-0038: with the setting on, Chrome runs without asking, in Ask mode too.
+    it('runs Chrome tools without an approval card', async () => {
       const chrome = (n: string) => `mcp__claude-in-chrome__${n}`;
       script = [
-        { tool: { name: chrome('read_page'), input: { tabId: 1 } } },
         { tool: { name: chrome('navigate'), input: { url: 'http://localhost:5173' } } },
-        { tool: { name: chrome('navigate'), input: { url: 'http://localhost:5173/a' } } },
         { tool: { name: chrome('javascript_tool'), input: { text: '1' } } },
-        { tool: { name: chrome('javascript_tool'), input: { text: '2' } } },
+        { tool: { name: chrome('read_page'), input: { tabId: 1 } } },
       ];
-      await api('POST', '/api/projects/core/chat', { text: 'check it', mode: 'auto' });
-      await until(() => pending().length === 1);
-      expect(pending()[0]).toMatchObject({
-        kind: 'other',
-        title: 'Claude wants to use Chrome: open http://localhost:5173',
-      });
-      // A session rule covers the next navigate; JavaScript asks both times.
-      await api('POST', `/api/approvals/${pending()[0]!.id}`, { answer: 'allow_session' });
-      await until(() => pending().length === 1);
-      expect(pending()[0]?.title).toBe('Claude wants to use Chrome: run JavaScript in the page');
-      await api('POST', `/api/approvals/${pending()[0]!.id}`, { answer: 'allow_session' });
-      await until(() => pending().length === 1);
-      await api('POST', `/api/approvals/${pending()[0]!.id}`, { answer: 'deny' });
+      await api('POST', '/api/projects/core/chat', { text: 'check it' });
       await idle();
-      expect(log.permissions.map((p) => p.allowed)).toEqual([true, true, true, true, false]);
-      expect(d.approvals.list()).toHaveLength(3);
+      expect(d.approvals.list()).toHaveLength(0);
+      expect(log.permissions.map((p) => p.allowed)).toEqual([true, true, true]);
+      // Each step is named for the chat row and the Live view.
+      const items = (await api('GET', '/api/projects/core/chat')).body.items as {
+        kind: string;
+        target?: string;
+      }[];
+      expect(items.filter((i) => i.kind === 'tool').map((i) => i.target)).toEqual([
+        'open http://localhost:5173',
+        'run JavaScript in the page',
+        'read the browser',
+      ]);
     });
 
     it('turns Claude in Chrome on for chats only when the setting is on', async () => {

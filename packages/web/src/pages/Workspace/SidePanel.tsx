@@ -1,4 +1,5 @@
 import { Check, ChevronRight, X } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { create } from 'zustand';
 import { useChat, useChatDraft } from '../../api/chat.ts';
@@ -9,7 +10,7 @@ import { AgentsPanel } from '../../components/AgentsPanel/AgentsPanel.tsx';
 import { GitPanel } from '../../components/GitHubBox/GitPanel.tsx';
 import { PlanUsage } from '../../components/PlanUsage/PlanUsage.tsx';
 import { SourceControl } from '../../components/SourceControl/SourceControl.tsx';
-import { LiveView } from './LiveView.tsx';
+import { LiveView, chromeSteps, currentTurn } from './LiveView.tsx';
 import styles from './SidePanel.module.css';
 
 const VIEWS = [
@@ -61,7 +62,19 @@ export function SidePanel({
   const setView = useSideView((s) => s.set);
   const label = VIEWS.find(([id]) => id === view)?.[1];
   const stage = useStage(projectId);
-  const working = !!useChat(projectId, stage).data?.running;
+  const chat = useChat(projectId, stage).data;
+  const working = !!chat?.running;
+  // Chrome started in this reply: show its steps in Live, once per turn (ADR-0038).
+  const items = chat?.items ?? [];
+  const turnNow = currentTurn(items, working);
+  const chromeNow = !!turnNow && chromeSteps(items).at(-1)?.turnId === turnNow;
+  const shownTurn = useRef<string | null>(null);
+  useEffect(() => {
+    if (chromeNow && turnNow && shownTurn.current !== turnNow) {
+      shownTurn.current = turnNow;
+      setView('live');
+    }
+  }, [chromeNow, turnNow, setView]);
   const navigate = useNavigate();
   const base = `/p/${encodeURIComponent(projectId)}`;
   const openNotes = () => void navigate(`${base}/notes`);

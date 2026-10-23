@@ -190,3 +190,47 @@
   font-size: var(--fs-sm);
   cursor: pointer;
 }
+
+/* Claude in Chrome (ADR-0038) */
+.chromePage {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--t2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chromeSteps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.chromeSteps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 4px 0;
+  min-width: 0;
+}
+.chromeSteps li[data-status='ok'] .mark {
+  background: var(--success);
+  border-color: var(--success);
+}
+.chromeSteps li[data-status='failed'] .mark,
+.chromeSteps li[data-status='denied'] .mark {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+.chromeSteps li[data-status='running'] .mark,
+.chromeSteps li[data-status='waiting'] .mark {
+  border-color: transparent;
+}
+.chromeSteps .stepTitle,
+.chromeSteps .active {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

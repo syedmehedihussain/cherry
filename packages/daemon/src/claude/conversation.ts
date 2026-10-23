@@ -168,6 +168,8 @@ export class Conversation {
 
   private targetOf(tool: string, input: Record<string, unknown>): string {
     const s = (k: string) => (typeof input[k] === 'string' ? (input[k] as string) : '');
+    const chrome = chromeTool(tool);
+    if (chrome) return classifyChrome(chrome, input).action;
     if (s('file_path')) return this.rel(s('file_path'));
     if (s('notebook_path')) return this.rel(s('notebook_path'));
     if (tool === 'Bash') return s('command');
@@ -245,6 +247,9 @@ export class Conversation {
         const ok = ev.ok;
         let meta: string | null = null;
         if (!ok) meta = (ev.output.split('\n').find((l) => l.trim()) ?? 'failed').slice(0, 120);
+        else if (chromeTool(item.tool))
+          // What Chrome said back ("Navigated to …"), for the Live view (ADR-0038).
+          meta = (ev.output.split('\n').find((l) => l.trim()) ?? '').slice(0, 120) || null;
         else if (item.tool === 'mcp__cherry__propose_decision')
           meta = /ADR-\d+/.exec(ev.output)?.[0] ?? null;
         else if (item.tool === 'mcp__cherry__commit_changes')
@@ -289,6 +294,9 @@ export class Conversation {
     input: Record<string, unknown>,
     toolUseId: string,
   ): Promise<PermissionAnswer> {
+    // Claude in Chrome only loads when the user turned it on; then it runs without asking,
+    // like the CLI after "don't ask again" (ADR-0038).
+    if (chromeTool(tool)) return { allow: true };
     const policy = this.o.policy?.(tool, input) ?? 'ask';
     if (policy === 'allow') return { allow: true };
     if (typeof policy === 'object') {
@@ -343,20 +351,6 @@ export class Conversation {
       ruleKeys = verdict.serious ? [] : [`run:${command}`];
       if (verdict.serious) autoOk = false;
       if (autoNeedsApproval(command)) autoOk = false;
-    } else if (chromeTool(tool)) {
-      // Claude in Chrome acts in the user's real, signed-in browser (ADR-0037): only reads
-      // follow Auto, and code or file uploads ask every time.
-      const verdict = classifyChrome(chromeTool(tool)!, input);
-      draft = {
-        ...base,
-        kind: 'other',
-        title: verdict.title,
-        files: [],
-        command: null,
-        detail: JSON.stringify(input, null, 2).slice(0, 4000),
-      };
-      ruleKeys = verdict.sessionOk ? [`tool:${tool}`] : [];
-      if (!verdict.read) autoOk = false;
     } else {
       draft = {
         ...base,

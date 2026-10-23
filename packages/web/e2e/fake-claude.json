@@ -161,6 +161,56 @@
     ]
   },
   {
+    "match": "^Check the app in Chrome",
+    "steps": [
+      {
+        "text": "I will open the app in a new tab."
+      },
+      {
+        "tool": {
+          "name": "mcp__claude-in-chrome__tabs_create_mcp",
+          "input": {}
+        },
+        "output": "Created tab 7"
+      },
+      {
+        "tool": {
+          "name": "mcp__claude-in-chrome__navigate",
+          "input": {
+            "url": "http://localhost:5173",
+            "tabId": 7
+          }
+        },
+        "output": "Navigated to http://localhost:5173"
+      },
+      {
+        "wait": 1500
+      },
+      {
+        "tool": {
+          "name": "mcp__claude-in-chrome__computer",
+          "input": {
+            "action": "left_click",
+            "tabId": 7
+          }
+        },
+        "output": "Clicked"
+      },
+      {
+        "tool": {
+          "name": "mcp__claude-in-chrome__read_console_messages",
+          "input": {
+            "tabId": 7
+          }
+        },
+        "output": "No errors"
+      },
+      {
+        "text": "The page loads and the console is clean."
+      }
+    ]
+  },
+  {
     "match": "read-only scan agent inside Cherry",
     "steps": [
       {
