@@ -32,7 +32,7 @@ import {
   proposePlanTool,
   type PlanItem,
 } from '../stages/plan-proposal.ts';
-import { expandCommand } from './commands.ts';
+import { expandCommand, withMentions } from './commands.ts';
 import { explainTurn } from './explain.ts';
 import { UPLOADS_DIR, saveUpload, uploadPath } from './uploads.ts';
 
@@ -284,7 +284,7 @@ export class ChatService {
     const handle = this.runner({
       cwd: dir,
       // The user's message stays as typed; a project command is expanded for Claude.
-      prompt: withAttachments(expandCommand(dir, body.text), body.attachments),
+      prompt: withAttachments(withMentions(dir, expandCommand(dir, body.text)), body.attachments),
       resume: current.claudeSessionId,
       model,
       ...(body.effort && model !== 'haiku' ? { effort: body.effort } : {}),

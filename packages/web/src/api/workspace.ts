@@ -138,6 +138,15 @@ export const commitStaged = (id: string, message: string) =>
 export const addTask = (id: string, title: string) =>
   api('POST', `${base(id)}/tasks`, { title }, TasksFileSchema);
 
+/** Project files matching `q`, for @ mentions in the composer (V2.1 w7.2). */
+export const searchFiles = (id: string, q: string) =>
+  api(
+    'GET',
+    `${base(id)}/files/search?q=${encodeURIComponent(q)}`,
+    undefined,
+    z.object({ files: z.array(z.string()) }),
+  ).then((r) => r.files);
+
 /** Move to the next stage (V2.1 w5): project.json's phase. */
 export const setPhase = async (id: string, phase: Phase) => {
   await api('PATCH', `${base(id)}/phase`, { phase });

@@ -85,6 +85,8 @@ interface ComposerProps {
   onModel(model: string): void;
   onEffort(effort: Effort | null): void;
   commands?: SlashCommand[];
+  /** Project files for @ mentions (V2.1 w7.2). */
+  searchFiles?(q: string): Promise<string[]>;
 }
 
 export function Composer({
@@ -104,8 +106,29 @@ export function Composer({
   onUpload,
   onDiscard,
   commands = [],
+  searchFiles,
 }: ComposerProps) {
   const [text, setText] = useState('');
+  // @ mentions: the "@query" just before the caret, and the files that match it.
+  const [caret, setCaret] = useState(0);
+  const mention = /(?:^|\s)@([\w./-]*)$/.exec(text.slice(0, caret));
+  const mentionQuery = mention ? mention[1]! : null;
+  const [found, setFound] = useState<{ q: string; files: string[] }>({ q: '', files: [] });
+  const [mentionClosed, setMentionClosed] = useState<string | null>(null);
+  useEffect(() => {
+    if (mentionQuery === null || !searchFiles) return;
+    const t = window.setTimeout(() => {
+      searchFiles(mentionQuery).then(
+        (files) => setFound({ q: mentionQuery, files }),
+        () => setFound({ q: mentionQuery, files: [] }),
+      );
+    }, 120);
+    return () => window.clearTimeout(t);
+  }, [mentionQuery, searchFiles]);
+  const mentions =
+    mentionQuery !== null && mentionClosed !== text && found.q === mentionQuery
+      ? found.files.slice(0, 10)
+      : [];
   const [slashIndex, setSlashIndex] = useState(0);
   const [slashClosed, setSlashClosed] = useState<string | null>(null);
   const query = SLASH.exec(text)?.[1]?.toLowerCase();
@@ -120,7 +143,19 @@ export function Composer({
               Number(!b.name.toLowerCase().startsWith(query)),
           )
           .slice(0, 12);
-  const slashActive = Math.min(slashIndex, Math.max(0, matches.length - 1));
+  const listLength = matches.length || mentions.length;
+  const slashActive = Math.min(slashIndex, Math.max(0, listLength - 1));
+  const pickFile = (file: string) => {
+    const before = text.slice(0, caret).replace(/@[\w./-]*$/, `@${file} `);
+    const next = before + text.slice(caret);
+    setText(next);
+    setSlashIndex(0);
+    setCaret(before.length);
+    requestAnimationFrame(() => {
+      area.current?.focus();
+      area.current?.setSelectionRange(before.length, before.length);
+    });
+  };
   const pick = (c: SlashCommand) => {
     setSlashIndex(0);
     if (c.instant && c.run) {
@@ -252,21 +287,23 @@ export function Composer({
     addFiles(e.dataTransfer.files);
   };
   const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (matches.length > 0) {
+    if (listLength > 0) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
         const step = e.key === 'ArrowDown' ? 1 : -1;
-        setSlashIndex((slashActive + step + matches.length) % matches.length);
+        setSlashIndex((slashActive + step + listLength) % listLength);
         return;
       }
       if (e.key === 'Tab' || (e.key === 'Enter' && !e.shiftKey)) {
         e.preventDefault();
-        pick(matches[slashActive]!);
+        if (matches.length) pick(matches[slashActive]!);
+        else pickFile(mentions[slashActive]!);
         return;
       }
       if (e.key === 'Escape') {
         e.preventDefault();
-        setSlashClosed(text);
+        if (matches.length) setSlashClosed(text);
+        else setMentionClosed(text);
         return;
       }
     }
@@ -359,6 +396,27 @@ export function Composer({
             ))}
           </div>
         )}
+        {matches.length === 0 && mentions.length > 0 && (
+          <div className={styles.slash} role="listbox" aria-label="Files">
+            {mentions.map((f, i) => (
+              <button
+                key={f}
+                type="button"
+                role="option"
+                aria-selected={i === slashActive}
+                className={styles.slashItem}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  pickFile(f);
+                }}
+                onMouseEnter={() => setSlashIndex(i)}
+              >
+                <span className={styles.slashName}>{f.split('/').pop()}</span>
+                <span className={styles.slashDesc}>{f}</span>
+              </button>
+            ))}
+          </div>
+        )}
         <label htmlFor={id} className="sr-only">
           Message Claude
         </label>
@@ -377,8 +435,10 @@ export function Composer({
           disabled={!!disabled}
           onChange={(e) => {
             setText(e.target.value);
+            setCaret(e.target.selectionStart);
             setSlashIndex(0);
           }}
+          onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
           onKeyDown={onKey}
           onPaste={onPaste}
         />

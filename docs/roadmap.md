@@ -110,7 +110,7 @@ New feedback is added here in build order.
 - [x] w5b Approve plan: the Planner proposes the plan as a card; Approve writes the tasks,
       opens Development in Auto and starts the Builder. Docs-only stages default to Auto.
 - [x] w6 A calmer chat: a finished reply folds its tool rows into one "Worked … · N steps" line.
-- [ ] w7 Claude Code CLI parity: slash commands (done), @ file mentions, context meter and compact,
+- [ ] w7 Claude Code CLI parity: slash commands (done), @ file mentions (done, needs its own tests), context meter and compact,
       thinking, subagents, chat history and resume, remembered allow rules, keys
       (Esc, ↑, paste image); later rewind.
 

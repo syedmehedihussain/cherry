@@ -381,3 +381,51 @@ export function listDocs(dir: string): DocsList {
   if (docsReadme) engineering.unshift(docsReadme);
   return { project, engineering, decisions };
 }
+
+const SEARCH_MAX_FILES = 20_000;
+
+/**
+ * @ mentions (V2.1 w7.2): project files whose path matches `q`, best first. Skips .git, the
+ * ignored folders and secret files (they cannot be read anyway).
+ */
+export function searchFiles(dir: string, q: string, limit = 20): string[] {
+  const needle = q.toLowerCase();
+  const found: { p: string; rank: number }[] = [];
+  const queue = [''];
+  let seen = 0;
+  while (queue.length && seen < SEARCH_MAX_FILES) {
+    const rel = queue.shift()!;
+    let dirents;
+    try {
+      dirents = readdirSync(path.join(dir, rel), { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const e of dirents) {
+      if (e.name === '.git' || e.name === '.DS_Store' || e.isSymbolicLink()) continue;
+      const p = rel ? `${rel}/${e.name}` : e.name;
+      if (e.isDirectory()) {
+        if (!IGNORED_DIRS.has(e.name)) queue.push(p);
+        continue;
+      }
+      seen++;
+      if (isSecretFile(p)) continue;
+      const lower = p.toLowerCase();
+      const base = e.name.toLowerCase();
+      const rank = !needle
+        ? 3
+        : base.startsWith(needle)
+          ? 0
+          : base.includes(needle)
+            ? 1
+            : lower.includes(needle)
+              ? 2
+              : -1;
+      if (rank >= 0) found.push({ p, rank });
+    }
+  }
+  return found
+    .sort((a, b) => a.rank - b.rank || a.p.length - b.p.length || a.p.localeCompare(b.p))
+    .slice(0, limit)
+    .map((f) => f.p);
+}

@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import type { ProjectCommand } from '@cherry/shared';
+import { isSecretFile, resolveInside } from '../paths.ts';
 import { frontMatter } from '../projects/status.ts';
 
 const NAME = /^[a-z0-9][a-z0-9_-]{0,40}$/i;
@@ -46,4 +47,24 @@ export function expandCommand(dir: string, text: string): string {
     : args
       ? `${cmd.body}\n\n${args}`
       : cmd.body;
+}
+
+/**
+ * @ mentions (V2.1 w7.2): `@docs/prd.md` names a file. Claude gets a line listing the mentioned
+ * files that exist (not secret ones) so it reads them; the chat keeps the text as typed.
+ */
+export function withMentions(dir: string, text: string): string {
+  const files = new Set<string>();
+  for (const m of text.matchAll(/(?:^|\s)@([\w./-]+[\w-])/g)) {
+    const rel = m[1]!;
+    try {
+      const abs = resolveInside(dir, rel);
+      if (!isSecretFile(rel) && existsSync(abs) && statSync(abs).isFile()) files.add(rel);
+    } catch {
+      // Outside the project: not a mention.
+    }
+  }
+  return files.size
+    ? `${text}\n\n(Files I mentioned: ${[...files].join(', ')}. Read them first.)`
+    : text;
 }

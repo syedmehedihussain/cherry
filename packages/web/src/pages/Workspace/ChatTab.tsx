@@ -1,5 +1,13 @@
 import { ChevronRight, FileText, Globe, MessageSquarePlus, RotateCcw } from 'lucide-react';
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useNavigate } from 'react-router';
 import {
   ChatModeSchema,
@@ -31,6 +39,7 @@ import {
   useProjectCommands,
 } from '../../api/chat.ts';
 import { queryClient } from '../../api/queries.ts';
+import { searchFiles } from '../../api/workspace.ts';
 import { stageInfo, useStageInfo } from '../../api/stages.ts';
 import { ApprovalCard } from '../../components/ApprovalCard/ApprovalCard.tsx';
 import { ChangeSummary } from '../../components/ChangeSummary/ChangeSummary.tsx';
@@ -214,6 +223,7 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
   };
 
   const lastUserText = [...items].reverse().find((i) => i.kind === 'user')?.text;
+  const findFiles = useCallback((q: string) => searchFiles(projectId, q), [projectId]);
   const commands = useSlashCommands({
     projectId,
     stage,
@@ -289,6 +299,7 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
           onModel={setModel}
           onEffort={setEffort}
           commands={commands}
+          searchFiles={findFiles}
         />
       </div>
     </div>

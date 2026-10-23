@@ -28,6 +28,7 @@ import {
   listTree,
   projectDir,
   readFileView,
+  searchFiles,
   writeFileView,
 } from '../projects/workspace.ts';
 
@@ -54,6 +55,12 @@ export function workspaceRoutes(config: ConfigStore, gitInfo: GitInfoService, ad
     app.get('/api/projects/:id/tree', async (req) =>
       listTree(dirOf(req.params), PathQuery.parse(req.query).path),
     );
+
+    // @ mentions in the composer (V2.1 w7.2).
+    app.get('/api/projects/:id/files/search', async (req) => {
+      const { q } = z.object({ q: z.string().max(200).default('') }).parse(req.query ?? {});
+      return { files: searchFiles(dirOf(req.params), q) };
+    });
 
     app.get('/api/projects/:id/file', async (req) =>
       readFileView(dirOf(req.params), PathQuery.parse(req.query).path),

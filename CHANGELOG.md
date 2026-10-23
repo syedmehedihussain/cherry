@@ -6,6 +6,8 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **@ file mentions** in the chat: type `@` and pick a project file; Claude is told to read the
+  files you mentioned (secret files are never offered).
 - **Slash commands** in the chat, like the CLI. Type `/` for a menu: `/clear`, `/stop`, `/ask`,
   `/auto`, `/plan`, `/model haiku`, `/status`, Claude's `/compact`, `/context`, `/init`,
   `/review` and `/security-review`, the stage's skills, and the project's own
