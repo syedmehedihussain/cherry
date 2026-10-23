@@ -11,6 +11,7 @@ import {
   CommitMessageSchema,
   CommitResultSchema,
   SourceControlSchema,
+  type Phase,
   type SourceControl,
   OrganisedNoteSchema,
   ProjectDetailSchema,
@@ -136,6 +137,13 @@ export const commitStaged = (id: string, message: string) =>
 
 export const addTask = (id: string, title: string) =>
   api('POST', `${base(id)}/tasks`, { title }, TasksFileSchema);
+
+/** Move to the next stage (V2.1 w5): project.json's phase. */
+export const setPhase = async (id: string, phase: Phase) => {
+  await api('PATCH', `${base(id)}/phase`, { phase });
+  void queryClient.invalidateQueries({ queryKey: wk.all(id) });
+  void queryClient.invalidateQueries({ queryKey: ['projects'] });
+};
 
 export const organiseNote = (id: string, text: string) =>
   api('POST', `${base(id)}/notes/organise`, { text }, OrganisedNoteSchema);

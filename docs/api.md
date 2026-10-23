@@ -48,6 +48,7 @@ folder (see `security.md`).
 | GET | `/api/projects/:id/status` | parsed STATUS.md |
 | GET | `/api/projects/:id/tasks` | tasks.json |
 | PATCH | `/api/projects/:id/tasks/:taskId` | update a task status |
+| PATCH | `/api/projects/:id/phase` | `{ phase }` → `{ ok, phase }`: Move to the next stage (ADR-0040) |
 | POST | `/api/projects/:id/tasks` | `{ title }` → adds a `todo` task in the current phase (first unfinished task's phase); creates tasks.json if missing; returns the tasks file |
 | GET | `/api/projects/:id/source-control` | `{ author, staged, changes, hidden, autoCommit }` from `git status`; a file staged and changed again is in both lists; secret files only in `hidden` (ADR-0030) |
 | POST | `/api/projects/:id/source-control/stage` · `/unstage` | `{ files }` or `{ all: true }` → `git add -A --` / `git restore --staged --`; secret files are never staged; returns the list |

@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import {
   NewTaskSchema,
+  PhaseSchema,
   TaskStatusSchema,
   TasksFileSchema,
   type ProjectDetail,
@@ -19,6 +20,7 @@ import { openInEditor } from '../projects/editor.ts';
 import type { GitInfoService } from '../projects/github.ts';
 import { buildCard, readProjectFiles } from '../projects/scanner.ts';
 import { addTask, readTasks, writeTasks } from '../projects/tasks.ts';
+import { setPhase } from '../stages/checklist.ts';
 import type { AdrService } from '../adr/service.ts';
 import {
   fileDiff,
@@ -125,6 +127,13 @@ export function workspaceRoutes(config: ConfigStore, gitInfo: GitInfoService, ad
       // "Apply ADR-0012: …" done by hand: the decision is done too (ADR-0029).
       if (status === 'done') adrs?.taskDone(IdParams.parse(req.params).id, task.title);
       return readTasks(dirOf(req.params));
+    });
+
+    // Move to the next stage (V2.1 w5).
+    app.patch('/api/projects/:id/phase', async (req) => {
+      const { phase } = z.object({ phase: PhaseSchema }).parse(req.body);
+      setPhase(dirOf(req.params), phase);
+      return { ok: true, phase };
     });
 
     app.post('/api/projects/:id/tasks', async (req) =>

@@ -1,7 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
-import { StageFocusSchema, StageInfoSchema, type Stage, type StageInfo } from '@cherry/shared';
+import {
+  PHASES,
+  StageFocusSchema,
+  StageInfoSchema,
+  stageProgress,
+  type Phase,
+  type Stage,
+  type StageInfo,
+} from '@cherry/shared';
 import { api } from './client.ts';
+import { useTasks } from './workspace.ts';
 
 /** The stage agents and their skills (ADR-0034); they only change when Cherry updates. */
 export const useStageInfo = () =>
@@ -29,3 +38,18 @@ export const useStageFocus = (projectId: string, stage: Stage) =>
         StageFocusSchema,
       ),
   });
+
+/** The stage after this one in the loop; Deployment hands over to Issues. */
+export function nextStage(stage: Stage): Stage | null {
+  if (stage === 'deployment') return 'issues';
+  const i = PHASES.indexOf(stage as Phase);
+  return i >= 0 && i < PHASES.length - 1 ? PHASES[i + 1]! : null;
+}
+
+/** A stage's progress, for the Overview card and the stage tabs. */
+export function useStageProgress(projectId: string, stage: Stage) {
+  const tasks = useTasks(projectId).data;
+  const readiness = useStageFocus(projectId, 'preparation').data?.readiness ?? [];
+  if (stage === 'issues') return null;
+  return stageProgress(tasks, stage, stage === 'preparation' ? readiness : []);
+}

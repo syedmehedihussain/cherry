@@ -33,7 +33,7 @@ describe('Start project (ADR-0036)', () => {
     expect(pj).toMatchObject({ name: 'review-qr', phase: 'plan', createdBy: 'manual' });
     const status = readFileSync(path.join(dir, '_project', 'STATUS.md'), 'utf8');
     expect(status).toContain('## Idea\n\nA QR code that opens a review page.');
-    expect(status).toContain('- [ ] Write the PRD');
+    expect(status).toContain('- [ ] Problem and who it is for');
     expect(existsSync(path.join(dir, '_project', 'tasks.json'))).toBe(true);
     // git, with _project/ kept out of it, and nothing else written.
     expect(readFileSync(path.join(dir, '.git', 'info', 'exclude'), 'utf8')).toContain('_project/');

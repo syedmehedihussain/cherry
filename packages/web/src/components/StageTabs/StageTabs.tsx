@@ -1,7 +1,7 @@
 import { RotateCcw } from 'lucide-react';
 import { STAGES, STAGE_LABEL, type Stage } from '@cherry/shared';
 import { useChat } from '../../api/chat.ts';
-import { stageInfo, useStageInfo } from '../../api/stages.ts';
+import { stageInfo, useStageInfo, useStageProgress } from '../../api/stages.ts';
 import styles from './StageTabs.module.css';
 
 interface StageTabsProps {
@@ -49,6 +49,9 @@ function StageTab({
   onSelect(stage: Stage): void;
 }) {
   const running = !!useChat(projectId, stage).data?.running;
+  // How far the stage is, as a thin line under its name (V2.1 w5).
+  const progress = useStageProgress(projectId, stage);
+  const percent = progress?.total ? progress.percent : null;
   return (
     <button
       type="button"
@@ -56,12 +59,19 @@ function StageTab({
       aria-pressed={active}
       data-running={running || undefined}
       title={
-        agent ? `${STAGE_LABEL[stage]}: the ${agent}${running ? ' (working)' : ''}` : undefined
+        agent
+          ? `${STAGE_LABEL[stage]}: the ${agent}${running ? ' (working)' : ''}${percent !== null ? `, ${percent}% done` : ''}`
+          : undefined
       }
       onClick={() => onSelect(stage)}
     >
       {running && <span className={styles.dot} aria-label="working" />}
       {STAGE_LABEL[stage]}
+      {percent !== null && (
+        <span className={styles.progress} aria-hidden="true">
+          <span style={{ width: `${percent}%` }} data-done={percent === 100 || undefined} />
+        </span>
+      )}
     </button>
   );
 }

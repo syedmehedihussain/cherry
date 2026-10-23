@@ -1,17 +1,17 @@
-import { Check, ChevronRight, X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { create } from 'zustand';
 import { useChat, useChatDraft } from '../../api/chat.ts';
 import { useStageFocus } from '../../api/stages.ts';
 import { useStage } from '../../state/stage.ts';
-import { useTasks } from '../../api/workspace.ts';
 import { AgentsPanel, QuickAdd } from '../../components/AgentsPanel/AgentsPanel.tsx';
 import { MagnetChat } from '../../components/MagnetChat/MagnetChat.tsx';
 import { GitPanel } from '../../components/GitHubBox/GitPanel.tsx';
 import { PlanUsage } from '../../components/PlanUsage/PlanUsage.tsx';
 import { SourceControl } from '../../components/SourceControl/SourceControl.tsx';
 import { LiveView, chromeSteps, currentTurn } from './LiveView.tsx';
+import { StageProgressCard } from './StageProgress.tsx';
 import styles from './SidePanel.module.css';
 
 const VIEWS = [
@@ -106,10 +106,15 @@ export function SidePanel({
         {view === 'overview' && (
           <>
             <div className={styles.pad}>
+              <StageProgressCard
+                projectId={projectId}
+                stage={stage}
+                onOpenChat={openChat}
+                onOpenNotes={openNotes}
+              />
               {stage === 'preparation' && <Readiness projectId={projectId} onOpenChat={openChat} />}
               <GitPanel key={projectId} projectId={projectId} now={now} collapsible />
               <PlanUsage now={now} />
-              <TasksLine projectId={projectId} onOpen={openNotes} />
             </div>
             <AgentsPanel
               projectId={projectId}
@@ -141,26 +146,6 @@ export function SidePanel({
         )}
       </div>
     </>
-  );
-}
-
-/** One line on the Overview: how far the task list is, and what is next. */
-function TasksLine({ projectId, onOpen }: { projectId: string; onOpen(): void }) {
-  const tasks = useTasks(projectId);
-  const list = tasks.data?.tasks ?? [];
-  if (list.length === 0) return null;
-  const done = list.filter((t) => t.status === 'done' || t.status === 'skipped').length;
-  const next = list.find((t) => t.status === 'doing') ?? list.find((t) => t.status === 'todo');
-  return (
-    <button type="button" className={styles.tasks} onClick={onOpen}>
-      <span className={styles.tasksCount}>
-        {done}/{list.length} tasks
-      </span>
-      <span className={styles.tasksNext} title={next?.title}>
-        {next ? `Next: ${next.title}` : 'All done'}
-      </span>
-      <ChevronRight size={13} aria-hidden="true" />
-    </button>
   );
 }
 

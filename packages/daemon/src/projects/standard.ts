@@ -65,16 +65,35 @@ export function buildProjectJson(opts: {
   };
 }
 
+/** Each stage's starting checklist (V2.1 w5); the stage agent adds and ticks items as it works. */
 const PRESET: Record<Phase, string[]> = {
-  plan: ['Write the PRD', 'Record the stack decision as an ADR', 'List what is out of scope'],
-  design: ['Sketch the main screens', 'Write the data model', 'Write the architecture doc'],
-  preparation: ['Set up the repository and CI', 'Create the project skeleton', 'Add a first test'],
+  plan: [
+    'Problem and who it is for',
+    'Scope of v1 and what is out',
+    'Requirements with acceptance criteria',
+    'Stack decision as an ADR',
+    'Risks and open questions',
+    'First roadmap milestone',
+  ],
+  design: [
+    'Main screens',
+    'Architecture',
+    'Data model',
+    'API or interfaces',
+    'Design tokens and style',
+  ],
+  preparation: ['Repository and CI', 'Project skeleton that runs', 'A first passing test'],
   development: [
     'Build the first feature end to end',
     'Cover the core logic with tests',
     'Keep STATUS.md current',
   ],
-  deployment: ['Deploy to the target host', 'Add monitoring and backups', 'Write the runbook'],
+  deployment: [
+    'Deploy target chosen and set up',
+    'Monitoring and backups',
+    'Runbook',
+    'Release and changelog',
+  ],
 };
 
 /** The phase task graph (data-model.md §4): earlier phases done, the current one open. */

@@ -1,7 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
-import { STAGES, type ChatMode, type ChatSend, type ChatState, type Stage } from '@cherry/shared';
+import {
+  STAGES,
+  STAGE_LABEL,
+  type ChatMode,
+  type ChatSend,
+  type ChatState,
+  type Stage,
+} from '@cherry/shared';
 import type { ConfigStore } from '../config.ts';
 import type { Db } from '../db.ts';
 import { AUTO_COMMIT_PROMPT, type CommitService } from '../projects/commits.ts';
@@ -17,6 +24,7 @@ import { projectDir } from '../projects/workspace.ts';
 import { recordUsage } from '../usage.ts';
 import { stageGuard, stageProfile } from '../stages/profiles.ts';
 import { buildStagePlugin } from '../stages/skills.ts';
+import { CHECKLIST_TOOL, checklistTool } from '../stages/checklist.ts';
 import { explainTurn } from './explain.ts';
 import { UPLOADS_DIR, saveUpload, uploadPath } from './uploads.ts';
 
@@ -47,6 +55,11 @@ export function chatSystemPrompt(stage: Stage, mode: ChatMode = 'ask'): string {
     '- For work with more than one step, first record the steps with your task tool (TaskCreate), then do them one by one: mark a step in_progress when you start it and completed when it is done. The user follows this list live.',
     '- Keep .gitignore current: when you add something that makes build output, caches, dependencies, local env files or secrets, add it to .gitignore (create the file if it is missing).',
     "- Skills: follow a skill's steps, but where it differs from this project's conventions, the project wins: decisions go through propose_decision and the project's ADR template, issues are files in docs/issues/, specs go in docs/specs/, plans in docs/roadmap.md. When a skill wants the OS temp folder or a place outside the project, use _project/tmp/ instead (for the brainstorming visual companion pass --project-dir _project/tmp). When a skill hands off to a skill you do not have, stop there and say which Cherry tab continues the work.",
+    ...(stage !== 'issues'
+      ? [
+          `- Your ${STAGE_LABEL[stage]} checklist (the ${CHECKLIST_TOOL} tool) is the progress bar the user sees on the Overview. Read it before you start. As you work, add what is still left to decide or write in this stage, mark items done once the project files cover them, and drop items that do not apply. Keep items short. Never mark an item done that the files do not show. When every item is finished, say the stage is ready and what the next stage is.`,
+        ]
+      : []),
     mode === 'auto'
       ? '- You are in auto mode: edits and most commands run without asking. Pushing, publishing and deleting folders still ask. If the user denies one, ask what they want instead.'
       : '- Every edit and command is shown to the user for approval. If they deny one, ask what they want instead.',
@@ -273,6 +286,8 @@ export class ChatService {
       decisions: true,
       extraTools: [
         ...(this.adrs?.tools(projectId, 'chat') ?? []),
+        // The stage checklist behind the Overview bar (V2.1 w5); Issues counts issues instead.
+        ...(stage !== 'issues' ? [checklistTool(dir, stage)] : []),
         ...(autoCommit && this.commits ? [this.commits.tool(projectId)] : []),
       ],
       onPermission: (tool, input, id) => current.conversation.permission(tool, input, id),

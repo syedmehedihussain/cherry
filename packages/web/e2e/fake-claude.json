@@ -1,5 +1,41 @@
 [
   {
+    "match": "^Finish the plan",
+    "steps": [
+      {
+        "call": {
+          "name": "stage_checklist",
+          "input": {
+            "done": ["t3", "t4", "t5"],
+            "drop": ["t6"]
+          }
+        }
+      },
+      {
+        "text": "The plan is ready. Next is Design."
+      }
+    ]
+  },
+  {
+    "match": "^This is a new project",
+    "steps": [
+      {
+        "text": "Who is it for? I noted the problem and the users."
+      },
+      {
+        "call": {
+          "name": "stage_checklist",
+          "input": {
+            "done": ["t1", "t2"]
+          }
+        }
+      },
+      {
+        "text": "Two of six done."
+      }
+    ]
+  },
+  {
     "match": "^Decision ADR-0001 was approved",
     "steps": [
       {

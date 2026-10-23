@@ -6,6 +6,9 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **Stage progress** (ADR-0040). The Overview shows how far the open stage is: a bar, what is
+  left (click one to ask the agent), **Recheck**, and **Move to <next stage>** at 100%. The
+  stage agent keeps its checklist current while you talk; each stage tab has a progress line.
 - **File panel per stage.** Plan, Design, Preparation, Deployment and Issues show their own files
   open and fold the project tree away; each section folds with a click, **Collapse all** folds
   everything, and the choice is remembered per stage. Development shows the whole project.

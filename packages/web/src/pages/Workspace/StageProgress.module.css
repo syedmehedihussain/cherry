@@ -1,0 +1,94 @@
+/* The Overview's stage card (V2.1 w5) */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--b);
+  border-radius: var(--r-lg);
+  background: var(--s1);
+}
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.title {
+  font-weight: 600;
+}
+.percent {
+  font-family: var(--mono);
+  font-size: var(--fs-sm);
+  color: var(--t2);
+}
+.track {
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--s2);
+  overflow: hidden;
+}
+.fill {
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+.note {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--t3);
+}
+.left {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 2px;
+}
+.left button {
+  width: 100%;
+  min-width: 0;
+  padding: 3px 0 3px 14px;
+  position: relative;
+  border: 0;
+  background: none;
+  color: var(--t2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.left button::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 50%;
+  border: 1.5px solid var(--bs);
+}
+.left button:hover {
+  color: var(--t1);
+}
+.more {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}

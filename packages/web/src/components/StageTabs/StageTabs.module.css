@@ -53,3 +53,26 @@
     animation: none;
   }
 }
+
+/* How far each stage is (V2.1 w5) */
+.tab {
+  position: relative;
+}
+.progress {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 2px;
+  height: 2px;
+  border-radius: var(--r-pill);
+  background: var(--s2);
+  overflow: hidden;
+}
+.progress > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+.progress > span[data-done] {
+  background: var(--success);
+}
