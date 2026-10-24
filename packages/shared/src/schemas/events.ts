@@ -67,6 +67,8 @@ export interface EventMap {
   };
   /** Claude's plan changed (a task was added, started or finished). */
   'chat.plan': { projectId: string; stage: Stage; conversationId: string; plan: PlanItem[] };
+  /** A rewind cut the chat (V2.1 w7.9): reload it. */
+  'chat.rewound': { projectId: string; stage: Stage; conversationId: string };
   'calibrate.updated': { projectId: string; state: CalibrationState };
   /** Pull or Push finished (Push runs after its approval). */
   'git.result': { projectId: string } & GitResult;

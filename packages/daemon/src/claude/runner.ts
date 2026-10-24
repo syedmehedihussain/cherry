@@ -6,6 +6,8 @@ import { isInside, isSecretFile } from '../paths.ts';
 /** The internal event stream every runner produces (claude-runner.md). */
 export type RunnerEvent =
   | { t: 'session'; sessionId: string }
+  /** The id of this turn's user message: its file checkpoint for rewind (V2.1 w7.9). */
+  | { t: 'checkpoint'; uuid: string }
   | { t: 'text_start'; blockId: string }
   | { t: 'text'; blockId: string; delta: string }
   /** Claude's thinking (V2.1 w7.4): start, text as it streams (may stay empty), end. */
@@ -32,6 +34,8 @@ export type RunnerEvent =
       costUsd: number | null;
       /** How full the context window is after the turn (V2.1 w7.3); null if unknown. */
       context?: ContextUse | null;
+      /** The last entry of the turn in Claude's session: where a rewind resumes (V2.1 w7.9). */
+      chainEnd?: string | null;
     };
 
 export interface ContextUse {
@@ -58,6 +62,10 @@ export interface RunRequest {
   prompt: string;
   /** Claude session id to continue, if any. */
   resume: string | null;
+  /** Continue the session only up to this entry (rewind, V2.1 w7.9). */
+  resumeAt?: string;
+  /** Keep file checkpoints and report the checkpoint ids, so the chat can rewind. */
+  checkpoints?: boolean;
   model: string;
   /** Reasoning effort; left out, the model's default. */
   effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
@@ -96,7 +104,14 @@ export interface RunHandle {
   interrupt(): Promise<void>;
 }
 
-export type Runner = (req: RunRequest) => RunHandle;
+/** Puts the files back as they were before a user message (V2.1 w7.9). */
+export type FileRewinder = (o: {
+  cwd: string;
+  sessionId: string;
+  checkpoint: string;
+}) => Promise<{ ok: true; files: string[] } | { ok: false; error: string }>;
+
+export type Runner = ((req: RunRequest) => RunHandle) & { rewind?: FileRewinder };
 
 export const DECISION_TOOL = 'mcp__cherry__ask_decision';
 
@@ -180,6 +195,9 @@ export function preToolGuard(
     null
   );
 }
+
+/** File checkpoints in SDK sessions (V2.1 w7.9). */
+const CHECKPOINT_ENV = { CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING: '1' };
 
 /** Tools that only read. ToolSearch just loads tool definitions (the SDK defers MCP tools). */
 /** Run without asking: reading, and Claude's own checklist (TaskCreate…, TodoWrite). */
@@ -274,6 +292,8 @@ export const sdkRunner: Runner = (req) => {
       model: req.model,
       ...(req.effort ? { effort: req.effort } : {}),
       ...(req.resume ? { resume: req.resume } : {}),
+      ...(req.resume && req.resumeAt ? { resumeSessionAt: req.resumeAt } : {}),
+      ...(req.checkpoints ? { enableFileCheckpointing: true } : {}),
       includePartialMessages: true,
       permissionMode: req.planMode ? 'plan' : 'default',
       allowedTools: [
@@ -296,8 +316,16 @@ export const sdkRunner: Runner = (req) => {
       // No settings files: their allow rules would bypass Cherry's approvals (ADR-0004).
       settingSources: [],
       // Claude in Chrome only when the caller asks; every Chrome tool still asks (ADR-0037).
-      extraArgs: { [req.chrome ? 'chrome' : 'no-chrome']: null },
-      env: { ...process.env, ...NO_TELEMETRY_ENV },
+      extraArgs: {
+        [req.chrome ? 'chrome' : 'no-chrome']: null,
+        // The user message comes back with its id: the file checkpoint (V2.1 w7.9).
+        ...(req.checkpoints ? { 'replay-user-messages': null } : {}),
+      },
+      env: {
+        ...process.env,
+        ...NO_TELEMETRY_ENV,
+        ...(req.checkpoints ? CHECKPOINT_ENV : {}),
+      },
       systemPrompt: { type: 'preset', preset: 'claude_code', append: req.appendSystemPrompt },
       hooks: {
         PreToolUse: [
@@ -332,6 +360,9 @@ export const sdkRunner: Runner = (req) => {
   });
 
   let messageId = '';
+  let checkpoint = false;
+  // The last entry of the turn in the session (assistant or user message), for rewind.
+  let chainEnd: string | null = null;
   // Content block indexes of the current message that are thinking blocks.
   const thinking = new Set<number>();
   // Tokens in the context after the last main-agent message, like the CLI's /context.
@@ -341,6 +372,21 @@ export const sdkRunner: Runner = (req) => {
   const started = Date.now();
 
   const handle = (m: SDKMessage) => {
+    if ((m.type === 'assistant' || m.type === 'user') && !m.parent_tool_use_id && m.uuid)
+      chainEnd = m.uuid;
+    if (
+      req.checkpoints &&
+      !checkpoint &&
+      m.type === 'user' &&
+      !m.parent_tool_use_id &&
+      m.uuid &&
+      (typeof m.message.content === 'string' ||
+        (Array.isArray(m.message.content) &&
+          !m.message.content.some((b) => b.type === 'tool_result')))
+    ) {
+      checkpoint = true;
+      req.onEvent({ t: 'checkpoint', uuid: m.uuid });
+    }
     if (m.type === 'system' && m.subtype === 'init') {
       req.onEvent({ t: 'session', sessionId: m.session_id });
     } else if (m.type === 'system' && m.subtype === 'compact_boundary') {
@@ -441,6 +487,7 @@ export const sdkRunner: Runner = (req) => {
         durationMs: m.duration_ms,
         costUsd: m.total_cost_usd ?? null,
         context: contextUse(used, m.modelUsage),
+        chainEnd,
       });
     }
   };
@@ -515,3 +562,40 @@ export function contextUse(
   // A /compact turn may call no model: window 0, the conversation keeps the last one it saw.
   return { used, window: main?.contextWindow ?? 0 };
 }
+
+/**
+ * Rewind with the CLI's file checkpoints: resume the session with no prompt and ask it to put
+ * the files back as they were at that user message (V2.1 w7.9). Only Edit/Write changes are
+ * tracked; what a shell command changed stays.
+ */
+sdkRunner.rewind = async ({ cwd, sessionId, checkpoint }) => {
+  const q = query({
+    prompt: '',
+    options: {
+      cwd,
+      resume: sessionId,
+      enableFileCheckpointing: true,
+      settingSources: [],
+      extraArgs: { 'no-chrome': null },
+      env: { ...process.env, ...NO_TELEMETRY_ENV, ...CHECKPOINT_ENV },
+      stderr: () => undefined,
+    },
+  });
+  try {
+    // The first message means the session is loaded; then rewind and stop.
+    for await (const m of q) {
+      void m;
+      // Only a dry run lists the files; then rewind for real.
+      const preview = await q.rewindFiles(checkpoint, { dryRun: true });
+      const r = preview.canRewind ? await q.rewindFiles(checkpoint) : preview;
+      return r.canRewind
+        ? { ok: true as const, files: preview.filesChanged ?? [] }
+        : { ok: false as const, error: r.error ?? 'Claude Code could not rewind the files.' };
+    }
+    return { ok: false as const, error: 'Claude Code closed before it could rewind.' };
+  } catch (e) {
+    return { ok: false as const, error: (e as Error).message };
+  } finally {
+    q.close();
+  }
+};

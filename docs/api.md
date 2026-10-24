@@ -89,6 +89,7 @@ folder (see `security.md`).
 | POST | `/api/projects/:id/chat/new?stage=` | starts a fresh session for that stage only |
 | GET | `/api/allow-rules` | `{ rules: [{ projectId, rule, createdAt }] }`: "Always allow here" rules, `run:<command>` or `tool:<name>` (ADR-0043) |
 | DELETE | `/api/allow-rules` | `{ projectId, rule }` → removes one rule; that command asks again |
+| POST | `/api/projects/:id/chat/rewind?stage=` | `{ itemId, code, chat }` → `{ text, files }`: back to before that user message (ADR-0044). `code` puts back the files Claude edited since (Claude Code checkpoints), `chat` drops the message and what came after and Claude resumes before it. 409 while Claude works or without a checkpoint |
 | GET | `/api/projects/:id/chat/history?stage=` | `{ sessions: [{ id, title, model, startedAt, endedAt, current }] }`, the stage's chats, newest first (V2.1 w7.6) |
 | POST | `/api/projects/:id/chat/resume?stage=` | `{ conversationId }` → ends the open chat and opens that one again; Claude continues its session, like the CLI's `/resume`. 409 while Claude works, 404 for a chat of another stage |
 | POST | `/api/decisions/:cardId` | `{ optionId? , custom? }` answer a decision card |
@@ -214,6 +215,7 @@ One socket at `/ws`. Every event: `{ type, at, ...payload }`. The client subscri
 | `projects.updated` | `{ cards: ProjectCard[] }` | projects |
 | `health.updated` | health object | projects |
 | `chat.item` | `{ projectId, stage, conversationId, item: ChatItem }` (upsert by `item.id`: user message, text, tool row, decision, approval, turn end) | project:id |
+| `chat.rewound` | `{ projectId, stage, conversationId }`: a rewind cut the chat; reload it | project:id |
 | `chat.delta` | `{ projectId, stage, conversationId, itemId, turnId, text }` streamed text appended to a text item | project:id |
 | `chat.state` | `{ projectId, stage, conversationId, running, turnId, touched }` | project:id |
 | `chat.plan` | `{ projectId, stage, conversationId, plan: [{ id, title, activeForm, status }] }` — Claude's checklist changed (ADR-0017) | project:id |

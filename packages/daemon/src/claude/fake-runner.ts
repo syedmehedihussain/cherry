@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { preToolGuard, type RunHandle, type Runner, type RunRequest } from './runner.ts';
 
@@ -43,7 +43,10 @@ export function fakeRunner(
   log?: FakeLog,
 ): Runner {
   let n = 0;
-  return (req: RunRequest): RunHandle => {
+  // File checkpoints (V2.1 w7.9): per user message, each file's content before the turn
+  // changed it (null: the file did not exist).
+  const checkpoints: { id: string; files: Map<string, string | null> }[] = [];
+  const runner: Runner = (req: RunRequest): RunHandle => {
     const steps = typeof script === 'function' ? script(req, n) : script;
     n++;
     log?.requests.push(req);
@@ -52,8 +55,13 @@ export function fakeRunner(
     const started = Date.now();
     let used = 12_000;
     let window = 200_000;
+    const cp = req.checkpoints
+      ? { id: `fake_cp_${n}`, files: new Map<string, string | null>() }
+      : null;
+    if (cp) checkpoints.push(cp);
     const done = (async () => {
       req.onEvent({ t: 'session', sessionId });
+      if (cp) req.onEvent({ t: 'checkpoint', uuid: cp.id });
       let i = 0;
       for (const step of steps) {
         if (stopped) break;
@@ -159,6 +167,8 @@ export function fakeRunner(
           if (stopped) break;
           const file =
             typeof input.file_path === 'string' ? path.resolve(req.cwd, input.file_path) : null;
+          if (cp && file && !cp.files.has(file))
+            cp.files.set(file, existsSync(file) ? readFileSync(file, 'utf8') : null);
           if (name === 'Write' && file) {
             mkdirSync(path.dirname(file), { recursive: true });
             writeFileSync(file, String(input.content ?? ''));
@@ -182,6 +192,7 @@ export function fakeRunner(
         durationMs: Date.now() - started,
         costUsd: 0,
         context: { used, window },
+        chainEnd: `fake_end_${n}`,
       });
     })();
     return {
@@ -191,6 +202,19 @@ export function fakeRunner(
       },
     };
   };
+  runner.rewind = async ({ checkpoint }) => {
+    const at = checkpoints.findIndex((c) => c.id === checkpoint);
+    if (at < 0) return { ok: false, error: 'No checkpoint for that message.' };
+    const files = new Set<string>();
+    for (const c of checkpoints.splice(at).reverse())
+      for (const [file, text] of c.files) {
+        if (text === null) rmSync(file, { force: true });
+        else writeFileSync(file, text);
+        files.add(file);
+      }
+    return { ok: true, files: [...files] };
+  };
+  return runner;
 }
 
 /**

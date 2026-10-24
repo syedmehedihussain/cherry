@@ -6,6 +6,7 @@ import {
   ChatSendSchema,
   DecisionAnswerSchema,
   MAX_UPLOAD_BYTES,
+  RewindRequestSchema,
   StageSchema,
 } from '@cherry/shared';
 import { projectCommands } from '../chat/commands.ts';
@@ -111,6 +112,14 @@ export function chatRoutes(
       await chat.resume(IdParams.parse(req.params).id, stageOf(req.query), conversationId);
       return { ok: true };
     });
+
+    app.post('/api/projects/:id/chat/rewind', async (req) =>
+      chat.rewind(
+        IdParams.parse(req.params).id,
+        stageOf(req.query),
+        RewindRequestSchema.parse(req.body),
+      ),
+    );
 
     app.post('/api/projects/:id/chat/new', async (req) => {
       await chat.newConversation(IdParams.parse(req.params).id, stageOf(req.query));

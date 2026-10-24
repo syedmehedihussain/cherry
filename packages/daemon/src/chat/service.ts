@@ -7,6 +7,8 @@ import {
   type ChatMode,
   type ChatSend,
   type ChatSession,
+  type RewindRequest,
+  type RewindResult,
   type ChatState,
   type Stage,
 } from '@cherry/shared';
@@ -14,7 +16,7 @@ import type { ConfigStore } from '../config.ts';
 import type { Db } from '../db.ts';
 import { AUTO_COMMIT_PROMPT, type CommitService } from '../projects/commits.ts';
 import { notify, projectLink, type EventHub } from '../events.ts';
-import { conflict, notFound } from '../http.ts';
+import { badRequest, conflict, notFound } from '../http.ts';
 import { DECISIONS_PROMPT, type AdrService } from '../adr/service.ts';
 import type { ApprovalBroker } from '../claude/approvals.ts';
 import { Conversation } from '../claude/conversation.ts';
@@ -86,6 +88,8 @@ interface Live {
   stage: Stage;
   conversationId: string;
   claudeSessionId: string | null;
+  /** After a chat rewind: the next turn resumes Claude's session only up to here (w7.9). */
+  resumeAt: string | null;
   conversation: Conversation;
   model: string;
   /** The mode of the last message, reused when Cherry sends one itself. */
@@ -160,6 +164,7 @@ export class ChatService {
       stage,
       conversationId,
       claudeSessionId,
+      resumeAt: null,
       conversation,
       model,
       mode: 'ask',
@@ -178,10 +183,16 @@ export class ChatService {
     if (cached) return cached;
     const row = this.db
       .prepare(
-        `SELECT id, claude_session_id, model, started_at, title FROM sessions WHERE project_id = ? AND stage = ? AND kind = 'chat' AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1`,
+        `SELECT id, claude_session_id, model, started_at, title, resume_at FROM sessions WHERE project_id = ? AND stage = ? AND kind = 'chat' AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1`,
       )
       .get(projectId, stage) as
-      | { id: string; claude_session_id: string | null; model: string; started_at: number }
+      | {
+          id: string;
+          claude_session_id: string | null;
+          model: string;
+          started_at: number;
+          resume_at: string | null;
+        }
       | undefined;
     if (!row) return null;
     const turns = this.sessionCount(projectId, stage);
@@ -194,6 +205,7 @@ export class ChatService {
       row.started_at,
       turns,
     );
+    live.resumeAt = row.resume_at;
     live.conversation.closeInterrupted(
       'Cherry restarted while Claude was working, so this turn stopped. Send a message (for example "continue") to pick up where it left off.',
     );
@@ -287,6 +299,8 @@ export class ChatService {
       // The user's message stays as typed; a project command is expanded for Claude.
       prompt: withAttachments(withMentions(dir, expandCommand(dir, body.text)), body.attachments),
       resume: current.claudeSessionId,
+      ...(current.resumeAt ? { resumeAt: current.resumeAt } : {}),
+      checkpoints: true,
       model,
       ...(body.effort && model !== 'haiku' ? { effort: body.effort } : {}),
       planMode: body.mode === 'plan',
@@ -312,6 +326,12 @@ export class ChatService {
       onPermission: (tool, input, id) => current.conversation.permission(tool, input, id),
       onDecision: (input) => current.conversation.decision(input),
       onEvent: (ev) => {
+        if (ev.t === 'session' && current.resumeAt) {
+          current.resumeAt = null;
+          this.db
+            .prepare('UPDATE sessions SET resume_at = NULL WHERE id = ?')
+            .run(current.conversationId);
+        }
         if (ev.t === 'session' && ev.sessionId !== current.claudeSessionId) {
           current.claudeSessionId = ev.sessionId;
           this.db
@@ -450,6 +470,69 @@ export class ChatService {
     this.approvals.cancel(source, 'Stopped by the user');
     this.decisions.cancel(source);
     await live.running.interrupt();
+  }
+
+  /**
+   * Rewind to before a message, like the CLI's Esc Esc (V2.1 w7.9): `code` puts back the files
+   * Claude edited since (Claude Code's checkpoints; shell commands are not undone), `chat` drops
+   * the message and everything after it, and Claude forgets them too.
+   */
+  async rewind(projectId: string, stage: Stage, req: RewindRequest): Promise<RewindResult> {
+    const dir = projectDir(this.config.projectsDir(), projectId);
+    const live = this.current(projectId, stage);
+    if (!live) throw notFound('There is no chat to rewind.');
+    if (live.running)
+      throw conflict('Claude is still working on the last message. Stop it first or wait.');
+    if (!req.code && !req.chat) throw badRequest('Pick the code, the chat or both.');
+    const all = live.conversation.list(Infinity);
+    const at = all.findIndex((i) => i.id === req.itemId);
+    const user = all[at];
+    if (user?.kind !== 'user') throw notFound('That message is not in this chat.');
+
+    // Where Claude's session resumes: the end of the turn before this message.
+    let resumeAt: string | null = null;
+    if (req.chat) {
+      const before = all.slice(0, at).findLast((i) => i.kind === 'turn-end');
+      if (before?.kind === 'turn-end') {
+        if (!before.chainEnd)
+          throw conflict('This chat is older than rewind, so its chat cannot be cut here.');
+        resumeAt = before.chainEnd;
+      }
+    }
+
+    let files: string[] = [];
+    if (req.code) {
+      if (!user.checkpoint || !live.claudeSessionId || !this.runner.rewind)
+        throw conflict('There is no checkpoint for this message, so its code cannot be rewound.');
+      const r = await this.runner.rewind({
+        cwd: dir,
+        sessionId: live.claudeSessionId,
+        checkpoint: user.checkpoint,
+      });
+      if (!r.ok) throw conflict(`Could not rewind the code: ${r.error}`);
+      files = r.files.map((f) => (path.isAbsolute(f) ? path.relative(dir, f) : f));
+    }
+
+    if (req.chat) {
+      live.conversation.truncateFrom(user.id);
+      if (resumeAt) {
+        live.resumeAt = resumeAt;
+      } else {
+        // Rewound to the first message: Claude starts a fresh session.
+        live.claudeSessionId = null;
+        live.resumeAt = null;
+      }
+      this.db
+        .prepare('UPDATE sessions SET resume_at = ?, claude_session_id = ? WHERE id = ?')
+        .run(live.resumeAt, live.claudeSessionId, live.conversationId);
+    }
+    this.hub.publish(`project:${projectId}`, 'chat.rewound', {
+      projectId,
+      stage,
+      conversationId: live.conversationId,
+    });
+    this.publishState(projectId, stage, live);
+    return { text: user.text, files };
   }
 
   /** The stage's chats, newest first (V2.1 w7.6). Chats without a message are left out. */

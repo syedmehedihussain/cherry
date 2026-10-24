@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { E2E_PROJECTS, loginCode } from './fixture.ts';
@@ -253,4 +253,38 @@ test('chat: a pasted image becomes an attachment', async ({ page }) => {
   await expect(chips.getByLabel('Uploading')).toHaveCount(0);
   await chips.getByRole('button', { name: 'Remove pasted.png' }).click();
   await expect(chips).toHaveCount(0);
+});
+
+// V2.1 w7.9: rewind to before a message, like the CLI's Esc Esc. cctop keeps core's counts.
+test('chat: rewind puts the code and the chat back', async ({ page }) => {
+  const notes = path.join(E2E_PROJECTS, 'cctop', 'rewind-notes.txt');
+  await page.evaluate(() => fetch('/api/projects/cctop/chat/new', { method: 'POST' }));
+  await page.goto('/p/cctop');
+  const box = page.getByLabel('Message Claude');
+  await box.fill('/auto');
+  await box.press('Enter');
+  await box.fill('Write the rewind notes');
+  await box.press('Enter');
+  await expect(page.getByText('Notes written.')).toBeVisible();
+  await box.fill('Change the rewind notes');
+  await box.press('Enter');
+  await expect(page.getByText('Notes changed.')).toBeVisible();
+  expect(readFileSync(notes, 'utf8')).toBe('v2');
+
+  await page.getByText('Change the rewind notes').hover();
+  await page.getByRole('button', { name: 'Rewind to before this message' }).last().click();
+  const panel = page.getByRole('group', { name: 'Rewind' });
+  await panel.getByRole('button', { name: 'Code and chat' }).click();
+  await expect(page.getByRole('status')).toContainText('Put back 1 file: rewind-notes.txt.');
+  await expect(box).toHaveValue('Change the rewind notes');
+  await expect(page.getByText('Notes changed.')).toBeHidden();
+  expect(readFileSync(notes, 'utf8')).toBe('v1');
+
+  await box.fill('/rewind');
+  await box.press('Enter');
+  await panel.getByRole('button', { name: 'Code and chat' }).click();
+  await expect(page.getByText('Notes written.')).toBeHidden();
+  await expect.poll(() => existsSync(notes)).toBe(false);
+  await box.fill('/ask');
+  await box.press('Enter');
 });

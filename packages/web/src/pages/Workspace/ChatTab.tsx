@@ -1,4 +1,12 @@
-import { ChevronRight, FileText, Globe, History, MessageSquarePlus, RotateCcw } from 'lucide-react';
+import {
+  ChevronRight,
+  FileText,
+  Globe,
+  History,
+  MessageSquarePlus,
+  RotateCcw,
+  Undo2,
+} from 'lucide-react';
 import { create } from 'zustand';
 import {
   Fragment,
@@ -30,6 +38,7 @@ import {
   chatKey,
   newChat,
   resumeChat,
+  rewindChat,
   sendChat,
   stopChat,
   uploadAttachment,
@@ -235,6 +244,9 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
   };
 
   const lastUserText = [...items].reverse().find((i) => i.kind === 'user')?.text;
+  // Rewind (V2.1 w7.9): the message whose rewind panel is open, and what the last rewind did.
+  const [rewindAt, setRewindAt] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const lastEnd = items.findLast((i) => i.kind === 'turn-end');
   const sentTexts = useMemo(
     () => items.flatMap((i) => (i.kind === 'user' && i.text.trim() ? [i.text] : [])),
@@ -245,6 +257,11 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
   const commands = useSlashCommands({
     projectId,
     stage,
+    onRewind: () => {
+      const last = items.findLast((i) => i.kind === 'user');
+      if (last) setRewindAt(last.id);
+      else setError('There is no message to rewind to yet.');
+    },
     onMode: changeMode,
     onModel: setModel,
     onError: setError,
@@ -264,13 +281,53 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
           )}
           {blocks.map((b) =>
             b.t === 'user' ? (
-              <div key={b.item.id} className={styles.userRow}>
-                <div className={styles.user}>
-                  {b.item.attachments && b.item.attachments.length > 0 && (
-                    <Attachments projectId={projectId} files={b.item.attachments} />
+              <div key={b.item.id} className={styles.userBlock}>
+                <div className={styles.userRow}>
+                  {!state?.running && rewindAt !== b.item.id && (
+                    <button
+                      type="button"
+                      className={styles.rewindBtn}
+                      aria-label="Rewind to before this message"
+                      title="Rewind to before this message"
+                      onClick={() => setRewindAt(b.item.id)}
+                    >
+                      <Undo2 size={13} aria-hidden="true" />
+                    </button>
                   )}
-                  {b.item.text}
+                  <div className={styles.user}>
+                    {b.item.attachments && b.item.attachments.length > 0 && (
+                      <Attachments projectId={projectId} files={b.item.attachments} />
+                    )}
+                    {b.item.text}
+                  </div>
                 </div>
+                {rewindAt === b.item.id && (
+                  <RewindPanel
+                    hasCheckpoint={!!b.item.checkpoint}
+                    onCancel={() => setRewindAt(null)}
+                    onRewind={async (code, chat) => {
+                      const r = await rewindChat(projectId, stage, {
+                        itemId: b.item.id,
+                        code,
+                        chat,
+                      });
+                      setRewindAt(null);
+                      if (chat) setDraft(projectId, r.text);
+                      setNotice(
+                        [
+                          chat ? 'Rewound the chat; your message is back in the box.' : null,
+                          code
+                            ? r.files.length
+                              ? `Put back ${r.files.length} file${r.files.length === 1 ? '' : 's'}: ${r.files.join(', ')}.`
+                              : 'No files had changed since that message.'
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' '),
+                      );
+                    }}
+                  />
+                )}
               </div>
             ) : (
               <ClaudeBlock
@@ -302,6 +359,14 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
         {error && (
           <p className={styles.error} role="alert">
             {error}
+          </p>
+        )}
+        {notice && (
+          <p className={styles.notice} role="status">
+            {notice}
+            <button type="button" aria-label="Dismiss" onClick={() => setNotice(null)}>
+              ×
+            </button>
           </p>
         )}
         <Composer
@@ -552,12 +617,14 @@ const REVIEW_PROMPT =
 function useSlashCommands({
   projectId,
   stage,
+  onRewind,
   onMode,
   onModel,
   onError,
 }: {
   projectId: string;
   stage: Stage;
+  onRewind(): void;
   onMode(m: ChatMode): void;
   onModel(m: string): void;
   onError(e: string | null): void;
@@ -581,6 +648,13 @@ function useSlashCommands({
       group: 'Cherry',
       instant: true,
       run: () => useHistoryMenu.getState().set(true),
+    },
+    {
+      name: 'rewind',
+      description: 'Go back to before your last message: the code, the chat or both',
+      group: 'Cherry',
+      instant: true,
+      run: onRewind,
     },
     {
       name: 'stop',
@@ -687,6 +761,75 @@ function PlanCard({
         await dismissPlan(projectId, plan.id);
       }}
     />
+  );
+}
+
+/** Rewind to before a message, like the CLI's Esc Esc (V2.1 w7.9). */
+function RewindPanel({
+  hasCheckpoint,
+  onCancel,
+  onRewind,
+}: {
+  hasCheckpoint: boolean;
+  onCancel(): void;
+  onRewind(code: boolean, chat: boolean): Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const run = async (code: boolean, chat: boolean) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await onRewind(code, chat);
+    } catch (e) {
+      setError(e instanceof ApiFailure ? e.message : 'Could not rewind.');
+      setBusy(false);
+    }
+  };
+  return (
+    <div className={styles.rewind} role="group" aria-label="Rewind">
+      <p className={styles.rewindTitle}>Rewind to before this message?</p>
+      <p className={styles.rewindNote}>
+        {hasCheckpoint
+          ? 'Code puts back the files Claude edited since. Changes made by commands stay. Chat removes this message and everything after it, and Claude forgets them.'
+          : 'This message has no checkpoint, so only the chat can go back.'}
+      </p>
+      {error && (
+        <p className={styles.rewindError} role="alert">
+          {error}
+        </p>
+      )}
+      <div className={styles.rewindActions}>
+        <button
+          type="button"
+          className="btn btn-primary btn-sm"
+          disabled={busy || !hasCheckpoint}
+          onClick={() => void run(true, true)}
+        >
+          Code and chat
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          disabled={busy}
+          onClick={() => void run(false, true)}
+        >
+          Chat only
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          disabled={busy || !hasCheckpoint}
+          onClick={() => void run(true, false)}
+        >
+          Code only
+        </button>
+        <span className={styles.spacer} />
+        <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </div>
   );
 }
 

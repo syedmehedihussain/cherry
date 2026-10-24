@@ -305,3 +305,85 @@
 .historyError {
   color: var(--danger-text);
 }
+
+/* Rewind (V2.1 w7.9): a quiet button by each sent message and a panel under it. */
+.userBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.userRow {
+  align-items: center;
+  gap: 6px;
+}
+.rewindBtn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+  opacity: 0;
+}
+.userRow:hover .rewindBtn,
+.rewindBtn:focus-visible {
+  opacity: 1;
+}
+.rewindBtn:hover {
+  background: var(--s2);
+  color: var(--t1);
+}
+.rewind {
+  align-self: flex-end;
+  width: min(100%, 520px);
+  padding: 12px 14px;
+  border: 1px solid var(--bs);
+  border-radius: var(--r-xl);
+  background: var(--s1);
+}
+.rewindTitle {
+  margin: 0 0 4px;
+  font-weight: 500;
+}
+.rewindNote {
+  margin: 0 0 10px;
+  color: var(--t2);
+  font-size: var(--fs-sm2);
+}
+.rewindError {
+  margin: 0 0 8px;
+  color: var(--danger-text);
+  font-size: var(--fs-sm2);
+}
+.rewindActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--b);
+  border-radius: var(--r-md);
+  background: var(--s1);
+  color: var(--t2);
+  font-size: var(--fs-sm2);
+}
+.notice button {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: var(--t3);
+  font-size: var(--fs-lg);
+  cursor: pointer;
+}
+.spacer {
+  flex: 1;
+}

@@ -1,4 +1,4 @@
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { ChatItemSchema, type ChatItem } from '@cherry/shared';
 
@@ -10,6 +10,13 @@ export class Transcript {
 
   append(item: ChatItem): void {
     appendFileSync(this.file, JSON.stringify(item) + '\n', { mode: 0o600 });
+  }
+
+  /** Replaces the file with these items (rewind cuts the end off, V2.1 w7.9). */
+  rewrite(items: ChatItem[]): void {
+    writeFileSync(this.file, items.map((i) => JSON.stringify(i) + '\n').join(''), {
+      mode: 0o600,
+    });
   }
 
   load(): ChatItem[] {

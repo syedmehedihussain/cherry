@@ -7,6 +7,7 @@ import {
   ChatSessionSchema,
   ChatStateSchema,
   ProjectCommandSchema,
+  RewindResultSchema,
   UploadedFileSchema,
   type Approval,
   type ApprovalAnswer,
@@ -14,6 +15,7 @@ import {
   type ChatMode,
   type ChatState,
   type DecisionAnswer,
+  type RewindRequest,
   type Stage,
   type UploadedFile,
 } from '@cherry/shared';
@@ -101,6 +103,12 @@ export const useAllowRules = () =>
 export const removeAllowRule = async (projectId: string, rule: string) => {
   await api('DELETE', '/api/allow-rules', { projectId, rule });
   await queryClient.invalidateQueries({ queryKey: ['allow-rules'] });
+};
+/** Rewind to before a message: the code, the chat or both (V2.1 w7.9). */
+export const rewindChat = async (id: string, stage: Stage, req: RewindRequest) => {
+  const r = await api('POST', `${base(id)}/chat/rewind${q(stage)}`, req, RewindResultSchema);
+  await queryClient.invalidateQueries({ queryKey: chatKey(id, stage) });
+  return r;
 };
 /** The stage's chats, newest first (V2.1 w7.6). */
 export const useChatHistory = (id: string, stage: Stage, enabled: boolean) =>
@@ -228,6 +236,8 @@ export function useLiveChat(id: string): void {
         const cur = queryClient.getQueryData<ChatState>(chatKey(id, event.stage));
         if (cur && cur.conversationId !== event.conversationId)
           void queryClient.invalidateQueries({ queryKey: chatKey(id, event.stage) });
+      } else if (event.type === 'chat.rewound' && event.projectId === id) {
+        void queryClient.invalidateQueries({ queryKey: chatKey(id, event.stage) });
       } else if (event.type === 'chat.plan' && event.projectId === id) {
         queryClient.setQueryData<ChatState>(chatKey(id, event.stage), (old) =>
           old && old.conversationId === event.conversationId ? { ...old, plan: event.plan } : old,

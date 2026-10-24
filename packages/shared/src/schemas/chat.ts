@@ -139,6 +139,8 @@ export const ChatItemSchema = z.discriminatedUnion('kind', [
     text: z.string(),
     /** File names under cherry/uploads/ that came with the message. */
     attachments: z.array(z.string()).optional(),
+    /** Claude Code's file checkpoint for this message: Rewind puts the files back (w7.9). */
+    checkpoint: z.string().optional(),
   }),
   z.object({
     kind: z.literal('text'),
@@ -210,6 +212,8 @@ export const ChatItemSchema = z.discriminatedUnion('kind', [
     durationMs: z.number(),
     /** Tokens in the context window after this turn, of `window` (V2.1 w7.3). */
     context: z.object({ used: z.number(), window: z.number() }).optional(),
+    /** The turn's last entry in Claude's session; a rewind resumes there (V2.1 w7.9). */
+    chainEnd: z.string().optional(),
   }),
   /** Magnet: inline project mini-cards. */
   z.object({
@@ -270,6 +274,21 @@ export const ChatStateSchema = z.object({
   plan: z.array(PlanItemSchema).default([]),
 });
 export type ChatState = z.infer<typeof ChatStateSchema>;
+
+/** Rewind to before a message (V2.1 w7.9): the code, the chat, or both, like the CLI. */
+export const RewindRequestSchema = z.object({
+  itemId: z.string().min(1).max(100),
+  code: z.boolean(),
+  chat: z.boolean(),
+});
+export type RewindRequest = z.infer<typeof RewindRequestSchema>;
+export const RewindResultSchema = z.object({
+  /** The message, back in the composer after a chat rewind. */
+  text: z.string(),
+  /** Files put back (project-relative). */
+  files: z.array(z.string()),
+});
+export type RewindResult = z.infer<typeof RewindResultSchema>;
 
 /** An earlier chat of a stage, for History and /resume (V2.1 w7.6). */
 export const ChatSessionSchema = z.object({

@@ -1,5 +1,40 @@
 [
   {
+    "match": "^Write the rewind notes",
+    "steps": [
+      {
+        "tool": {
+          "name": "Write",
+          "input": {
+            "file_path": "rewind-notes.txt",
+            "content": "v1"
+          }
+        }
+      },
+      {
+        "text": "Notes written."
+      }
+    ]
+  },
+  {
+    "match": "^Change the rewind notes",
+    "steps": [
+      {
+        "tool": {
+          "name": "Edit",
+          "input": {
+            "file_path": "rewind-notes.txt",
+            "old_string": "v1",
+            "new_string": "v2"
+          }
+        }
+      },
+      {
+        "text": "Notes changed."
+      }
+    ]
+  },
+  {
     "match": "^Say hello",
     "steps": [
       {

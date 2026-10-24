@@ -118,6 +118,24 @@ export class Conversation {
     return true;
   }
 
+  /**
+   * Drops this item and everything after it (rewind, V2.1 w7.9) and rewrites the transcript.
+   * Returns what was dropped.
+   */
+  truncateFrom(itemId: string): ChatItem[] {
+    const all = [...this.items.values()];
+    const at = all.findIndex((i) => i.id === itemId);
+    if (at < 0) return [];
+    const dropped = all.slice(at);
+    for (const i of dropped) this.items.delete(i.id);
+    this.o.transcript.rewrite(all.slice(0, at));
+    this.touched.clear();
+    for (const item of this.items.values())
+      if (item.kind === 'tool' && item.verb === 'edit' && item.status === 'ok')
+        this.touched.add(item.target);
+    return dropped;
+  }
+
   get plan(): PlanItem[] {
     return this.planTracker.plan;
   }
@@ -344,7 +362,13 @@ export class Conversation {
           error: ev.error,
           durationMs: ev.durationMs,
           ...(context ? { context } : {}),
+          ...(ev.chainEnd ? { chainEnd: ev.chainEnd } : {}),
         });
+        break;
+      }
+      case 'checkpoint': {
+        const user = this.items.get(`u_${this.turnId}`);
+        if (user?.kind === 'user') this.put({ ...user, checkpoint: ev.uuid });
         break;
       }
       case 'session':

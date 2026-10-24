@@ -6,6 +6,10 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **Rewind** (ADR-0044), like the CLI's Esc Esc: the button by a message you sent (or `/rewind`)
+  goes back to before it. Pick **Code and chat**, **Chat only** or **Code only**; the files Claude
+  edited are put back from Claude Code's checkpoints and the message returns to the composer.
+  Changes made by shell commands stay.
 - **Keys like the CLI**: Esc stops Claude; ↑ and ↓ in an empty composer step through the
   messages you sent; a pasted screenshot becomes an attachment. Settings → Shortcuts lists them.
 - **Always allow here** (ADR-0043) on a command card remembers that exact command for the
