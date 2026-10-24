@@ -32,6 +32,9 @@ for it today. Everything else goes out of sight until the user asks for it.
   decisions, notes and tasks, status report) stay working. They move to the right rail or the
   command palette. Code that has no place any more is removed only after the stage that
   replaces it is done.
+- **Every report and summary is in ASD-STE100** (ADR-0015): short sentences, technical
+  facts first, readable at a glance. This covers Autopilot reports, test results, handoff
+  notes and status updates.
 - **The browser still never touches the disk** (rule 1), and the token rule (ADR-0022) stands.
 
 ## Shell (all stages)
@@ -195,6 +198,22 @@ image generation). Images come from the user's files and references instead.
   (what, where, version), because it leaves the machine.
 - A failed check or test gives **Fix in Development**, which sends it to the Builder.
 
+## Autopilot: Magnet flies the stage (ADR-0046)
+
+A button in the top bar of Plan, Design and Development (not Deployment).
+
+1. Click **Autopilot**. Magnet asks "What should I do, sir?" with suggestions such as
+   "Finish M1". He waits: nothing runs until you answer.
+2. Answer once, for example "Finish M1", and leave.
+3. Magnet takes your seat. He gives the stage agent one order at a time (shown as MAGNET →
+   BUILDER), answers its questions from the documents and names the source, picks the
+   recommended option when the documents do not decide and logs it as an ADR for review.
+   Each task must pass its tests. Push, publish and deploy go to "Needs you".
+4. The top bar pill shows Magnet working (small bobbing avatar, typing dots, task count).
+   Esc or a click stops him after the current step.
+5. When you come back: "Welcome back, sir", then a short report in ASD-STE100: Result,
+   Decisions Magnet made (Keep / Change), Needs you, Next.
+
 ## The Claude Code look
 
 One chat component for every stage, as close to the Claude Code CLI as a browser allows:
@@ -250,8 +269,10 @@ The same list is in `roadmap.md` (V3) with check boxes.
   screenshots, no Cherry prompts, a one-time hint to give the extension localhost access.
 - **r12 Stage moves.** Next-step chip at 100%, Haiku handoff note between stages, Stuck? hint
   (from V2.1 suggestions).
-- **r13 Clean-up.** Remove code with no place left, update docs, screens.md, e2e tests.
-- **r14 Real run.** One small new project from Plan to Deploy in Cherry, fix what hurts.
+- **r13 Autopilot.** Magnet flies the stage: asks once, drives the stage agent, decides from
+  the documents, logs decisions, reports in ASD-STE100 (ADR-0046).
+- **r14 Clean-up.** Remove code with no place left, update docs, screens.md, e2e tests.
+- **r15 Real run.** One small new project from Plan to Deploy in Cherry, fix what hurts.
 
 **Done when:** a new idea goes from a Plan chat to a folder of documents, to screens and a
 handoff on the Design canvas, to code built in the Development layout with the editor, to a

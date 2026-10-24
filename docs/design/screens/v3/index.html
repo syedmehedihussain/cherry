@@ -15,7 +15,7 @@
   .hero h1 { margin: 10px 0 6px; font-size: var(--fs-3xl); letter-spacing: var(--tracking-display); font-weight: 600; }
   .hero p { margin: 0; color: var(--t2); font-size: var(--fs-lg); max-width: 640px; line-height: var(--lh-body); }
   .themes { margin-left: auto; }
-  .new { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--b); border: 1px solid var(--b); border-radius: var(--r-xl); overflow: hidden; margin-bottom: 40px; }
+  .new { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--b); border: 1px solid var(--b); border-radius: var(--r-xl); overflow: hidden; margin-bottom: 40px; }
   .new div { background: var(--bg); padding: 14px 16px; }
   .new b { display: block; color: var(--t1); font-weight: 500; margin-bottom: 3px; }
   .new span { color: var(--t2); font-size: var(--fs-sm2); line-height: 1.5; }
@@ -52,6 +52,8 @@
     <div><b>Status bar</b><span>Branch, changes, the running app, which agent, model, context and plan usage, in one quiet line.</span></div>
     <div><b>Claude Code chat</b><span>Monospace, &gt; for you, ● for Claude, ⎿ for results, the turning star with a verb, prompts answered with 1 2 3.</span></div>
     <div><b>Command palette</b><span>Ctrl K holds everything that left the screen: agents, scans, decisions, notes, history, push.</span></div>
+    <div><b>Tabs, not splits</b><span>In Development, Claude is the first tab. Files and terminals open as tabs beside it.</span></div>
+    <div><b>Autopilot</b><span>One click and Magnet takes over the stage: asks once, gives the orders, decides from the documents, reports in ASD-STE100.</span></div>
     <div><b>Fewer boxes</b><span>Hairlines and sections instead of cards inside cards. Cards only where a thing floats or needs you.</span></div>
   </div>
 
@@ -97,6 +99,24 @@
     <p>A command that needs you asks inside the chat, the way the CLI does: 1 Yes, 2 Yes and don't ask again, 3 No (Esc). Live shows the Builder's steps and background agents.</p>
     <div class="frame"><iframe data-src="07-permission-and-live.html" title="Permission and Live" loading="lazy"></iframe></div>
   </section>
+  <section class="board">
+    <div class="board-h"><span class="n">08</span><h2>Autopilot: Magnet asks</h2><a href="08-autopilot-ask.html" target="_blank">Open full size<i data-i="arrow-up-right" data-s="13"></i></a></div>
+    <p>Click Autopilot in the top bar (Plan, Design or Development). Magnet asks "What should I do, sir?" and waits. Nothing runs until you answer. Answer once, then leave.</p>
+    <div class="frame"><iframe data-src="08-autopilot-ask.html" title="Autopilot: Magnet asks" loading="lazy"></iframe></div>
+  </section>
+
+  <section class="board">
+    <div class="board-h"><span class="n">09</span><h2>Autopilot: Magnet flies</h2><a href="09-autopilot-flying.html" target="_blank">Open full size<i data-i="arrow-up-right" data-s="13"></i></a></div>
+    <p>Magnet takes your seat. His orders to the Builder show as MAGNET → BUILDER. He answers the Builder from the documents, decides what they do not say and logs it, and checks each task's tests. The top bar shows him working; Esc stops him.</p>
+    <div class="frame"><iframe data-src="09-autopilot-flying.html" title="Autopilot: Magnet flies" loading="lazy"></iframe></div>
+  </section>
+
+  <section class="board">
+    <div class="board-h"><span class="n">10</span><h2>Autopilot: the report</h2><a href="10-autopilot-report.html" target="_blank">Open full size<i data-i="arrow-up-right" data-s="13"></i></a></div>
+    <p>When you come back: a short report in ASD-STE100. Result, the decisions Magnet made (Keep or Change), what needs you (push is never done for you), and the next step.</p>
+    <div class="frame"><iframe data-src="10-autopilot-report.html" title="Autopilot: the report" loading="lazy"></iframe></div>
+  </section>
+
 </div>
 <script>
   const theme = document.documentElement.getAttribute('data-theme');

@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="../../brand/icon-32.svg">
+<title>V3 — Autopilot asks</title>
+<script src="theme.js"></script>
+<link rel="stylesheet" href="v3.css">
+<script src="shell.js"></script>
+<script src="icons.js"></script>
+<style>
+  .explorer { width: var(--v3-explorer-w); flex: none; display: flex; flex-direction: column; border-right: 1px solid var(--b); min-height: 0; }
+  .explorer .pane-head { height: 36px; padding-left: 14px; }
+  .tree .r { padding-left: calc(8px + var(--d, 0) * 14px); }
+  .work { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+  .pane { flex: 1 1 0; min-height: 0; display: none; flex-direction: column; }
+  .pane.on { display: flex; }
+  .agent .cc-scroll { justify-content: flex-end; }
+  .ed-tab.claude { gap: 8px; padding-right: 14px; }
+  .ed-tab.claude .star { color: var(--v3-spinner); }
+  .ed-actions { margin-left: auto; display: flex; align-items: center; gap: 2px; padding: 0 6px; }
+  .claude-edit { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px 0 14px; background: var(--edited-fill); color: var(--t1); font-size: var(--fs-xs); border-bottom: 1px solid var(--b); }
+  .claude-edit .ic { color: var(--edited); }
+  .term { border-top: 0; }
+  .term .term-body { padding-top: 12px; }
+  .term .p { color: var(--success); }
+  .term .dim { color: var(--t3); }
+  .term .ok { color: var(--success); }
+  .term .u { color: var(--accent-text); }
+  .ap-task { display: flex; align-items: center; gap: 12px; height: 30px; padding: 0 10px; border-radius: var(--r-sm); border: 1px solid var(--b); color: var(--t2); font-size: 12px; }
+  .ap-task .grow { color: var(--t1); }
+  .ap-task .ok { color: var(--success); }
+  .ap-task.now { border-color: var(--accent-border); background: var(--accent-fill-weak); }
+  .ap-task.now .ic { color: var(--accent-text); }
+  .ap-task .mono { color: var(--t3); }
+  .cc-msg.dec::before { color: var(--accent-text); }
+  .cc-msg.dec .tag { margin-right: 6px; font-family: var(--sans); }
+  .cc-hint .mode.ap { color: var(--accent-text); }
+  .mg-writing { display: flex; align-items: center; gap: 10px; color: var(--accent-text); font-size: 12px; }
+  .mg-ask { display: grid; grid-template-columns: 56px 1fr; gap: 14px; padding: 18px 18px 16px; border-radius: var(--r-xl); border: 1px solid var(--accent-border); background: var(--accent-fill-weak); font-family: var(--sans); }
+  .mg-ask .mg img { width: 48px; height: 48px; }
+  .mg-ask .q { font-size: var(--fs-xl); font-weight: 600; color: var(--t1); letter-spacing: var(--tracking-tight); margin: 2px 0 4px; }
+  .mg-ask .d { color: var(--t2); font-size: var(--fs-base); line-height: var(--lh-body); max-width: 560px; }
+  .mg-ask .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="ab">
+  <header data-shell="top" data-stage="development" data-progress="100,100,38,0" data-autopilot="waiting"></header>
+
+  <div class="body">
+    <!-- Explorer -->
+    <aside class="explorer" aria-label="Explorer">
+      <div class="pane-head"><span class="label" style="flex:1">Explorer</span>
+        <button class="ibtn sm" aria-label="New file"><i data-i="file-plus" data-s="14"></i></button>
+        <button class="ibtn sm" aria-label="Search files"><i data-i="search" data-s="14"></i></button>
+      </div>
+      <div class="tree">
+        <div class="r" style="--d:0"><i data-i="chevron-down" data-s="13"></i><span class="name" style="color:var(--t1);font-weight:500">runlog</span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-right" data-s="13"></i><i data-i="folder" data-s="14"></i><span class="name">design</span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-right" data-s="13"></i><i data-i="folder" data-s="14"></i><span class="name">docs</span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-right" data-s="13"></i><i data-i="folder" data-s="14"></i><span class="name">public</span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-down" data-s="13"></i><i data-i="folder-open" data-s="14"></i><span class="name">src</span><span class="g M">•</span></div>
+        <div class="r" style="--d:2"><i data-i="chevron-right" data-s="13"></i><i data-i="folder" data-s="14"></i><span class="name">components</span></div>
+        <div class="r add" style="--d:2"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-ts)">TS</span><span class="name">db.ts</span><span class="g A">A</span></div>
+        <div class="r mod sel" style="--d:2"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-ts)">TS</span><span class="name">runs.ts</span><span class="g M">M</span></div>
+        <div class="r" style="--d:2"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-ts)">TS</span><span class="name">pace.ts</span><span class="g"></span></div>
+        <div class="r" style="--d:2"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-ts)">TSX</span><span class="name">App.tsx</span><span class="g"></span></div>
+        <div class="r" style="--d:2"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-css)">CSS</span><span class="name">index.css</span><span class="g"></span></div>
+        <div class="r" style="--d:2"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-ts)">TSX</span><span class="name">main.tsx</span><span class="g"></span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-right" data-s="13"></i><i data-i="folder" data-s="14"></i><span class="name">tests</span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-md)">MD</span><span class="name">CLAUDE.md</span><span class="g"></span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-html)">HTML</span><span class="name">index.html</span><span class="g"></span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-json)">JSON</span><span class="name">package.json</span><span class="g M">M</span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-ts)">TS</span><span class="name">vite.config.ts</span><span class="g"></span></div>
+      </div>
+    </aside>
+
+    <div class="work">
+      <!-- One place, tabs: Claude is pinned first; files and terminals open as tabs beside it. -->
+      <div class="ed-tabs" role="tablist">
+        <div class="ed-tab claude" role="tab" data-tab="chat"><span class="star">✻</span>Claude<span class="dot live" title="Working"></span></div>
+        <div class="ed-tab" role="tab" data-tab="file"><span class="ft" style="color:var(--ft-ts);width:auto">TS</span>runs.ts<i data-i="x" data-s="13" class="x"></i></div>
+        <div class="ed-tab" role="tab"><span class="ft" style="color:var(--ft-ts);width:auto">TS</span>db.ts<span class="m" title="Unsaved"></span></div>
+        <div class="ed-tab" role="tab" data-tab="term"><i data-i="square-terminal" data-s="13"></i>Terminal<i data-i="x" data-s="13" class="x"></i></div>
+        <div class="ed-actions">
+          <button class="ibtn sm" aria-label="New terminal (Ctrl \`)"><i data-i="plus" data-s="14"></i></button>
+          <button class="ibtn sm" aria-label="More"><i data-i="ellipsis" data-s="14"></i></button>
+        </div>
+      </div>
+
+      <section class="pane agent cc-chat cc" data-pane="chat" aria-label="Development chat">
+          <div class="cc-scroll">
+            <div class="cc-col">
+            <div class="cc-user">Next task from the roadmap: save runs in IndexedDB.</div>
+              <div class="cc-fold">Builder finished task 2 · 2 files · tests pass · 6m 10s</div>
+              <div class="mg-ask">
+                <span class="mg working"><img src="../../../../packages/web/src/assets/magnet/magnet-48.svg" width="44" alt=""></span>
+                <div>
+                  <div class="q">What should I do, sir?</div>
+                  <div class="d">Tell me once. I give the Builder its orders, decide what the documents do not say, and report when I finish. I wait until you answer.</div>
+                  <div class="chips"><button class="btn sm">Finish M1 · 6 tasks left</button><button class="btn sm">Only the next task</button><button class="btn sm">Fix what the tests found</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="cc-input-wrap">
+            <div class="cc-col">
+            <div class="cc-input focus" style="border-color:var(--accent-border)">
+              <span class="p">&gt;</span>
+              <span class="ph"><span class="caret"></span> Tell Magnet the job</span>
+              <span class="tools"><button class="ibtn sm" aria-label="Attach"><i data-i="paperclip" data-s="14"></i></button></span>
+            </div>
+            <div class="cc-hint" style="margin-top:6px">
+              <span class="mode ap">autopilot · waiting for you · nothing runs until you answer · esc cancels</span>
+              <span class="r"><span>/ commands</span><span>@ files</span><span>? shortcuts</span></span>
+            </div>
+            </div>
+          </div>
+      </section>
+
+      <section class="pane editor" data-pane="file" aria-label="runs.ts">
+          <div class="claude-edit"><i data-i="pencil" data-s="13"></i>Claude changed this file 20s ago<span class="grow"></span><button class="btn ghost sm">Show diff</button><button class="btn ghost sm"><i data-i="undo-2" data-s="13"></i>Undo</button></div>
+          <div class="crumbs">src<i data-i="chevron-right" data-s="11"></i>runs.ts<i data-i="chevron-right" data-s="11"></i><span class="t2">saveRun</span></div>
+          <div class="code" role="textbox" aria-label="runs.ts">
+            <div class="l"><span class="n">1</span><span class="gut"></span><span><span class="k">import</span> <span class="pu">{</span> openDb <span class="pu">}</span> <span class="k">from</span> <span class="s">'./db'</span>;</span></div>
+            <div class="l"><span class="n">2</span><span class="gut"></span><span><span class="k">import</span> <span class="k">type</span> <span class="pu">{</span> <span class="ty">Run</span> <span class="pu">}</span> <span class="k">from</span> <span class="s">'./types'</span>;</span></div>
+            <div class="l"><span class="n">3</span><span class="gut"></span><span><span class="k">import</span> <span class="pu">{</span> paceOf <span class="pu">}</span> <span class="k">from</span> <span class="s">'./pace'</span>;</span></div>
+            <div class="l"><span class="n">4</span><span class="gut"></span><span></span></div>
+            <div class="l"><span class="n">5</span><span class="gut"></span><span><span class="cm">/** A run as the user typed it, with the pace worked out. */</span></span></div>
+            <div class="l"><span class="n">6</span><span class="gut"></span><span><span class="k">export function</span> <span class="f">newRun</span>(km: <span class="ty">number</span>, seconds: <span class="ty">number</span>, feel: <span class="ty">Feel</span>): <span class="ty">Run</span> <span class="pu">{</span></span></div>
+            <div class="l"><span class="n">7</span><span class="gut"></span><span>  <span class="k">return</span> <span class="pu">{</span></span></div>
+            <div class="l"><span class="n">8</span><span class="gut"></span><span>    id: crypto.<span class="f">randomUUID</span>(),</span></div>
+            <div class="l"><span class="n">9</span><span class="gut"></span><span>    at: <span class="ty">Date</span>.<span class="f">now</span>(),</span></div>
+            <div class="l"><span class="n">10</span><span class="gut"></span><span>    km, seconds, feel,</span></div>
+            <div class="l"><span class="n">11</span><span class="gut"></span><span>    pace: <span class="f">paceOf</span>(km, seconds),</span></div>
+            <div class="l"><span class="n">12</span><span class="gut"></span><span>  <span class="pu">}</span>;</span></div>
+            <div class="l"><span class="n">13</span><span class="gut"></span><span><span class="pu">}</span></span></div>
+            <div class="l"><span class="n">14</span><span class="gut"></span><span></span></div>
+            <div class="l"><span class="n">15</span><span class="gut"></span><span><span class="k">export async function</span> <span class="f">saveRun</span>(run: <span class="ty">Run</span>) <span class="pu">{</span></span></div>
+            <div class="l add"><span class="n">16</span><span class="gut"></span><span>  <span class="k">const</span> db = <span class="k">await</span> <span class="f">openDb</span>();</span></div>
+            <div class="l add"><span class="n">17</span><span class="gut"></span><span>  <span class="k">await</span> db.<span class="f">put</span>(<span class="s">'runs'</span>, run);</span></div>
+            <div class="l"><span class="n">18</span><span class="gut"></span><span><span class="pu">}</span></span></div>
+            <div class="l"><span class="n">19</span><span class="gut"></span><span></span></div>
+            <div class="l cur"><span class="n">20</span><span class="gut"></span><span><span class="k">export async function</span> <span class="f">listRuns</span>(weekStart: <span class="ty">number</span>)<span class="cursor"></span></span></div>
+            <div class="l"><span class="n">21</span><span class="gut"></span><span></span></div>
+          </div>
+          <div class="crumbs" style="height:24px;border-top:1px solid var(--b);justify-content:flex-end;gap:16px;font-family:var(--mono);font-size:11px"><span>Ln 20, Col 63</span><span>Spaces: 2</span><span>UTF-8</span><span>TypeScript</span></div>
+      </section>
+
+      <section class="pane term" data-pane="term" aria-label="Terminal">
+        <div class="term-body"><span class="p">~/Projects/runlog</span> <span class="dim">main*</span> $ pnpm test
+<span class="dim"> RUN  v3.2.4 ~/Projects/runlog</span>
+ <span class="ok">✓</span> tests/pace.test.ts <span class="dim">(3 tests) 4ms</span>
+ <span class="ok">✓</span> tests/runs.test.ts <span class="dim">(4 tests) 18ms</span>
+<span class="dim"> Test Files</span>  <span class="ok">2 passed</span> (2)    <span class="dim">Tests</span>  <span class="ok">7 passed</span> (7)
+<span class="p">~/Projects/runlog</span> <span class="dim">main*</span> $ <span class="caret" style="display:inline-block;width:7px;height:14px;vertical-align:-2px;background:var(--t1)"></span></div>
+      </section>
+    </div>
+
+    <nav data-shell="rail" data-live></nav>
+  </div>
+
+  <footer data-shell="status" data-ctx="58" data-changes="+86 -11" data-agent="Builder" data-run="dev :5173"></footer>
+</div>
+<script>
+  // ?tab=chat (default), file or term: which tab is open.
+  const tab = new URLSearchParams(location.search).get('tab') || 'chat';
+  document.querySelectorAll('[data-tab]').forEach((t) => t.classList.toggle('on', t.dataset.tab === tab));
+  document.querySelectorAll('[data-pane]').forEach((p) => p.classList.toggle('on', p.dataset.pane === tab));
+</script>
+</body>
+</html>

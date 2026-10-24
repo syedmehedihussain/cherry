@@ -203,6 +203,44 @@ body {
   background: var(--success);
 }
 
+/* ---------- Autopilot button (top bar) ---------- */
+.autopilot {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 28px;
+  padding: 0 12px 0 10px;
+  margin-right: 4px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--bs);
+  background: none;
+  color: var(--t1);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.autopilot:hover {
+  background: var(--neutral-fill);
+}
+.autopilot .ic {
+  color: var(--t2);
+}
+.autopilot.on {
+  border-color: var(--accent-border);
+  background: var(--accent-fill);
+  color: var(--accent-text-strong);
+}
+.autopilot.on .ic {
+  color: var(--accent-text-strong);
+}
+.autopilot .ap-n {
+  font-family: var(--mono);
+  font-size: var(--fs-2xs);
+  font-weight: 400;
+  color: var(--accent-text);
+}
+
 /* ---------- Buttons ---------- */
 .btn {
   display: inline-flex;
@@ -1236,4 +1274,77 @@ kbd,
   border-radius: var(--r-xl);
   background: var(--s-float);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+/* ---------- Magnet as the pilot (Autopilot, ADR-0046) ---------- */
+.mg {
+  position: relative;
+  display: inline-block;
+  flex: none;
+}
+.mg img {
+  display: block;
+}
+.mg.working img {
+  animation: v3-bob 1.2s var(--ease) infinite;
+}
+/* Typing dots next to Magnet while he writes an order. */
+.mg-dots {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+.mg-dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: v3-dot 1.2s infinite;
+}
+.mg-dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.mg-dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes v3-bob {
+  50% {
+    transform: translateY(-2px) rotate(-3deg);
+  }
+}
+@keyframes v3-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+/* Magnet's order to the stage agent: takes the place of the user's > line. */
+.cc-magnet {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 0;
+  padding: 6px 10px 6px 6px;
+  border-radius: var(--r-sm);
+  background: var(--accent-fill-weak);
+  border: 1px solid var(--accent-fill);
+  color: var(--t1);
+}
+.cc-magnet .mg {
+  margin-top: 2px;
+}
+.cc-magnet .who {
+  display: block;
+  font-family: var(--sans);
+  font-size: var(--fs-2xs);
+  color: var(--accent-text);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.autopilot .mg img {
+  width: 18px;
+  height: 18px;
 }
