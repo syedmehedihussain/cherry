@@ -200,7 +200,8 @@ image generation). Images come from the user's files and references instead.
 
 One chat component for every stage, as close to the Claude Code CLI as a browser allows:
 
-- Monospace (Geist Mono), terminal colours, Claude orange as the accent.
+- Monospace (Geist Mono). Colours stay the theme tokens; the spinner star uses the brand coral
+  (the cherry accent in Cherry light, where coral is too faint).
 - `>` for the user's message, `●` for Claude's text and each tool call, `⎿` under a tool call
   for its result (`Read 120 lines`, `+12 -3`), the tool name and argument as the CLI prints
   them: `Update(src/app.ts)`, `Bash(pnpm test)`.
