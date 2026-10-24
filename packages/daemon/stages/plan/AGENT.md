@@ -22,17 +22,29 @@ recommendation.
 2. **Ask before you write.** Use ask_decision for the real choices: who it is for, what is in
    and out, the one thing it must do well, hard limits (time, money, platform). At most three
    questions in a row, then write something the user can react to.
-3. **Write the plan into the project**, not only into the chat:
-   - A new project: `docs/prd.md` with the problem, users, goals, non-goals, requirements with
-     acceptance criteria, non-functional needs (speed, privacy, cost), risks and open questions.
+3. **Write the plan into the project**, not only into the chat. Cherry's Plan screen lists
+   these documents and ticks each one when the file exists, so use these paths:
+   - A new project, one document at a time, asking before each big one:
+     - `docs/prd.md`: problem, users, goals, non-goals, requirements with acceptance
+       criteria, non-functional needs (speed, privacy, cost), risks, open questions.
+     - `docs/trd.md`: technical requirements: platform, stack, limits, quality targets.
+     - `docs/architecture.md`: the parts and how they talk, with one small diagram.
+     - `docs/data-model.md`: the entities, their fields and where they are kept.
+     - `docs/api.md`: the routes or functions between the parts (skip for a static page and
+       say so in the TRD).
+     - `docs/roadmap.md`: milestones (M1 first, usable on its own), each with numbered
+       tasks small enough for one sitting and a **Done when** list someone can check.
+     - `docs/test-plan.md`: what is tested how (unit, end to end, by hand), per milestone,
+       with the steps a browser test walks through.
+     - `docs/adr/NNNN-*.md`: real choices (stack, storage, a trade-off the user made), through
+       propose_decision so they land as ADRs.
+     - `CLAUDE.md`: a short front door for the Builder: stack, commands, layout, rules, and
+       where the documents above are.
+     Keep the stage checklist (stage_checklist) to one item per document.
    - A new round of work on an existing project: `docs/specs/<short-name>.md` with the same
-     parts, scoped to this round, and linking the issues it closes. In each of those issue
-     files set `status: planned` and `cycle: docs/specs/<short-name>.md` (front matter only;
-     leave the report as it is).
-   - `docs/roadmap.md`: a milestone with numbered tasks, each small enough for one sitting, in
-     the order they must be built, and a **Done when** list someone can check by hand.
-   - Real choices (stack, storage, a trade-off the user had to make) become decisions through
-     propose_decision, so they land as ADRs.
+     parts as a PRD, scoped to this round, and linking the issues it closes. In each of those
+     issue files set `status: planned` and `cycle: docs/specs/<short-name>.md` (front matter
+     only; leave the report as it is). Add the round as a milestone in `docs/roadmap.md`.
 4. **Check the plan before you hand it on.** Every requirement has a way to test it; every task
    traces to a requirement; nothing contradicts CLAUDE.md or an accepted ADR; the first
    milestone ships something usable on its own.

@@ -1,5 +1,25 @@
 [
   {
+    "match": "^Write the PRD",
+    "steps": [
+      {
+        "text": "I will write the PRD first."
+      },
+      {
+        "tool": {
+          "name": "Write",
+          "input": {
+            "file_path": "docs/prd.md",
+            "content": "# Kite log — PRD\n\n## Problem\n\nKite fliers forget which days were windy and how the kite flew.\n\n## Goals\n\n- Log a session in ten seconds.\n- See the windy days of the month.\n"
+          }
+        }
+      },
+      {
+        "text": "Wrote docs/prd.md. Next: the technical requirements."
+      }
+    ]
+  },
+  {
     "match": "^Write the rewind notes",
     "steps": [
       {
@@ -475,7 +495,7 @@
               "medium": 1,
               "low": 0
             },
-            "markdown": "## Summary\n\nThe project is in good shape apart from one token leak.\n\n## Findings\n\n### High \u00b7 Session token in the log\n\n`lib/auth.ts:12` logs the whole request, including the cookie. Log the path only.\n\n### Medium \u00b7 No rate limit on login\n\n`lib/auth.ts:30` accepts unlimited attempts. Add a small limit.\n\n## What to do next\n\n1. Stop logging the cookie.\n2. Add a login rate limit."
+            "markdown": "## Summary\n\nThe project is in good shape apart from one token leak.\n\n## Findings\n\n### High · Session token in the log\n\n`lib/auth.ts:12` logs the whole request, including the cookie. Log the path only.\n\n### Medium · No rate limit on login\n\n`lib/auth.ts:30` accepts unlimited attempts. Add a small limit.\n\n## What to do next\n\n1. Stop logging the cookie.\n2. Add a login rate limit."
           }
         }
       }
@@ -613,7 +633,7 @@
               {
                 "path": "CLAUDE.md",
                 "action": "create",
-                "content": "# CLAUDE.md \u2014 torongo\n\nTranslation app.\n"
+                "content": "# CLAUDE.md — torongo\n\nTranslation app.\n"
               },
               {
                 "path": "docs/architecture.md",

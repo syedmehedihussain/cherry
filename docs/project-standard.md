@@ -11,10 +11,13 @@ tab, its session hook and its project-notes skill keep working on the same files
 ├── CLAUDE.md                 committed  front door for Claude, short, points to docs
 ├── README.md                 committed
 ├── docs/                     committed  engineering documents
-│   ├── prd.md
+│   ├── prd.md                the Plan stage's documents (V3, docs/v3-redesign.md):
+│   ├── trd.md                technical requirements
 │   ├── architecture.md
 │   ├── data-model.md
+│   ├── api.md
 │   ├── roadmap.md
+│   ├── test-plan.md
 │   ├── specs/                one spec per round of work (Plan stage)
 │   ├── issues/               one file per issue (Issues stage, ADR-0035)
 │   │   └── 0001-chat-scroll-jumps.md

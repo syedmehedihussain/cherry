@@ -15,6 +15,19 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 
 - Nothing yet.
 
+## r3 Plan — done 2026-10-25
+
+- Built: Plan is the chat plus a Documents panel. The panel lists the nine plan documents
+  (PRD, TRD, architecture, data model, API, roadmap, test plan, ADRs, CLAUDE.md) and ticks
+  each one when its file exists, "writing…" while the Planner writes it. Other docs (specs)
+  show under More. A click reads the document; Edit and Save (Ctrl+S) use the
+  unchanged-on-disk check. Select text: Ask about this (Ctrl L) quotes it in the composer.
+  Every file the Planner writes is one line with Open in the chat. No file tree in Plan.
+- Changed: the Planner's AGENT.md names the nine documents and their paths;
+  project-standard.md lists trd.md, api.md and test-plan.md.
+- Tests: 410 unit, 54 e2e pass (new: plan.spec.ts).
+- Screens: match 01 in Just black and Cherry light.
+
 ## r2 Claude Code chat — done 2026-10-25
 
 - Built: one chat in the CLI look for every stage. `>` user band, `●` text and tool calls

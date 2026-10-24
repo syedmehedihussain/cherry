@@ -131,7 +131,7 @@ VS Code with Claude Code, Deployment like a cockpit. The plan is in
 - [x] r1 Shell: four stage tabs (Preparation and Issues removed), minimal top bar, right rail (closed by default), status bar,
       command palette.
 - [x] r2 One chat component in the Claude Code CLI look, inline permission prompts.
-- [ ] r3 Plan: chat plus Documents panel, reader and editor, Ask about this.
+- [x] r3 Plan: chat plus Documents panel, reader and editor, Ask about this.
 - [ ] r4 Development layout: explorer and one tabbed area (Claude pinned first, files and
       terminals as tabs, no split).
 - [ ] r5 Code editor with tabs, Save and diff of Claude's edits.
