@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { create } from 'zustand';
 import {
   ApprovalSchema,
+  ChatSessionSchema,
   ChatStateSchema,
   ProjectCommandSchema,
   UploadedFileSchema,
@@ -86,6 +87,25 @@ export const stopChat = (id: string, stage: Stage) =>
 export const newChat = async (id: string, stage: Stage) => {
   await api('POST', `${base(id)}/chat/new${q(stage)}`);
   await queryClient.invalidateQueries({ queryKey: chatKey(id, stage) });
+};
+/** The stage's chats, newest first (V2.1 w7.6). */
+export const useChatHistory = (id: string, stage: Stage, enabled: boolean) =>
+  useQuery({
+    queryKey: ['chat-history', id, stage],
+    enabled,
+    queryFn: () =>
+      api(
+        'GET',
+        `${base(id)}/chat/history${q(stage)}`,
+        undefined,
+        z.object({ sessions: z.array(ChatSessionSchema) }),
+      ).then((r) => r.sessions),
+  });
+/** Opens an earlier chat again, like the CLI's /resume. */
+export const resumeChat = async (id: string, stage: Stage, conversationId: string) => {
+  await api('POST', `${base(id)}/chat/resume${q(stage)}`, { conversationId });
+  await queryClient.invalidateQueries({ queryKey: chatKey(id, stage) });
+  await queryClient.invalidateQueries({ queryKey: ['chat-history', id, stage] });
 };
 /** The project's own slash commands, `.claude/commands/*.md` (V2.1 w7.1). */
 export const useProjectCommands = (id: string) =>

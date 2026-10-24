@@ -149,3 +149,32 @@ test('chat: thinking shows as one folded row that opens', async ({ page }) => {
   await row.click();
   await expect(page.getByText('The streak lives in')).toBeVisible();
 });
+
+// V2.1 w7.6: History lists the stage's earlier chats and opens one again, like /resume.
+test('chat: History and /resume open an earlier chat', async ({ page }) => {
+  await page.goto('/p/core');
+  const box = page.getByLabel('Message Claude');
+  await box.fill('An older question about history');
+  await box.press('Enter');
+  await expect(page.getByText('An older question about history')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Send' })).toBeVisible();
+  await page.getByRole('button', { name: 'New chat' }).click();
+  await expect(page.getByText('An older question about history')).toBeHidden();
+
+  await box.fill('/resu');
+  await box.press('Enter');
+  const menu = page.getByRole('menu', { name: 'Chat history' });
+  await menu
+    .getByRole('menuitemradio', { name: /An older question about history/ })
+    .first()
+    .click();
+  await expect(menu).toBeHidden();
+  await expect(page.getByText('An older question about history')).toBeVisible();
+
+  await page.getByRole('button', { name: 'History' }).click();
+  await expect(
+    menu.getByRole('menuitemradio', { name: /An older question about history.*open now/ }),
+  ).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(menu).toBeHidden();
+});

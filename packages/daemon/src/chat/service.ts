@@ -6,6 +6,7 @@ import {
   STAGE_LABEL,
   type ChatMode,
   type ChatSend,
+  type ChatSession,
   type ChatState,
   type Stage,
 } from '@cherry/shared';
@@ -449,6 +450,50 @@ export class ChatService {
     this.approvals.cancel(source, 'Stopped by the user');
     this.decisions.cancel(source);
     await live.running.interrupt();
+  }
+
+  /** The stage's chats, newest first (V2.1 w7.6). Chats without a message are left out. */
+  history(projectId: string, stage: Stage = 'development', limit = 50): ChatSession[] {
+    projectDir(this.config.projectsDir(), projectId);
+    const rows = this.db
+      .prepare(
+        `SELECT id, title, model, started_at, ended_at FROM sessions WHERE project_id = ? AND stage = ? AND kind = 'chat' ORDER BY started_at DESC LIMIT ?`,
+      )
+      .all(projectId, stage, limit) as {
+      id: string;
+      title: string | null;
+      model: string;
+      started_at: number;
+      ended_at: number | null;
+    }[];
+    return rows.map((r) => ({
+      id: r.id,
+      title: r.title || 'Untitled chat',
+      model: r.model,
+      startedAt: r.started_at,
+      endedAt: r.ended_at,
+      current: r.ended_at === null,
+    }));
+  }
+
+  /**
+   * Opens an earlier chat of the stage again, like the CLI's /resume: the open one ends, and
+   * Claude continues the chosen session with its memory (V2.1 w7.6).
+   */
+  async resume(projectId: string, stage: Stage, conversationId: string): Promise<void> {
+    const row = this.db
+      .prepare(
+        `SELECT id FROM sessions WHERE id = ? AND project_id = ? AND stage = ? AND kind = 'chat'`,
+      )
+      .get(conversationId, projectId, stage);
+    if (!row) throw notFound('That chat is not in this stage.');
+    const live = this.current(projectId, stage);
+    if (live?.conversationId === conversationId) return;
+    if (live?.running)
+      throw conflict('Claude is still working on the last message. Stop it first or wait.');
+    await this.newConversation(projectId, stage);
+    this.db.prepare('UPDATE sessions SET ended_at = NULL WHERE id = ?').run(conversationId);
+    this.publishState(projectId, stage, this.current(projectId, stage));
   }
 
   async newConversation(projectId: string, stage: Stage = 'development'): Promise<void> {

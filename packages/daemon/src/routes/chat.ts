@@ -100,6 +100,18 @@ export function chatRoutes(
       return { ok: true };
     });
 
+    app.get('/api/projects/:id/chat/history', async (req) => ({
+      sessions: chat.history(IdParams.parse(req.params).id, stageOf(req.query)),
+    }));
+
+    app.post('/api/projects/:id/chat/resume', async (req) => {
+      const { conversationId } = z
+        .object({ conversationId: z.string().min(1).max(100) })
+        .parse(req.body);
+      await chat.resume(IdParams.parse(req.params).id, stageOf(req.query), conversationId);
+      return { ok: true };
+    });
+
     app.post('/api/projects/:id/chat/new', async (req) => {
       await chat.newConversation(IdParams.parse(req.params).id, stageOf(req.query));
       return { ok: true };

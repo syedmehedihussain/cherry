@@ -25,7 +25,7 @@ import {
   usePendingApprovals,
 } from '../../api/chat.ts';
 import { Pill } from '../../components/Pill/Pill.tsx';
-import { ChatTab, NewChatButton, useSessionMeta } from './ChatTab.tsx';
+import { ChatHistoryButton, ChatTab, NewChatButton, useSessionMeta } from './ChatTab.tsx';
 import { DocsTab } from './DocsTab.tsx';
 import { IssuesTab } from './IssuesTab.tsx';
 import { NotesTab } from './NotesTab.tsx';
@@ -354,6 +354,7 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
             {tab === 'chat' && (
               <>
                 {sessionMeta && <span className={styles.sessionMeta}>{sessionMeta}</span>}
+                <ChatHistoryButton projectId={id} stage={stage} state={chat.data} now={now} />
                 <NewChatButton projectId={id} stage={stage} state={chat.data} />
               </>
             )}

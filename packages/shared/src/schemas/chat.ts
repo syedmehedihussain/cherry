@@ -256,6 +256,19 @@ export const ChatStateSchema = z.object({
 });
 export type ChatState = z.infer<typeof ChatStateSchema>;
 
+/** An earlier chat of a stage, for History and /resume (V2.1 w7.6). */
+export const ChatSessionSchema = z.object({
+  id: z.string(),
+  /** The first message, cut to 80 characters. */
+  title: z.string(),
+  model: z.string(),
+  startedAt: z.number(),
+  /** Null for the open chat. */
+  endedAt: z.number().nullable(),
+  current: z.boolean(),
+});
+export type ChatSession = z.infer<typeof ChatSessionSchema>;
+
 /** Chat attachments: at most this many files per message, each up to MAX_UPLOAD_BYTES. */
 export const MAX_ATTACHMENTS = 8;
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;

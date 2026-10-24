@@ -6,6 +6,8 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **Chat history** per stage: **History** next to New chat (or `/resume`) lists the stage's
+  earlier chats; a click opens one again and Claude continues that session with its memory.
 - **Subagents** (ADR-0042) start without an approval card, like the CLI; their edits and
   commands still ask. Each shows as one row ("Explore agent · Find the streak code · 3 steps")
   with the step it is on, and as a card in Live.
