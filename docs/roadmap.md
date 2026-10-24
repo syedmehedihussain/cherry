@@ -119,6 +119,35 @@ opens Development and the Builder works through the tasks while the Development 
 Chrome checks the app without one approval card and its steps show in Live; the side Chat tab
 answers questions about the project.
 
+## V3 — Redesign: four stages (ADR-0045)
+
+From the user's brief (2026-10-25): Cherry is too full and every stage looks the same. Plan
+feels like a Claude chat that writes documents, Design like Claude Design, Development like
+VS Code with Claude Code, Deployment like a cockpit. The plan is in
+[`v3-redesign.md`](v3-redesign.md).
+
+- [ ] r0 Artboards for the shell and the four stages in `docs/design/screens/v3/`, approved;
+      ADR-0045 accepted (2026-10-25).
+- [ ] r1 Shell: four stage tabs (Preparation and Issues removed), minimal top bar, right rail (closed by default), status bar,
+      command palette.
+- [ ] r2 One chat component in the Claude Code CLI look, inline permission prompts.
+- [ ] r3 Plan: chat plus Documents panel, reader and editor, Ask about this.
+- [ ] r4 Development layout: explorer, agent in the centre, editor split.
+- [ ] r5 Code editor with tabs, Save and diff of Claude's edits.
+- [ ] r6 Terminal panel (xterm.js, node-pty), folded at the bottom of Development.
+- [ ] r7 Design canvas: HTML screens in `design/screens/`, pan, zoom, click to comment.
+- [ ] r8 Design brief: references, design system, components, images, colours, fonts.
+- [ ] r9 Design handoff: Approve design, `design/handoff/`, Export zip.
+- [ ] r10 Deployment cockpit: run and preview, checks, Deploy with one confirm.
+- [ ] r11 Quiet browser test with Claude in Chrome from the test plan, step rows with screenshots.
+- [ ] r12 Stage moves: next-step chip, Haiku handoff note, Stuck? hint.
+- [ ] r13 Clean-up: remove dead code, update docs and e2e tests.
+- [ ] r14 Real run: one new project from Plan to Deploy.
+
+**Done when:** a new idea goes from a Plan chat to a folder of documents, to screens and a
+handoff on the Design canvas, to code built in the Development layout with the editor, to a
+tested and deployed app from the cockpit, and no stage shows a panel the user did not open.
+
 ## After the MVP: scan agents
 
 - [x] Ready-made scan agents (Security review, Test runner, Code health, Dependency audit),

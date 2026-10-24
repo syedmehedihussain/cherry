@@ -1,6 +1,6 @@
 # 0034 — Lifecycle stages as tabs, each with its own agent
 
-- **Status:** Accepted
+- **Status:** Accepted (stages changed to four by ADR-0045)
 - **Date:** 2026-10-22
 - **Decided by:** Meddy
 
