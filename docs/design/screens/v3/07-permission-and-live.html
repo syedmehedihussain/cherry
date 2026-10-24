@@ -9,19 +9,20 @@
 <script src="shell.js"></script>
 <script src="icons.js"></script>
 <style>
-  .explorer { width: 200px; flex: none; display: flex; flex-direction: column; border-right: 1px solid var(--b); min-height: 0; }
+  .explorer { width: var(--v3-explorer-w); flex: none; display: flex; flex-direction: column; border-right: 1px solid var(--b); min-height: 0; }
   .explorer .pane-head { height: 36px; padding-left: 14px; }
   .tree .r { padding-left: calc(8px + var(--d, 0) * 14px); }
   .work { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
-  .split { flex: 1 1 0; min-height: 0; display: flex; }
-  .agent { width: 470px; flex: none; border-right: 1px solid var(--b); }
-  .agent .cc-scroll { padding: 16px 20px 8px; justify-content: flex-end; }
-  .agent .cc-input-wrap { padding: 8px 20px 12px; }
-  .editor { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+  .pane { flex: 1 1 0; min-height: 0; display: none; flex-direction: column; }
+  .pane.on { display: flex; }
+  .agent .cc-scroll { justify-content: flex-end; }
+  .ed-tab.claude { gap: 8px; padding-right: 14px; }
+  .ed-tab.claude .star { color: var(--v3-spinner); }
   .ed-actions { margin-left: auto; display: flex; align-items: center; gap: 2px; padding: 0 6px; }
   .claude-edit { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px 0 14px; background: var(--edited-fill); color: var(--t1); font-size: var(--fs-xs); border-bottom: 1px solid var(--b); }
   .claude-edit .ic { color: var(--edited); }
-  .term { height: 176px; }
+  .term { border-top: 0; }
+  .term .term-body { padding-top: 12px; }
   .term .p { color: var(--success); }
   .term .dim { color: var(--t3); }
   .term .ok { color: var(--success); }
@@ -33,7 +34,6 @@
   .lv .now { color: var(--accent-text); }
   .lv .mono { font-size: 11px; }
   .agent-card { padding: 10px 12px; border-radius: var(--r-lg); border: 1px solid var(--b); background: var(--s1); font-size: var(--fs-sm2); }
-  .editor { min-width: 0; }
 </style>
 </head>
 <body>
@@ -69,10 +69,21 @@
     </aside>
 
     <div class="work">
-      <div class="split">
-        <!-- The Builder, in the middle -->
-        <section class="agent cc-chat cc" aria-label="Development chat">
+      <!-- One place, tabs: Claude is pinned first; files and terminals open as tabs beside it. -->
+      <div class="ed-tabs" role="tablist">
+        <div class="ed-tab claude" role="tab" data-tab="chat"><span class="star">✻</span>Claude<span class="dot live" title="Working"></span></div>
+        <div class="ed-tab" role="tab" data-tab="file"><span class="ft" style="color:var(--ft-ts);width:auto">TS</span>runs.ts<i data-i="x" data-s="13" class="x"></i></div>
+        <div class="ed-tab" role="tab"><span class="ft" style="color:var(--ft-ts);width:auto">TS</span>db.ts<span class="m" title="Unsaved"></span></div>
+        <div class="ed-tab" role="tab" data-tab="term"><i data-i="square-terminal" data-s="13"></i>Terminal<i data-i="x" data-s="13" class="x"></i></div>
+        <div class="ed-actions">
+          <button class="ibtn sm" aria-label="New terminal (Ctrl \`)"><i data-i="plus" data-s="14"></i></button>
+          <button class="ibtn sm" aria-label="More"><i data-i="ellipsis" data-s="14"></i></button>
+        </div>
+      </div>
+
+      <section class="pane agent cc-chat cc" data-pane="chat" aria-label="Development chat">
           <div class="cc-scroll">
+            <div class="cc-col">
             <div class="cc-user">Next task from the roadmap: save runs in IndexedDB.</div>
             <div class="cc-step">
               <div class="cc-msg tool"><div><span class="cc-tool">Update Todos</span></div></div>
@@ -108,8 +119,10 @@
                 <div class="opt"><span>3. No, and tell Claude what to do differently <span class="t3">(esc)</span></span></div>
               </div>
             </div>
+            </div>
           </div>
           <div class="cc-input-wrap">
+            <div class="cc-col">
             <div class="cc-input">
               <span class="p">&gt;</span>
               <span class="ph">Press 1, 2 or 3, or type to answer</span>
@@ -119,20 +132,11 @@
               <span class="mode">⏵⏵ accept edits on</span>
               <span class="r"><span>/ commands</span><span>@ files</span><span>? shortcuts</span></span>
             </div>
-          </div>
-        </section>
-
-        <!-- The editor (Monaco) -->
-        <section class="editor" aria-label="Editor">
-          <div class="ed-tabs">
-            <div class="ed-tab on"><span class="ft" style="color:var(--ft-ts);width:auto">TS</span>runs.ts<i data-i="x" data-s="13" class="x"></i></div>
-            <div class="ed-tab"><span class="ft" style="color:var(--ft-ts);width:auto">TS</span>db.ts<span class="m" title="Unsaved"></span></div>
-            <div class="ed-tab"><span class="ft" style="color:var(--ft-md);width:auto">MD</span>roadmap.md</div>
-            <div class="ed-actions">
-              <button class="ibtn sm" aria-label="Show changes"><i data-i="split" data-s="14"></i></button>
-              <button class="ibtn sm" aria-label="More"><i data-i="ellipsis" data-s="14"></i></button>
             </div>
           </div>
+      </section>
+
+      <section class="pane editor" data-pane="file" aria-label="runs.ts">
           <div class="claude-edit"><i data-i="pencil" data-s="13"></i>Claude changed this file 20s ago<span class="grow"></span><button class="btn ghost sm">Show diff</button><button class="btn ghost sm"><i data-i="undo-2" data-s="13"></i>Undo</button></div>
           <div class="crumbs">src<i data-i="chevron-right" data-s="11"></i>runs.ts<i data-i="chevron-right" data-s="11"></i><span class="t2">saveRun</span></div>
           <div class="code" role="textbox" aria-label="runs.ts">
@@ -159,19 +163,10 @@
             <div class="l"><span class="n">21</span><span class="gut"></span><span></span></div>
           </div>
           <div class="crumbs" style="height:24px;border-top:1px solid var(--b);justify-content:flex-end;gap:16px;font-family:var(--mono);font-size:11px"><span>Ln 20, Col 63</span><span>Spaces: 2</span><span>UTF-8</span><span>TypeScript</span></div>
-        </section>
-      </div>
+      </section>
 
-      <!-- Terminal -->
-      <section class="term" aria-label="Terminal">
-        <div class="term-head">
-          <span class="term-tab on"><i data-i="square-terminal" data-s="13"></i>Terminal</span>
-          <span class="term-tab">dev server</span>
-          <span class="grow"></span>
-          <button class="ibtn sm" aria-label="New terminal"><i data-i="plus" data-s="14"></i></button>
-          <button class="ibtn sm" aria-label="Hide terminal"><i data-i="chevron-down" data-s="14"></i></button>
-        </div>
-<div class="term-body"><span class="p">~/Projects/runlog</span> <span class="dim">main*</span> $ pnpm test
+      <section class="pane term" data-pane="term" aria-label="Terminal">
+        <div class="term-body"><span class="p">~/Projects/runlog</span> <span class="dim">main*</span> $ pnpm test
 <span class="dim"> RUN  v3.2.4 ~/Projects/runlog</span>
  <span class="ok">✓</span> tests/pace.test.ts <span class="dim">(3 tests) 4ms</span>
  <span class="ok">✓</span> tests/runs.test.ts <span class="dim">(4 tests) 18ms</span>
@@ -206,5 +201,11 @@
 
   <footer data-shell="status" data-ctx="58" data-changes="+86 -11" data-agent="Builder" data-run="dev :5173"></footer>
 </div>
+<script>
+  // ?tab=chat (default), file or term: which tab is open.
+  const tab = new URLSearchParams(location.search).get('tab') || 'chat';
+  document.querySelectorAll('[data-tab]').forEach((t) => t.classList.toggle('on', t.dataset.tab === tab));
+  document.querySelectorAll('[data-pane]').forEach((p) => p.classList.toggle('on', p.dataset.pane === tab));
+</script>
 </body>
 </html>

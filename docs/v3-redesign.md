@@ -136,33 +136,32 @@ image generation). Images come from the user's files and references instead.
   list, notes for the builder) and opens Development. **Export** zips plan plus handoff for use
   outside Cherry.
 
-## Development: VS Code with Claude Code in the middle
+## Development: VS Code with Claude Code as the first tab
 
 ```
-+-------------+----------------------------------+-------------------------------+
-| EXPLORER    |  Claude Code                     |  src/app.ts   x  | index.css  |
-|  > src      |                                  |  1  import ...               |
-|    app.ts M |  > add login                     |  2                           |
-|    index.css|                                  |  3  export function ...      |
-|  > docs     |  * Read src/app.ts               |                              |
-|             |    L 120 lines                   |   (Monaco: real code         |
-|             |  * Update(src/app.ts)            |    editing, VS Code keys,    |
-|             |    L +12 -3                      |    diff of Claude's edit)    |
-|             |  * Simmering... (8s . esc)       |                              |
-|             |  +----------------------------+  |                              |
-|             |  | >                          |  |                              |
-+-------------+----------------------------------+-------------------------------+
-|  TERMINAL  (optional, folded)                                                  |
-+--------------------------------------------------------------------------------+
++-------------+------------------------------------------------------------------+
+| EXPLORER    | [* Claude] [runs.ts x] [db.ts *] [Terminal x]              + ... |
+|  > src      +------------------------------------------------------------------+
+|    app.ts M |                                                                  |
+|    index.css|        > add login                                               |
+|  > docs     |        * Read src/app.ts                                         |
+|             |          L 120 lines                                             |
+|             |        * Update(src/app.ts)   L +12 -3                           |
+|             |        * Simmering... (8s . esc to interrupt)                    |
+|             |        +----------------------------------------------+          |
+|             |        | >                                            |          |
++-------------+------------------------------------------------------------------+
 ```
 
 - **Explorer (left):** the file tree as VS Code shows it: git letters, folders, filter.
-- **Agent (centre):** the Builder in the Claude Code look. With no file open it takes the whole
-  width.
-- **Editor (right of the agent):** a real code editor (Monaco, the editor inside VS Code) with
-  tabs, line numbers, VS Code keys, find, multi-cursor, and Save with the unchanged-on-disk
-  check (ADR-0021). A file Claude edits opens as a diff. Drag the divider to resize.
-- **Terminal (bottom, folded):** a real shell in the project folder (xterm.js, node-pty).
+- **One place in the middle, with tabs.** The Claude chat is the first tab and is pinned.
+  Opening a file or a terminal adds a tab next to it and switches to it; switching tabs goes
+  back and forth between chat, files and terminals. No split (the user's choice, 2026-10-25).
+  With only the Claude tab open, the chat fills the space in a centred column.
+- **File tabs:** Monaco (the editor inside VS Code) with line numbers, VS Code keys, find,
+  multi-cursor, and Save with the unchanged-on-disk check (ADR-0021). A file Claude changed
+  shows a band with Show diff and Undo, and the changed lines are marked.
+- **Terminal tabs:** a real shell in the project folder (xterm.js, node-pty). `+` opens another.
 - Source control stays in the right rail (GitHub view).
 
 ## Deployment: the cockpit
@@ -238,9 +237,10 @@ The same list is in `roadmap.md` (V3) with check boxes.
   used in every stage.
 - **r3 Plan.** Chat plus Documents panel, document reader and editor, Ask about this, the
   document checklist.
-- **r4 Development layout.** Explorer, agent centre, editor split, resizable.
+- **r4 Development layout.** Explorer, one tabbed area: Claude pinned first, files and
+  terminals as tabs.
 - **r5 Code editor.** Monaco with tabs, Save, diff of Claude's edits (new dependency, ADR).
-- **r6 Terminal.** xterm.js and node-pty, folded at the bottom of Development.
+- **r6 Terminal.** xterm.js and node-pty, as tabs in Development.
 - **r7 Design canvas.** Screens as HTML in `design/screens/`, canvas with pan and zoom, click to
   comment.
 - **r8 Design brief.** References, design system, components, images, colours, fonts.
