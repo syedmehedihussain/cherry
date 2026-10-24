@@ -106,3 +106,17 @@ test('chat: slash commands switch the model, the mode and expand /review', async
   await expect(page.getByText(/^Review the uncommitted changes/)).toBeVisible();
   await expect(page.getByText('Focus: the streak code')).toBeVisible();
 });
+
+// V2.1 w7.2: @ file mentions, like the CLI.
+test('chat: @ opens a file menu and inserts the picked path', async ({ page }) => {
+  await page.goto('/p/core');
+  const box = page.getByLabel('Message Claude');
+  await box.fill('look at @strea');
+  const menu = page.getByRole('listbox', { name: 'Files' });
+  await expect(menu.getByRole('option', { name: /lib\/streaks\.ts/ })).toBeVisible();
+  await box.press('Enter');
+  await expect(box).toHaveValue('look at @lib/streaks.ts ');
+  await expect(menu).toBeHidden();
+  await box.press('Enter');
+  await expect(page.getByText('look at @lib/streaks.ts')).toBeVisible();
+});

@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { expandCommand, projectCommands } from '../src/chat/commands.ts';
+import { expandCommand, projectCommands, withMentions } from '../src/chat/commands.ts';
+import { searchFiles } from '../src/projects/workspace.ts';
 import { fakeRunner, type FakeLog } from '../src/claude/fake-runner.ts';
 import { HOST, tempDir, testDaemon, write, type TestDaemon } from './helpers.ts';
 
@@ -64,5 +65,38 @@ describe('project slash commands', () => {
       const items = (await inject('GET', '/api/projects/core/chat')).json().items;
       expect(items[0]).toMatchObject({ kind: 'user', text: '/fix-issue 7' });
     });
+  });
+});
+
+// V2.1 w7.2: @ file mentions.
+describe('@ file mentions', () => {
+  const project = () => {
+    const dir = tempDir('cherry-mention-');
+    write(path.join(dir, 'lib', 'streaks.ts'), 'x');
+    write(path.join(dir, 'lib', 'old-streaks.ts'), 'x');
+    write(path.join(dir, 'docs', 'prd.md'), 'x');
+    write(path.join(dir, 'node_modules', 'streaks', 'index.js'), 'x');
+    write(path.join(dir, '.env'), 'SECRET=1');
+    return dir;
+  };
+
+  it('searches project files best first, without ignored folders or secrets', () => {
+    const dir = project();
+    expect(searchFiles(dir, 'streaks')).toEqual(['lib/streaks.ts', 'lib/old-streaks.ts']);
+    expect(searchFiles(dir, 'docs/')).toEqual(['docs/prd.md']);
+    expect(searchFiles(dir, 'env')).toEqual([]);
+    expect(searchFiles(dir, '')).not.toContain('.env');
+    expect(searchFiles(dir, '', 2)).toHaveLength(2);
+  });
+
+  it('asks Claude to read the mentioned files that exist inside the project', () => {
+    const dir = project();
+    expect(withMentions(dir, 'look at @lib/streaks.ts and @docs/prd.md.')).toBe(
+      'look at @lib/streaks.ts and @docs/prd.md.\n\n(Files I mentioned: lib/streaks.ts, docs/prd.md. Read them first.)',
+    );
+    expect(withMentions(dir, '@.env @../outside.txt @missing.ts mail@lib/streaks.ts')).toBe(
+      '@.env @../outside.txt @missing.ts mail@lib/streaks.ts',
+    );
+    expect(withMentions(dir, 'no mentions')).toBe('no mentions');
   });
 });
