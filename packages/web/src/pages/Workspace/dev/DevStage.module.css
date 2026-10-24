@@ -1,0 +1,200 @@
+/* Development (V3 r4, artboard 03): explorer, then one tabbed area. */
+.dev {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: var(--v3-explorer-w) minmax(0, 1fr);
+}
+.area {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.bar {
+  height: 36px;
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--b);
+  background: var(--bg);
+}
+.tabs {
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+.grow {
+  flex: 1;
+}
+
+.tab {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid var(--b);
+  color: var(--t3);
+}
+.tab[data-active] {
+  background: var(--code-bg);
+  color: var(--t1);
+}
+.tab[data-active]::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: var(--accent);
+}
+.tab:hover {
+  color: var(--t1);
+}
+.tabMain {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px 0 12px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--fs-sm2);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tabMain > span:first-child {
+  width: auto;
+}
+.tabLabel {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.star::before {
+  content: '✻' / '';
+  color: var(--v3-spinner);
+}
+.running {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: ap-pulse 1.4s infinite;
+}
+.tabClose {
+  width: 20px;
+  height: 20px;
+  margin-right: 6px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--t3);
+  cursor: pointer;
+}
+.tabClose > * {
+  grid-area: 1 / 1;
+}
+.tabClose:hover {
+  background: var(--neutral-fill);
+  color: var(--t1);
+}
+.dirtyDot {
+  display: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--t2);
+}
+.tabClose[data-dirty] .dirtyDot {
+  display: block;
+}
+.tabClose[data-dirty] svg {
+  visibility: hidden;
+}
+.tabClose[data-dirty]:hover .dirtyDot {
+  display: none;
+}
+.tabClose[data-dirty]:hover svg {
+  visibility: visible;
+}
+
+.menuWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.barBtn {
+  width: 28px;
+  height: 28px;
+  margin-right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--t3);
+  cursor: pointer;
+}
+.barBtn:hover,
+.barBtn[aria-expanded='true'] {
+  color: var(--t1);
+  background: var(--neutral-fill);
+}
+.menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 4px;
+  z-index: 30;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border: 1px solid var(--bs);
+  border-radius: var(--r-lg);
+  background: var(--s-float);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+.menu button {
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  color: var(--t1);
+  font: inherit;
+  font-size: var(--fs-sm2);
+  text-align: left;
+  white-space: pre;
+  cursor: pointer;
+}
+.menu button:hover {
+  background: var(--s3);
+}
+
+.body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.pane {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.pane[hidden] {
+  display: none;
+}

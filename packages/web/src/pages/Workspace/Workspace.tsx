@@ -31,7 +31,6 @@ import { newChat, sendChat, useChat, useChatDraft, useLiveChat } from '../../api
 import { stageInfo, useStageInfo } from '../../api/stages.ts';
 import { useAgents, useLiveAgents } from '../../api/agents.ts';
 import { useScanAgents } from '../../api/scans.ts';
-import { FileViewer } from '../../components/FileViewer/FileViewer.tsx';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
 import { WorkspaceTop } from '../../components/WorkspaceTop/WorkspaceTop.tsx';
 import { StageTabs } from '../../components/StageTabs/StageTabs.tsx';
@@ -53,12 +52,15 @@ import { RunTab } from './RunTab.tsx';
 import { StatusTab, UPDATE_STATUS_PROMPT } from './StatusTab.tsx';
 import { Rail, SidePanel, useSideView } from './SidePanel.tsx';
 import { StageBody } from './StageBody.tsx';
+import { DevStage } from './dev/DevStage.tsx';
+import type { ActiveTab } from './dev/devTabs.ts';
 import styles from './Workspace.module.css';
 
 /** A view opened from the palette or a link; it covers the stage until closed (ADR-0045). */
 type ViewRoute =
   | { view: 'docs'; path: string | null }
   | { view: 'file'; path: string }
+  | { view: 'term'; id: string }
   | { view: 'report'; path: string }
   | { view: 'notes' | 'agents' | 'decisions' | 'status' | 'run' };
 
@@ -66,6 +68,7 @@ export function parseSplat(splat: string): ViewRoute | null {
   if (splat === 'docs' || splat.startsWith('docs/'))
     return { view: 'docs', path: splat.slice(5) || null };
   if (splat.startsWith('files/') && splat.length > 6) return { view: 'file', path: splat.slice(6) };
+  if (splat.startsWith('term/') && splat.length > 5) return { view: 'term', id: splat.slice(5) };
   if (splat.startsWith('reports/') && splat.length > 8)
     return { view: 'report', path: splat.slice(8) };
   if (['notes', 'agents', 'decisions', 'status', 'run'].includes(splat))
@@ -113,6 +116,19 @@ export function Workspace() {
   useEffect(() => {
     if (reportPath) setReport(id, reportPath);
   }, [reportPath, id, setReport]);
+
+  // Files and terminals are tabs in Development (r4); their URLs open that stage.
+  const devTab: ActiveTab | null =
+    route?.view === 'file'
+      ? { kind: 'file', path: route.path }
+      : route?.view === 'term'
+        ? { kind: 'term', id: route.id }
+        : null;
+  const onDevRoute = !!devTab;
+  useEffect(() => {
+    if (onDevRoute && stage !== 'development') setStage(id, 'development');
+  }, [onDevRoute, stage, setStage, id]);
+  const view = route && route.view !== 'file' && route.view !== 'term' ? route : null;
 
   const base = `/p/${encodeURIComponent(id)}`;
   const go = useCallback((to = '') => void navigate(`${base}${to}`), [navigate, base]);
@@ -178,12 +194,12 @@ export function Workspace() {
       />
       <div className={styles.body}>
         <main className={styles.stage} aria-label={`${STAGE_LABEL[stage]} stage`}>
-          {route ? (
-            <ViewPane title={viewTitle(route, scans.data?.agents ?? [])} onClose={() => go()}>
-              {route.view === 'docs' && (
+          {view ? (
+            <ViewPane title={viewTitle(view, scans.data?.agents ?? [])} onClose={() => go()}>
+              {view.view === 'docs' && (
                 <DocsTab
                   projectId={id}
-                  docPath={route.path}
+                  docPath={view.path}
                   now={now}
                   onAskClaude={(doc) => {
                     setDraft(id, `About ${doc}: `);
@@ -191,19 +207,19 @@ export function Workspace() {
                   }}
                 />
               )}
-              {route.view === 'notes' && <NotesTab projectId={id} />}
-              {route.view === 'agents' && (
+              {view.view === 'notes' && <NotesTab projectId={id} />}
+              {view.view === 'agents' && (
                 <div className={styles.pane}>
                   <AgentsPanel projectId={id} branch={card?.git?.branch ?? null} now={now} />
                 </div>
               )}
-              {route.view === 'decisions' && (
+              {view.view === 'decisions' && (
                 <div className={styles.pane}>
                   <Decisions projectId={id} />
                 </div>
               )}
-              {route.view === 'run' && <RunTab projectId={id} />}
-              {route.view === 'status' && (
+              {view.view === 'run' && <RunTab projectId={id} />}
+              {view.view === 'status' && (
                 <StatusTab
                   projectId={id}
                   mtime={detail.data ? (detail.data.statusMtime ?? null) : undefined}
@@ -212,24 +228,31 @@ export function Workspace() {
                   updateDisabledReason="Claude is working; wait for the turn to finish"
                 />
               )}
-              {route.view === 'file' && (
-                <FileViewer
-                  key={route.path}
-                  projectId={id}
-                  path={route.path}
-                  fileHref={(p) => `${base}/files/${p}`}
-                />
-              )}
-              {route.view === 'report' && (
+              {view.view === 'report' && (
                 <ReportTab
-                  key={route.path.split('/')[0]}
+                  key={view.path.split('/')[0]}
                   projectId={id}
-                  agentId={route.path.split('/')[0]!}
-                  reportId={route.path.split('/')[1] || null}
+                  agentId={view.path.split('/')[0]!}
+                  reportId={view.path.split('/')[1] || null}
                   now={now}
                 />
               )}
             </ViewPane>
+          ) : devTab || stage === 'development' ? (
+            <DevStage
+              projectId={id}
+              now={now}
+              active={devTab ?? { kind: 'claude' }}
+              onShow={(t) =>
+                go(
+                  t.kind === 'claude'
+                    ? ''
+                    : t.kind === 'file'
+                      ? `/files/${t.path}`
+                      : `/term/${t.id}`,
+                )
+              }
+            />
           ) : (
             <StageBody projectId={id} stage={stage} now={now} onOpenFile={openFile} />
           )}
@@ -257,12 +280,13 @@ export function Workspace() {
   );
 }
 
-function viewTitle(route: ViewRoute, scans: { id: string; name: string }[]): string {
+function viewTitle(
+  route: Exclude<ViewRoute, { view: 'file' | 'term' }>,
+  scans: { id: string; name: string }[],
+): string {
   switch (route.view) {
     case 'docs':
       return 'Docs';
-    case 'file':
-      return route.path.split('/').pop() ?? route.path;
     case 'report': {
       const agent = route.path.split('/')[0] ?? '';
       return `${scans.find((a) => a.id === agent)?.name ?? agent} report`;

@@ -1,4 +1,4 @@
-import { ChevronRight, ChevronsDownUp, Folder } from 'lucide-react';
+import { ChevronRight, ChevronsDownUp, Folder, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { STAGE_LABEL, fileTag, type GitLetter, type Stage, type TreeEntry } from '@cherry/shared';
 import { useStageFocus } from '../../api/stages.ts';
@@ -39,6 +39,8 @@ interface FileTreeProps {
   touched?: Set<string>;
   /** The open stage: its files show first (ADR-0034). */
   stage?: Stage;
+  /** Find a file (the palette in files mode). */
+  onSearch?(): void;
 }
 
 export function FileTree({
@@ -48,6 +50,7 @@ export function FileTree({
   onOpen,
   touched,
   stage,
+  onSearch,
 }: FileTreeProps) {
   const focus = useStageFocus(projectId, stage ?? 'development');
   const stageFiles = stage ? (focus.data?.files ?? []) : [];
@@ -93,12 +96,19 @@ export function FileTree({
   return (
     <aside aria-label="Files" className={styles.panel}>
       <div className={styles.head}>
-        <span className={styles.title} title={projectId}>
-          {projectId}
-        </span>
-        <span className={styles.path} title={projectPath}>
-          {projectPath}
-        </span>
+        <span className={styles.title}>Explorer</span>
+        <span className={styles.grow} />
+        {onSearch && (
+          <button
+            type="button"
+            className={styles.collapseAll}
+            aria-label="Find a file"
+            title="Find a file (Ctrl K, then >)"
+            onClick={onSearch}
+          >
+            <Search size={14} aria-hidden="true" />
+          </button>
+        )}
         <button
           type="button"
           className={styles.collapseAll}
@@ -151,7 +161,9 @@ export function FileTree({
           </div>
         ) : (
           <SectionHead
-            label="Project files"
+            label={projectId}
+            ariaLabel="Project files"
+            title={projectPath}
             folded={projectFolded}
             onToggle={() => setFold({ ...fold, project: !projectFolded })}
           />
@@ -243,22 +255,33 @@ export function FileTree({
 /** A foldable section title in the file panel ("Plan files", "Project files"). */
 function SectionHead({
   label,
+  ariaLabel,
+  title,
   folded,
   onToggle,
 }: {
   label: string;
+  ariaLabel?: string;
+  title?: string;
   folded: boolean;
   onToggle(): void;
 }) {
   return (
-    <button type="button" className={styles.section} aria-expanded={!folded} onClick={onToggle}>
+    <button
+      type="button"
+      className={styles.section}
+      aria-expanded={!folded}
+      aria-label={ariaLabel}
+      title={title}
+      onClick={onToggle}
+    >
       <ChevronRight
         size={12}
         strokeWidth={2}
         aria-hidden="true"
         style={{ transform: folded ? undefined : 'rotate(90deg)' }}
       />
-      <span className="label">{label}</span>
+      <span className={ariaLabel ? styles.root : 'label'}>{label}</span>
     </button>
   );
 }
@@ -410,5 +433,15 @@ function TreeSkeleton() {
         />
       ))}
     </div>
+  );
+}
+
+/** The file type as a short coloured tag ("TS", "MD"), as the explorer shows it. */
+export function TypeTag({ path }: { path: string }) {
+  const tag = fileTag(path);
+  return (
+    <span className={styles.type} data-tag={tag ?? undefined} aria-hidden="true">
+      {tag ?? ''}
+    </span>
   );
 }

@@ -15,6 +15,17 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 
 - Nothing yet.
 
+## r4 Development layout — done 2026-10-25
+
+- Built: Development is the explorer (VS Code style: EXPLORER, the project as the root row,
+  find a file) and one tabbed area. Claude is the first tab and is pinned; files open as tabs
+  and switch back and forth; the chat stays mounted so its scroll and draft stay. Middle
+  click or × closes a tab; an unsaved tab asks first. `+` opens a file, `…` has New chat,
+  Chat history and Close all tabs. File tabs are kept per project in this browser.
+- A file link from any stage (palette, chat) opens Development with its tab. No split.
+- Tests: 413 unit, 56 e2e pass (new: dev-tabs.spec.ts).
+- Screens: match 03 (tab bar and explorer) in Just black.
+
 ## r3 Plan — done 2026-10-25
 
 - Built: Plan is the chat plus a Documents panel. The panel lists the nine plan documents

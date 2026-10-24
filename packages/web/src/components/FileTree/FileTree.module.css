@@ -5,23 +5,23 @@
   min-height: 0;
 }
 .head {
-  height: 48px;
+  height: 36px;
   flex: none;
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 15px 16px 0;
-  border-bottom: 1px solid var(--b);
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px 0 14px;
   min-width: 0;
 }
 .title {
-  flex: 0 1 auto;
-  max-width: 70%;
-  min-width: 0;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: var(--fs-2xs);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--t3);
+}
+.grow {
+  flex: 1;
 }
 .path {
   flex: 1 1 0;
@@ -265,5 +265,11 @@
   text-align: left;
 }
 .section:hover {
+  color: var(--t1);
+}
+/* The project folder as the tree's root row, as VS Code shows it. */
+.root {
+  font-size: var(--fs-base);
+  font-weight: 600;
   color: var(--t1);
 }
