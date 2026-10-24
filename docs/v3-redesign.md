@@ -262,7 +262,7 @@ tested and deployed app from the cockpit, and no stage shows a panel the user di
 1. **Preparation and Issues are dropped.** Four stages only. Old Preparation and Issues chats
    stay readable in History; `docs/issues/` files stay on disk and are not shown.
 2. **Code editor: Monaco**, the editor inside VS Code, served locally.
-3. **Terminal: yes**, xterm.js and node-pty, folded at the bottom of Development (r6).
+3. **Terminal: yes**, xterm.js and node-pty, as tabs in Development (r6).
 4. **Browser tests: Claude in Chrome**, the user's real Chrome. To keep it quiet, Cherry
    pre-allows the Chrome tools (ADR-0038), shows the steps as rows with screenshots in the
    cockpit, and the first run tells the user to give the extension permanent access to
