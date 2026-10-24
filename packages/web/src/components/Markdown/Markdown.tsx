@@ -66,8 +66,8 @@ interface MarkdownProps {
   docHref?(path: string): string;
   /** ADR number → document path, for ADR chips. */
   adrPath?(num: string): string | null;
-  /** Smaller type for chat messages. */
-  variant?: 'doc' | 'chat';
+  /** Smaller type for chat messages; `cli` is the Claude Code look (mono, V3). */
+  variant?: 'doc' | 'chat' | 'cli';
 }
 
 /**

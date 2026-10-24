@@ -46,9 +46,7 @@ test('ideas: add, edit, remove, and start one as a project', async ({ page }) =>
     'aria-pressed',
     'true',
   );
-  await expect(page.getByPlaceholder(/^Reply to Claude/)).toHaveValue(
-    /Bird log\n\nHelp me plan it\./,
-  );
+  await expect(page.getByPlaceholder(/^Reply to/)).toHaveValue(/Bird log\n\nHelp me plan it\./);
   expect(
     readFileSync(path.join(E2E_PROJECTS, 'bird-log', '_project', 'STATUS.md'), 'utf8'),
   ).toContain('Bird log');

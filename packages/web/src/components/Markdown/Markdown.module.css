@@ -147,3 +147,52 @@
 .md[data-variant='chat'] table {
   font-size: var(--fs-base);
 }
+
+/* The Claude Code look (V3): mono, one size, quiet headings, code in the accent. */
+.md[data-variant='cli'] {
+  font-family: var(--mono);
+  font-size: var(--v3-cc-fs);
+  line-height: var(--v3-cc-lh);
+  color: var(--t1);
+}
+.md[data-variant='cli'] h1,
+.md[data-variant='cli'] h2,
+.md[data-variant='cli'] h3,
+.md[data-variant='cli'] h4 {
+  font-size: var(--v3-cc-fs);
+  font-weight: 600;
+  letter-spacing: 0;
+  margin: 10px 0 4px;
+}
+.md[data-variant='cli'] p {
+  margin: 0 0 8px;
+}
+.md[data-variant='cli'] p:last-child,
+.md[data-variant='cli'] ul:last-child,
+.md[data-variant='cli'] ol:last-child {
+  margin-bottom: 0;
+}
+.md[data-variant='cli'] ul,
+.md[data-variant='cli'] ol {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+.md[data-variant='cli'] li {
+  margin: 2px 0;
+}
+.md[data-variant='cli'] strong {
+  font-weight: 600;
+}
+.md[data-variant='cli'] :not(pre) > code {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  font-size: inherit;
+}
+.md[data-variant='cli'] pre {
+  font-size: 12px;
+}
+.md[data-variant='cli'] table {
+  font-size: 12px;
+}

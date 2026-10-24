@@ -19,7 +19,7 @@ test('decisions: Claude proposes, the user approves one in the chat and rejects 
   await page.getByLabel('Message Claude').fill('Propose: storage and name');
   await page.getByLabel('Message Claude').press('Enter');
   await expect(page.getByText('I proposed two decisions.')).toBeVisible();
-  await expect(page.getByText('Proposed 2 decisions')).toBeVisible();
+  await expect(page.getByText('Propose decision', { exact: true })).toHaveCount(2);
 
   // Decisions is a view in the palette, with the pending count on it (ADR-0045).
   await page.keyboard.press('Control+k');

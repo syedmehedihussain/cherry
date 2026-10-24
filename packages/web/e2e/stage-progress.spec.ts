@@ -30,7 +30,7 @@ test('the Plan bar fills as the Planner works, then Move to Design', async ({ pa
   await expect(card).toContainText('4 left');
   await expect(card).not.toContainText('Problem and who it is for');
 
-  await page.getByPlaceholder(/^Reply to Claude/).fill('Finish the plan');
+  await page.getByPlaceholder(/^Reply to/).fill('Finish the plan');
   await page.getByRole('button', { name: 'Send' }).click();
   await expect(card).toContainText('100%');
   await expect(card).toContainText('ready for Design');
@@ -40,9 +40,7 @@ test('the Plan bar fills as the Planner works, then Move to Design', async ({ pa
     'aria-pressed',
     'true',
   );
-  await expect(page.getByPlaceholder(/^Reply to Claude|^Message/)).toHaveValue(
-    /^Plan is finished\./,
-  );
+  await expect(page.getByPlaceholder(/^Reply to/)).toHaveValue(/^Plan is finished\./);
   await expect(aside.getByRole('region', { name: 'Design progress' })).toContainText('5 left');
 });
 
@@ -56,7 +54,7 @@ test('Approve plan opens Development and the Builder starts on the tasks', async
   await expect(page).toHaveURL(/\/p\/orbit-log$/);
 
   // Plan opens in Auto: the Planner writes its spec without an approval card.
-  const composer = page.getByPlaceholder(/^Reply to Claude|^Message/);
+  const composer = page.getByPlaceholder(/^Reply to/);
   await composer.fill('Plan offline mode');
   await page.getByRole('button', { name: 'Send' }).click();
   const card = page.getByRole('region', { name: 'Plan: Offline mode' });

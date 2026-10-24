@@ -1,46 +1,57 @@
+/* The Claude Code input (V3, artboard 01): a bordered box with the prompt sign, then the
+   CLI's hint line under it. */
 .wrap {
-  max-width: 760px;
-  margin: 0 auto;
   width: 100%;
+  max-width: var(--prompt-max);
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-.hint {
-  font-size: var(--fs-sm);
-  color: var(--t3);
-  padding-left: 4px;
+  gap: 6px;
+  font-family: var(--mono);
 }
 .paused {
+  padding: 0 12px;
+  font-size: var(--fs-2xs);
   color: var(--warning);
 }
 .box {
-  background: var(--s1);
-  border: 1px solid var(--bs);
-  border-radius: var(--r-3xl);
-  padding: 12px 12px 10px 16px;
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  padding: 11px 8px 9px 12px;
+  border: 1px solid var(--bs);
+  border-radius: var(--r-lg);
+  background: var(--bg);
 }
 .box:focus-within {
-  border-color: color-mix(in srgb, var(--tint) 22%, transparent);
+  border-color: var(--t3);
 }
 .box[data-disabled] {
   opacity: 0.6;
+}
+.line {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  align-items: start;
+}
+.prompt {
+  color: var(--t2);
+  font-size: var(--v3-cc-fs);
+  line-height: 1.5;
 }
 .text {
   resize: none;
   background: transparent;
   border: 0;
   color: var(--t1);
-  font: inherit;
-  font-size: var(--fs-lg);
+  font-family: var(--mono);
+  font-size: var(--v3-cc-fs);
   line-height: 1.5;
-  padding: 2px 0;
+  padding: 0;
   max-height: 240px;
   field-sizing: content;
-  min-height: 42px;
+  min-height: 20px;
 }
 .text:focus-visible {
   outline: none;
@@ -48,66 +59,142 @@
 .text::placeholder {
   color: var(--t3);
 }
-.row {
+.tools {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  gap: 2px;
+  margin-top: -3px;
 }
-.chip {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 11px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--b);
-  background: var(--s2);
-  color: var(--t2);
-  font-size: var(--fs-sm);
+.icon {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--t3);
   cursor: pointer;
 }
-.chip:hover {
+.icon:hover:not(:disabled) {
+  color: var(--t1);
+  background: var(--neutral-fill);
+}
+.icon:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.icon[data-send]:not(:disabled) {
+  color: var(--t2);
+}
+
+/* The hint line: mode on the left, helpers on the right. */
+.hintLine {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 20px;
+  padding: 0 4px 0 12px;
+  font-size: var(--fs-2xs);
+  color: var(--t3);
+}
+.menuWrap {
+  position: relative;
+}
+.mode,
+.hintBtn,
+.chip {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--t3);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.hintBtn:hover,
+.chip:hover,
+.mode:hover .dim {
   color: var(--t1);
 }
-.chip[aria-pressed='true'] {
-  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: var(--accent-text-strong);
+.mode[data-mode='auto'] {
+  color: var(--edited);
 }
-.chip[data-mode='auto'] {
-  border-color: color-mix(in srgb, var(--warning) 55%, transparent);
-  background: var(--warning-fill);
+.mode[data-mode='plan'] {
+  color: var(--success);
+}
+.dim {
+  color: var(--t3);
+}
+.chip {
   color: var(--warning);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
-.chip[data-mode='plan'] {
-  border-color: var(--accent-border);
-  background: var(--accent-fill);
-  color: var(--accent-text-strong);
-}
-.modelWrap {
-  position: relative;
+.spacer {
+  flex: 1;
 }
 /* Context meter (V2.1 w7.3): a small ring and the share of the window used. */
 .meter {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 0 4px;
-  color: var(--t3);
-  font-size: var(--fs-sm);
   font-variant-numeric: tabular-nums;
   cursor: default;
 }
 .ring {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: conic-gradient(currentColor calc(var(--share) * 360deg), var(--b) 0);
 }
 .meter[data-high] {
   color: var(--warning);
 }
-/* Two classes, so these win over .menu (defined further down). */
+.menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: -8px;
+  min-width: 160px;
+  background: var(--s-float);
+  border: 1px solid var(--bs);
+  border-radius: var(--r-lg);
+  padding: 4px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--sans);
+  font-size: var(--fs-sm);
+}
+.menuRight {
+  left: auto;
+  right: -8px;
+}
+.menu button {
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--t1);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.menu button:hover {
+  background: var(--s3);
+}
+.menu button[aria-checked='true'] {
+  color: var(--accent-text-strong);
+}
+.menuLabel {
+  padding: 8px 10px 4px;
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--t3);
+}
+/* Two classes, so these win over .menu. */
 .menu.modeMenu {
   min-width: 270px;
 }
@@ -125,69 +212,25 @@
   color: var(--t3);
   font-size: var(--fs-xs);
 }
-.menu {
-  position: absolute;
-  bottom: 36px;
-  left: 0;
-  min-width: 140px;
-  background: var(--s2);
-  border: 1px solid var(--bs);
-  border-radius: var(--r-lg);
-  padding: 4px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-}
-.menu button {
-  height: 30px;
-  padding: 0 10px;
-  border: 0;
-  border-radius: var(--r-md);
-  background: transparent;
-  color: var(--t1);
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
-}
-.menu button:hover {
-  background: var(--s3);
-}
-.menu button[aria-checked='true'] {
-  color: var(--accent-text-strong);
-}
-.spacer {
-  flex: 1;
-}
-.send {
-  width: 34px;
-  height: 34px;
+.shortcuts {
+  margin: 0;
+  padding: 8px 12px;
   display: grid;
-  place-items: center;
-  border-radius: var(--r-pill);
-  border: 0;
-  background: var(--t1);
-  color: var(--t-on-primary);
-  cursor: pointer;
-}
-.send:disabled {
-  background: var(--s3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 24px;
+  font-size: var(--fs-2xs);
   color: var(--t3);
-  cursor: not-allowed;
 }
-.stop {
+.shortcuts div {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 14px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--bs);
-  background: var(--s2);
-  color: var(--t1);
-  font: inherit;
-  font-weight: 500;
-  cursor: pointer;
+  gap: 10px;
+}
+.shortcuts dt {
+  min-width: 88px;
+  color: var(--t2);
+}
+.shortcuts dd {
+  margin: 0;
 }
 .box[data-dragging] {
   border-color: var(--accent-border);
@@ -255,24 +298,6 @@
   color: var(--t1);
   background: var(--s3);
 }
-.attach {
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  border: 1px solid var(--b);
-  background: var(--s2);
-  color: var(--t2);
-  cursor: pointer;
-}
-.attach:hover:not(:disabled) {
-  color: var(--t1);
-}
-.attach:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
 .fileError {
   margin: 0;
   padding-left: 4px;
@@ -281,9 +306,6 @@
 }
 
 /* Slash commands (V2.1 w7.1) */
-.box {
-  position: relative;
-}
 .slash {
   position: absolute;
   left: 8px;

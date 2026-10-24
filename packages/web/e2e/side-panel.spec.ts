@@ -130,5 +130,5 @@ test('subagents show as one row and in Live', async ({ page }) => {
   await expect(card).toContainText('3 steps');
   await expect(card.getByText('1 subagent working')).toBeHidden();
   await expect(page.getByText('Approval needed')).toBeHidden();
-  await expect(page.getByText('Explore agent', { exact: true })).toBeVisible();
+  await expect(page.getByText('(Explore: Find the streak code)')).toBeVisible();
 });

@@ -1,8 +1,6 @@
 import {
-  ArrowUp,
-  ChevronDown,
+  CornerDownLeft,
   FileText,
-  Gauge,
   Hand,
   Map as MapIcon,
   Paperclip,
@@ -94,6 +92,8 @@ interface ComposerProps {
   onCompact?(): void;
   /** Messages sent in this chat, oldest first: ↑ and ↓ step through them (V2.1 w7.8). */
   history?: string[];
+  /** "Reply to the Builder". */
+  placeholder?: string;
 }
 
 /** From this share of the window the meter turns amber and offers Compact, like the CLI. */
@@ -120,8 +120,10 @@ export function Composer({
   context,
   onCompact,
   history = [],
+  placeholder,
 }: ComposerProps) {
   const [text, setText] = useState('');
+  const [shortcuts, setShortcuts] = useState(false);
   // ↑ / ↓ through earlier messages, like the CLI: the index shown, and the draft to go back to.
   const [recall, setRecall] = useState<{ index: number; draft: string } | null>(null);
   // @ mentions: the "@query" just before the caret, and the files that match it.
@@ -301,7 +303,30 @@ export function Composer({
     setDragging(false);
     addFiles(e.dataTransfer.files);
   };
+  /** Puts `/` or `@` into the box, as typing it would. */
+  const insert = (ch: string) => {
+    const next = ch === '/' ? '/' : `${text}${text && !text.endsWith(' ') ? ' ' : ''}@`;
+    setText(next);
+    setCaret(next.length);
+    requestAnimationFrame(() => {
+      area.current?.focus();
+      area.current?.setSelectionRange(next.length, next.length);
+    });
+  };
   const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Shift+Tab cycles the mode, like the CLI.
+    if (e.key === 'Tab' && e.shiftKey && listLength === 0) {
+      e.preventDefault();
+      const order: ChatMode[] = ['ask', 'auto', 'plan'];
+      onMode(order[(order.indexOf(mode) + 1) % order.length]!);
+      return;
+    }
+    if (shortcuts && e.key === 'Escape') {
+      e.preventDefault();
+      setShortcuts(false);
+      if (text === '?') setText('');
+      return;
+    }
     if (listLength > 0) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
@@ -380,16 +405,11 @@ export function Composer({
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.hint}>
-        {paused ? (
-          <span className={styles.paused}>Claude is paused until you answer above.</span>
-        ) : (
-          <>
-            Claude reads <span className="mono">CLAUDE.md</span> and{' '}
-            <span className="mono">STATUS.md</span> first.
-          </>
-        )}
-      </div>
+      {paused && (
+        <div className={styles.paused} role="status">
+          Claude is paused until you answer above.
+        </div>
+      )}
       <div
         className={styles.box}
         data-disabled={disabled ? true : undefined}
@@ -479,142 +499,161 @@ export function Composer({
             ))}
           </div>
         )}
-        <label htmlFor={id} className="sr-only">
-          Message Claude
-        </label>
-        <textarea
-          id={id}
-          ref={area}
-          rows={2}
-          className={styles.text}
-          placeholder={
-            disabled ??
-            (running
-              ? 'Claude is working… write your next message.'
-              : 'Reply to Claude, or describe the next task…')
-          }
-          value={text}
-          disabled={!!disabled}
-          onChange={(e) => {
-            setText(e.target.value);
-            setCaret(e.target.selectionStart);
-            setSlashIndex(0);
-            setRecall(null);
-          }}
-          onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
-          onKeyDown={onKey}
-          onPaste={onPaste}
-        />
-        <div className={styles.row}>
-          {onUpload && (
-            <>
+        <div className={styles.line}>
+          <span className={styles.prompt} aria-hidden="true">
+            &gt;
+          </span>
+          <label htmlFor={id} className="sr-only">
+            Message Claude
+          </label>
+          <textarea
+            id={id}
+            ref={area}
+            rows={1}
+            className={styles.text}
+            placeholder={
+              disabled ??
+              (paused
+                ? 'Answer above: press a number, or Esc to say no'
+                : running
+                  ? `${placeholder ?? 'Reply to Claude'}. Claude is working; Esc to interrupt`
+                  : (placeholder ?? 'Reply to Claude, or describe the next task'))
+            }
+            value={text}
+            disabled={!!disabled}
+            onChange={(e) => {
+              setText(e.target.value);
+              setCaret(e.target.selectionStart);
+              setSlashIndex(0);
+              setRecall(null);
+              if (e.target.value === '?') setShortcuts(true);
+            }}
+            onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
+            onKeyDown={onKey}
+            onPaste={onPaste}
+          />
+          <div className={styles.tools}>
+            {onUpload && (
+              <>
+                <button
+                  type="button"
+                  className={styles.icon}
+                  aria-label="Attach files"
+                  title="Attach files or pictures (or drop or paste them here)"
+                  disabled={!!disabled || files.length >= MAX_ATTACHMENTS}
+                  onClick={() => picker.current?.click()}
+                >
+                  <Paperclip size={14} strokeWidth={1.8} aria-hidden="true" />
+                </button>
+                <input
+                  ref={picker}
+                  type="file"
+                  multiple
+                  hidden
+                  aria-hidden="true"
+                  tabIndex={-1}
+                  onChange={(e) => {
+                    if (e.target.files) addFiles(e.target.files);
+                    e.target.value = '';
+                  }}
+                />
+              </>
+            )}
+            {running ? (
               <button
                 type="button"
-                className={styles.attach}
-                aria-label="Attach files"
-                title="Attach files or pictures (or drop or paste them here)"
-                disabled={!!disabled || files.length >= MAX_ATTACHMENTS}
-                onClick={() => picker.current?.click()}
+                className={styles.icon}
+                aria-label="Stop"
+                title="Stop Claude (Esc)"
+                onClick={onStop}
               >
-                <Paperclip size={15} strokeWidth={1.8} aria-hidden="true" />
+                <Square size={10} fill="currentColor" aria-hidden="true" />
               </button>
-              <input
-                ref={picker}
-                type="file"
-                multiple
-                hidden
-                aria-hidden="true"
-                tabIndex={-1}
-                onChange={(e) => {
-                  if (e.target.files) addFiles(e.target.files);
-                  e.target.value = '';
-                }}
-              />
-            </>
+            ) : (
+              <button
+                type="button"
+                className={styles.icon}
+                data-send
+                aria-label="Send"
+                title="Send (Enter)"
+                disabled={!canSend}
+                onClick={() => void send()}
+              >
+                <CornerDownLeft size={14} strokeWidth={1.8} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className={styles.hintLine}>
+        <div className={styles.menuWrap}>
+          <button
+            type="button"
+            className={styles.mode}
+            data-mode={mode}
+            aria-haspopup="menu"
+            aria-expanded={menu === 'mode'}
+            aria-label={`Mode: ${current.label}`}
+            title={`${current.detail}. Shift+Tab cycles the mode.`}
+            onClick={() => setMenu(menu === 'mode' ? null : 'mode')}
+          >
+            {MODE_LINE[mode]}
+            <span className={styles.dim}> (shift+tab to cycle)</span>
+          </button>
+          {menu === 'mode' && (
+            <div className={`${styles.menu} ${styles.modeMenu}`} role="menu" aria-label="Mode">
+              {MODES.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={m.id === mode}
+                  onClick={() => {
+                    onMode(m.id);
+                    setMenu(null);
+                  }}
+                >
+                  <span className={styles.modeLabel}>{m.label}</span>
+                  <span className={styles.modeDetail}>{m.detail}</span>
+                </button>
+              ))}
+            </div>
           )}
-          <div className={styles.modelWrap}>
-            <button
-              type="button"
-              className={styles.chip}
-              data-mode={mode}
-              aria-haspopup="menu"
-              aria-expanded={menu === 'mode'}
-              aria-label={`Mode: ${current.label}`}
-              title={current.detail}
-              onClick={() => setMenu(menu === 'mode' ? null : 'mode')}
-            >
-              <current.Icon size={12} strokeWidth={1.8} aria-hidden="true" />
-              {current.label}
-              <ChevronDown size={12} strokeWidth={2} aria-hidden="true" />
-            </button>
-            {menu === 'mode' && (
-              <div className={`${styles.menu} ${styles.modeMenu}`} role="menu" aria-label="Mode">
-                {MODES.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={m.id === mode}
-                    onClick={() => {
-                      onMode(m.id);
-                      setMenu(null);
-                    }}
-                  >
-                    <span className={styles.modeLabel}>{m.label}</span>
-                    <span className={styles.modeDetail}>{m.detail}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className={styles.modelWrap}>
-            <button
-              type="button"
-              className={styles.chip}
-              aria-haspopup="menu"
-              aria-expanded={menu === 'model'}
-              aria-label={`Model: ${modelLabel}`}
-              onClick={() => setMenu(menu === 'model' ? null : 'model')}
-            >
-              {modelLabel}
-              <ChevronDown size={12} strokeWidth={2} aria-hidden="true" />
-            </button>
-            {menu === 'model' && (
-              <div className={styles.menu} role="menu">
-                {MODELS.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={m.id === model}
-                    onClick={() => {
-                      onModel(m.id);
-                      setMenu(null);
-                    }}
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          {model !== 'haiku' && (
-            <div className={styles.modelWrap}>
-              <button
-                type="button"
-                className={styles.chip}
-                aria-haspopup="menu"
-                aria-expanded={menu === 'effort'}
-                aria-label={`Effort: ${effortLabel}`}
-                title="How much Claude thinks before answering"
-                onClick={() => setMenu(menu === 'effort' ? null : 'effort')}
-              >
-                <Gauge size={12} strokeWidth={1.8} aria-hidden="true" />
-                {effort ? effortLabel : 'Effort'}
-                <ChevronDown size={12} strokeWidth={2} aria-hidden="true" />
-              </button>
-              {menu === 'effort' && (
-                <div className={styles.menu} role="menu" aria-label="Effort">
+        </div>
+        {context && <ContextMeter context={context} onCompact={running ? undefined : onCompact} />}
+        <span className={styles.spacer} />
+        <div className={styles.menuWrap}>
+          <button
+            type="button"
+            className={styles.hintBtn}
+            aria-haspopup="menu"
+            aria-expanded={menu === 'model'}
+            aria-label={`Model: ${modelLabel}${model !== 'haiku' && effort ? `, effort ${effortLabel}` : ''}`}
+            title="Model and effort (/model)"
+            onClick={() => setMenu(menu === 'model' ? null : 'model')}
+          >
+            {modelLabel.toLowerCase()}
+            {model !== 'haiku' && effort ? ` · ${effortLabel.toLowerCase()}` : ''}
+          </button>
+          {menu === 'model' && (
+            <div className={`${styles.menu} ${styles.menuRight}`} role="menu" aria-label="Model">
+              {MODELS.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={m.id === model}
+                  onClick={() => {
+                    onModel(m.id);
+                    setMenu(null);
+                  }}
+                >
+                  {m.label}
+                </button>
+              ))}
+              {model !== 'haiku' && (
+                <>
+                  <span className={styles.menuLabel}>Effort</span>
                   {[{ id: null, label: 'Default' }, ...EFFORTS].map((e) => (
                     <button
                       key={e.id ?? 'default'}
@@ -629,36 +668,60 @@ export function Composer({
                       {e.label}
                     </button>
                   ))}
-                </div>
+                </>
               )}
             </div>
           )}
-          {context && (
-            <ContextMeter context={context} onCompact={running ? undefined : onCompact} />
-          )}
-          <span className={styles.spacer} />
-          {running ? (
-            <button type="button" className={styles.stop} onClick={onStop}>
-              <Square size={10} fill="currentColor" aria-hidden="true" />
-              Stop
-            </button>
-          ) : (
-            <button
-              type="button"
-              className={styles.send}
-              aria-label="Send"
-              disabled={!canSend}
-              onClick={() => void send()}
-            >
-              <ArrowUp size={16} strokeWidth={2} aria-hidden="true" />
-            </button>
-          )}
         </div>
+        <button type="button" className={styles.hintBtn} onClick={() => insert('/')}>
+          / commands
+        </button>
+        {searchFiles && (
+          <button type="button" className={styles.hintBtn} onClick={() => insert('@')}>
+            @ files
+          </button>
+        )}
+        <button
+          type="button"
+          className={styles.hintBtn}
+          aria-expanded={shortcuts}
+          onClick={() => setShortcuts(!shortcuts)}
+        >
+          ? shortcuts
+        </button>
       </div>
+      {shortcuts && (
+        <dl className={styles.shortcuts} aria-label="Shortcuts">
+          {SHORTCUTS.map(([k, v]) => (
+            <div key={k}>
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
       {fileError && <p className={styles.fileError}>{fileError}</p>}
     </div>
   );
 }
+
+/** The mode as the CLI prints it under the input. */
+const MODE_LINE: Record<ChatMode, string> = {
+  ask: '⏵ ask before edits',
+  auto: '⏵⏵ auto mode on',
+  plan: '⏸ plan mode on',
+};
+
+const SHORTCUTS: [string, string][] = [
+  ['Enter', 'send'],
+  ['Shift+Enter', 'new line'],
+  ['Shift+Tab', 'cycle the mode: ask, auto, plan'],
+  ['Esc', 'stop Claude'],
+  ['↑ ↓', 'earlier messages'],
+  ['/', 'commands'],
+  ['@', 'mention a file'],
+  ['Ctrl+K', 'command palette'],
+];
 
 const tokens = (n: number) =>
   n >= 1_000_000

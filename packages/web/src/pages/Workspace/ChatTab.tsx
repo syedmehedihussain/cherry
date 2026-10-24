@@ -1,4 +1,4 @@
-import { ChevronRight, FileText, Globe, History, RotateCcw, Undo2 } from 'lucide-react';
+import { FileText, History, RotateCcw, Undo2 } from 'lucide-react';
 import { create } from 'zustand';
 import {
   Fragment,
@@ -46,18 +46,23 @@ import {
 import { queryClient } from '../../api/queries.ts';
 import { searchFiles } from '../../api/workspace.ts';
 import { stageInfo, useStageInfo } from '../../api/stages.ts';
-import { ApprovalCard } from '../../components/ApprovalCard/ApprovalCard.tsx';
+import {
+  CcAnswered,
+  CcFold,
+  CcPrompt,
+  CcSpinner,
+  CcText,
+  CcThinking,
+  CcTool,
+  CcUser,
+} from '../../components/ClaudeCode/ClaudeCode.tsx';
+import { elapsed } from '../../components/ClaudeCode/cli.ts';
 import { ChangeSummary } from '../../components/ChangeSummary/ChangeSummary.tsx';
 import { Composer, type SlashCommand } from '../../components/Composer/Composer.tsx';
 import { DecisionCard } from '../../components/DecisionCard/DecisionCard.tsx';
 import { DecisionInChat } from '../../components/Decisions/Decisions.tsx';
 import { Markdown } from '../../components/Markdown/Markdown.tsx';
-import {
-  ReadGroup,
-  StepsGroup,
-  TimelineRow,
-  type ToolItem,
-} from '../../components/Timeline/Timeline.tsx';
+import { stepsSummary, type ToolItem } from '../../components/Timeline/Timeline.tsx';
 import { PlanProposal } from '../../components/PlanProposal/PlanProposal.tsx';
 import { useStages } from '../../state/stage.ts';
 import { useSideView } from './SidePanel.tsx';
@@ -178,9 +183,11 @@ interface ChatTabProps {
   /** Which stage's agent and chat (ADR-0034). */
   stage: Stage;
   now: number;
+  /** Opens a file the agent wrote (the Plan reader, an editor tab). */
+  onOpenFile?: (path: string) => void;
 }
 
-export function ChatTab({ projectId, stage, now }: ChatTabProps) {
+export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
   const chat = useChat(projectId, stage);
   const draft = useChatDraft((s) => s.drafts[projectId]);
   const setDraft = useChatDraft((s) => s.set);
@@ -210,6 +217,10 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
       (i.kind === 'decision' && i.status === 'open'),
   );
   const lastItem = items[items.length - 1];
+  const lastUser = items.findLast((i) => i.kind === 'user');
+  const turnStart = lastUser?.at;
+  const turnSeed = lastUser?.id ?? 'turn';
+  const agentName = stageInfo(useStageInfo().data, stage)?.name;
 
   useLayoutEffect(() => {
     const el = scroller.current;
@@ -275,25 +286,29 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
           {blocks.map((b) =>
             b.t === 'user' ? (
               <div key={b.item.id} className={styles.userBlock}>
-                <div className={styles.userRow}>
-                  {!state?.running && rewindAt !== b.item.id && (
-                    <button
-                      type="button"
-                      className={styles.rewindBtn}
-                      aria-label="Rewind to before this message"
-                      title="Rewind to before this message"
-                      onClick={() => setRewindAt(b.item.id)}
-                    >
-                      <Undo2 size={13} aria-hidden="true" />
-                    </button>
-                  )}
-                  <div className={styles.user}>
+                <CcUser
+                  actions={
+                    !state?.running &&
+                    rewindAt !== b.item.id && (
+                      <button
+                        type="button"
+                        className={styles.rewindBtn}
+                        aria-label="Rewind to before this message"
+                        title="Rewind to before this message"
+                        onClick={() => setRewindAt(b.item.id)}
+                      >
+                        <Undo2 size={13} aria-hidden="true" />
+                      </button>
+                    )
+                  }
+                >
+                  <span>
                     {b.item.attachments && b.item.attachments.length > 0 && (
                       <Attachments projectId={projectId} files={b.item.attachments} />
                     )}
                     {b.item.text}
-                  </div>
-                </div>
+                  </span>
+                </CcUser>
                 {rewindAt === b.item.id && (
                   <RewindPanel
                     hasCheckpoint={!!b.item.checkpoint}
@@ -330,6 +345,7 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
                 now={now}
                 running={!!state?.running}
                 streamingId={state?.running && lastItem?.kind === 'text' ? lastItem.id : null}
+                onOpenFile={onOpenFile}
                 onRetry={
                   lastUserText
                     ? () => void send(lastUserText, mode.mode, model ?? state?.model ?? 'opus')
@@ -338,14 +354,7 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
               />
             ),
           )}
-          {state?.running &&
-            lastItem?.kind !== 'text' &&
-            !(lastItem?.kind === 'thinking' && lastItem.durationMs === null) &&
-            !paused && (
-              <div className={styles.working}>
-                <span className="spinner" /> Claude is working…
-              </div>
-            )}
+          {state?.running && !paused && <CcSpinner since={turnStart ?? now} seed={turnSeed} />}
         </div>
       </div>
       <div className={styles.composer}>
@@ -382,6 +391,7 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
           context={context}
           history={sentTexts}
           onCompact={() => void send('/compact', mode.mode, model ?? state?.model ?? 'opus')}
+          placeholder={agentName ? `Reply to the ${agentName}` : undefined}
         />
       </div>
     </div>
@@ -421,7 +431,7 @@ const MODE_NOTE: Record<ChatMode, string> = {
   plan: 'Plan mode: Claude reads and plans, and changes nothing until you approve the plan.',
 };
 
-/** The stage's agent introduces itself: name, what it does, its skills (ADR-0034). */
+/** The stage's agent introduces itself, like the CLI's welcome box (ADR-0034). */
 function EmptyChat({
   stage,
   mode,
@@ -435,26 +445,31 @@ function EmptyChat({
   const agent = stageInfo(useStageInfo().data, stage);
   return (
     <div className={styles.empty}>
-      <h2>{agent ? `${agent.label}: the ${agent.name}` : 'Start a conversation'}</h2>
-      <p>
-        {agent?.summary ?? 'Ask Claude to look into something or describe the next task.'}{' '}
-        {agent?.docsOnly && 'It writes docs and notes only, never code. '}
-        {MODE_NOTE[mode]}
-      </p>
+      <div className={styles.welcome}>
+        <h2>{agent ? `${agent.label}: the ${agent.name}` : 'Start a conversation'}</h2>
+        <p>
+          {agent?.summary ?? 'Ask Claude to look into something or describe the next task.'}{' '}
+          {agent?.docsOnly && 'It writes docs and notes only, never code. '}
+        </p>
+        <p className={styles.welcomeMode}>{MODE_NOTE[mode]}</p>
+      </div>
       {!!agent?.skills.length && (
-        <ul className={styles.skills} aria-label="Skills">
-          {agent.skills.map((s) => (
-            <li key={s.name}>
-              <button
-                type="button"
-                title={`${s.description}\n\nClick to start it: /cherry-${stage}:${s.name}`}
-                onClick={() => onSkill(s.name)}
-              >
-                {s.name}
-              </button>
-            </li>
-          ))}
-        </ul>
+        <div className={styles.skillsWrap}>
+          <span className={styles.skillsLabel}>Skills</span>
+          <ul className={styles.skills} aria-label="Skills">
+            {agent.skills.map((s) => (
+              <li key={s.name}>
+                <button
+                  type="button"
+                  title={`${s.description}\n\nClick to start it: /cherry-${stage}:${s.name}`}
+                  onClick={() => onSkill(s.name)}
+                >
+                  {s.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );
@@ -467,6 +482,7 @@ function ClaudeBlock({
   running,
   streamingId,
   onRetry,
+  onOpenFile,
 }: {
   projectId: string;
   block: Extract<Block, { t: 'claude' }>;
@@ -474,6 +490,7 @@ function ClaudeBlock({
   running: boolean;
   streamingId: string | null;
   onRetry?: () => void;
+  onOpenFile?: (path: string) => void;
 }) {
   const firstPending = block.parts.find(
     (p) => p.t === 'approval' && p.item.approval.status === 'pending',
@@ -481,13 +498,35 @@ function ClaudeBlock({
   const end = block.parts.find((p) => p.t === 'end')?.item;
   const tools = block.parts.flatMap((p) => (p.t === 'tools' ? p.items : []));
   const lastTools = block.parts.findLast((p) => p.t === 'tools');
-  /** Rows for a run of steps: reads of 3+ collapse, the rest one row each. */
+  // An allowed edit shows its diff under the call, as the CLI does.
+  const diffs = new Map(
+    block.parts.flatMap((p) =>
+      p.t === 'approval' && p.item.approval.kind === 'edit'
+        ? [[p.item.approval.id, p.item.approval.files] as const]
+        : [],
+    ),
+  );
+  const row = (t: ToolItem) => (
+    <CcTool
+      key={t.id}
+      item={t}
+      diff={t.approvalId ? diffs.get(t.approvalId) : undefined}
+      extra={
+        onOpenFile && t.tool === 'Write' && t.status === 'ok' ? (
+          <FileLine path={t.target} onOpen={() => onOpenFile(t.target)} />
+        ) : undefined
+      }
+    />
+  );
+  /** Rows for a run of steps: reads of 3+ fold into one line, the rest one row each. */
   const rowsOf = (list: ToolItem[]) =>
-    toolRuns(list).map((r, i, all) =>
+    toolRuns(list).map((r) =>
       Array.isArray(r) ? (
-        <ReadGroup key={r[0]!.id} items={r} />
+        <CcFold key={r[0]!.id} summary={`Read ${r.length} files`}>
+          {r.map(row)}
+        </CcFold>
       ) : (
-        <TimelineRow key={r.id} item={r} last={i === all.length - 1} />
+        row(r)
       ),
     );
   /**
@@ -497,15 +536,24 @@ function ClaudeBlock({
   const LIVE_ROWS = 3;
   const renderTools = (list: ToolItem[], live: boolean) => {
     const keep = list.findIndex((i) => i.status === 'waiting' || i.status === 'running');
+    // Done: the last two steps stay as rows under the fold, as the CLI leaves them.
     const cut = live
       ? Math.max(0, Math.min(keep < 0 ? list.length : keep, list.length - LIVE_ROWS))
-      : list.length;
+      : list.length >= 4
+        ? list.length - 2
+        : 0;
     const folded = list.slice(0, cut);
     const shown = list.slice(cut);
+    const took = folded.reduce((ms, t) => ms + (t.durationMs ?? 0), 0);
     return (
       <>
         {folded.length >= 2 ? (
-          <StepsGroup items={folded}>{rowsOf(folded)}</StepsGroup>
+          <CcFold
+            summary={`${stepsSummary(folded)}${took >= 1000 ? ` · ${elapsed(took)}` : ''}`}
+            failed={folded.filter((i) => i.status === 'failed').length}
+          >
+            {rowsOf(folded)}
+          </CcFold>
         ) : (
           rowsOf(folded)
         )}
@@ -515,25 +563,28 @@ function ClaudeBlock({
   };
   return (
     <div className={styles.claude}>
-      <div className={styles.claudeLabel}>Claude</div>
       {block.parts.map((p) => {
         switch (p.t) {
           case 'text':
             return (
-              <div key={p.item.id} className={styles.text}>
-                <Markdown source={p.item.text} variant="chat" />
-                {p.item.id === streamingId && <span className={styles.cursor} aria-hidden="true" />}
-              </div>
+              <CcText key={p.item.id}>
+                <div className={styles.text}>
+                  <Markdown source={p.item.text} variant="cli" />
+                  {p.item.id === streamingId && (
+                    <span className={styles.cursor} aria-hidden="true" />
+                  )}
+                </div>
+              </CcText>
             );
           case 'tools':
             return (
               <Fragment key={p.items[0]!.id}>
-                <div className={styles.timeline}>
-                  {renderTools(p.items, !end && p === lastTools)}
-                </div>
+                {renderTools(p.items, !end && p === lastTools)}
                 {/* A big choice Claude proposed: approve it right here (ADR-0029). */}
                 {proposals(p.items).map((n) => (
-                  <DecisionInChat key={n} projectId={projectId} number={n} />
+                  <div key={n} className={styles.card}>
+                    <DecisionInChat projectId={projectId} number={n} />
+                  </div>
                 ))}
               </Fragment>
             );
@@ -542,25 +593,31 @@ function ClaudeBlock({
           case 'chrome':
             return <ChromeRow key={p.items[0]!.id} items={p.items} />;
           case 'plan':
-            return <PlanCard key={p.item.id} projectId={projectId} plan={p.item} />;
+            return (
+              <div key={p.item.id} className={styles.card}>
+                <PlanCard projectId={projectId} plan={p.item} />
+              </div>
+            );
           case 'decision':
             return (
-              <DecisionCard
-                key={p.item.id}
-                card={p.item.card}
-                state={p.item.status === 'open' ? (running ? 'open' : 'cancelled') : p.item.status}
-                answer={p.item.answer}
-                onConfirm={async (a) => {
-                  await answerDecision(p.item.id, a);
-                }}
-              />
+              <div key={p.item.id} className={styles.card}>
+                <DecisionCard
+                  card={p.item.card}
+                  state={
+                    p.item.status === 'open' ? (running ? 'open' : 'cancelled') : p.item.status
+                  }
+                  answer={p.item.answer}
+                  onConfirm={async (a) => {
+                    await answerDecision(p.item.id, a);
+                  }}
+                />
+              </div>
             );
           case 'approval':
-            return (
-              <ApprovalCard
+            return p.item.approval.status === 'pending' ? (
+              <CcPrompt
                 key={p.item.id}
                 approval={p.item.approval}
-                now={now}
                 autoFocus={p === firstPending}
                 onAnswer={async (answer, reason) => {
                   await answerApproval(p.item.approval.id, {
@@ -569,6 +626,8 @@ function ClaudeBlock({
                   });
                 }}
               />
+            ) : (
+              <CcAnswered key={p.item.id} approval={p.item.approval} />
             );
           case 'end':
             if (p.item.stopped)
@@ -582,7 +641,7 @@ function ClaudeBlock({
                 <div key={p.item.id} className={styles.failed} role="alert">
                   <span>{p.item.error ?? 'Claude stopped with an error.'}</span>
                   {onRetry && (
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={onRetry}>
+                    <button type="button" className={styles.retry} onClick={onRetry}>
                       <RotateCcw size={12} aria-hidden="true" />
                       Retry
                     </button>
@@ -593,6 +652,25 @@ function ClaudeBlock({
         }
       })}
       {end && <ChangeSummary projectId={projectId} tools={tools} end={end} />}
+    </div>
+  );
+}
+
+/** A file the agent wrote: one line with Open (V3, artboard 01). */
+function FileLine({ path, onOpen }: { path: string; onOpen(): void }) {
+  return (
+    <div className={styles.fileLine}>
+      <FileText size={13} aria-hidden="true" />
+      <span className={styles.fileName}>{path.split('/').pop()}</span>
+      <span className={styles.filePath}>{path}</span>
+      <button
+        type="button"
+        className={styles.fileOpen}
+        onClick={onOpen}
+        aria-label={`Open ${path}`}
+      >
+        Open
+      </button>
     </div>
   );
 }
@@ -826,9 +904,8 @@ function RewindPanel({
 
 const seconds = (ms: number) => `${Math.max(1, Math.round(ms / 1000))}s`;
 
-/** "Thought for 12s", folded; a click shows what Claude thought (V2.1 w7.4). */
+/** "✻ Thought for 12s", folded; a click shows what Claude thought (V2.1 w7.4). */
 function ThinkingRow({ items, now }: { items: ThinkingItem[]; now: number }) {
-  const [open, setOpen] = useState(false);
   const thinking = items.some((i) => i.durationMs === null);
   const ms = items.reduce((sum, i) => sum + (i.durationMs ?? now - i.at), 0);
   const text = items
@@ -836,32 +913,9 @@ function ThinkingRow({ items, now }: { items: ThinkingItem[]; now: number }) {
     .filter(Boolean)
     .join('\n\n');
   return (
-    <div className={styles.thinking}>
-      <button
-        type="button"
-        className={styles.thinkingHead}
-        aria-expanded={text ? open : undefined}
-        disabled={!text}
-        onClick={() => setOpen(!open)}
-      >
-        {text && (
-          <ChevronRight
-            size={12}
-            strokeWidth={2}
-            aria-hidden="true"
-            style={{ transform: open ? 'rotate(90deg)' : undefined }}
-          />
-        )}
-        <span className={thinking ? styles.thinkingBusy : undefined}>
-          {thinking ? 'Thinking…' : `Thought for ${seconds(ms)}`}
-        </span>
-      </button>
-      {open && text && (
-        <div className={styles.thinkingText}>
-          <Markdown source={text} variant="chat" />
-        </div>
-      )}
-    </div>
+    <CcThinking label={thinking ? 'Thinking…' : `Thought for ${seconds(ms)}`} busy={thinking}>
+      {text ? <Markdown source={text} variant="cli" /> : undefined}
+    </CcThinking>
   );
 }
 
@@ -872,20 +926,19 @@ function ChromeRow({ items }: { items: ToolItem[] }) {
   const failed = items.filter((i) => i.status === 'failed').length;
   const last = items.at(-1)!;
   return (
-    <button type="button" className={styles.chromeRow} onClick={() => setView('live')}>
-      <Globe size={13} aria-hidden="true" className={running ? styles.chromeBusy : undefined} />
-      <span className={styles.chromeTitle}>
-        {running ? 'Using Chrome' : 'Used Chrome'} · {items.length} step
-        {items.length === 1 ? '' : 's'}
-        {failed > 0 && ` · ${failed} failed`}
-      </span>
+    <div className={styles.chromeRow} data-running={running || undefined}>
+      <button type="button" className={styles.chromeBtn} onClick={() => setView('live')}>
+        <span className={styles.chromeTitle}>
+          {running ? 'Using Chrome' : 'Used Chrome'} · {items.length} step
+          {items.length === 1 ? '' : 's'}
+          {failed > 0 && ` · ${failed} failed`}
+        </span>
+        <span className={styles.chromeOpen}>Live ›</span>
+      </button>
       <span className={styles.chromeLast} title={last.target}>
-        {last.target}
+        ⎿ {last.target}
       </span>
-      <span className={styles.chromeOpen}>
-        Live <ChevronRight size={12} aria-hidden="true" />
-      </span>
-    </button>
+    </div>
   );
 }
 

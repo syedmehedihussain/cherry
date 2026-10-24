@@ -1,3 +1,4 @@
+/* The Claude Code chat (V3, ADR-0045): one mono column, the CLI's marks. */
 .chat {
   position: relative;
   flex: 1;
@@ -11,131 +12,211 @@
   overflow: auto;
 }
 .thread {
-  max-width: 760px;
+  max-width: var(--prompt-max);
   margin: 0 auto;
-  padding: 24px 24px 16px;
+  padding: 24px 24px 12px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-}
-.userRow {
-  display: flex;
-  justify-content: flex-end;
-}
-.user {
-  max-width: 80%;
-  background: var(--s2);
-  border: 1px solid var(--b);
-  border-radius: 14px 14px 4px 14px;
-  padding: 10px 14px;
-  font-size: var(--fs-lg);
-  line-height: 1.55;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  gap: 14px;
+  font-family: var(--mono);
+  font-size: var(--v3-cc-fs);
+  line-height: var(--v3-cc-lh);
+  color: var(--t-code);
 }
 .claude {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-.claudeLabel {
-  font-size: var(--fs-sm);
-  color: var(--t3);
-  font-weight: 500;
+  gap: 14px;
+  min-width: 0;
 }
 .text {
   position: relative;
+  min-width: 0;
 }
 .cursor {
   display: inline-block;
   width: 7px;
-  height: 16px;
+  height: 15px;
   background: var(--t1);
-  vertical-align: -3px;
+  vertical-align: -2px;
   margin-left: 2px;
   animation: ap-pulse 1s steps(1) infinite;
 }
-.timeline {
-  display: flex;
-  flex-direction: column;
-}
-.working {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--t3);
-  font-size: var(--fs-sm2);
+/* Cards that are not CLI lines (plans, decisions) sit under the dot column. */
+.card {
+  margin-left: 18px;
+  font-family: var(--sans);
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
 }
 .stopped {
+  display: grid;
+  grid-template-columns: 18px 1fr;
   color: var(--t3);
-  font-size: var(--fs-sm2);
+}
+.stopped::before {
+  content: '⎿' / '';
+  padding-left: 3px;
 }
 .failed {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border: 1px solid rgba(248, 81, 73, 0.25);
-  border-radius: var(--r-xl);
-  background: rgba(248, 81, 73, 0.06);
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  align-items: start;
+  gap: 0 10px;
   color: var(--danger-text);
-  font-size: var(--fs-base);
 }
-.failed span {
-  flex: 1;
+.failed::before {
+  content: '●' / '';
+  font-size: 10px;
+  line-height: calc(var(--v3-cc-fs) * var(--v3-cc-lh));
+  color: var(--danger);
+}
+.retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  height: 22px;
+  border: 1px solid var(--b);
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--t2);
+  font: inherit;
+  cursor: pointer;
+}
+.retry:hover {
+  color: var(--t1);
+  border-color: var(--bs);
 }
 .composer {
   flex: none;
-  padding: 0 24px 20px;
+  padding: 8px 24px 14px;
 }
 .error {
-  max-width: 760px;
+  max-width: var(--prompt-max);
   margin: 0 auto 8px;
+  padding: 0 12px;
   color: var(--danger-text);
-  font-size: var(--fs-sm2);
+  font-family: var(--mono);
+  font-size: var(--fs-2xs);
 }
+
+/* The agent's welcome, like the CLI's box. */
 .empty {
-  padding: 64px 12px;
-  text-align: center;
+  padding: 24px 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.welcome {
+  padding: 12px 16px;
+  border: 1px solid var(--v3-spinner);
+  border-radius: var(--r-lg);
   color: var(--t2);
 }
-.empty h2 {
-  margin: 0 0 8px;
+.welcome h2 {
+  margin: 0 0 4px;
   color: var(--t1);
-  font-size: var(--fs-xl);
+  font-size: var(--v3-cc-fs);
+  font-weight: 600;
 }
-.empty p {
-  margin: 0 auto;
-  max-width: 420px;
+.welcome h2::before {
+  content: '✻ ' / '';
+  color: var(--v3-spinner);
+}
+.welcome p {
+  margin: 0;
+  padding-left: 18px;
+}
+.welcomeMode {
+  margin-top: 6px !important;
+  color: var(--t3);
+}
+.skillsWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 4px;
+}
+.skillsLabel {
+  color: var(--t3);
 }
 .skills {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-  margin: 16px auto 0;
+  gap: 4px 14px;
+  margin: 0;
   padding: 0;
-  max-width: 480px;
   list-style: none;
 }
 .skills button {
-  padding: 2px 8px;
-  border: 1px solid var(--b);
-  border-radius: var(--r-pill);
-  background: transparent;
-  font-family: var(--mono);
-  font-size: var(--fs-2xs);
+  padding: 0;
+  border: 0;
+  background: none;
   color: var(--t2);
+  font: inherit;
   cursor: pointer;
 }
+.skills button::before {
+  content: '/' / '';
+  color: var(--t3);
+}
 .skills button:hover {
-  border-color: var(--bs);
-  color: var(--t1);
+  color: var(--accent-text);
 }
 .skills button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
+
+/* A file the agent wrote: one line with Open. */
+.fileLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: calc(100% - 18px);
+  height: 28px;
+  margin: 4px 0 0 18px;
+  padding: 0 4px 0 10px;
+  border: 1px solid var(--b);
+  border-radius: var(--r-md);
+  background: var(--s1);
+  font-size: 12px;
+  color: var(--t1);
+}
+.fileLine svg {
+  flex: none;
+  color: var(--t3);
+}
+.fileName {
+  font-family: var(--sans);
+  font-weight: 500;
+}
+.filePath {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--t3);
+}
+.fileOpen {
+  flex: none;
+  height: 20px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--s3);
+  color: var(--t1);
+  font-family: var(--sans);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  cursor: pointer;
+}
+.fileOpen:hover {
+  background: var(--bs);
+}
+
 .attachments {
   display: flex;
   flex-wrap: wrap;
@@ -167,79 +248,48 @@
 }
 
 /* Claude in Chrome: one row per reply; the steps are in Live (ADR-0038). */
+/* Claude in Chrome: one row per reply; the steps are in Live (ADR-0038). */
 .chromeRow {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+}
+.chromeRow::before {
+  content: '●' / '';
+  font-size: 10px;
+  line-height: calc(var(--v3-cc-fs) * var(--v3-cc-lh));
+  color: var(--success);
+}
+.chromeRow[data-running]::before {
+  color: var(--t3);
+  animation: ap-pulse 1.4s infinite;
+}
+.chromeBtn {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-width: 0;
-  padding: 6px 10px;
-  border: 1px solid var(--b);
-  border-radius: var(--r-md);
-  background: var(--s1);
-  color: var(--t2);
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--t1);
   font: inherit;
-  font-size: var(--fs-sm);
   text-align: left;
   cursor: pointer;
 }
-.chromeRow:hover {
-  border-color: var(--bs);
-  color: var(--t1);
+.chromeTitle {
+  font-weight: 600;
 }
-.chromeBusy {
-  animation: ap-pulse 1.2s ease-in-out infinite;
+.chromeOpen {
+  color: var(--t3);
+}
+.chromeBtn:hover .chromeOpen {
   color: var(--accent-text);
 }
-.chromeTitle {
-  flex: none;
-  font-weight: 500;
-}
 .chromeLast {
-  flex: 1;
+  grid-column: 2;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--t3);
-}
-.chromeOpen {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  color: var(--accent-text);
-}
-
-/* Thinking (V2.1 w7.4): one quiet folded row per reply. */
-.thinkingHead {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  border: 0;
-  background: transparent;
-  padding: 2px 0;
-  color: var(--t3);
-  font: inherit;
-  font-size: var(--fs-sm);
-  font-style: italic;
-  cursor: pointer;
-}
-.thinkingHead:hover:not(:disabled) {
-  color: var(--t2);
-}
-.thinkingHead:disabled {
-  cursor: default;
-}
-.thinkingBusy {
-  animation: ap-pulse 1.2s ease-in-out infinite;
-}
-.thinkingText {
-  margin: 4px 0 2px 6px;
-  padding-left: 12px;
-  border-left: 2px solid var(--b);
-  color: var(--t2);
-  font-size: var(--fs-sm2);
 }
 
 /* Chat history (V2.1 w7.6): earlier chats of the stage, like the CLI's /resume. */
@@ -321,11 +371,10 @@
   flex-direction: column;
   gap: 6px;
 }
-.userRow {
-  align-items: center;
-  gap: 6px;
-}
 .rewindBtn {
+  position: absolute;
+  top: 2px;
+  right: -32px;
   display: grid;
   place-items: center;
   width: 26px;
@@ -337,7 +386,7 @@
   cursor: pointer;
   opacity: 0;
 }
-.userRow:hover .rewindBtn,
+.userBlock:hover .rewindBtn,
 .rewindBtn:focus-visible {
   opacity: 1;
 }

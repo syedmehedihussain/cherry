@@ -20,9 +20,11 @@ test('chat: send, approve an edit, see it in the timeline and on disk', async ({
   await expect(card).toBeVisible();
   await expect(card).toContainText('lib/streaks.ts');
   await expect(page.getByText('Claude is paused until you answer above.')).toBeVisible();
-  await card.getByRole('button', { name: 'Allow', exact: true }).click();
+  // The CLI's prompt (V3): numbered answers; 1 is Yes.
+  await expect(card.getByText('Do you want to proceed?')).toBeVisible();
+  await card.getByRole('button', { name: 'Yes', exact: true }).click();
   await expect(page.getByText('Done. The streak is now 3.')).toBeVisible();
-  await expect(page.getByText('Edited')).toBeVisible();
+  await expect(page.getByText('Update', { exact: true })).toBeVisible();
   await expect(page.getByText('Allowed', { exact: true })).toBeVisible();
   expect(readFileSync(path.join(E2E_PROJECTS, 'core', 'lib', 'streaks.ts'), 'utf8')).toContain(
     'streaks = 3',
@@ -55,7 +57,7 @@ test('chat: a command approval can be denied with a reason', async ({ page }) =>
   await page.getByLabel('Message Claude').press('Enter');
   const card = page.getByRole('group', { name: 'Claude wants to run a command' });
   await expect(card).toContainText('npm test');
-  await card.getByRole('button', { name: 'Deny' }).click();
+  await card.getByRole('button', { name: /No, and tell Claude/ }).click();
   await page.getByLabel('Tell Claude why (optional)').fill('Not now');
   await card.getByRole('button', { name: 'Deny' }).click();
   await expect(page.getByText('Denied', { exact: true }).first()).toBeVisible();
@@ -71,7 +73,7 @@ test('chat: Auto mode runs commands without a card, but git push still asks', as
   const card = page.getByRole('group', { name: 'Claude wants to run a command' });
   await expect(card).toContainText('git push origin main');
   await expect(page.getByRole('group', { name: 'Claude wants to run a command' })).toHaveCount(1);
-  await card.getByRole('button', { name: 'Allow', exact: true }).click();
+  await card.getByRole('button', { name: 'Yes', exact: true }).click();
   await expect(page.getByText('Pushed.')).toBeVisible();
   // The mode is remembered for the project; put it back for the other tests.
   await page.reload();
@@ -185,7 +187,9 @@ test('chat: Always allow here skips the card next time, Settings removes it', as
   await box.fill('Run the unit tests');
   await box.press('Enter');
   const card = page.getByRole('group', { name: 'Claude wants to run a command' });
-  await card.getByRole('button', { name: 'Always allow here' }).click();
+  await card
+    .getByRole('button', { name: /don't ask again for pnpm vitest run in this project/ })
+    .click();
   await expect(page.getByText('Always allowed here')).toBeVisible();
   await expect(page.getByText('The unit tests pass.')).toBeVisible();
 

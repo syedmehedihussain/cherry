@@ -1,0 +1,375 @@
+/* The Claude Code look (V3, artboards 01, 03 and 07). Mono, the theme's colours. */
+
+.userRow {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.user {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  padding: 6px 10px 6px 8px;
+  border-radius: var(--r-sm);
+  background: var(--neutral-fill);
+  color: var(--t1);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.user::before {
+  content: '>' / '';
+  color: var(--t3);
+}
+
+/* Claude's text and each tool call start with a dot. */
+.msg {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  color: var(--t1);
+}
+.msg::before {
+  content: '●' / '';
+  font-size: 10px;
+  line-height: calc(var(--v3-cc-fs) * var(--v3-cc-lh));
+  color: var(--t1);
+}
+.msg[data-tool-state='ok']::before {
+  color: var(--success);
+}
+.msg[data-tool-state='err']::before {
+  color: var(--danger);
+}
+.msg[data-tool-state='run']::before {
+  color: var(--t3);
+  animation: ap-pulse 1.4s infinite;
+}
+.msg[data-tool-state='ask']::before {
+  color: var(--warning);
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.call {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tool {
+  color: var(--t1);
+  font-weight: 600;
+}
+.arg {
+  color: var(--t2);
+}
+
+/* The result line under a tool call. */
+.res {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  color: var(--t3);
+}
+.res::before {
+  content: '⎿' / '';
+  padding-left: 3px;
+}
+.res > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.res[data-tone='bad'] {
+  color: var(--danger-text);
+}
+.res[data-tone='warn'] {
+  color: var(--warning);
+}
+.add {
+  color: var(--diff-add-text);
+}
+.del {
+  color: var(--diff-del-text);
+}
+.reasonText {
+  color: var(--t3);
+}
+
+/* Folded steps: one dim line with a triangle. */
+.foldWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fold {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--t3);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.fold::before {
+  content: '▸' / '';
+}
+.fold[aria-expanded='true']::before {
+  content: '▾' / '';
+}
+.fold:hover {
+  color: var(--t2);
+}
+.foldText {
+  min-width: 0;
+}
+.foldFailed {
+  color: var(--danger-text);
+}
+.foldBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 18px;
+}
+
+/* Thinking: a dim star line. */
+.thinkWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.think {
+  display: grid;
+  grid-template-columns: 18px auto;
+  justify-content: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--t3);
+  font: inherit;
+  font-style: italic;
+  text-align: left;
+  cursor: pointer;
+}
+.think::before {
+  content: '✻' / '';
+  font-style: normal;
+}
+.think:disabled {
+  cursor: default;
+}
+.think:hover:not(:disabled) {
+  color: var(--t2);
+}
+.think[data-busy] {
+  animation: ap-shimmer 2s infinite;
+}
+.thinkBody {
+  margin-left: 18px;
+  padding-left: 10px;
+  border-left: 1px solid var(--b);
+  color: var(--t3);
+}
+
+/* The spinner: a turning star, a verb, then time and the way out. */
+.spin {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--v3-spinner);
+}
+.star {
+  width: 10px;
+  display: inline-block;
+  text-align: center;
+}
+.verb {
+  animation: ap-shimmer 2s infinite;
+}
+.spinMeta {
+  color: var(--t3);
+}
+
+/* Diff lines. */
+.diffs {
+  margin: 4px 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.diffs[data-compact] {
+  margin-left: 36px;
+}
+.diffFile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.diffHead {
+  color: var(--t2);
+}
+.newTag {
+  color: var(--t3);
+}
+.diff {
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.diff > div {
+  display: grid;
+  grid-template-columns: 36px 14px minmax(0, 1fr);
+  padding-right: 8px;
+  white-space: pre;
+  color: var(--t3);
+}
+.diff > div > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ln {
+  color: var(--t-gutter);
+  text-align: right;
+  padding-right: 8px;
+}
+.diff > div[data-kind='+'] {
+  background: var(--diff-add-bg);
+  color: var(--diff-add-text);
+}
+.diff > div[data-kind='-'] {
+  background: var(--diff-del-bg);
+  color: var(--diff-del-text);
+}
+.more {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--t3);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.more:hover {
+  color: var(--t1);
+}
+
+/* Permission prompt, inline like the CLI (artboard 07). */
+.ask {
+  margin-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--r-lg);
+}
+.ask:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.askHead {
+  color: var(--t1);
+  font-weight: 600;
+}
+.askHead::before {
+  content: '› ' / '';
+  color: var(--t3);
+}
+.askCmd {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--s2);
+}
+.askCmd code {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: inherit;
+  color: var(--t1);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.askIn {
+  font-size: 11.5px;
+  color: var(--t3);
+}
+.askWarn {
+  margin: 0;
+  color: var(--warning);
+}
+.askDetail {
+  margin: 0;
+  max-height: 160px;
+  overflow: auto;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--s2);
+  color: var(--t2);
+  font-size: 12px;
+}
+.askQ {
+  color: var(--t1);
+}
+.opts {
+  display: flex;
+  flex-direction: column;
+}
+.opt {
+  display: grid;
+  grid-template-columns: 18px 22px minmax(0, 1fr);
+  padding: 1px 0;
+  border: 0;
+  background: none;
+  color: var(--t2);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.opt::before {
+  content: '';
+}
+.opt[data-sel] {
+  color: var(--accent-text);
+}
+.opt[data-sel]::before {
+  content: '❯' / '';
+}
+.opt:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.optN {
+  color: inherit;
+}
+.optKey {
+  color: var(--t3);
+}
+.reason {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--sans);
+}
+.reason label {
+  font-size: var(--fs-sm);
+  color: var(--t2);
+}
+.reasonRow {
+  display: flex;
+  gap: 6px;
+}
+.reasonRow input {
+  flex: 1;
+  min-width: 0;
+}

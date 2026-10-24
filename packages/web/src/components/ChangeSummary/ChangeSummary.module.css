@@ -1,21 +1,24 @@
+/* After a reply: one fold line, like the CLI's summary (V3). */
 .box {
-  margin-top: var(--sp-2);
-  border: 1px solid var(--b);
-  border-radius: var(--r-lg);
-  background: var(--s1);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .toggle {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  width: 100%;
-  height: var(--h-btn);
-  padding: 0 var(--sp-3);
+  gap: 6px;
+  width: fit-content;
+  padding: 0;
   border: 0;
   background: none;
-  font-size: var(--fs-sm);
-  color: var(--t2);
+  font: inherit;
+  color: var(--t3);
   cursor: pointer;
+}
+.toggle .chevron {
+  width: 12px;
+  margin-right: 0;
 }
 .toggle:hover {
   color: var(--t1);
@@ -31,8 +34,9 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--sp-2);
-  padding: var(--sp-1) var(--sp-3) var(--sp-3);
-  border-top: 1px solid var(--b);
+  margin-left: 18px;
+  padding: 2px 0 4px 12px;
+  border-left: 1px solid var(--b);
 }
 .body h4 {
   margin: var(--sp-2) 0 0;

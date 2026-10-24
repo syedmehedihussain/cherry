@@ -34,13 +34,13 @@ export function StageBody({
           stage={stage}
         />
         <div className={styles.centre}>
-          <ChatTab projectId={projectId} stage={stage} now={now} />
+          <ChatTab projectId={projectId} stage={stage} now={now} onOpenFile={onOpenFile} />
         </div>
       </div>
     );
   return (
     <div className={styles.centre}>
-      <ChatTab projectId={projectId} stage={stage} now={now} />
+      <ChatTab projectId={projectId} stage={stage} now={now} onOpenFile={onOpenFile} />
     </div>
   );
 }
