@@ -95,7 +95,10 @@ export function fakeRunner(
           used = step.context;
           window = step.window ?? window;
         } else if ('wait' in step) {
-          await new Promise((r) => setTimeout(r, step.wait));
+          // Stop ends the wait early, like interrupting the real CLI.
+          const until = Date.now() + step.wait;
+          while (!stopped && Date.now() < until)
+            await new Promise((r) => setTimeout(r, Math.min(20, until - Date.now())));
         } else if ('call' in step) {
           const custom = req.extraTools?.find((x) => x.name === step.call.name);
           const id = `toolu_call_${n}_${i}`;

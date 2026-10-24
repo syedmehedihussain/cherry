@@ -236,6 +236,10 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
 
   const lastUserText = [...items].reverse().find((i) => i.kind === 'user')?.text;
   const lastEnd = items.findLast((i) => i.kind === 'turn-end');
+  const sentTexts = useMemo(
+    () => items.flatMap((i) => (i.kind === 'user' && i.text.trim() ? [i.text] : [])),
+    [items],
+  );
   const context = lastEnd?.kind === 'turn-end' ? (lastEnd.context ?? null) : null;
   const findFiles = useCallback((q: string) => searchFiles(projectId, q), [projectId]);
   const commands = useSlashCommands({
@@ -318,6 +322,7 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
           commands={commands}
           searchFiles={findFiles}
           context={context}
+          history={sentTexts}
           onCompact={() => void send('/compact', mode.mode, model ?? state?.model ?? 'opus')}
         />
       </div>

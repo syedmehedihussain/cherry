@@ -112,7 +112,7 @@ New feedback is added here in build order.
 - [x] w6 A calmer chat: a finished reply folds its tool rows into one "Worked … · N steps" line.
 - [ ] w7 Claude Code CLI parity: slash commands (done), @ file mentions (done), context meter and compact (done),
       thinking (done), subagents (done), chat history and resume (done), remembered allow rules (done), keys
-      (Esc, ↑, paste image); later rewind.
+      (Esc, ↑, paste image) (done); later rewind.
 
 **Done when:** in Plan you say "next I want X", the Planner fills the Plan bar, Approve plan
 opens Development and the Builder works through the tasks while the Development bar fills;

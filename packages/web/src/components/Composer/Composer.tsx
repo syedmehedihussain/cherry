@@ -92,6 +92,8 @@ interface ComposerProps {
   context?: { used: number; window: number } | null;
   /** Sends /compact; offered when the context is nearly full. */
   onCompact?(): void;
+  /** Messages sent in this chat, oldest first: ↑ and ↓ step through them (V2.1 w7.8). */
+  history?: string[];
 }
 
 /** From this share of the window the meter turns amber and offers Compact, like the CLI. */
@@ -117,8 +119,11 @@ export function Composer({
   searchFiles,
   context,
   onCompact,
+  history = [],
 }: ComposerProps) {
   const [text, setText] = useState('');
+  // ↑ / ↓ through earlier messages, like the CLI: the index shown, and the draft to go back to.
+  const [recall, setRecall] = useState<{ index: number; draft: string } | null>(null);
   // @ mentions: the "@query" just before the caret, and the files that match it.
   const [caret, setCaret] = useState(0);
   const mention = /(?:^|\s)@([\w./-]*)$/.exec(text.slice(0, caret));
@@ -317,11 +322,58 @@ export function Composer({
         return;
       }
     }
+    // Esc stops Claude, like the CLI (V2.1 w7.8).
+    if (e.key === 'Escape' && running) {
+      e.preventDefault();
+      onStop();
+      return;
+    }
+    const el = e.currentTarget;
+    const firstLine = !el.value.slice(0, el.selectionStart).includes('\n');
+    const lastLine = !el.value.slice(el.selectionEnd).includes('\n');
+    if (e.key === 'ArrowUp' && firstLine && history.length && (text === '' || recall)) {
+      const index = recall ? recall.index - 1 : history.length - 1;
+      if (index < 0) return;
+      e.preventDefault();
+      setRecall({ index, draft: recall?.draft ?? text });
+      setText(history[index]!);
+      return;
+    }
+    if (e.key === 'ArrowDown' && lastLine && recall) {
+      e.preventDefault();
+      const index = recall.index + 1;
+      if (index < history.length) {
+        setRecall({ ...recall, index });
+        setText(history[index]!);
+      } else {
+        setRecall(null);
+        setText(recall.draft);
+      }
+      return;
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      setRecall(null);
       void send();
     }
   };
+  // Esc anywhere outside a field also stops Claude.
+  useEffect(() => {
+    if (!running) return;
+    const stop = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      const t = e.target as HTMLElement | null;
+      if (
+        t &&
+        t !== document.body &&
+        t.closest('input, textarea, select, [role="menu"], [role="dialog"]')
+      )
+        return;
+      onStop();
+    };
+    window.addEventListener('keydown', stop);
+    return () => window.removeEventListener('keydown', stop);
+  }, [running, onStop]);
   const modelLabel = MODELS.find((m) => m.id === model)?.label ?? model;
   const effortLabel = EFFORTS.find((e) => e.id === effort)?.label ?? 'Default';
   const current = MODES.find((m) => m.id === mode) ?? MODES[0]!;
@@ -447,6 +499,7 @@ export function Composer({
             setText(e.target.value);
             setCaret(e.target.selectionStart);
             setSlashIndex(0);
+            setRecall(null);
           }}
           onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
           onKeyDown={onKey}

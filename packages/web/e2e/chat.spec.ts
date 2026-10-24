@@ -204,3 +204,53 @@ test('chat: Always allow here skips the card next time, Settings removes it', as
   await core.getByRole('button', { name: 'Remove pnpm vitest run' }).click();
   await expect(page.getByText('Nothing yet.')).toBeVisible();
 });
+
+// V2.1 w7.8: keys like the CLI.
+test('chat: up and down step through sent messages, Esc stops Claude', async ({ page }) => {
+  await page.goto('/p/core');
+  const box = page.getByLabel('Message Claude');
+  for (const [n, text] of ['Say hello one', 'Say hello two'].entries()) {
+    await box.fill(text);
+    await box.press('Enter');
+    await expect(page.getByText('Hello.', { exact: true })).toHaveCount(n + 1);
+  }
+  await box.fill('');
+  await box.press('ArrowUp');
+  await expect(box).toHaveValue('Say hello two');
+  await box.press('ArrowUp');
+  await expect(box).toHaveValue('Say hello one');
+  await box.press('ArrowDown');
+  await expect(box).toHaveValue('Say hello two');
+  await box.press('ArrowDown');
+  await expect(box).toHaveValue('');
+
+  await box.fill('Take your time');
+  await box.press('Enter');
+  await expect(page.getByText('Starting slowly.')).toBeVisible();
+  await box.press('Escape');
+  await expect(page.getByText('Stopped.')).toBeVisible();
+  await expect(page.getByText('Finally done.')).toBeHidden();
+});
+
+// cctop, like attach.spec: the first upload adds /cherry/ to the project's .gitignore.
+test('chat: a pasted image becomes an attachment', async ({ page }) => {
+  await page.goto('/p/cctop');
+  const box = page.getByLabel('Message Claude');
+  await box.focus();
+  await box.evaluate((el) => {
+    const bytes = Uint8Array.from(
+      atob(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      ),
+      (c) => c.charCodeAt(0),
+    );
+    const data = new DataTransfer();
+    data.items.add(new File([bytes], 'pasted.png', { type: 'image/png' }));
+    el.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true }));
+  });
+  const chips = page.getByRole('list', { name: 'Attachments' });
+  await expect(chips.getByRole('listitem')).toHaveCount(1);
+  await expect(chips.getByLabel('Uploading')).toHaveCount(0);
+  await chips.getByRole('button', { name: 'Remove pasted.png' }).click();
+  await expect(chips).toHaveCount(0);
+});

@@ -6,6 +6,8 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **Keys like the CLI**: Esc stops Claude; ↑ and ↓ in an empty composer step through the
+  messages you sent; a pasted screenshot becomes an attachment. Settings → Shortcuts lists them.
 - **Always allow here** (ADR-0043) on a command card remembers that exact command for the
   project, so it runs without asking in later chats too. Never offered for edits, serious
   commands, push or publish. **Settings → Permissions** (or `/permissions`) lists and removes them.

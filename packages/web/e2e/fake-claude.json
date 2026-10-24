@@ -1,5 +1,27 @@
 [
   {
+    "match": "^Say hello",
+    "steps": [
+      {
+        "text": "Hello."
+      }
+    ]
+  },
+  {
+    "match": "^Take your time",
+    "steps": [
+      {
+        "text": "Starting slowly."
+      },
+      {
+        "wait": 8000
+      },
+      {
+        "text": "Finally done."
+      }
+    ]
+  },
+  {
     "match": "^Run the unit tests",
     "steps": [
       {

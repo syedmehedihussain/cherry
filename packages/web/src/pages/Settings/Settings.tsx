@@ -501,8 +501,14 @@ function ShortcutsSection() {
   const list: [string, string][] = [
     ['Enter', 'Send a message, start an agent, confirm a decision card'],
     ['Shift + Enter', 'New line in the composer'],
-    ['↑ / ↓', 'Move between options on a decision card'],
-    ['Esc', 'Close Magnet or a dialog'],
+    [
+      '↑ / ↓',
+      'In an empty composer: step through the messages you sent; on a decision card: move between options',
+    ],
+    ['Esc', 'Stop Claude while it works; close Magnet, a menu or a dialog'],
+    ['/', 'Commands in the composer: /clear, /compact, /model, /resume, /permissions …'],
+    ['@', 'Mention a project file in the composer'],
+    ['Ctrl + V', 'Paste a screenshot as an attachment'],
     ['Ctrl + S', 'Save the file in the built-in editor'],
     ['Tab', 'Indent two spaces in the built-in editor'],
   ];
