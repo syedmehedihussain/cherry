@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { E2E_PROJECTS, E2E_REMOTES, loginCode } from './fixture.ts';
+import { E2E_PROJECTS, E2E_REMOTES, loginCode, openSide } from './fixture.ts';
 
 const head = (cwd: string, ref = 'HEAD') =>
   execFileSync('git', ['rev-parse', ref], { cwd, encoding: 'utf8' }).trim();
@@ -14,7 +14,7 @@ test('push from the GitHub box only after Allow', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
   await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
   await page.getByRole('link', { name: 'atlas', exact: true }).first().click();
-  const box = page.getByRole('region', { name: 'Repository' });
+  const box = (await openSide(page, 'Overview')).getByRole('region', { name: 'Repository' });
   await expect(box.getByLabel('1 ahead, 0 behind')).toBeVisible();
   // Only the latest commit shows; the chevron opens the last three.
   const commits = box.getByRole('list', { name: 'Recent commits' });

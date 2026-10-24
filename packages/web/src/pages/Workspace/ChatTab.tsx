@@ -1,12 +1,4 @@
-import {
-  ChevronRight,
-  FileText,
-  Globe,
-  History,
-  MessageSquarePlus,
-  RotateCcw,
-  Undo2,
-} from 'lucide-react';
+import { ChevronRight, FileText, Globe, History, RotateCcw, Undo2 } from 'lucide-react';
 import { create } from 'zustand';
 import {
   Fragment,
@@ -269,6 +261,7 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
 
   return (
     <div className={styles.chat}>
+      <ChatHistoryMenu projectId={projectId} stage={stage} state={state} now={now} />
       <div className={styles.scroll} ref={scroller} onScroll={onScroll}>
         <div className={styles.thread}>
           {chat.isPending && <span className="shimmer" style={{ height: 80 }} />}
@@ -746,7 +739,6 @@ function PlanCard({
   plan: Extract<ChatItem, { kind: 'plan' }>;
 }) {
   const setStage = useStages((s) => s.set);
-  const setView = useSideView((s) => s.set);
   return (
     <PlanProposal
       plan={plan}
@@ -755,7 +747,6 @@ function PlanCard({
         await approvePlan(projectId, plan.id);
         storeMode(projectId, 'development', 'auto');
         setStage(projectId, 'development');
-        setView('live');
       }}
       onDismiss={async () => {
         await dismissPlan(projectId, plan.id);
@@ -898,59 +889,49 @@ function ChromeRow({ items }: { items: ToolItem[] }) {
   );
 }
 
-export function NewChatButton({
-  projectId,
-  stage,
-  state,
-}: {
-  projectId: string;
-  stage: Stage;
-  state: ChatState | undefined;
-}) {
-  if (!state?.conversationId) return null;
-  return (
-    <button
-      type="button"
-      className="btn btn-ghost btn-sm"
-      onClick={() => void newChat(projectId, stage)}
-      title="Start a fresh conversation"
-    >
-      <MessageSquarePlus size={13} aria-hidden="true" />
-      New chat
-    </button>
-  );
-}
-
 /** Whether the History menu is open; /resume opens it too. */
-const useHistoryMenu = create<{ open: boolean; set(open: boolean): void }>((set) => ({
+export const useHistoryMenu = create<{ open: boolean; set(open: boolean): void }>((set) => ({
   open: false,
   set: (open) => set({ open }),
 }));
 
-/** Earlier chats of the stage; a click opens one again, like the CLI's /resume (V2.1 w7.6). */
-export function ChatHistoryButton({
-  projectId,
-  stage,
-  state,
-  now,
-}: {
+/** Earlier chats of the stage, from /resume or the palette; a click opens one (V2.1 w7.6). */
+function ChatHistoryMenu(props: {
   projectId: string;
   stage: Stage;
   state: ChatState | undefined;
   now: number;
 }) {
   const { open, set } = useHistoryMenu();
-  const history = useChatHistory(projectId, stage, open);
+  const close = useCallback(() => set(false), [set]);
+  useEffect(() => close, [props.projectId, props.stage, close]);
+  // Mounted only while open, so an old error never shows again.
+  return open ? <HistoryList {...props} onClose={close} /> : null;
+}
+
+function HistoryList({
+  projectId,
+  stage,
+  state,
+  now,
+  onClose,
+}: {
+  projectId: string;
+  stage: Stage;
+  state: ChatState | undefined;
+  now: number;
+  onClose(): void;
+}) {
+  const history = useChatHistory(projectId, stage, true);
   const [error, setError] = useState<string | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (!open) return;
     void queryClient.invalidateQueries({ queryKey: ['chat-history', projectId, stage] });
     const close = (e: MouseEvent | KeyboardEvent) => {
       if (
         e instanceof KeyboardEvent ? e.key === 'Escape' : !wrap.current?.contains(e.target as Node)
       )
-        set(false);
+        onClose();
     };
     document.addEventListener('mousedown', close);
     document.addEventListener('keydown', close);
@@ -958,75 +939,48 @@ export function ChatHistoryButton({
       document.removeEventListener('mousedown', close);
       document.removeEventListener('keydown', close);
     };
-  }, [open, set, projectId, stage]);
-  useEffect(() => () => set(false), [projectId, stage, set]);
+  }, [onClose, projectId, stage]);
   const sessions = history.data ?? [];
   return (
-    <div className={styles.historyWrap} ref={wrap}>
-      <button
-        type="button"
-        className="btn btn-ghost btn-sm"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => {
-          setError(null);
-          set(!open);
-        }}
-        title="Earlier chats of this stage"
-      >
+    <div className={styles.history} role="menu" aria-label="Chat history" ref={wrap}>
+      <div className={styles.historyHead}>
         <History size={13} aria-hidden="true" />
-        History
-      </button>
-      {open && (
-        <div className={styles.history} role="menu" aria-label="Chat history">
-          {history.isPending && <span className={styles.historyEmpty}>Loading…</span>}
-          {history.isSuccess && sessions.length === 0 && (
-            <span className={styles.historyEmpty}>No chats in this stage yet.</span>
-          )}
-          {sessions.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              role="menuitemradio"
-              aria-checked={s.current}
-              disabled={s.current || !!state?.running}
-              onClick={async () => {
-                try {
-                  await resumeChat(projectId, stage, s.id);
-                  set(false);
-                } catch (e) {
-                  setError(e instanceof ApiFailure ? e.message : 'Could not open that chat.');
-                }
-              }}
-            >
-              <span className={styles.historyTitle}>{s.title}</span>
-              <span className={styles.historyMeta}>
-                {s.current ? 'open now' : relativeTime(s.startedAt, now)}
-              </span>
-            </button>
-          ))}
-          {state?.running && (
-            <span className={styles.historyEmpty}>Stop Claude to open another chat.</span>
-          )}
-          {error && (
-            <span className={styles.historyError} role="alert">
-              {error}
-            </span>
-          )}
-        </div>
+        Resume a chat of this stage
+      </div>
+      {history.isPending && <span className={styles.historyEmpty}>Loading…</span>}
+      {history.isSuccess && sessions.length === 0 && (
+        <span className={styles.historyEmpty}>No chats in this stage yet.</span>
+      )}
+      {sessions.map((s) => (
+        <button
+          key={s.id}
+          type="button"
+          role="menuitemradio"
+          aria-checked={s.current}
+          disabled={s.current || !!state?.running}
+          onClick={async () => {
+            try {
+              await resumeChat(projectId, stage, s.id);
+              onClose();
+            } catch (e) {
+              setError(e instanceof ApiFailure ? e.message : 'Could not open that chat.');
+            }
+          }}
+        >
+          <span className={styles.historyTitle}>{s.title}</span>
+          <span className={styles.historyMeta}>
+            {s.current ? 'open now' : relativeTime(s.startedAt, now)}
+          </span>
+        </button>
+      ))}
+      {state?.running && (
+        <span className={styles.historyEmpty}>Stop Claude to open another chat.</span>
+      )}
+      {error && (
+        <span className={styles.historyError} role="alert">
+          {error}
+        </span>
       )}
     </div>
   );
-}
-
-export function useSessionMeta(state: ChatState | undefined, now: number): string | null {
-  const [, force] = useState(0);
-  useEffect(() => {
-    const id = window.setInterval(() => force((n) => n + 1), 60_000);
-    return () => window.clearInterval(id);
-  }, []);
-  if (!state?.conversationId || !state.startedAt) return null;
-  const mins = Math.max(0, Math.round((now - state.startedAt) / 60_000));
-  const dur = mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)} h ${mins % 60} min`;
-  return `session ${state.turns} · ${dur}`;
 }

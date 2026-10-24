@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { E2E_PROJECTS, loginCode } from './fixture.ts';
+import { E2E_PROJECTS, loginCode, runCommand } from './fixture.ts';
 
 // The scan adds cherry/ to core's .gitignore and writes a report; undo both for later specs.
 const core = path.join(E2E_PROJECTS, 'core');
@@ -20,10 +20,7 @@ test.afterAll(() => {
 test('scan agent: run → report in the centre, with history', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
-  await page
-    .getByRole('navigation', { name: 'Workspace tabs' })
-    .getByRole('link', { name: /^Agents/ })
-    .click();
+  await runCommand(page, 'Agents');
 
   const scans = page.getByRole('region', { name: 'Scan agents' });
   // Folded by default; the header says how many there are.
@@ -50,7 +47,7 @@ test('scan agent: run → report in the centre, with history', async ({ page }) 
   await expect(
     page.getByRole('heading', { name: 'High · Session token in the log' }),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Security review report' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Security review report' })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Report history' })).toContainText(
     '1 high, 1 medium',
   );

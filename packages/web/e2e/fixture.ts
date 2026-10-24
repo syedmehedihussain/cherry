@@ -130,3 +130,26 @@ export async function loginCode(): Promise<string> {
   });
   return ((await res.json()) as { code: string }).code;
 }
+
+/** Opens a side view from the right rail (ADR-0045) and returns its panel. */
+export async function openSide(
+  page: import('@playwright/test').Page,
+  name: 'Overview' | 'Live' | 'GitHub' | 'Chat',
+) {
+  const rail = page.getByRole('navigation', { name: 'Side views' });
+  const button = rail.getByRole('button', { name, exact: true });
+  if ((await button.getAttribute('aria-pressed')) !== 'true') await button.click();
+  return page.getByRole('complementary', { name });
+}
+
+/** Runs an action or opens a view from the command palette (Ctrl K, ADR-0045). */
+export async function runCommand(page: import('@playwright/test').Page, label: string | RegExp) {
+  // The workspace listens for Ctrl K once it is on screen.
+  await page.getByRole('navigation', { name: 'Lifecycle stages' }).waitFor();
+  await page.keyboard.press('Control+k');
+  const palette = page.getByRole('dialog', { name: 'Command palette' });
+  await palette
+    .getByRole('combobox')
+    .fill(typeof label === 'string' ? label : label.source.replace(/[\\^$]/g, ''));
+  await palette.getByRole('option', { name: label }).first().click();
+}

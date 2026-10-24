@@ -1,67 +1,85 @@
+/* V3 workspace (ADR-0045): top bar, the stage (or an open view), side panel, rail, status bar. */
 .page {
   height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--bg);
 }
-.grid {
-  flex: 1;
+.body {
+  flex: 1 1 0;
   min-height: 0;
-  display: grid;
-  grid-template-columns: var(--left-w) minmax(0, 1fr) var(--right-w);
+  display: flex;
+}
+.stage {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 .centre {
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
 }
-.tabs {
+.dev {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: var(--v3-explorer-w) minmax(0, 1fr);
+}
+
+/* A view from the palette, over the stage. */
+.view {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.viewHead {
+  height: 40px;
   flex: none;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 0 24px;
-  margin-top: 12px;
+  gap: 8px;
+  padding: 0 8px 0 16px;
   border-bottom: 1px solid var(--b);
 }
-.tab {
-  padding: 11px 12px;
+.viewTitle {
+  flex: 1;
+  min-width: 0;
   font-weight: 500;
-  color: var(--t2);
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  display: flex;
+  color: var(--t1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.viewClose {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--t3);
+  cursor: pointer;
 }
-.tab:hover {
+.viewClose:hover {
   color: var(--t1);
-}
-.tab[aria-current='page'] {
-  color: var(--t1);
-  border-bottom-color: var(--t1);
-}
-.tabCount,
-.tabBadge {
-  min-width: 16px;
-  height: 16px;
-  padding: 0 5px;
-  border-radius: var(--r-pill);
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 16px;
-  text-align: center;
-}
-.tabCount {
   background: var(--neutral-fill);
-  color: var(--t2);
 }
-/* Decisions waiting for the user. */
-.tabBadge {
-  background: var(--warning);
-  color: var(--t-on-primary);
+.viewBody {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
+
 /* Agents and Decisions in the centre: one readable column. */
 .pane {
   flex: 1;
@@ -72,69 +90,6 @@
   padding: 8px 16px 0;
   display: flex;
   flex-direction: column;
-}
-.tabSep {
-  width: 1px;
-  height: 16px;
-  background: var(--bs);
-  margin: 0 6px;
-}
-.fileTab {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 6px 11px 12px;
-  font-weight: 500;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-}
-.fileTab a {
-  color: var(--t2);
-  font-size: var(--fs-sm2);
-}
-.fileTab[data-active] {
-  border-bottom-color: var(--t1);
-}
-.fileTab[data-active] a {
-  color: var(--t1);
-}
-.fileTab button {
-  width: 20px;
-  height: 20px;
-  display: grid;
-  place-items: center;
-  border: 0;
-  border-radius: var(--r-sm);
-  background: transparent;
-  color: var(--t3);
-  cursor: pointer;
-  padding: 0;
-}
-.fileTab button:hover {
-  background: var(--s2);
-  color: var(--t1);
-}
-.tabBody {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-.right {
-  border-left: 1px solid var(--b);
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-.rightTop {
-  padding: 16px;
-  flex: none;
-}
-.soon {
-  flex: 1;
-  display: grid;
-  place-items: center;
-  color: var(--t3);
 }
 .gone {
   padding: 96px 24px;
@@ -369,22 +324,6 @@
 }
 .task[data-status='doing'] .taskStatus {
   color: var(--accent-text);
-}
-
-.tabSpacer {
-  flex: 1;
-}
-.sessionMeta {
-  font-size: var(--fs-sm);
-  color: var(--t3);
-  font-family: var(--mono);
-  margin-right: 4px;
-}
-.needsYou {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--warning);
 }
 
 /* Agent reports (ReportTab): reuses the Docs reader, plus a verdict dot per history row. */

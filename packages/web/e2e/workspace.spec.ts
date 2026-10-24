@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { loginCode } from './fixture.ts';
+import { loginCode, openSide, runCommand } from './fixture.ts';
 
 test.beforeEach(async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
@@ -10,12 +10,12 @@ test('opens a project with status, stage tabs and git box', async ({ page }) => 
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
   await expect(page).toHaveURL(/\/p\/core$/);
   await expect(page.getByRole('navigation', { name: 'Lifecycle stages' })).toBeVisible();
-  // Status is a pill in the top bar; a click opens the Status report in the centre.
-  const notch = page.getByRole('banner').getByRole('button', { name: /^Open the status report/ });
-  await expect(notch).toHaveText('Status');
-  await expect(notch).toHaveAttribute('data-tone', 'ok');
+  // V3 (ADR-0045): four stages; the Status report is a view in the palette.
+  await expect(
+    page.getByRole('navigation', { name: 'Lifecycle stages' }).getByRole('button'),
+  ).toHaveText([/Plan/, /Design/, /Development/, /Deployment/]);
   await expect(page.getByText('Finished the HUD.')).toHaveCount(0);
-  await notch.click();
+  await runCommand(page, 'Status report');
   await expect(page).toHaveURL(/\/p\/core\/status$/);
   const report = page.getByRole('article', { name: 'Status report' });
   await expect(report.getByRole('region', { name: 'Where we left off' })).toContainText(
@@ -27,7 +27,9 @@ test('opens a project with status, stage tabs and git box', async ({ page }) => 
   await expect(report.getByRole('button', { name: 'Update status' })).toBeVisible();
   await page.getByRole('button', { name: 'Close Status' }).click();
   await expect(page).toHaveURL(/\/p\/core$/);
-  await expect(page.getByText('1 uncommitted')).toBeVisible();
+  await expect(page.getByRole('contentinfo')).toContainText('1 changed');
+  const repo = (await openSide(page, 'Overview')).getByRole('region', { name: 'Repository' });
+  await expect(repo.getByText('1 uncommitted')).toBeVisible();
 });
 
 test('browses the tree and shows changes in a file', async ({ page }) => {
@@ -89,33 +91,18 @@ test('a project not in Cherry says so', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'This project is not in Cherry' })).toBeVisible();
 });
 
-// V2.1 w4: each stage shows its own files; the project tree folds away, and Collapse all.
-test('the file panel shows the stage files and folds the project tree', async ({ page }) => {
+// V3 (ADR-0045): the explorer belongs to Development; Plan has no file tree.
+test('the explorer shows in Development only', async ({ page }) => {
   await page.goto('/p/core');
   const files = page.getByRole('complementary', { name: 'Files' });
-  const project = files.getByRole('button', { name: 'Project files' });
-  // Development: the whole project, open.
-  await expect(project).toHaveAttribute('aria-expanded', 'true');
-  await expect(files.getByRole('treeitem', { name: /lib/ })).toBeVisible();
-
-  const stages = page.getByRole('navigation', { name: 'Lifecycle stages' });
-  await stages.getByRole('button', { name: 'Plan' }).click();
-  await expect(files.getByRole('button', { name: 'Plan files' })).toHaveAttribute(
+  await expect(files.getByRole('button', { name: 'Project files' })).toHaveAttribute(
     'aria-expanded',
     'true',
   );
-  await expect(project).toHaveAttribute('aria-expanded', 'false');
-  await expect(files.getByRole('treeitem', { name: /lib/ })).toHaveCount(0);
-
-  await project.click();
   await expect(files.getByRole('treeitem', { name: /lib/ })).toBeVisible();
-  await files.getByRole('button', { name: 'Collapse all' }).click();
-  await expect(files.getByRole('button', { name: 'Plan files' })).toHaveAttribute(
-    'aria-expanded',
-    'false',
-  );
-  await expect(project).toHaveAttribute('aria-expanded', 'false');
-  // Remembered per stage: Development still shows the project open.
+  const stages = page.getByRole('navigation', { name: 'Lifecycle stages' });
+  await stages.getByRole('button', { name: 'Plan' }).click();
+  await expect(files).toHaveCount(0);
   await stages.getByRole('button', { name: 'Development' }).click();
-  await expect(project).toHaveAttribute('aria-expanded', 'true');
+  await expect(files.getByRole('treeitem', { name: /lib/ })).toBeVisible();
 });

@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { E2E_PROJECTS, loginCode } from './fixture.ts';
+import { E2E_PROJECTS, loginCode, openSide } from './fixture.ts';
 
 // E2E flow 5: an agent runs on its own (Auto), skips the push for you, and Merge lands it.
 test('agent: start → runs on its own → needs you → review diff → merge → commit on main', async ({
@@ -13,17 +13,14 @@ test('agent: start → runs on its own → needs you → review diff → merge �
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
 
   // Started from the box in the side Chat tab (ADR-0039); the Agents tab in the centre opens.
-  const aside = page.getByRole('complementary', { name: 'Repository and agents' });
-  await aside.getByRole('tab', { name: 'Chat' }).click();
+  const aside = await openSide(page, 'Chat');
   const box = aside.getByRole('form', { name: 'Quick add' });
   await box.getByRole('button', { name: /^Type/ }).click();
   await page.getByRole('menuitemradio', { name: /Agent/ }).click();
   await box.getByLabel('Task').fill('Write tests for the streak service');
   await box.getByRole('button', { name: 'Start' }).click();
   await expect(page).toHaveURL(/\/p\/core\/agents$/);
-  const panel = page
-    .getByRole('region', { name: 'Project' })
-    .getByRole('region', { name: 'Agents' });
+  const panel = page.getByRole('main');
 
   const card = panel.getByRole('article', { name: 'Write tests for the streak service' });
   await expect(card).toContainText('agent/tests-streak-service');

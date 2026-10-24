@@ -1,0 +1,82 @@
+/* V3 status bar (artboard 01): 26 px of mono items, each a way into a view. */
+.bar {
+  height: var(--v3-status-h);
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px;
+  border-top: 1px solid var(--b);
+  background: var(--bg);
+  font-family: var(--mono);
+  font-size: var(--fs-2xs);
+  color: var(--t3);
+  overflow: hidden;
+}
+.it {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+}
+button.it,
+a.it {
+  cursor: pointer;
+}
+a.it {
+  color: inherit;
+}
+button.it:hover,
+a.it:hover {
+  background: var(--neutral-fill);
+  color: var(--t1);
+}
+.it[data-high] {
+  color: var(--warning);
+}
+.agent {
+  color: var(--t2);
+}
+.changed {
+  color: var(--warning);
+}
+.grow {
+  flex: 1;
+}
+.meter {
+  width: 36px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--b);
+  overflow: hidden;
+}
+.meter i {
+  display: block;
+  height: 100%;
+  background: var(--t3);
+}
+.dot,
+.live {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--t3);
+}
+.dot[data-state='ok'],
+.live {
+  background: var(--success);
+}
+.dot[data-state='missing'] {
+  background: var(--danger);
+}
+.live {
+  animation: ap-pulse 1.4s infinite;
+}

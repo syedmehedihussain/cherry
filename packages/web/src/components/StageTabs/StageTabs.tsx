@@ -1,26 +1,27 @@
-import { RotateCcw } from 'lucide-react';
-import { STAGES, STAGE_LABEL, type Stage } from '@cherry/shared';
+import { Check } from 'lucide-react';
+import { STAGE_LABEL, WORKSPACE_STAGES, type WorkspaceStage } from '@cherry/shared';
 import { useChat } from '../../api/chat.ts';
 import { stageInfo, useStageInfo, useStageProgress } from '../../api/stages.ts';
 import styles from './StageTabs.module.css';
 
 interface StageTabsProps {
   projectId: string;
-  active: Stage;
-  onSelect(stage: Stage): void;
+  active: WorkspaceStage;
+  onSelect(stage: WorkspaceStage): void;
 }
 
 /**
- * The lifecycle stages in the workspace top bar (ADR-0034). Each opens its own agent's chat;
- * the arrow after Issues says the loop goes back to Plan.
+ * The four stages in the top bar (ADR-0045): a number, the name, and the stage's progress as a
+ * thin line under it (ADR-0040). Any stage opens at any time.
  */
 export function StageTabs({ projectId, active, onSelect }: StageTabsProps) {
   const info = useStageInfo().data;
   return (
     <nav aria-label="Lifecycle stages" className={styles.stages}>
-      {STAGES.map((stage) => (
+      {WORKSPACE_STAGES.map((stage, i) => (
         <StageTab
           key={stage}
+          n={i + 1}
           projectId={projectId}
           stage={stage}
           active={stage === active}
@@ -28,50 +29,52 @@ export function StageTabs({ projectId, active, onSelect }: StageTabsProps) {
           onSelect={onSelect}
         />
       ))}
-      <span className={styles.loop} title="Issues feed the next Plan" aria-hidden="true">
-        <RotateCcw size={12} strokeWidth={1.8} />
-      </span>
     </nav>
   );
 }
 
 function StageTab({
+  n,
   projectId,
   stage,
   active,
   agent,
   onSelect,
 }: {
+  n: number;
   projectId: string;
-  stage: Stage;
+  stage: WorkspaceStage;
   active: boolean;
   agent: string | undefined;
-  onSelect(stage: Stage): void;
+  onSelect(stage: WorkspaceStage): void;
 }) {
   const running = !!useChat(projectId, stage).data?.running;
-  // How far the stage is, as a thin line under its name (V2.1 w5).
   const progress = useStageProgress(projectId, stage);
-  const percent = progress?.total ? progress.percent : null;
+  const percent = progress?.total ? progress.percent : 0;
+  const done = !!progress?.total && percent === 100;
   return (
     <button
       type="button"
       className={styles.tab}
       aria-pressed={active}
       data-running={running || undefined}
+      data-done={done || undefined}
       title={
         agent
-          ? `${STAGE_LABEL[stage]}: the ${agent}${running ? ' (working)' : ''}${percent !== null ? `, ${percent}% done` : ''}`
+          ? `${STAGE_LABEL[stage]}: the ${agent}${running ? ' (working)' : ''}${progress?.total ? `, ${percent}% done` : ''}`
           : undefined
       }
       onClick={() => onSelect(stage)}
     >
-      {running && <span className={styles.dot} aria-label="working" />}
+      <span className={styles.n} aria-hidden="true">
+        0{n}
+      </span>
       {STAGE_LABEL[stage]}
-      {percent !== null && (
-        <span className={styles.progress} aria-hidden="true">
-          <span style={{ width: `${percent}%` }} data-done={percent === 100 || undefined} />
-        </span>
-      )}
+      {done && <Check size={13} strokeWidth={2.25} className={styles.check} aria-label="done" />}
+      {running && <span className={styles.dot} aria-label="working" />}
+      <span className={styles.track} aria-hidden="true">
+        <span style={{ width: `${percent}%` }} />
+      </span>
     </button>
   );
 }

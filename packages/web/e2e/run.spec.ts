@@ -8,11 +8,12 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
 });
 
-test('runs the app from the Play button, shows its output and address, and stops it', async ({
+// V3 (ADR-0045): Run sits in the status bar and the palette.
+test('runs the app from the Run button, shows its output and address, and stops it', async ({
   page,
 }) => {
   await page.goto('/p/cctop');
-  const bar = page.getByRole('banner');
+  const bar = page.getByRole('contentinfo');
   await bar.getByRole('button', { name: 'Run the app on localhost' }).click();
   await expect(page).toHaveURL(/\/p\/cctop\/run$/);
   await expect(page.getByRole('log', { name: 'App output' })).toContainText(
@@ -33,8 +34,11 @@ test('runs the app from the Play button, shows its output and address, and stops
 
 test('a project Cherry cannot run has no Play button', async ({ page }) => {
   await page.goto('/p/atlas');
-  await expect(page.getByRole('button', { name: /Open the status report/ })).toBeVisible();
+  await expect(page.getByRole('contentinfo')).toContainText('Claude Code');
   await expect(page.getByRole('button', { name: 'Run the app on localhost' })).toHaveCount(0);
+  await page.keyboard.press('Control+k');
+  await page.getByRole('combobox').fill('Run the app');
+  await expect(page.getByRole('option', { name: /Run the app/ })).toHaveCount(0);
 });
 
 test('a site Claude or a terminal already started shows as a link that opens in a new tab', async ({
@@ -66,7 +70,7 @@ test('a site Claude or a terminal already started shows as a link that opens in 
     });
     await page.goto('/p/atlas');
     const link = page
-      .getByRole('banner')
+      .getByRole('contentinfo')
       .getByRole('link', { name: `Open localhost:${port} in a new tab`, exact: false });
     await expect(link).toHaveAttribute('href', `http://localhost:${port}/`);
     await expect(link).toHaveAttribute('target', '_blank');

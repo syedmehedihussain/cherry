@@ -1,36 +1,45 @@
 import { expect, test } from '@playwright/test';
-import { loginCode } from './fixture.ts';
+import { loginCode, openSide } from './fixture.ts';
 
-// The right column shows one view at a time, picked from the row at its top.
+// The right rail (ADR-0045): closed by default, one view at a time, the choice remembered.
 test('side panel switches between views and remembers the choice', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
-  const aside = page.getByRole('complementary', { name: 'Repository and agents' });
-  const views = aside.getByRole('tablist', { name: 'Side panel' });
+  const rail = page.getByRole('navigation', { name: 'Side views' });
+  await expect(rail.getByRole('button')).toHaveCount(5);
+  await expect(page.getByRole('complementary', { name: /Overview|Live|GitHub|Chat/ })).toHaveCount(
+    0,
+  );
 
-  await expect(aside.getByRole('tabpanel', { name: 'Overview' })).toBeVisible();
-  await expect(aside.getByRole('region', { name: 'Agents' })).toBeVisible();
+  const overview = await openSide(page, 'Overview');
+  await expect(overview.getByRole('region', { name: 'Agents' })).toBeVisible();
 
-  await views.getByRole('tab', { name: 'GitHub' }).click();
-  await expect(aside.getByRole('list', { name: 'Recent commits' })).toBeVisible();
-  await expect(aside.getByRole('region', { name: 'Agents' })).toHaveCount(0);
-
-  // Agents, Decisions and Notes & Tasks are centre tabs, not side views.
-  await expect(views.getByRole('tab')).toHaveText(['Overview', 'Live', 'GitHub', 'Chat']);
+  const github = await openSide(page, 'GitHub');
+  await expect(github.getByRole('list', { name: 'Recent commits' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Agents' })).toHaveCount(0);
 
   await page.reload();
-  await expect(views.getByRole('tab', { name: 'GitHub' })).toHaveAttribute('aria-selected', 'true');
+  await expect(rail.getByRole('button', { name: 'GitHub' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  // A second click on the open view closes it; Ctrl+B brings it back.
+  await rail.getByRole('button', { name: 'GitHub' }).click();
+  await expect(page.getByRole('complementary', { name: 'GitHub' })).toHaveCount(0);
+  await page.keyboard.press('Control+b');
+  await expect(page.getByRole('complementary', { name: 'GitHub' })).toBeVisible();
+  await page.getByRole('button', { name: 'Close GitHub' }).click();
+  await expect(page.getByRole('complementary', { name: 'GitHub' })).toHaveCount(0);
 });
 
 // The Overview box adds a task to the task list and opens the Notes & Tasks tab in the centre.
 test('side Chat tab adds a task, and Magnet answers about this project', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
-  const aside = page.getByRole('complementary', { name: 'Repository and agents' });
-  // The box moved from Overview to the Chat tab (ADR-0039).
-  await aside.getByRole('tab', { name: 'Overview' }).click();
-  await expect(aside.getByRole('form', { name: 'Quick add' })).toHaveCount(0);
-  await aside.getByRole('tab', { name: 'Chat' }).click();
+  // The box moved from Overview to the Chat view (ADR-0039).
+  const overview = await openSide(page, 'Overview');
+  await expect(overview.getByRole('form', { name: 'Quick add' })).toHaveCount(0);
+  const aside = await openSide(page, 'Chat');
 
   await aside.getByRole('button', { name: /^Type/ }).click();
   await aside.getByRole('menuitemradio', { name: /Task/ }).click();
@@ -55,8 +64,7 @@ test('side Chat tab adds a task, and Magnet answers about this project', async (
 test('repository box minimizes and remembers it', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
-  const aside = page.getByRole('complementary', { name: 'Repository and agents' });
-  await aside.getByRole('tab', { name: 'Overview' }).click();
+  const aside = await openSide(page, 'Overview');
   const repo = aside.getByRole('region', { name: 'Repository' });
 
   await repo.getByRole('button', { name: 'Minimize repository' }).click();
@@ -71,8 +79,7 @@ test('repository box minimizes and remembers it', async ({ page }) => {
 test("live view follows Claude's plan", async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
-  const aside = page.getByRole('complementary', { name: 'Repository and agents' });
-  await aside.getByRole('tab', { name: /^Live/ }).click();
+  const aside = await openSide(page, 'Live');
   await expect(aside.getByText('Claude is idle')).toBeVisible();
 
   await page.getByLabel('Message Claude').fill('Plan the hero fix');
@@ -86,19 +93,18 @@ test("live view follows Claude's plan", async ({ page }) => {
   await expect(aside.getByText('Claude is idle')).toBeVisible();
 });
 
-// ADR-0038: Chrome steps are one row in the chat; Live shows them, and opens by itself.
+// ADR-0038: Chrome steps are one row in the chat; Live shows them. V3 (ADR-0045): Live does
+// not open by itself; the row opens it.
 test('Chrome steps show in Live, not as rows in the chat', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
-  const aside = page.getByRole('complementary', { name: 'Repository and agents' });
-  await aside.getByRole('tab', { name: /^Overview/ }).click();
 
   await page.getByLabel('Message Claude').fill('Check the app in Chrome');
   await page.getByRole('button', { name: 'Send' }).click();
 
+  await page.getByRole('button', { name: /Using Chrome|Used Chrome/ }).click();
+  const aside = page.getByRole('complementary', { name: 'Live' });
   const chrome = aside.getByRole('region', { name: 'Chrome' });
-  await expect(chrome.getByText('Chrome is in use')).toBeVisible();
-  await expect(aside.getByRole('tab', { name: /^Live/ })).toHaveAttribute('aria-selected', 'true');
   await expect(chrome.getByText('Last Chrome session')).toBeVisible();
   await expect(chrome).toContainText('On http://localhost:5173');
   await expect(chrome).toContainText('4 steps');
@@ -111,8 +117,7 @@ test('Chrome steps show in Live, not as rows in the chat', async ({ page }) => {
 test('subagents show as one row and in Live', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
-  const aside = page.getByRole('complementary', { name: 'Repository and agents' });
-  await aside.getByRole('tab', { name: /^Live/ }).click();
+  const aside = await openSide(page, 'Live');
 
   await page.getByLabel('Message Claude').fill('Look around with an explorer');
   await page.getByRole('button', { name: 'Send' }).click();

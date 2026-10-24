@@ -1,4 +1,5 @@
 .chat {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -242,14 +243,12 @@
 }
 
 /* Chat history (V2.1 w7.6): earlier chats of the stage, like the CLI's /resume. */
-.historyWrap {
-  position: relative;
-}
 .history {
   position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  width: 340px;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(460px, calc(100% - 32px));
   max-height: 360px;
   overflow-y: auto;
   background: var(--s2);
@@ -293,6 +292,16 @@
 }
 .historyMeta {
   flex: none;
+  color: var(--t3);
+  font-size: var(--fs-sm);
+}
+.historyHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 8px;
+  border-bottom: 1px solid var(--b);
+  margin-bottom: 4px;
   color: var(--t3);
   font-size: var(--fs-sm);
 }

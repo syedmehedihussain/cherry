@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { E2E_PROJECTS, loginCode } from './fixture.ts';
+import { E2E_PROJECTS, loginCode, runCommand } from './fixture.ts';
 
 test.beforeEach(async ({ page, request }) => {
   await page.goto(`/#login=${await loginCode()}`);
@@ -19,7 +19,6 @@ test('chat: send, approve an edit, see it in the timeline and on disk', async ({
   const card = page.getByRole('group', { name: 'Claude wants to edit 1 file' });
   await expect(card).toBeVisible();
   await expect(card).toContainText('lib/streaks.ts');
-  await expect(page.getByText('Approval needed')).toBeVisible();
   await expect(page.getByText('Claude is paused until you answer above.')).toBeVisible();
   await card.getByRole('button', { name: 'Allow', exact: true }).click();
   await expect(page.getByText('Done. The streak is now 3.')).toBeVisible();
@@ -158,7 +157,7 @@ test('chat: History and /resume open an earlier chat', async ({ page }) => {
   await box.press('Enter');
   await expect(page.getByText('An older question about history')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Send' })).toBeVisible();
-  await page.getByRole('button', { name: 'New chat' }).click();
+  await runCommand(page, 'New chat');
   await expect(page.getByText('An older question about history')).toBeHidden();
 
   await box.fill('/resu');
@@ -171,7 +170,7 @@ test('chat: History and /resume open an earlier chat', async ({ page }) => {
   await expect(menu).toBeHidden();
   await expect(page.getByText('An older question about history')).toBeVisible();
 
-  await page.getByRole('button', { name: 'History' }).click();
+  await runCommand(page, 'Chat history');
   await expect(
     menu.getByRole('menuitemradio', { name: /An older question about history.*open now/ }),
   ).toBeVisible();
@@ -190,7 +189,7 @@ test('chat: Always allow here skips the card next time, Settings removes it', as
   await expect(page.getByText('Always allowed here')).toBeVisible();
   await expect(page.getByText('The unit tests pass.')).toBeVisible();
 
-  await page.getByRole('button', { name: 'New chat' }).click();
+  await runCommand(page, 'New chat');
   await box.fill('Run the unit tests');
   await box.press('Enter');
   await expect(page.getByText('The unit tests pass.')).toBeVisible();

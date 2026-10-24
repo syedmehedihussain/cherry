@@ -34,6 +34,15 @@ export type Stage = z.infer<typeof StageSchema>;
 
 export const STAGE_LABEL: Record<Stage, string> = { ...PHASE_LABEL, issues: 'Issues' };
 
+/**
+ * The four stages the V3 workspace shows (ADR-0045). Preparation and Issues stay in
+ * `STAGES` so their old chats still load in History; they get no tab.
+ */
+export const WORKSPACE_STAGES = ['plan', 'design', 'development', 'deployment'] as const;
+export type WorkspaceStage = (typeof WORKSPACE_STAGES)[number];
+export const isWorkspaceStage = (s: Stage): s is WorkspaceStage =>
+  (WORKSPACE_STAGES as readonly Stage[]).includes(s);
+
 /** Stages whose agent writes docs and notes only (ADR-0034); their chat opens in Auto. */
 export const DOCS_ONLY_STAGES: ReadonlySet<Stage> = new Set(['plan', 'design', 'issues']);
 

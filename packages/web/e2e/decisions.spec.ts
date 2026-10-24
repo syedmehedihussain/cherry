@@ -1,7 +1,7 @@
 import { readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { E2E_PROJECTS, loginCode } from './fixture.ts';
+import { E2E_PROJECTS, loginCode, runCommand } from './fixture.ts';
 
 const adrDir = path.join(E2E_PROJECTS, 'core', 'docs', 'adr');
 
@@ -21,10 +21,11 @@ test('decisions: Claude proposes, the user approves one in the chat and rejects 
   await expect(page.getByText('I proposed two decisions.')).toBeVisible();
   await expect(page.getByText('Proposed 2 decisions')).toBeVisible();
 
-  // Decisions is a tab in the centre, with the pending count on it.
-  const tabs = page.getByRole('navigation', { name: 'Workspace tabs' });
-  const tab = tabs.getByRole('link', { name: /^Decisions/ });
-  await expect(tab).toContainText('2');
+  // Decisions is a view in the palette, with the pending count on it (ADR-0045).
+  await page.keyboard.press('Control+k');
+  await page.getByRole('combobox').fill('Decisions');
+  await expect(page.getByRole('option', { name: /Decisions/ })).toContainText('2 proposed');
+  await page.keyboard.press('Escape');
 
   // Each proposal also shows as a card in the chat; approve one right there.
   const sqlite = page.getByRole('article', { name: 'Move streaks to SQLite' });
@@ -34,8 +35,8 @@ test('decisions: Claude proposes, the user approves one in the chat and rejects 
   await sqlite.getByRole('button', { name: /Approve/ }).click();
   await sqlite.getByRole('menuitem', { name: /Approve & apply in chat/ }).click();
   await expect(page.getByText('Switched to SQLite.')).toBeVisible();
-  await tab.click();
-  const view = page.getByRole('region', { name: 'Project' });
+  await runCommand(page, 'Decisions');
+  const view = page.getByRole('main');
   await expect(view.getByRole('article', { name: 'Move streaks to SQLite' })).toHaveCount(0);
 
   const rename = view.getByRole('article', { name: 'Rename core to hub' });
@@ -43,7 +44,10 @@ test('decisions: Claude proposes, the user approves one in the chat and rejects 
   await rename.getByPlaceholder('Why not? (optional)').fill('core is fine');
   await rename.getByRole('button', { name: 'Reject' }).click();
   await expect(rename).toHaveCount(0);
-  await expect(tab).not.toContainText('2');
+  await page.keyboard.press('Control+k');
+  await page.getByRole('combobox').fill('Decisions');
+  await expect(page.getByRole('option', { name: /Decisions/ })).not.toContainText('proposed');
+  await page.keyboard.press('Escape');
 
   await view.getByRole('button', { name: /History/ }).click();
   const history = view.getByRole('region', { name: 'Decision history' });

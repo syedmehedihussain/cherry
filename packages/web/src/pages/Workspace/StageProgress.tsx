@@ -1,7 +1,6 @@
 import { ArrowRight, RefreshCw } from 'lucide-react';
-import { STAGE_LABEL, type Stage } from '@cherry/shared';
+import { STAGE_LABEL, type WorkspaceStage } from '@cherry/shared';
 import { useChatDraft } from '../../api/chat.ts';
-import { useIssues } from '../../api/issues.ts';
 import { nextStage, stageInfo, useStageInfo, useStageProgress } from '../../api/stages.ts';
 import { setPhase } from '../../api/workspace.ts';
 import { useStages } from '../../state/stage.ts';
@@ -36,7 +35,7 @@ export function StageProgressCard({
   onOpenNotes,
 }: {
   projectId: string;
-  stage: Stage;
+  stage: WorkspaceStage;
   onOpenChat(): void;
   onOpenNotes(): void;
 }) {
@@ -51,7 +50,6 @@ export function StageProgressCard({
     onOpenChat();
   };
 
-  if (stage === 'issues') return <IssuesCard projectId={projectId} />;
   if (!progress) return null;
   const { done, total, percent, open } = progress;
   const ready = total > 0 && open.length === 0 && done === total;
@@ -116,7 +114,7 @@ export function StageProgressCard({
             className="btn btn-primary btn-sm"
             onClick={() => {
               void (async () => {
-                if (next !== 'issues') await setPhase(projectId, next).catch(() => undefined);
+                await setPhase(projectId, next).catch(() => undefined);
                 setStage(projectId, next);
                 setDraft(
                   projectId,
@@ -131,28 +129,6 @@ export function StageProgressCard({
           </button>
         )}
       </div>
-    </section>
-  );
-}
-
-/** Issues has no checklist: how many are open, planned and done. */
-function IssuesCard({ projectId }: { projectId: string }) {
-  const issues = useIssues(projectId).data?.issues ?? [];
-  const count = (s: string) => issues.filter((i) => i.status === s).length;
-  const total = issues.length;
-  const percent = total ? Math.floor((count('done') / total) * 100) : 0;
-  return (
-    <section className={styles.card} aria-label="Issues progress">
-      <div className={styles.head}>
-        <span className={styles.title}>Issues</span>
-        <span className={styles.percent}>{total ? `${percent}%` : '—'}</span>
-      </div>
-      <Bar percent={percent} label="Issues fixed" />
-      <p className={styles.note}>
-        {total
-          ? `${count('open')} open · ${count('planned')} planned · ${count('done')} done`
-          : 'No issues yet.'}
-      </p>
     </section>
   );
 }

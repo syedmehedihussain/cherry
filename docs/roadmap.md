@@ -128,7 +128,7 @@ VS Code with Claude Code, Deployment like a cockpit. The plan is in
 
 - [x] r0 Artboards for the shell and the four stages in `docs/design/screens/v3/`, approved;
       ADR-0045 accepted (2026-10-25).
-- [ ] r1 Shell: four stage tabs (Preparation and Issues removed), minimal top bar, right rail (closed by default), status bar,
+- [x] r1 Shell: four stage tabs (Preparation and Issues removed), minimal top bar, right rail (closed by default), status bar,
       command palette.
 - [ ] r2 One chat component in the Claude Code CLI look, inline permission prompts.
 - [ ] r3 Plan: chat plus Documents panel, reader and editor, Ask about this.

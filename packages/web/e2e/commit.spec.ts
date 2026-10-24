@@ -1,14 +1,13 @@
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { E2E_PROJECTS, loginCode } from './fixture.ts';
+import { E2E_PROJECTS, loginCode, openSide } from './fixture.ts';
 
 // The GitHub view lists changes VS Code style: stage, Write message (Haiku), Commit as the user.
 test('source control: stage, write a message, commit as the user', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
   await page.getByRole('link', { name: 'shop', exact: true }).first().click();
-  const aside = page.getByRole('complementary', { name: 'Repository and agents' });
-  await aside.getByRole('tab', { name: 'GitHub' }).click();
+  const aside = await openSide(page, 'GitHub');
 
   const box = aside.getByRole('region', { name: 'Source control' });
   await expect(box).toContainText('as E2E User');

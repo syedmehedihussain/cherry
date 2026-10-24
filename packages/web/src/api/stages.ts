@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import {
-  PHASES,
   StageFocusSchema,
+  WORKSPACE_STAGES,
   StageInfoSchema,
   stageProgress,
-  type Phase,
   type Stage,
   type StageInfo,
+  type WorkspaceStage,
 } from '@cherry/shared';
 import { api } from './client.ts';
 import { useTasks } from './workspace.ts';
@@ -39,11 +39,10 @@ export const useStageFocus = (projectId: string, stage: Stage) =>
       ),
   });
 
-/** The stage after this one in the loop; Deployment hands over to Issues. */
-export function nextStage(stage: Stage): Stage | null {
-  if (stage === 'deployment') return 'issues';
-  const i = PHASES.indexOf(stage as Phase);
-  return i >= 0 && i < PHASES.length - 1 ? PHASES[i + 1]! : null;
+/** The stage after this one (ADR-0045); Deployment is the last. */
+export function nextStage(stage: Stage): WorkspaceStage | null {
+  const i = WORKSPACE_STAGES.indexOf(stage as WorkspaceStage);
+  return i >= 0 && i < WORKSPACE_STAGES.length - 1 ? WORKSPACE_STAGES[i + 1]! : null;
 }
 
 /** A stage's progress, for the Overview card and the stage tabs. */

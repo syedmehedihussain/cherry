@@ -1,44 +1,108 @@
-.views {
+/* V3 right rail (ADR-0045, artboard 05): icons like the VS Code activity bar, closed by default. */
+.rail {
+  width: var(--v3-rail-w);
   flex: none;
   display: flex;
-  gap: 2px;
-  margin: 12px 12px 0;
-  padding: 3px;
-  background: var(--s1);
-  border: 1px solid var(--b);
-  border-radius: var(--r-pill);
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0;
+  border-left: 1px solid var(--b);
+  background: var(--bg);
 }
-.view {
-  flex: 1 1 auto;
-  min-width: 0;
-  height: 28px;
-  padding: 0 4px;
+.railBtn {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 0;
-  border-radius: var(--r-pill);
-  background: transparent;
-  color: var(--t2);
-  font: inherit;
-  font-size: var(--fs-sm);
-  font-weight: 500;
-  white-space: nowrap;
+  border-radius: var(--r-md);
+  background: none;
+  color: var(--t3);
   cursor: pointer;
 }
+.railBtn:hover {
+  color: var(--t1);
+  background: var(--neutral-fill);
+}
+.railBtn[aria-pressed='true'] {
+  color: var(--t1);
+  background: var(--s2);
+}
+.railBtn[aria-pressed='true']::before {
+  content: '';
+  position: absolute;
+  right: -7px;
+  top: 7px;
+  bottom: 7px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.railBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.railSpacer {
+  flex: 1;
+}
 .liveDot {
-  display: inline-block;
+  position: absolute;
+  top: 6px;
+  right: 6px;
   width: 6px;
   height: 6px;
-  margin-left: 5px;
-  vertical-align: 1px;
   border-radius: 50%;
-  background: var(--accent);
-  animation: ap-pulse 1.2s ease-in-out infinite;
+  background: var(--success);
+  box-shadow: 0 0 0 2px var(--bg);
+  animation: ap-pulse 1.4s ease-in-out infinite;
 }
-.view:hover {
+
+.panel {
+  width: var(--v3-rail-panel-w);
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--b);
+  background: var(--bg);
+}
+.head {
+  height: 40px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 0 16px;
+  border-bottom: 1px solid var(--b);
+}
+.title {
+  flex: 1;
+  font-weight: 500;
   color: var(--t1);
 }
-.view[aria-selected='true'] {
-  background: var(--s3);
+.close {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--t3);
+  cursor: pointer;
+}
+.close:hover {
   color: var(--t1);
+  background: var(--neutral-fill);
+}
+.scrollAll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 .body {
   flex: 1;
@@ -89,52 +153,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.readiness {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
-  border: 1px solid var(--b);
-  border-radius: var(--r-lg);
-}
-.readinessHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.readinessCount {
-  font-family: var(--mono);
-  font-size: var(--fs-2xs);
-  color: var(--t3);
-}
-.readiness ul {
-  display: grid;
-  gap: 4px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.readiness li {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--fs-sm);
-  color: var(--t3);
-}
-.readiness li svg {
-  flex: none;
-  color: var(--danger-text);
-}
-.readiness li[data-ok] {
-  color: var(--t2);
-}
-.readiness li[data-ok] svg {
-  color: var(--success);
-}
-.readiness button {
-  align-self: flex-start;
 }
 
 /* Chat view (ADR-0039): Magnet about this project on top, the quick add box at the bottom. */

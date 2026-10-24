@@ -1,29 +1,36 @@
-import { Check, X } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import {
+  Activity,
+  GitPullRequest,
+  LayoutDashboard,
+  MessageSquare,
+  PanelRight,
+  X,
+} from 'lucide-react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { create } from 'zustand';
-import { useChat, useChatDraft } from '../../api/chat.ts';
-import { useStageFocus } from '../../api/stages.ts';
+import { useChat } from '../../api/chat.ts';
 import { useStage } from '../../state/stage.ts';
 import { AgentsPanel, QuickAdd } from '../../components/AgentsPanel/AgentsPanel.tsx';
 import { MagnetChat } from '../../components/MagnetChat/MagnetChat.tsx';
 import { GitPanel } from '../../components/GitHubBox/GitPanel.tsx';
 import { PlanUsage } from '../../components/PlanUsage/PlanUsage.tsx';
 import { SourceControl } from '../../components/SourceControl/SourceControl.tsx';
-import { LiveView, chromeSteps, currentTurn } from './LiveView.tsx';
+import { LiveView } from './LiveView.tsx';
 import { StageProgressCard } from './StageProgress.tsx';
 import styles from './SidePanel.module.css';
 
 const VIEWS = [
-  ['overview', 'Overview'],
-  ['live', 'Live'],
-  ['github', 'GitHub'],
-  ['chat', 'Chat'],
+  ['overview', 'Overview', LayoutDashboard],
+  ['live', 'Live', Activity],
+  ['github', 'GitHub', GitPullRequest],
+  ['chat', 'Chat', MessageSquare],
 ] as const;
 
 export type View = (typeof VIEWS)[number][0];
 
 const KEY = 'cherry.sideView';
+const OPEN_KEY = 'cherry.rail';
 
 function readView(): View {
   try {
@@ -34,23 +41,105 @@ function readView(): View {
   }
 }
 
-/** The chosen view stays the same across projects and reloads. */
-export const useSideView = create<{ view: View; set(v: View): void }>((set) => ({
+function readOpen(): boolean {
+  try {
+    return localStorage.getItem(OPEN_KEY) === 'open';
+  } catch {
+    return false;
+  }
+}
+
+function keep(view: View, open: boolean) {
+  try {
+    localStorage.setItem(KEY, view);
+    localStorage.setItem(OPEN_KEY, open ? 'open' : 'closed');
+  } catch {
+    // Private window: the choice just isn't remembered.
+  }
+}
+
+/**
+ * The right rail (ADR-0045): closed by default, the choice kept per browser. `set` opens a
+ * view; a second click on the open view's icon closes it; Ctrl+B toggles.
+ */
+export const useSideView = create<{
+  view: View;
+  open: boolean;
+  set(v: View): void;
+  click(v: View): void;
+  toggle(): void;
+  close(): void;
+}>((set, get) => ({
   view: readView(),
+  open: readOpen(),
   set: (view) => {
-    try {
-      localStorage.setItem(KEY, view);
-    } catch {
-      // Private window: the choice just isn't remembered.
-    }
-    set({ view });
+    keep(view, true);
+    set({ view, open: true });
+  },
+  click: (view) => {
+    const open = !(get().open && get().view === view);
+    keep(view, open);
+    set({ view, open });
+  },
+  toggle: () => {
+    const open = !get().open;
+    keep(get().view, open);
+    set({ open });
+  },
+  close: () => {
+    keep(get().view, false);
+    set({ open: false });
   },
 }));
 
-/**
- * Right column of the workspace: a row of views, one shown at a time. Agents, Decisions and
- * Notes & Tasks are tabs in the centre.
- */
+/** The rail's icons, at the far right of every stage. */
+export function Rail({ projectId }: { projectId: string }) {
+  const { view, open, click, toggle } = useSideView();
+  const stage = useStage(projectId);
+  const working = !!useChat(projectId, stage).data?.running;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        toggle();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [toggle]);
+  return (
+    <nav className={styles.rail} aria-label="Side views">
+      {VIEWS.map(([id, name, Icon]) => (
+        <button
+          key={id}
+          type="button"
+          className={styles.railBtn}
+          aria-label={name}
+          aria-pressed={open && view === id}
+          title={name}
+          onClick={() => click(id)}
+        >
+          <Icon size={17} strokeWidth={1.75} aria-hidden="true" />
+          {id === 'live' && working && (
+            <span className={styles.liveDot} aria-label="Claude is working" />
+          )}
+        </button>
+      ))}
+      <span className={styles.railSpacer} />
+      <button
+        type="button"
+        className={styles.railBtn}
+        aria-label={open ? 'Hide side view (Ctrl B)' : 'Show side view (Ctrl B)'}
+        title="Ctrl B"
+        onClick={toggle}
+      >
+        <PanelRight size={17} strokeWidth={1.75} aria-hidden="true" />
+      </button>
+    </nav>
+  );
+}
+
+/** The open side view, next to the rail. Agents, Decisions and Notes are in the palette. */
 export function SidePanel({
   projectId,
   branch,
@@ -61,22 +150,9 @@ export function SidePanel({
   now: number;
 }) {
   const view = useSideView((s) => s.view);
-  const setView = useSideView((s) => s.set);
+  const close = useSideView((s) => s.close);
   const label = VIEWS.find(([id]) => id === view)?.[1];
   const stage = useStage(projectId);
-  const chat = useChat(projectId, stage).data;
-  const working = !!chat?.running;
-  // Chrome started in this reply: show its steps in Live, once per turn (ADR-0038).
-  const items = chat?.items ?? [];
-  const turnNow = currentTurn(items, working);
-  const chromeNow = !!turnNow && chromeSteps(items).at(-1)?.turnId === turnNow;
-  const shownTurn = useRef<string | null>(null);
-  useEffect(() => {
-    if (chromeNow && turnNow && shownTurn.current !== turnNow) {
-      shownTurn.current = turnNow;
-      setView('live');
-    }
-  }, [chromeNow, turnNow, setView]);
   const navigate = useNavigate();
   const base = `/p/${encodeURIComponent(projectId)}`;
   const openNotes = () => void navigate(`${base}/notes`);
@@ -84,27 +160,21 @@ export function SidePanel({
   const openChat = () => void navigate(base);
 
   return (
-    <>
-      <nav className={styles.views} role="tablist" aria-label="Side panel">
-        {VIEWS.map(([id, name]) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={view === id}
-            className={styles.view}
-            onClick={() => setView(id)}
-          >
-            {name}
-            {id === 'live' && working && (
-              <span className={styles.liveDot} aria-label="Claude is working" />
-            )}
-          </button>
-        ))}
-      </nav>
-      <div className={styles.body} role="tabpanel" aria-label={label}>
+    <aside className={styles.panel} aria-label={label}>
+      <header className={styles.head}>
+        <span className={styles.title}>{label}</span>
+        <button
+          type="button"
+          className={styles.close}
+          aria-label={`Close ${label}`}
+          onClick={close}
+        >
+          <X size={15} aria-hidden="true" />
+        </button>
+      </header>
+      <div className={styles.body}>
         {view === 'overview' && (
-          <>
+          <div className={styles.scrollAll}>
             <div className={styles.pad}>
               <StageProgressCard
                 projectId={projectId}
@@ -112,7 +182,6 @@ export function SidePanel({
                 onOpenChat={openChat}
                 onOpenNotes={openNotes}
               />
-              {stage === 'preparation' && <Readiness projectId={projectId} onOpenChat={openChat} />}
               <GitPanel key={projectId} projectId={projectId} now={now} collapsible />
               <PlanUsage now={now} />
             </div>
@@ -124,7 +193,7 @@ export function SidePanel({
               onSeeAll={openAgents}
               box={false}
             />
-          </>
+          </div>
         )}
         {view === 'live' && <LiveView projectId={projectId} now={now} onOpenAgents={openAgents} />}
         {view === 'chat' && (
@@ -145,47 +214,6 @@ export function SidePanel({
           </div>
         )}
       </div>
-    </>
-  );
-}
-
-/** Preparation: a quick, file-only readiness check (ADR-0034); the Preparer fixes on request. */
-function Readiness({ projectId, onOpenChat }: { projectId: string; onOpenChat(): void }) {
-  const items = useStageFocus(projectId, 'preparation').data?.readiness ?? [];
-  const setDraft = useChatDraft((s) => s.set);
-  if (!items.length) return null;
-  const missing = items.filter((i) => !i.ok);
-  return (
-    <section className={styles.readiness} aria-label="Readiness">
-      <div className={styles.readinessHead}>
-        <span className="label">Readiness</span>
-        <span className={styles.readinessCount}>
-          {items.length - missing.length}/{items.length}
-        </span>
-      </div>
-      <ul>
-        {items.map((i) => (
-          <li key={i.id} data-ok={i.ok || undefined} title={i.detail}>
-            {i.ok ? <Check size={12} aria-label="ready" /> : <X size={12} aria-label="missing" />}
-            {i.label}
-          </li>
-        ))}
-      </ul>
-      {missing.length > 0 && (
-        <button
-          type="button"
-          className="btn btn-secondary btn-sm"
-          onClick={() => {
-            setDraft(
-              projectId,
-              `Run the project-readiness check and set up what is missing. Cherry's quick check found: ${missing.map((m) => m.label).join(', ')}.`,
-            );
-            onOpenChat();
-          }}
-        >
-          Ask the Preparer to fix
-        </button>
-      )}
-    </section>
+    </aside>
   );
 }

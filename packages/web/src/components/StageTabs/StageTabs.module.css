@@ -1,78 +1,87 @@
+/* The four stage tabs (V3 shell, artboard 01): number, name, a progress line under each. */
 .stages {
   display: flex;
-  align-items: center;
-  gap: 4px;
+  align-items: stretch;
+  height: var(--v3-top-h);
+  gap: 2px;
 }
+
 .tab {
-  display: inline-flex;
+  position: relative;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  height: var(--h-chip);
-  padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: var(--r-pill);
-  background: transparent;
+  gap: 8px;
+  padding: 0 14px;
+  border: 0;
+  background: none;
   color: var(--t2);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-base);
+  font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
 }
-.tab:hover {
-  background: var(--s2);
+.tab:hover,
+.tab[aria-pressed='true'] {
   color: var(--t1);
 }
-.tab[aria-pressed='true'] {
-  background: var(--accent-fill);
-  border-color: var(--accent-border);
-  color: var(--accent-text-strong);
-  font-weight: 500;
-}
 .tab:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: inset var(--focus-ring);
+  border-radius: var(--r-sm);
 }
+
+.n {
+  font-family: var(--mono);
+  font-size: var(--fs-2xs);
+  font-weight: 400;
+  color: var(--t3);
+}
+.tab[aria-pressed='true'] .n {
+  color: var(--accent-text);
+}
+
+.check {
+  color: var(--success);
+  flex: none;
+}
+
 .dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--accent);
-  animation: pulse 1.4s ease-in-out infinite;
+  animation: pulse 1.4s var(--ease) infinite;
 }
-.loop {
-  display: inline-flex;
-  margin-left: 2px;
-  color: var(--t3);
+
+.track {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--b);
+  overflow: hidden;
 }
+.track span {
+  display: block;
+  height: 100%;
+  background: var(--t3);
+  transition: width var(--dur) var(--ease);
+}
+.tab[aria-pressed='true'] .track span {
+  background: var(--accent);
+}
+.tab[data-done] .track span {
+  background: var(--success);
+}
+/* The open stage shows its line even before it has progress. */
+.tab[aria-pressed='true'] .track {
+  background: var(--accent-fill);
+}
+
 @keyframes pulse {
   50% {
     opacity: 0.35;
   }
-}
-@media (prefers-reduced-motion: reduce) {
-  .dot {
-    animation: none;
-  }
-}
-
-/* How far each stage is (V2.1 w5) */
-.tab {
-  position: relative;
-}
-.progress {
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 2px;
-  height: 2px;
-  border-radius: var(--r-pill);
-  background: var(--s2);
-  overflow: hidden;
-}
-.progress > span {
-  display: block;
-  height: 100%;
-  background: var(--accent);
-}
-.progress > span[data-done] {
-  background: var(--success);
 }

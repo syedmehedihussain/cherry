@@ -1,74 +1,79 @@
-import { X } from 'lucide-react';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  Activity,
+  BookOpen,
+  CircleDot,
+  FileText,
+  GitPullRequest,
+  History,
+  House,
+  LayoutDashboard,
+  ListChecks,
+  MessageSquare,
+  MessageSquarePlus,
+  PanelRight,
+  Play,
+  Plus,
+  RefreshCw,
+  ScanEye,
+  Settings,
+  ShieldCheck,
+  Square,
+  X,
+} from 'lucide-react';
+import { useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { create } from 'zustand';
-import type { Stage } from '@cherry/shared';
+import { STAGE_LABEL, WORKSPACE_STAGES, type WorkspaceStage } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
-import { useLiveProject, useProjectDetail } from '../../api/workspace.ts';
-import { FileTree } from '../../components/FileTree/FileTree.tsx';
+import { searchFiles, useLiveProject, useProjectDetail } from '../../api/workspace.ts';
+import { startRun, stopRun, useLiveRun, useRun } from '../../api/run.ts';
+import { newChat, sendChat, useChat, useChatDraft, useLiveChat } from '../../api/chat.ts';
+import { stageInfo, useStageInfo } from '../../api/stages.ts';
+import { useAgents, useLiveAgents } from '../../api/agents.ts';
+import { useScanAgents } from '../../api/scans.ts';
 import { FileViewer } from '../../components/FileViewer/FileViewer.tsx';
-import { GitPanel } from '../../components/GitHubBox/GitPanel.tsx';
-import { StatusNotch } from '../../components/StatusNotch/StatusNotch.tsx';
-import { RunButton } from '../../components/RunButton/RunButton.tsx';
-import { startRun, useLiveRun, useRun } from '../../api/run.ts';
-import { RunTab } from './RunTab.tsx';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
+import { WorkspaceTop } from '../../components/WorkspaceTop/WorkspaceTop.tsx';
 import { StageTabs } from '../../components/StageTabs/StageTabs.tsx';
-import { useStage, useStages } from '../../state/stage.ts';
-import { tildify } from '../../lib/paths.ts';
-import { useNow } from '../../lib/useNow.ts';
+import { StatusBar } from '../../components/StatusBar/StatusBar.tsx';
 import {
-  sendChat,
-  useChat,
-  useChatDraft,
-  useLiveChat,
-  usePendingApprovals,
-} from '../../api/chat.ts';
-import { Pill } from '../../components/Pill/Pill.tsx';
-import { ChatHistoryButton, ChatTab, NewChatButton, useSessionMeta } from './ChatTab.tsx';
-import { DocsTab } from './DocsTab.tsx';
-import { IssuesTab } from './IssuesTab.tsx';
-import { NotesTab } from './NotesTab.tsx';
+  CommandPalette,
+  usePalette,
+  type PaletteItem,
+} from '../../components/CommandPalette/CommandPalette.tsx';
 import { AgentsPanel } from '../../components/AgentsPanel/AgentsPanel.tsx';
 import { Decisions, usePendingDecisions } from '../../components/Decisions/Decisions.tsx';
-import { useAgents, useLiveAgents } from '../../api/agents.ts';
+import { useStage, useStages } from '../../state/stage.ts';
+import { useNow } from '../../lib/useNow.ts';
+import { useHistoryMenu } from './ChatTab.tsx';
+import { DocsTab } from './DocsTab.tsx';
+import { NotesTab } from './NotesTab.tsx';
 import { ReportTab } from './ReportTab.tsx';
+import { RunTab } from './RunTab.tsx';
 import { StatusTab, UPDATE_STATUS_PROMPT } from './StatusTab.tsx';
-import { useScanAgents } from '../../api/scans.ts';
-import { SidePanel, useSideView, type View } from './SidePanel.tsx';
+import { Rail, SidePanel, useSideView } from './SidePanel.tsx';
+import { StageBody } from './StageBody.tsx';
 import styles from './Workspace.module.css';
 
-type Tab =
-  | 'chat'
-  | 'docs'
-  | 'notes'
-  | 'agents'
-  | 'decisions'
-  | 'issues'
-  | 'file'
-  | 'report'
-  | 'status'
-  | 'run';
+/** A view opened from the palette or a link; it covers the stage until closed (ADR-0045). */
+type ViewRoute =
+  | { view: 'docs'; path: string | null }
+  | { view: 'file'; path: string }
+  | { view: 'report'; path: string }
+  | { view: 'notes' | 'agents' | 'decisions' | 'status' | 'run' };
 
-/** The last file opened per project, so its tab stays while you visit other tabs. */
-const useOpenFiles = create<{
-  files: Record<string, string | undefined>;
-  set(id: string, path: string | undefined): void;
-}>((set) => ({
-  files: {},
-  set: (id, path) => set((s) => ({ files: { ...s.files, [id]: path } })),
-}));
+export function parseSplat(splat: string): ViewRoute | null {
+  if (splat === 'docs' || splat.startsWith('docs/'))
+    return { view: 'docs', path: splat.slice(5) || null };
+  if (splat.startsWith('files/') && splat.length > 6) return { view: 'file', path: splat.slice(6) };
+  if (splat.startsWith('reports/') && splat.length > 8)
+    return { view: 'report', path: splat.slice(8) };
+  if (['notes', 'agents', 'decisions', 'status', 'run'].includes(splat))
+    return { view: splat as 'notes' };
+  return null;
+}
 
-/** Projects whose Status report tab is open (it stays until closed, like a file). */
-const useOpenStatus = create<{
-  open: Record<string, boolean>;
-  set(id: string, open: boolean): void;
-}>((set) => ({
-  open: {},
-  set: (id, open) => set((s) => ({ open: { ...s.open, [id]: open } })),
-}));
-
-/** The last scan agent whose reports were open, per project (`<agentId>` or `<agentId>/<id>`). */
+/** The last scan agent whose reports were open, per project, for the report's title. */
 const useOpenReports = create<{
   reports: Record<string, string | undefined>;
   set(id: string, path: string | undefined): void;
@@ -77,75 +82,61 @@ const useOpenReports = create<{
   set: (id, path) => set((s) => ({ reports: { ...s.reports, [id]: path } })),
 }));
 
-function parseSplat(splat: string): { tab: Tab; path: string | null } {
-  if (splat.startsWith('docs')) return { tab: 'docs', path: splat.slice(5) || null };
-  if (splat.startsWith('files/')) return { tab: 'file', path: splat.slice(6) || null };
-  if (splat.startsWith('reports/')) return { tab: 'report', path: splat.slice(8) || null };
-  if (splat === 'notes') return { tab: 'notes', path: null };
-  if (splat === 'agents') return { tab: 'agents', path: null };
-  if (splat === 'decisions') return { tab: 'decisions', path: null };
-  if (splat === 'issues') return { tab: 'issues', path: null };
-  if (splat === 'status') return { tab: 'status', path: null };
-  if (splat === 'run') return { tab: 'run', path: null };
-  return { tab: 'chat', path: null };
-}
-
-export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
+export function Workspace() {
   const params = useParams();
   const id = params.id ?? '';
-  const { tab, path } = parseSplat(params['*'] ?? '');
+  const route = parseSplat(params['*'] ?? '');
   const navigate = useNavigate();
   const now = useNow(60_000);
   const detail = useProjectDetail(id);
   useLiveProject(id);
   const stage = useStage(id);
   const setStage = useStages((s) => s.set);
-  const setSideView = useSideView((s) => s.set);
+  const side = useSideView();
   const chat = useChat(id, stage);
-  // Once per workspace: the Chat tab and the Live view both read this state.
+  // Once per workspace: the chat and the Live view both read this state.
   useLiveChat(id);
   const app = useRun(id);
   useLiveRun(id);
-  const [starting, setStarting] = useState(false);
-  const approvals = usePendingApprovals();
+  useLiveAgents(id);
   const setDraft = useChatDraft((s) => s.set);
-  const pendingHere = (approvals.data ?? []).filter((a) => a.projectId === id);
   const running = !!chat.data?.running;
-  const sessionMeta = useSessionMeta(chat.data, now);
-  const touched = useMemo(() => new Set(chat.data?.touched ?? []), [chat.data?.touched]);
-
-  const openFile = useOpenFiles((s) => s.files[id]);
-  const setOpenFile = useOpenFiles((s) => s.set);
-  useEffect(() => {
-    if (tab === 'file' && path) setOpenFile(id, path);
-  }, [tab, path, id, setOpenFile]);
-
-  const openReport = useOpenReports((s) => s.reports[id]);
-  const setOpenReport = useOpenReports((s) => s.set);
-  useEffect(() => {
-    if (tab === 'report' && path) setOpenReport(id, path);
-  }, [tab, path, id, setOpenReport]);
-  const statusOpen = useOpenStatus((s) => !!s.open[id]) || tab === 'status';
-  const setStatusOpen = useOpenStatus((s) => s.set);
-  useEffect(() => {
-    if (tab === 'status') setStatusOpen(id, true);
-  }, [tab, id, setStatusOpen]);
+  const info = useStageInfo().data;
   const scans = useScanAgents(id);
   const pendingDecisions = usePendingDecisions(id);
-  useLiveAgents(id);
   const agentsBusy = (useAgents(id).data?.agents ?? []).filter(
     (a) => a.status === 'running' || a.status === 'waiting',
   ).length;
-  const reportAgent = openReport?.split('/')[0] ?? '';
-  const reportName = scans.data?.agents.find((a) => a.id === reportAgent)?.name ?? reportAgent;
+  const openPalette = usePalette((s) => s.set);
+  const setReport = useOpenReports((s) => s.set);
+  const reportPath = route?.view === 'report' ? route.path : undefined;
+  useEffect(() => {
+    if (reportPath) setReport(id, reportPath);
+  }, [reportPath, id, setReport]);
 
   const base = `/p/${encodeURIComponent(id)}`;
-  const updateStatus = running
-    ? undefined
-    : () => {
-        void sendChat(id, stage, UPDATE_STATUS_PROMPT, 'ask');
-        void navigate(base);
-      };
+  const go = useCallback((to = '') => void navigate(`${base}${to}`), [navigate, base]);
+  const selectStage = useCallback(
+    (s: WorkspaceStage) => {
+      setStage(id, s);
+      go();
+    },
+    [setStage, id, go],
+  );
+  const openFile = useCallback((p: string) => go(`/files/${p}`), [go]);
+  const findFiles = useCallback((q: string) => searchFiles(id, q), [id]);
+
+  const items = usePaletteItems({
+    id,
+    stage,
+    go,
+    selectStage,
+    agentsBusy,
+    pendingDecisions,
+    appRunning: !!app.data?.running,
+    canRun: !!app.data?.command,
+    chatRunning: running,
+  });
 
   if (detail.isError) {
     const gone = detail.error instanceof ApiFailure && detail.error.status === 404;
@@ -168,293 +159,379 @@ export function Workspace({ right }: { right?: (id: string) => ReactNode }) {
   }
 
   const card = detail.data?.card;
+  const lastEnd = (chat.data?.items ?? []).findLast((i) => i.kind === 'turn-end');
+  const context = lastEnd?.kind === 'turn-end' ? (lastEnd.context ?? null) : null;
+  const updateStatus = running
+    ? undefined
+    : () => {
+        void sendChat(id, stage, UPDATE_STATUS_PROMPT, 'ask');
+        go();
+      };
 
   return (
     <div className={styles.page}>
-      <TopBar
-        crumbs={[{ label: 'Projects', href: '/' }, { label: card?.name ?? id }]}
-        centre={
-          <StageTabs
-            projectId={id}
-            active={stage}
-            onSelect={(s) => {
-              setStage(id, s);
-              // The side view that fits the stage: GitHub to ship, Live to build.
-              const side: Partial<Record<Stage, View>> = {
-                development: 'live',
-                deployment: 'github',
-                preparation: 'overview',
-              };
-              const v = side[s];
-              if (v) setSideView(v);
-              // A stage opens its agent's chat; Issues opens the issue list.
-              void navigate(s === 'issues' ? `${base}/issues` : base);
-            }}
-          />
-        }
-        claude={running ? 'working' : undefined}
-        beforeClaude={
-          <>
-            <RunButton
-              state={app.data}
-              active={tab === 'run'}
-              busy={starting}
-              onOpen={() => void navigate(`${base}/run`)}
-              onRun={() => {
-                setStarting(true);
-                void startRun(id)
-                  .catch(() => undefined)
-                  .finally(() => setStarting(false));
-                void navigate(`${base}/run`);
-              }}
-            />
-            <StatusNotch
-              status={detail.data ? detail.data.status : undefined}
-              updatedAt={detail.data?.statusMtime ?? null}
-              active={tab === 'status'}
-              onOpen={() => void navigate(`${base}/status`)}
-            />
-          </>
-        }
-        status={
-          pendingHere.length > 0 ? (
-            <Pill tone="warning" dot>
-              Approval needed
-            </Pill>
-          ) : running ? (
-            <Pill tone="accent" spin>
-              Claude is working
-            </Pill>
-          ) : null
-        }
+      <WorkspaceTop
+        projectId={id}
+        projectName={card?.name ?? id}
+        stages={<StageTabs projectId={id} active={stage} onSelect={selectStage} />}
+        onSearch={() => openPalette(true)}
       />
-      <div className={styles.grid}>
-        <FileTree
-          projectId={id}
-          projectPath={card ? tildify(card.path) : ''}
-          selected={tab === 'file' ? path : null}
-          onOpen={(p) => void navigate(`${base}/files/${p}`)}
-          touched={touched}
-          stage={stage}
-        />
-
-        <section aria-label="Project" className={styles.centre}>
-          <nav aria-label="Workspace tabs" className={styles.tabs}>
-            <TabLink to={base} active={tab === 'chat'}>
-              Chat
-              {tab !== 'chat' && pendingHere.length > 0 && (
-                <span className={styles.needsYou} title="Needs you" />
-              )}
-            </TabLink>
-            <TabLink to={`${base}/docs`} active={tab === 'docs'}>
-              Docs
-            </TabLink>
-            <TabLink to={`${base}/notes`} active={tab === 'notes'}>
-              Notes &amp; Tasks
-            </TabLink>
-            <TabLink to={`${base}/agents`} active={tab === 'agents'}>
-              Agents
-              {agentsBusy > 0 && (
-                <span className={styles.tabCount} aria-label={`${agentsBusy} running`}>
-                  {agentsBusy}
-                </span>
-              )}
-            </TabLink>
-            <TabLink to={`${base}/decisions`} active={tab === 'decisions'}>
-              Decisions
-              {pendingDecisions > 0 && (
-                <span className={styles.tabBadge} aria-label={`${pendingDecisions} pending`}>
-                  {pendingDecisions}
-                </span>
-              )}
-            </TabLink>
-            {(stage === 'issues' || tab === 'issues') && (
-              <TabLink to={`${base}/issues`} active={tab === 'issues'}>
-                Issues
-              </TabLink>
-            )}
-            {openFile && (
-              <>
-                <span className={styles.tabSep} aria-hidden="true" />
-                <span className={styles.fileTab} data-active={tab === 'file' || undefined}>
-                  <Link
-                    to={`${base}/files/${openFile}`}
-                    className="mono"
-                    aria-current={tab === 'file' ? 'page' : undefined}
-                  >
-                    {openFile.split('/').pop()}
-                  </Link>
-                  <button
-                    type="button"
-                    aria-label={`Close ${openFile.split('/').pop()}`}
-                    onClick={() => {
-                      setOpenFile(id, undefined);
-                      if (tab === 'file') void navigate(base);
-                    }}
-                  >
-                    <X size={12} aria-hidden="true" />
-                  </button>
-                </span>
-              </>
-            )}
-            {openReport && (
-              <>
-                <span className={styles.tabSep} aria-hidden="true" />
-                <span className={styles.fileTab} data-active={tab === 'report' || undefined}>
-                  <Link
-                    to={`${base}/reports/${openReport}`}
-                    aria-current={tab === 'report' ? 'page' : undefined}
-                  >
-                    {reportName} report
-                  </Link>
-                  <button
-                    type="button"
-                    aria-label={`Close ${reportName} report`}
-                    onClick={() => {
-                      setOpenReport(id, undefined);
-                      if (tab === 'report') void navigate(base);
-                    }}
-                  >
-                    <X size={12} aria-hidden="true" />
-                  </button>
-                </span>
-              </>
-            )}
-            {statusOpen && (
-              <>
-                <span className={styles.tabSep} aria-hidden="true" />
-                <span className={styles.fileTab} data-active={tab === 'status' || undefined}>
-                  <Link to={`${base}/status`} aria-current={tab === 'status' ? 'page' : undefined}>
-                    Status
-                  </Link>
-                  <button
-                    type="button"
-                    aria-label="Close Status"
-                    onClick={() => {
-                      setStatusOpen(id, false);
-                      if (tab === 'status') void navigate(base);
-                    }}
-                  >
-                    <X size={12} aria-hidden="true" />
-                  </button>
-                </span>
-              </>
-            )}
-            {(tab === 'run' || app.data?.running) && (
-              <>
-                <span className={styles.tabSep} aria-hidden="true" />
-                <span className={styles.fileTab} data-active={tab === 'run' || undefined}>
-                  <Link to={`${base}/run`} aria-current={tab === 'run' ? 'page' : undefined}>
-                    Run
-                  </Link>
-                </span>
-              </>
-            )}
-            <span className={styles.tabSpacer} />
-            {tab === 'chat' && (
-              <>
-                {sessionMeta && <span className={styles.sessionMeta}>{sessionMeta}</span>}
-                <ChatHistoryButton projectId={id} stage={stage} state={chat.data} now={now} />
-                <NewChatButton projectId={id} stage={stage} state={chat.data} />
-              </>
-            )}
-          </nav>
-          <div className={styles.tabBody}>
-            {tab === 'chat' && <ChatTab projectId={id} stage={stage} now={now} />}
-            {tab === 'docs' && (
-              <DocsTab
-                projectId={id}
-                docPath={path}
-                now={now}
-                onAskClaude={(doc) => {
-                  setDraft(id, `About ${doc}: `);
-                  void navigate(base);
-                }}
-              />
-            )}
-            {tab === 'notes' && <NotesTab projectId={id} />}
-            {tab === 'agents' && (
-              <div className={styles.pane}>
-                <AgentsPanel
+      <div className={styles.body}>
+        <main className={styles.stage} aria-label={`${STAGE_LABEL[stage]} stage`}>
+          {route ? (
+            <ViewPane title={viewTitle(route, scans.data?.agents ?? [])} onClose={() => go()}>
+              {route.view === 'docs' && (
+                <DocsTab
                   projectId={id}
-                  branch={detail.data?.card.git?.branch ?? null}
+                  docPath={route.path}
+                  now={now}
+                  onAskClaude={(doc) => {
+                    setDraft(id, `About ${doc}: `);
+                    go();
+                  }}
+                />
+              )}
+              {route.view === 'notes' && <NotesTab projectId={id} />}
+              {route.view === 'agents' && (
+                <div className={styles.pane}>
+                  <AgentsPanel projectId={id} branch={card?.git?.branch ?? null} now={now} />
+                </div>
+              )}
+              {route.view === 'decisions' && (
+                <div className={styles.pane}>
+                  <Decisions projectId={id} />
+                </div>
+              )}
+              {route.view === 'run' && <RunTab projectId={id} />}
+              {route.view === 'status' && (
+                <StatusTab
+                  projectId={id}
+                  mtime={detail.data ? (detail.data.statusMtime ?? null) : undefined}
+                  now={now}
+                  onUpdate={updateStatus}
+                  updateDisabledReason="Claude is working; wait for the turn to finish"
+                />
+              )}
+              {route.view === 'file' && (
+                <FileViewer
+                  key={route.path}
+                  projectId={id}
+                  path={route.path}
+                  fileHref={(p) => `${base}/files/${p}`}
+                />
+              )}
+              {route.view === 'report' && (
+                <ReportTab
+                  key={route.path.split('/')[0]}
+                  projectId={id}
+                  agentId={route.path.split('/')[0]!}
+                  reportId={route.path.split('/')[1] || null}
                   now={now}
                 />
-              </div>
-            )}
-            {tab === 'decisions' && (
-              <div className={styles.pane}>
-                <Decisions projectId={id} />
-              </div>
-            )}
-            {tab === 'issues' && (
-              <IssuesTab
-                projectId={id}
-                onPlan={(issues) => {
-                  // The loop (ADR-0034): chosen issues become the next round in Plan.
-                  setDraft(
-                    id,
-                    [
-                      'Plan the next round from these issues. Read each one, ask what you need, then write the spec and the roadmap milestone, and mark the issues planned with the spec as their cycle:',
-                      ...issues.map((i) => `- ${i.file} (${i.title})`),
-                    ].join('\n'),
-                  );
-                  setStage(id, 'plan');
-                  void navigate(base);
-                }}
-              />
-            )}
-            {tab === 'run' && <RunTab projectId={id} />}
-            {tab === 'status' && (
-              <StatusTab
-                projectId={id}
-                mtime={detail.data ? (detail.data.statusMtime ?? null) : undefined}
-                now={now}
-                onUpdate={updateStatus}
-                updateDisabledReason="Claude is working; wait for the turn to finish"
-              />
-            )}
-            {tab === 'file' && path && (
-              <FileViewer
-                key={path}
-                projectId={id}
-                path={path}
-                fileHref={(p) => `${base}/files/${p}`}
-              />
-            )}
-            {tab === 'report' && path && (
-              <ReportTab
-                key={path.split('/')[0]}
-                projectId={id}
-                agentId={path.split('/')[0]!}
-                reportId={path.split('/')[1] || null}
-                now={now}
-              />
-            )}
-          </div>
-        </section>
-
-        <aside aria-label="Repository and agents" className={styles.right}>
-          {right ? (
-            <>
-              <div className={styles.rightTop}>
-                <GitPanel key={id} projectId={id} now={now} />
-              </div>
-              {right(id)}
-            </>
+              )}
+            </ViewPane>
           ) : (
-            <SidePanel projectId={id} branch={detail.data?.card.git?.branch ?? null} now={now} />
+            <StageBody projectId={id} stage={stage} now={now} onOpenFile={openFile} />
           )}
-        </aside>
+        </main>
+        {side.open && <SidePanel projectId={id} branch={card?.git?.branch ?? null} now={now} />}
+        <Rail projectId={id} />
       </div>
+      <StatusBar
+        git={card?.git}
+        agent={stageInfo(info, stage)?.name}
+        model={chat.data?.model}
+        context={context}
+        app={app.data}
+        onGit={() => side.set('github')}
+        onRun={() => {
+          void startRun(id).catch(() => undefined);
+          go('/run');
+        }}
+        onOpenRun={() => go('/run')}
+        onUsage={() => side.set('overview')}
+        onPalette={() => openPalette(true)}
+      />
+      <CommandPalette items={items} searchFiles={findFiles} onOpenFile={openFile} />
     </div>
   );
 }
 
-function TabLink({ to, active, children }: { to: string; active: boolean; children: ReactNode }) {
+function viewTitle(route: ViewRoute, scans: { id: string; name: string }[]): string {
+  switch (route.view) {
+    case 'docs':
+      return 'Docs';
+    case 'file':
+      return route.path.split('/').pop() ?? route.path;
+    case 'report': {
+      const agent = route.path.split('/')[0] ?? '';
+      return `${scans.find((a) => a.id === agent)?.name ?? agent} report`;
+    }
+    case 'notes':
+      return 'Notes and tasks';
+    case 'agents':
+      return 'Agents';
+    case 'decisions':
+      return 'Decisions';
+    case 'status':
+      return 'Status';
+    case 'run':
+      return 'Run';
+  }
+}
+
+const sideView = () => useSideView.getState();
+const ic = (I: typeof Activity) => <I size={15} aria-hidden="true" />;
+
+/** A hidden view, open over the stage: a title and a way back (ADR-0045). */
+function ViewPane({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose(): void;
+  children: ReactNode;
+}) {
   return (
-    <Link to={to} className={styles.tab} aria-current={active ? 'page' : undefined}>
-      {children}
-    </Link>
+    <section className={styles.view} aria-label={title}>
+      <header className={styles.viewHead}>
+        <span className={styles.viewTitle}>{title}</span>
+        <button
+          type="button"
+          className={styles.viewClose}
+          aria-label={`Close ${title}`}
+          title="Back to the stage"
+          onClick={onClose}
+        >
+          <X size={15} aria-hidden="true" />
+        </button>
+      </header>
+      <div className={styles.viewBody}>{children}</div>
+    </section>
+  );
+}
+
+/** Every action and hidden view for the palette (ADR-0045, artboard 06). */
+function usePaletteItems({
+  id,
+  stage,
+  go,
+  selectStage,
+  agentsBusy,
+  pendingDecisions,
+  appRunning,
+  canRun,
+  chatRunning,
+}: {
+  id: string;
+  stage: WorkspaceStage;
+  go(to?: string): void;
+  selectStage(s: WorkspaceStage): void;
+  agentsBusy: number;
+  pendingDecisions: number;
+  appRunning: boolean;
+  canRun: boolean;
+  chatRunning: boolean;
+}): PaletteItem[] {
+  const info = useStageInfo().data;
+  const navigate = useNavigate();
+  return useMemo<PaletteItem[]>(
+    () => [
+      {
+        id: 'v-agents',
+        group: 'Views',
+        label: 'Agents',
+        hint: agentsBusy ? `${agentsBusy} running` : 'background agents',
+        icon: ic(Activity),
+        run: () => go('/agents'),
+      },
+      {
+        id: 'v-scans',
+        group: 'Views',
+        label: 'Scan agents',
+        hint: 'Security, Tests, Code health',
+        icon: ic(ScanEye),
+        run: () => go('/agents'),
+      },
+      {
+        id: 'v-notes',
+        group: 'Views',
+        label: 'Notes and tasks',
+        icon: ic(ListChecks),
+        run: () => go('/notes'),
+      },
+      {
+        id: 'v-decisions',
+        group: 'Views',
+        label: 'Decisions',
+        hint: pendingDecisions ? `${pendingDecisions} proposed` : undefined,
+        icon: ic(BookOpen),
+        run: () => go('/decisions'),
+      },
+      { id: 'v-docs', group: 'Views', label: 'Docs', icon: ic(FileText), run: () => go('/docs') },
+      {
+        id: 'v-status',
+        group: 'Views',
+        label: 'Status report',
+        icon: ic(CircleDot),
+        run: () => go('/status'),
+      },
+      {
+        id: 'v-overview',
+        group: 'Views',
+        label: 'Overview',
+        icon: ic(LayoutDashboard),
+        run: () => sideView().set('overview'),
+      },
+      {
+        id: 'v-live',
+        group: 'Views',
+        label: 'Live',
+        icon: ic(Activity),
+        run: () => sideView().set('live'),
+      },
+      {
+        id: 'v-github',
+        group: 'Views',
+        label: 'GitHub',
+        words: 'source control commit git',
+        icon: ic(GitPullRequest),
+        run: () => sideView().set('github'),
+      },
+      {
+        id: 'v-magnet',
+        group: 'Views',
+        label: 'Magnet chat',
+        icon: ic(MessageSquare),
+        run: () => sideView().set('chat'),
+      },
+      ...WORKSPACE_STAGES.map((s, i) => ({
+        id: `s-${s}`,
+        group: 'Stages' as const,
+        label: `0${i + 1} ${STAGE_LABEL[s]}`,
+        hint: s === stage ? 'open now' : stageInfo(info, s)?.name,
+        icon: ic(CircleDot),
+        run: () => selectStage(s),
+      })),
+      {
+        id: 'a-agent',
+        group: 'Actions',
+        label: 'New background agent…',
+        icon: ic(Plus),
+        run: () => go('/agents'),
+      },
+      {
+        id: 'a-new-chat',
+        group: 'Actions',
+        label: 'New chat',
+        keys: ['/clear'],
+        icon: ic(MessageSquarePlus),
+        run: () => {
+          go();
+          void newChat(id, stage);
+        },
+      },
+      {
+        id: 'a-history',
+        group: 'Actions',
+        label: 'Chat history',
+        keys: ['/resume'],
+        icon: ic(History),
+        run: () => {
+          go();
+          useHistoryMenu.getState().set(true);
+        },
+      },
+      {
+        id: 'a-push',
+        group: 'Actions',
+        label: 'Push to GitHub',
+        icon: ic(GitPullRequest),
+        run: () => sideView().set('github'),
+      },
+      ...(appRunning
+        ? [
+            {
+              id: 'a-stop',
+              group: 'Actions' as const,
+              label: 'Stop the app',
+              icon: ic(Square),
+              run: () => void stopRun(id).catch(() => undefined),
+            },
+          ]
+        : canRun
+          ? [
+              {
+                id: 'a-run',
+                group: 'Actions' as const,
+                label: 'Run the app',
+                icon: ic(Play),
+                run: () => {
+                  void startRun(id).catch(() => undefined);
+                  go('/run');
+                },
+              },
+            ]
+          : []),
+      ...(!chatRunning
+        ? [
+            {
+              id: 'a-status',
+              group: 'Actions' as const,
+              label: 'Update the status report',
+              icon: ic(RefreshCw),
+              run: () => {
+                void sendChat(id, stage, UPDATE_STATUS_PROMPT, 'ask');
+                go();
+              },
+            },
+          ]
+        : []),
+      {
+        id: 'a-side',
+        group: 'Actions',
+        label: 'Toggle side view',
+        keys: ['Ctrl', 'B'],
+        icon: ic(PanelRight),
+        run: () => sideView().toggle(),
+      },
+      {
+        id: 'a-permissions',
+        group: 'Actions',
+        label: 'Permissions',
+        hint: 'Always allow rules',
+        icon: ic(ShieldCheck),
+        run: () => void navigate('/settings/permissions'),
+      },
+      {
+        id: 'a-settings',
+        group: 'Actions',
+        label: 'Settings',
+        icon: ic(Settings),
+        run: () => void navigate('/settings/general'),
+      },
+      {
+        id: 'a-home',
+        group: 'Actions',
+        label: 'All projects',
+        words: 'home',
+        icon: ic(House),
+        run: () => void navigate('/'),
+      },
+    ],
+    [
+      id,
+      stage,
+      agentsBusy,
+      pendingDecisions,
+      appRunning,
+      canRun,
+      chatRunning,
+      info,
+      go,
+      selectStage,
+      navigate,
+    ],
   );
 }

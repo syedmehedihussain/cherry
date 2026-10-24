@@ -6,37 +6,25 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
 });
 
-// ADR-0034 and ADR-0035: stages with their own agents, and Issues feeding the next Plan.
-test('stage tabs open each agent, and a picked issue becomes the next plan', async ({ page }) => {
+// ADR-0034, ADR-0045: four stages, each with its own agent; Preparation and Issues are gone.
+test('stage tabs open each agent', async ({ page }) => {
   await page.goto('/p/shop');
   const stages = page.getByRole('navigation', { name: 'Lifecycle stages' });
-  await stages.getByRole('button', { name: 'Design' }).click();
-  await expect(page.getByRole('heading', { name: 'Design: the Designer' })).toBeVisible();
-  await expect(stages.getByRole('button', { name: 'Design' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
-
-  await stages.getByRole('button', { name: 'Issues' }).click();
-  await expect(page).toHaveURL(/\/p\/shop\/issues$/);
-  await page.getByRole('button', { name: 'New issue' }).click();
-  const form = page.getByRole('form', { name: 'New issue' });
-  await form.getByLabel('Title').fill('Cart total ignores discounts');
-  await form.getByLabel('Details').fill('Add a coupon, the total stays the same.');
-  await form.getByRole('button', { name: 'Save issue' }).click();
-  await expect(page.getByRole('link', { name: 'Cart total ignores discounts' })).toBeVisible();
-
-  await page.getByRole('checkbox', { name: 'Pick Cart total ignores discounts' }).check();
-  await page.getByRole('button', { name: 'Plan selected (1)' }).click();
-  await expect(page).toHaveURL(/\/p\/shop$/);
-  await expect(stages.getByRole('button', { name: 'Plan' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
-  await expect(page.getByRole('heading', { name: 'Plan: the Planner' })).toBeVisible();
-  await expect(page.getByPlaceholder(/^Reply to Claude/)).toHaveValue(
-    /docs\/issues\/0001-cart-total-ignores-discounts\.md/,
-  );
+  await expect(stages.getByRole('button', { name: 'Issues' })).toHaveCount(0);
+  await expect(stages.getByRole('button', { name: 'Preparation' })).toHaveCount(0);
+  for (const [stage, agent] of [
+    ['Design', 'Designer'],
+    ['Deployment', 'Shipper'],
+    ['Plan', 'Planner'],
+  ]) {
+    await stages.getByRole('button', { name: stage }).click();
+    await expect(page.getByRole('heading', { name: `${stage}: the ${agent}` })).toBeVisible();
+    await expect(stages.getByRole('button', { name: stage })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  }
+  await expect(page.getByRole('contentinfo')).toContainText('Planner');
 });
 
 test('Settings lists the stage agents and their bundled skills', async ({ page }) => {

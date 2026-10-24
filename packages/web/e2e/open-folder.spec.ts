@@ -16,7 +16,7 @@ test('open a folder from anywhere, work in it, and remove it from Cherry', async
   await page.getByRole('button', { name: 'Open folder…' }).first().click();
   const dialog = page.getByRole('dialog', { name: 'Open folder' });
   await dialog.getByLabel('Folder to open').fill(outside);
-  await expect(dialog.getByRole('button', { name: 'Up' })).toBeEnabled();
+  await expect(dialog.getByRole('button', { name: 'Up', exact: true })).toBeEnabled();
   await dialog.getByRole('button', { name: 'Open', exact: true }).click();
 
   await expect(page).toHaveURL(/\/p\/notes-app$/);

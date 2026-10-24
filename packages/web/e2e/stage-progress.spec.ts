@@ -1,7 +1,7 @@
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { E2E_PROJECTS, loginCode } from './fixture.ts';
+import { E2E_PROJECTS, loginCode, openSide } from './fixture.ts';
 
 test.afterEach(() => {
   for (const p of ['kite-log', 'orbit-log'])
@@ -18,8 +18,7 @@ test('the Plan bar fills as the Planner works, then Move to Design', async ({ pa
   await page.getByRole('button', { name: 'Start planning' }).click();
   await expect(page).toHaveURL(/\/p\/kite-log$/);
 
-  const aside = page.getByRole('complementary', { name: 'Repository and agents' });
-  await aside.getByRole('tab', { name: 'Overview' }).click();
+  const aside = await openSide(page, 'Overview');
   const card = aside.getByRole('region', { name: 'Plan progress' });
   await expect(card).toContainText('0%');
   await expect(card).toContainText('6 left');
@@ -72,8 +71,7 @@ test('Approve plan opens Development and the Builder starts on the tasks', async
   );
   await expect(page.getByText(/^Build the approved plan "Offline mode"/)).toBeVisible();
   await expect(page.getByText('Cache done.')).toBeVisible();
-  const aside = page.getByRole('complementary', { name: 'Repository and agents' });
-  await aside.getByRole('tab', { name: 'Overview' }).click();
+  const aside = await openSide(page, 'Overview');
   const dev = aside.getByRole('region', { name: 'Development progress' });
   await expect(dev).toContainText('4 left');
   await expect(dev).toContainText('Sync on reconnect');

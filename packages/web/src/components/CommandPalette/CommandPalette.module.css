@@ -1,0 +1,143 @@
+/* Command palette (artboard 06): a floating box near the top, grouped rows, a key hint line. */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 44px;
+}
+.palette {
+  width: min(620px, calc(100vw - 32px));
+  max-height: min(560px, calc(100vh - 120px));
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--bs);
+  border-radius: var(--r-xl);
+  background: var(--s-float);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.search {
+  height: 48px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px 0 16px;
+  border-bottom: 1px solid var(--b);
+  color: var(--t2);
+}
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--t1);
+  font: inherit;
+  font-size: var(--fs-lg);
+}
+.search input::placeholder {
+  color: var(--t3);
+}
+.list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 6px 0;
+}
+.group {
+  padding: 10px 16px 6px;
+  font-size: var(--fs-2xs);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--t3);
+}
+.row {
+  width: 100%;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  border: 0;
+  background: none;
+  color: var(--t2);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.row[aria-selected='true'] {
+  background: var(--s3);
+  color: var(--t1);
+}
+.icon {
+  width: 16px;
+  flex: none;
+  display: inline-flex;
+  color: var(--t2);
+}
+.label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mark {
+  color: var(--t1);
+  font-weight: 600;
+}
+.hint {
+  max-width: 50%;
+  font-size: var(--fs-xs);
+  color: var(--t3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 4px;
+  border: 1px solid var(--b);
+  background: var(--s2);
+  color: var(--t2);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  flex: none;
+}
+.empty {
+  margin: 0;
+  padding: 16px;
+  color: var(--t3);
+}
+.foot {
+  height: 34px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  border-top: 1px solid var(--b);
+  font-size: var(--fs-xs);
+  color: var(--t3);
+}
+.foot span + .kbd {
+  margin-left: 8px;
+}
+.grow {
+  flex: 1;
+}
+.search input:focus,
+.search input:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border: 0;
+}

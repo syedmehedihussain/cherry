@@ -159,6 +159,19 @@
   --home-max: 1088px;
   --prompt-max: 760px;
 
+  /* V3 layout (ADR-0045; docs/design/screens/v3/v3.css) */
+  --v3-top-h: 48px;
+  --v3-status-h: 26px;
+  --v3-rail-w: 44px;
+  --v3-rail-panel-w: 340px;
+  --v3-explorer-w: 248px;
+  --v3-docs-w: 480px;       /* Plan: the Documents panel */
+  --v3-brief-w: 284px;      /* Design: the Brief panel */
+  --v3-side-chat-w: 392px;  /* Design and Deployment: the right column */
+  --v3-cc-fs: 13px;         /* Claude Code chat text */
+  --v3-cc-lh: 1.6;
+  --v3-spinner: var(--brand-coral); /* the turning star; the wordmark cursor's coral */
+
   /* Control heights */
   --h-pill-sm: 22px;  /* badges */
   --h-chip: 26px;     /* phase pills, segmented */
@@ -237,6 +250,7 @@
 /* Cherry light: the brand sheet's cream page. Ink text, cherry accent. */
 :root[data-theme='cherry-light'],
 [data-theme='cherry-light'] {
+  --v3-spinner: var(--accent); /* coral is too faint on cream */
   color-scheme: light;
 
   --bg: #f5eee4;

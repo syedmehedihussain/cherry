@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { StageSchema, type Stage } from '@cherry/shared';
+import { StageSchema, isWorkspaceStage, type Stage, type WorkspaceStage } from '@cherry/shared';
 
 const KEY = 'cherry.stages';
 
@@ -35,6 +35,12 @@ export const useStages = create<{
     }),
 }));
 
-/** The project's open stage; Development until the user picks another. */
-export const useStage = (projectId: string): Stage =>
-  useStages((s) => s.stages[projectId] ?? 'development');
+/**
+ * The project's open stage; Development until the user picks another. A tab kept from before
+ * V3 (Preparation, Issues) opens as the stage that took its place (ADR-0045).
+ */
+export const toWorkspaceStage = (s: Stage | undefined): WorkspaceStage =>
+  !s ? 'development' : isWorkspaceStage(s) ? s : s === 'issues' ? 'plan' : 'development';
+
+export const useStage = (projectId: string): WorkspaceStage =>
+  useStages((s) => toWorkspaceStage(s.stages[projectId]));
