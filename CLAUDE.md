@@ -5,9 +5,13 @@ projects in `~/Projects`. A CLI starts a daemon on `127.0.0.1`; a React UI talks
 
 ## Read first
 
-- `_project/STATUS.md` — where we left off and what is next. Always read this first.
+- `_project/STATUS.md` — where we left off and what is next. Always read this first (it is not
+  in git; on a fresh clone use `docs/v3-progress.md`).
 - `docs/roadmap.md` — the milestone being built and its **Done when** list.
 - `docs/README.md` — map of the docs. Open other docs **only when the task needs them**.
+- **Version 3:** when the user says "start work of version 3" (or "continue version 3"),
+  follow `docs/v3-start.md`. It says what to read, how to work task by task without stopping,
+  and what you may decide alone.
 
 ## Repo layout
 

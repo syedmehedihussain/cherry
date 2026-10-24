@@ -289,7 +289,8 @@ tested and deployed app from the cockpit, and no stage shows a panel the user di
    cockpit, and the first run tells the user to give the extension permanent access to
    localhost so it stops asking.
 
-## Still open
+## Decided for the build
 
-5. **Fonts in Design.** A Google Fonts picker loads fonts from Google (data off the machine).
-   Allow it, or only fonts installed on this computer? Decide at r8.
+5. **Fonts in Design.** Decided for the V3 build: only fonts installed on the computer and the
+   self-hosted Geist fonts; no Google Fonts, because it sends data off the machine. The user
+   can change this later (r8 ADR).

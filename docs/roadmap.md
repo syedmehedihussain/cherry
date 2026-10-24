@@ -126,7 +126,7 @@ feels like a Claude chat that writes documents, Design like Claude Design, Devel
 VS Code with Claude Code, Deployment like a cockpit. The plan is in
 [`v3-redesign.md`](v3-redesign.md).
 
-- [ ] r0 Artboards for the shell and the four stages in `docs/design/screens/v3/`, approved;
+- [x] r0 Artboards for the shell and the four stages in `docs/design/screens/v3/`, approved;
       ADR-0045 accepted (2026-10-25).
 - [ ] r1 Shell: four stage tabs (Preparation and Issues removed), minimal top bar, right rail (closed by default), status bar,
       command palette.

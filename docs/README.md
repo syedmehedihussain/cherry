@@ -10,6 +10,8 @@ Read this page, then open only what your task needs.
 | [`screens.md`](screens.md) | What does each screen do, which design artboard shows it, what are its states? |
 | [`roadmap.md`](roadmap.md) | In what order do we build, and when is each milestone done? |
 | [`v3-redesign.md`](v3-redesign.md) | The V3 redesign: four stages, each with its own layout, and the Claude Code look. |
+| [`v3-start.md`](v3-start.md) | How Claude works through V3 on its own ("start work of version 3"). |
+| [`v3-progress.md`](v3-progress.md) | What V3 work is done, what needs the user, decisions to review. |
 
 ## Engineering
 
