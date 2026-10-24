@@ -1,4 +1,4 @@
-import type { GitResult, PullRequestList } from '@cherry/shared';
+import { isAllowedStatus, type GitResult, type PullRequestList } from '@cherry/shared';
 import type { ConfigStore } from '../config.ts';
 import type { EventHub } from '../events.ts';
 import { run } from '../exec.ts';
@@ -161,7 +161,7 @@ export class GitActions {
       [],
     );
     void done.then(async (answer) => {
-      if (answer.status !== 'allowed' && answer.status !== 'allowed_session') {
+      if (!isAllowedStatus(answer.status)) {
         this.hub.publish(`project:${id}`, 'git.result', {
           projectId: id,
           action: 'push',

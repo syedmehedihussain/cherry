@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { Approval, ApprovalAnswer } from '@cherry/shared';
+import type { AllowRule, Approval, ApprovalAnswer } from '@cherry/shared';
 import type { Db } from '../db.ts';
 import type { EventHub } from '../events.ts';
 import { notFound, conflict } from '../http.ts';
@@ -32,6 +32,29 @@ export class ApprovalBroker {
   isAllowedBySession(sessionKey: string, ruleKeys: string[]): boolean {
     const set = this.rules.get(sessionKey);
     return !!set && ruleKeys.length > 0 && ruleKeys.every((k) => set.has(k));
+  }
+
+  /** Every rule is covered by the project's "Always allow here" list (ADR-0043). */
+  isAllowedForProject(projectId: string, ruleKeys: string[]): boolean {
+    if (!ruleKeys.length) return false;
+    const has = this.db.prepare('SELECT 1 FROM allow_rules WHERE project_id = ? AND rule = ?');
+    return ruleKeys.every((k) => has.get(projectId, k));
+  }
+
+  allowRules(): AllowRule[] {
+    return (
+      this.db
+        .prepare(
+          'SELECT project_id, rule, created_at FROM allow_rules ORDER BY project_id, created_at DESC',
+        )
+        .all() as { project_id: string; rule: string; created_at: number }[]
+    ).map((r) => ({ projectId: r.project_id, rule: r.rule, createdAt: r.created_at }));
+  }
+
+  removeAllowRule(projectId: string, rule: string): void {
+    this.db
+      .prepare('DELETE FROM allow_rules WHERE project_id = ? AND rule = ?')
+      .run(projectId, rule);
   }
 
   clearSession(sessionKey: string): void {
@@ -69,7 +92,13 @@ export class ApprovalBroker {
       this.pending.set(approval.id, {
         approval,
         resolve: (a) => {
-          if (a.status === 'allowed_session') {
+          if (a.status === 'allowed_always') {
+            const add = this.db.prepare(
+              'INSERT OR IGNORE INTO allow_rules (project_id, rule, created_at) VALUES (?, ?, ?)',
+            );
+            ruleKeys.forEach((k) => add.run(a.projectId, k, Date.now()));
+          }
+          if (a.status === 'allowed_session' || a.status === 'allowed_always') {
             const set = this.rules.get(sessionKey) ?? new Set<string>();
             ruleKeys.forEach((k) => set.add(k));
             this.rules.set(sessionKey, set);
@@ -92,12 +121,16 @@ export class ApprovalBroker {
       if (!row) throw notFound(`No approval ${id}`);
       throw conflict(`This approval was already ${row.status}.`);
     }
+    if (answer.answer === 'allow_always' && !p.approval.remember)
+      throw conflict('This request cannot be allowed for good. Allow it once instead.');
     const status =
       answer.answer === 'allow'
         ? 'allowed'
         : answer.answer === 'allow_session'
           ? 'allowed_session'
-          : 'denied';
+          : answer.answer === 'allow_always'
+            ? 'allowed_always'
+            : 'denied';
     return this.finish(p, status, answer.reason?.trim() || null);
   }
 

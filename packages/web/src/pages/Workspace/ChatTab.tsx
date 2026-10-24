@@ -609,6 +609,13 @@ function useSlashCommands({
       },
     },
     {
+      name: 'permissions',
+      description: 'See and remove what you chose to Always allow',
+      group: 'Cherry',
+      instant: true,
+      run: () => void navigate('/settings/permissions'),
+    },
+    {
       name: 'status',
       description: 'Open the status report',
       group: 'Cherry',

@@ -178,3 +178,29 @@ test('chat: History and /resume open an earlier chat', async ({ page }) => {
   await page.keyboard.press('Escape');
   await expect(menu).toBeHidden();
 });
+
+// V2.1 w7.7, ADR-0043: Always allow here is kept for the project; Settings removes it.
+test('chat: Always allow here skips the card next time, Settings removes it', async ({ page }) => {
+  await page.goto('/p/core');
+  const box = page.getByLabel('Message Claude');
+  await box.fill('Run the unit tests');
+  await box.press('Enter');
+  const card = page.getByRole('group', { name: 'Claude wants to run a command' });
+  await card.getByRole('button', { name: 'Always allow here' }).click();
+  await expect(page.getByText('Always allowed here')).toBeVisible();
+  await expect(page.getByText('The unit tests pass.')).toBeVisible();
+
+  await page.getByRole('button', { name: 'New chat' }).click();
+  await box.fill('Run the unit tests');
+  await box.press('Enter');
+  await expect(page.getByText('The unit tests pass.')).toBeVisible();
+  await expect(card).toBeHidden();
+
+  await box.fill('/permissions');
+  await box.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Permissions' })).toBeVisible();
+  const core = page.getByRole('region', { name: 'core' });
+  await expect(core).toContainText('pnpm vitest run');
+  await core.getByRole('button', { name: 'Remove pnpm vitest run' }).click();
+  await expect(page.getByText('Nothing yet.')).toBeVisible();
+});

@@ -87,6 +87,8 @@ folder (see `security.md`).
 | GET | `/api/projects/:id/commands` | `{ commands: [{ name, description }] }` from `.claude/commands/*.md`; a chat message `/name args` is expanded for Claude (`$ARGUMENTS`) and kept as typed in the chat |
 | POST | `/api/projects/:id/chat/explain?stage=` | `{ turnId }` → `{ text }`: Haiku summary of what that turn changed (diff capped at 6 KB, no tools). Only on the user's click; cached per turn (ADR-0022) |
 | POST | `/api/projects/:id/chat/new?stage=` | starts a fresh session for that stage only |
+| GET | `/api/allow-rules` | `{ rules: [{ projectId, rule, createdAt }] }`: "Always allow here" rules, `run:<command>` or `tool:<name>` (ADR-0043) |
+| DELETE | `/api/allow-rules` | `{ projectId, rule }` → removes one rule; that command asks again |
 | GET | `/api/projects/:id/chat/history?stage=` | `{ sessions: [{ id, title, model, startedAt, endedAt, current }] }`, the stage's chats, newest first (V2.1 w7.6) |
 | POST | `/api/projects/:id/chat/resume?stage=` | `{ conversationId }` → ends the open chat and opens that one again; Claude continues its session, like the CLI's `/resume`. 409 while Claude works, 404 for a chat of another stage |
 | POST | `/api/decisions/:cardId` | `{ optionId? , custom? }` answer a decision card |

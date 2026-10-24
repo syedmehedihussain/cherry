@@ -54,10 +54,14 @@ export const ApprovalStatusSchema = z.enum([
   'pending',
   'allowed',
   'allowed_session',
+  /** "Always allow here": kept for the project (ADR-0043). */
+  'allowed_always',
   'denied',
   'cancelled',
 ]);
 export type ApprovalStatus = z.infer<typeof ApprovalStatusSchema>;
+export const isAllowedStatus = (s: ApprovalStatus) =>
+  s === 'allowed' || s === 'allowed_session' || s === 'allowed_always';
 
 export const ApprovalFileSchema = z.object({
   path: z.string(),
@@ -86,11 +90,22 @@ export const ApprovalSchema = z.object({
   reason: z.string().nullable(),
   createdAt: z.number(),
   answeredAt: z.number().nullable(),
+  /** The card may offer "Always allow here" (ADR-0043). */
+  remember: z.boolean().optional(),
 });
 export type Approval = z.infer<typeof ApprovalSchema>;
 
+/** A remembered "Always allow here" rule (ADR-0043). */
+export const AllowRuleSchema = z.object({
+  projectId: z.string(),
+  /** run:<command> or tool:<name>. */
+  rule: z.string(),
+  createdAt: z.number(),
+});
+export type AllowRule = z.infer<typeof AllowRuleSchema>;
+
 export const ApprovalAnswerSchema = z.object({
-  answer: z.enum(['allow', 'allow_session', 'deny']),
+  answer: z.enum(['allow', 'allow_session', 'allow_always', 'deny']),
   reason: z.string().max(1000).optional(),
 });
 export type ApprovalAnswer = z.infer<typeof ApprovalAnswerSchema>;

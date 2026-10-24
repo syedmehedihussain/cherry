@@ -5,6 +5,7 @@ import {
   IssueSeveritySchema,
   IssueStatusSchema,
   IssueTypeSchema,
+  isAllowedStatus,
   type GithubIssue,
   type Issue,
   type IssueInput,
@@ -279,7 +280,7 @@ export class IssueService {
       [],
     );
     void done.then(async (answer) => {
-      if (answer.status !== 'allowed' && answer.status !== 'allowed_session') return;
+      if (!isAllowedStatus(answer.status)) return;
       writeFileSync(bodyFile, issue.body || issue.title);
       const r = await run('gh', args, { cwd: dir, timeoutMs: 30_000 }).finally(() =>
         rmSync(bodyFile, { force: true }),

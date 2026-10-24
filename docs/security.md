@@ -60,7 +60,13 @@ never run them: they skip them and list them under Needs you.
 Always need approval (Ask mode, the default): every other Bash call, every Edit/Write in a chat
 session, every push.
 
-Auto-allowed: read-only tools listed in `claude-runner.md` for each session kind.
+Auto-allowed: read-only tools listed in `claude-runner.md` for each session kind, and starting a
+subagent (Task / Agent, ADR-0042); the subagent's own edits and commands still ask.
+
+"Always allow here" (ADR-0043): a command card may remember the exact command for the project
+(SQLite `allow_rules`, Settings → Permissions removes it). It is never offered for edits, serious
+commands, or the commands Auto mode still asks for (push, publish, deploy, destructive git), and
+the daemon refuses `allow_always` on a card that does not offer it.
 
 ### Auto mode (ADR-0025)
 

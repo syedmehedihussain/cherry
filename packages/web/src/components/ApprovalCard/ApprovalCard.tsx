@@ -1,6 +1,6 @@
 import { Check, ChevronRight, ShieldAlert, TriangleAlert, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
-import { relativeTime, type Approval, type ApprovalFile } from '@cherry/shared';
+import { isAllowedStatus, relativeTime, type Approval, type ApprovalFile } from '@cherry/shared';
 import { tildify } from '../../lib/paths.ts';
 import { Pill } from '../Pill/Pill.tsx';
 import styles from './ApprovalCard.module.css';
@@ -10,7 +10,10 @@ const PREVIEW_LINES = 12;
 interface ApprovalCardProps {
   approval: Approval;
   now: number;
-  onAnswer(answer: 'allow' | 'allow_session' | 'deny', reason?: string): Promise<void>;
+  onAnswer(
+    answer: 'allow' | 'allow_session' | 'allow_always' | 'deny',
+    reason?: string,
+  ): Promise<void>;
   /** Focus the card when it appears (the card, never Allow, so a stray Enter cannot approve). */
   autoFocus?: boolean;
   /** Narrow columns (the GitHub box): no status pill, no "Runs in" note. */
@@ -32,7 +35,7 @@ export function ApprovalCard({ approval, now, onAnswer, autoFocus, compact }: Ap
 
   if (approval.status !== 'pending') return <AnsweredLine approval={approval} now={now} />;
 
-  const answer = async (a: 'allow' | 'allow_session' | 'deny', r?: string) => {
+  const answer = async (a: 'allow' | 'allow_session' | 'allow_always' | 'deny', r?: string) => {
     setBusy(true);
     try {
       await onAnswer(a, r);
@@ -143,6 +146,17 @@ export function ApprovalCard({ approval, now, onAnswer, autoFocus, compact }: Ap
                 Allow for this session
               </button>
             )}
+            {approval.remember && !compact && (
+              <button
+                type="button"
+                className="btn btn-secondary btn-md"
+                disabled={busy}
+                title="Remember this for the project; Settings → Permissions lists and removes it"
+                onClick={() => void answer('allow_always')}
+              >
+                Always allow here
+              </button>
+            )}
             <span className={styles.spacer} />
             {!compact && (
               <span className={styles.runs}>
@@ -217,7 +231,7 @@ export function FileDiff({ file, defaultOpen }: { file: ApprovalFile; defaultOpe
 }
 
 function AnsweredLine({ approval, now }: { approval: Approval; now: number }) {
-  const allowed = approval.status === 'allowed' || approval.status === 'allowed_session';
+  const allowed = isAllowedStatus(approval.status);
   const what =
     approval.kind === 'command' || approval.kind === 'push' ? (
       <>
@@ -231,7 +245,9 @@ function AnsweredLine({ approval, now }: { approval: Approval; now: number }) {
   const label = allowed
     ? approval.status === 'allowed_session'
       ? 'Allowed for session'
-      : 'Allowed'
+      : approval.status === 'allowed_always'
+        ? 'Always allowed here'
+        : 'Allowed'
     : approval.status === 'cancelled'
       ? 'Cancelled'
       : 'Denied';

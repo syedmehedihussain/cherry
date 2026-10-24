@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { create } from 'zustand';
 import {
+  AllowRuleSchema,
   ApprovalSchema,
   ChatSessionSchema,
   ChatStateSchema,
@@ -87,6 +88,19 @@ export const stopChat = (id: string, stage: Stage) =>
 export const newChat = async (id: string, stage: Stage) => {
   await api('POST', `${base(id)}/chat/new${q(stage)}`);
   await queryClient.invalidateQueries({ queryKey: chatKey(id, stage) });
+};
+/** "Always allow here" rules of every project (ADR-0043). */
+export const useAllowRules = () =>
+  useQuery({
+    queryKey: ['allow-rules'],
+    queryFn: () =>
+      api('GET', '/api/allow-rules', undefined, z.object({ rules: z.array(AllowRuleSchema) })).then(
+        (r) => r.rules,
+      ),
+  });
+export const removeAllowRule = async (projectId: string, rule: string) => {
+  await api('DELETE', '/api/allow-rules', { projectId, rule });
+  await queryClient.invalidateQueries({ queryKey: ['allow-rules'] });
 };
 /** The stage's chats, newest first (V2.1 w7.6). */
 export const useChatHistory = (id: string, stage: Stage, enabled: boolean) =>

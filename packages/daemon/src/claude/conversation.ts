@@ -3,6 +3,7 @@ import {
   DecisionCardInputSchema,
   chromeTool,
   classifyChrome,
+  isAllowedStatus,
   isSubagent,
   type Approval,
   type ChatItem,
@@ -383,6 +384,8 @@ export class Conversation {
 
     let draft: ApprovalDraft;
     let ruleKeys: string[];
+    // The card may offer "Always allow here" (ADR-0043); never for edits.
+    let remember = false;
     // Auto mode: what got past the deny rules below runs, except what autoNeedsApproval names.
     let autoOk = this.auto;
     const base = { projectId: this.o.projectId, source: this.o.source, tool, cwd: this.o.cwd };
@@ -428,6 +431,8 @@ export class Conversation {
       ruleKeys = verdict.serious ? [] : [`run:${command}`];
       if (verdict.serious) autoOk = false;
       if (autoNeedsApproval(command)) autoOk = false;
+      // Never remembered for good: serious commands and the ones that always ask (ADR-0043).
+      remember = !verdict.serious && !autoNeedsApproval(command) && command.trim() !== '';
     } else {
       draft = {
         ...base,
@@ -438,17 +443,24 @@ export class Conversation {
         detail: JSON.stringify(input, null, 2).slice(0, 4000),
       };
       ruleKeys = [`tool:${tool}`];
+      remember = true;
     }
 
     if (autoOk) return { allow: true };
     if (this.o.approvals.isAllowedBySession(this.o.source, ruleKeys)) return { allow: true };
+    if (remember && this.o.approvals.isAllowedForProject(this.o.projectId, ruleKeys))
+      return { allow: true };
 
-    const { approval, done } = this.o.approvals.request(draft, this.o.source, ruleKeys);
+    const { approval, done } = this.o.approvals.request(
+      { ...draft, remember },
+      this.o.source,
+      ruleKeys,
+    );
     this.setTool(toolUseId, { status: 'waiting', approvalId: approval.id });
     this.putApproval(approval);
     const answered = await done;
     this.putApproval(answered);
-    if (answered.status === 'allowed' || answered.status === 'allowed_session') {
+    if (isAllowedStatus(answered.status)) {
       this.setTool(toolUseId, { status: 'running', at: Date.now() });
       return { allow: true };
     }

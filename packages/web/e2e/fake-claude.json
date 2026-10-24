@@ -1,5 +1,22 @@
 [
   {
+    "match": "^Run the unit tests",
+    "steps": [
+      {
+        "tool": {
+          "name": "Bash",
+          "input": {
+            "command": "pnpm vitest run"
+          }
+        },
+        "output": "Tests 3 passed"
+      },
+      {
+        "text": "The unit tests pass."
+      }
+    ]
+  },
+  {
     "match": "^Look around with an explorer",
     "steps": [
       {

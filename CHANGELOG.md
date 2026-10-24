@@ -6,6 +6,9 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **Always allow here** (ADR-0043) on a command card remembers that exact command for the
+  project, so it runs without asking in later chats too. Never offered for edits, serious
+  commands, push or publish. **Settings → Permissions** (or `/permissions`) lists and removes them.
 - **Chat history** per stage: **History** next to New chat (or `/resume`) lists the stage's
   earlier chats; a click opens one again and Claude continues that session with its memory.
 - **Subagents** (ADR-0042) start without an approval card, like the CLI; their edits and

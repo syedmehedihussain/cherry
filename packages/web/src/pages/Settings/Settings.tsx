@@ -1,7 +1,14 @@
 import { ArrowLeft, ArrowUpRight, Check, Code2, Globe, Mail } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
-import { MAGNET_FILES, relativeTime, type MagnetFileName, type Usage } from '@cherry/shared';
+import {
+  MAGNET_FILES,
+  relativeTime,
+  type AllowRule,
+  type MagnetFileName,
+  type Usage,
+} from '@cherry/shared';
+import { removeAllowRule, useAllowRules } from '../../api/chat.ts';
 import { ApiFailure } from '../../api/client.ts';
 import { patchConfig, saveMagnetFile, useMagnetInfo } from '../../api/magnet.ts';
 import { recheckHealth, useConfig, useHealth } from '../../api/queries.ts';
@@ -42,6 +49,7 @@ const GROUPS: { title: string | null; items: [string, string][] }[] = [
     title: 'Assistant',
     items: [
       ['agents', 'Stage agents'],
+      ['permissions', 'Permissions'],
       ['magnet', 'Magnet'],
     ],
   },
@@ -99,6 +107,8 @@ export function Settings() {
           <div className={styles.content}>
             {section === 'agents' ? (
               <AgentsSection />
+            ) : section === 'permissions' ? (
+              <PermissionsSection />
             ) : section === 'magnet' ? (
               <MagnetSection />
             ) : section === 'folder' ? (
@@ -120,6 +130,67 @@ export function Settings() {
         </main>
       </div>
     </div>
+  );
+}
+
+/** "Always allow here" rules per project (ADR-0043), like the CLI's /permissions. */
+function PermissionsSection() {
+  const rules = useAllowRules();
+  const now = useNow();
+  const [error, setError] = useState<string | null>(null);
+  const byProject = new Map<string, AllowRule[]>();
+  for (const r of rules.data ?? [])
+    byProject.set(r.projectId, [...(byProject.get(r.projectId) ?? []), r]);
+  return (
+    <section className={styles.section}>
+      <h1>Permissions</h1>
+      <p className={styles.lead}>
+        What you chose to <strong>Always allow here</strong> on an approval card. These commands and
+        tools run in that project without asking. Serious commands, pushing, publishing and edits
+        always ask.
+      </p>
+      {error && (
+        <p className={styles.error} role="alert">
+          {error}
+        </p>
+      )}
+      {rules.isSuccess && byProject.size === 0 && (
+        <p className={styles.muted}>
+          Nothing yet. Every command asks until you pick Always allow here.
+        </p>
+      )}
+      {[...byProject].map(([projectId, list]) => (
+        <section key={projectId} className={styles.block} aria-label={projectId}>
+          <h2>{projectId}</h2>
+          <ul className={styles.rules}>
+            {list.map((r) => (
+              <li key={r.rule}>
+                <span className={styles.ruleKind}>
+                  {r.rule.startsWith('run:') ? 'Command' : 'Tool'}
+                </span>
+                <span className="mono">{r.rule.replace(/^(run|tool):/, '')}</span>
+                <span className={styles.muted}>{relativeTime(r.createdAt, now)}</span>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  aria-label={`Remove ${r.rule.replace(/^(run|tool):/, '')}`}
+                  onClick={async () => {
+                    setError(null);
+                    try {
+                      await removeAllowRule(r.projectId, r.rule);
+                    } catch (e) {
+                      setError(e instanceof ApiFailure ? e.message : 'Could not remove it.');
+                    }
+                  }}
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </section>
   );
 }
 

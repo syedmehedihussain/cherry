@@ -122,11 +122,27 @@ export function chatRoutes(
       return decisions.answer(cardId, DecisionAnswerSchema.parse(req.body));
     });
 
+    app.get('/api/allow-rules', async () => ({ rules: approvals.allowRules() }));
+    app.delete('/api/allow-rules', async (req) => {
+      const { projectId, rule } = z
+        .object({ projectId: z.string().min(1).max(200), rule: z.string().min(1).max(10_000) })
+        .parse(req.body);
+      approvals.removeAllowRule(projectId, rule);
+      return { ok: true };
+    });
+
     app.get('/api/approvals', async (req) => {
       const { status } = z
         .object({
           status: z
-            .enum(['pending', 'allowed', 'allowed_session', 'denied', 'cancelled'])
+            .enum([
+              'pending',
+              'allowed',
+              'allowed_session',
+              'allowed_always',
+              'denied',
+              'cancelled',
+            ])
             .optional(),
         })
         .parse(req.query);

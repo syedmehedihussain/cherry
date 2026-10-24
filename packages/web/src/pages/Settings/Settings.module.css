@@ -509,3 +509,34 @@
   border-radius: var(--r-pill);
   font-size: var(--fs-xs);
 }
+
+/* Permissions (ADR-0043): one row per remembered rule. */
+.rules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rules li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 0 4px;
+  border-bottom: 1px solid var(--b);
+}
+.rules li .mono {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ruleKind {
+  flex: none;
+  width: 70px;
+  color: var(--t3);
+  font-size: var(--fs-sm);
+}

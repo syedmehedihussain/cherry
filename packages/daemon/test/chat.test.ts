@@ -219,6 +219,63 @@ describe('chat', () => {
     expect(d.approvals.list().filter((a) => a.kind === 'command')).toHaveLength(1);
   });
 
+  // ADR-0043: "Always allow here" is kept for the project, across chats, until removed.
+  it('remembers Always allow here for the project until it is removed', async () => {
+    script = [{ tool: { name: 'Bash', input: { command: 'npm test' } } }];
+    await api('POST', '/api/projects/core/chat', { text: 'test' });
+    await until(() => pending().length === 1);
+    expect(pending()[0]).toMatchObject({ kind: 'command', remember: true });
+    await api('POST', `/api/approvals/${pending()[0]!.id}`, { answer: 'allow_always' });
+    await idle();
+    expect((await api('GET', '/api/allow-rules')).body.rules).toEqual([
+      { projectId: 'core', rule: 'run:npm test', createdAt: expect.any(Number) },
+    ]);
+
+    // A new chat runs it without a card.
+    await api('POST', '/api/projects/core/chat/new');
+    await api('POST', '/api/projects/core/chat', { text: 'test again' });
+    await idle();
+    expect(d.approvals.list().filter((a) => a.kind === 'command')).toHaveLength(1);
+    expect(log.permissions.map((p) => p.allowed)).toEqual([true, true]);
+
+    // Removed: it asks again.
+    const del = await d.app.inject({
+      method: 'DELETE',
+      url: '/api/allow-rules',
+      headers: { host: HOST, cookie },
+      payload: { projectId: 'core', rule: 'run:npm test' },
+    });
+    expect(del.statusCode).toBe(200);
+    await api('POST', '/api/projects/core/chat', { text: 'and again' });
+    await until(() => pending().length === 1);
+    await api('POST', `/api/approvals/${pending()[0]!.id}`, { answer: 'deny' });
+    await idle();
+  });
+
+  it('never offers Always allow here for serious commands, pushes or edits', async () => {
+    script = [
+      { tool: { name: 'Bash', input: { command: 'sudo ls' } } },
+      { tool: { name: 'Bash', input: { command: 'git push origin main' } } },
+      {
+        tool: {
+          name: 'Edit',
+          input: { file_path: 'lib/streaks.ts', old_string: '1', new_string: '2' },
+        },
+      },
+    ];
+    await api('POST', '/api/projects/core/chat', { text: 'risky' });
+    for (let n = 0; n < 3; n++) {
+      await until(() => pending().length === 1);
+      const ap = pending()[0]!;
+      expect(ap.remember).toBe(false);
+      const r = await api('POST', `/api/approvals/${ap.id}`, { answer: 'allow_always' });
+      expect(r.status).toBe(409);
+      await api('POST', `/api/approvals/${ap.id}`, { answer: 'deny' });
+    }
+    await idle();
+    expect((await api('GET', '/api/allow-rules')).body.rules).toEqual([]);
+  });
+
   // Must-pass safety test 7 (ADR-0033): serious commands ask with a warning, every time.
   it('asks for serious commands with a warning, and every time', async () => {
     script = [
