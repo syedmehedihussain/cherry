@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="../../brand/icon-32.svg">
+<title>V3 — Deployment</title>
+<script src="theme.js"></script>
+<link rel="stylesheet" href="v3.css">
+<script src="shell.js"></script>
+<script src="icons.js"></script>
+<style>
+  .cockpit { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+  .cbar { height: 48px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid var(--b); }
+  .runstate { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 4px 0 10px; border-radius: var(--r-pill); background: var(--success-fill); color: var(--success); font-size: var(--fs-sm); font-weight: 500; }
+  .runstate .stop { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--s2); color: var(--t1); }
+  .url { flex: 1 1 0; max-width: 460px; display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 6px 0 10px; border-radius: var(--r-md); border: 1px solid var(--b); background: var(--s1); font-family: var(--mono); font-size: var(--fs-sm); color: var(--t2); }
+  .url .ic { color: var(--t3); }
+  .preview { flex: 1 1 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
+  .phone { width: 318px; height: 676px; border-radius: 40px; padding: 10px; background: var(--s2); box-shadow: 0 0 0 1px var(--bs), 0 24px 60px rgba(0,0,0,.45); }
+  .phone .glass { width: 100%; height: 100%; border-radius: 31px; overflow: hidden; position: relative; }
+  .phone .screen { width: 375px; height: 812px; transform: scale(0.795); transform-origin: 0 0; }
+  .test-mark { position: absolute; border: 2px solid var(--danger); border-radius: 8px; z-index: 2; }
+  .test-tip { position: absolute; z-index: 2; padding: 4px 8px; border-radius: 6px; background: var(--danger); color: #fff; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .pfoot { height: 34px; flex: none; display: flex; align-items: center; gap: 14px; padding: 0 14px; border-top: 1px solid var(--b); font-family: var(--mono); font-size: 11px; color: var(--t3); }
+
+  .side { width: 392px; flex: none; display: flex; flex-direction: column; border-left: 1px solid var(--b); min-height: 0; }
+  .ready { padding: 16px 16px 14px; border-bottom: 1px solid var(--b); }
+  .ready .big { font-size: var(--fs-xl); font-weight: 600; color: var(--t1); letter-spacing: var(--tracking-tight); display: flex; align-items: center; gap: 8px; }
+  .ready .sub { margin: 4px 0 10px; color: var(--t2); font-size: var(--fs-sm); }
+  .ready .segs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; }
+  .ready .segs i { height: 4px; border-radius: 2px; background: var(--success); }
+  .ready .segs i.bad { background: var(--danger); }
+  .chk { display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: 10px; height: 30px; padding: 0 16px; color: var(--t1); font-size: var(--fs-base); }
+  .chk:hover { background: var(--neutral-fill); }
+  .chk .m { font-family: var(--mono); font-size: 11px; color: var(--t3); }
+  .chk .ic.ok { color: var(--success); }
+  .chk .ic.bad { color: var(--danger); }
+  .step { display: grid; grid-template-columns: 16px 1fr 44px; align-items: center; gap: 10px; min-height: 36px; padding: 3px 16px; font-size: var(--fs-sm2); color: var(--t2); }
+  .step .ic.ok { color: var(--success); }
+  .step .ic.bad { color: var(--danger); }
+  .step .shot { width: 44px; height: 28px; border-radius: 4px; border: 1px solid var(--b); background: #101114; overflow: hidden; position: relative; }
+  .step .shot::after { content: ''; position: absolute; left: 6px; right: 14px; top: 7px; height: 5px; border-radius: 2px; background: #ff5a36; opacity: .9; }
+  .step.fail { background: var(--danger-fill); color: var(--t1); }
+  .step .err { display: block; color: var(--danger-text); font-size: var(--fs-xs); font-family: var(--mono); margin-top: 1px; }
+  .fixrow { display: flex; gap: 6px; padding: 8px 16px 12px 42px; }
+  .deploy { margin-top: auto; padding: 14px 16px 16px; border-top: 1px solid var(--b); display: flex; flex-direction: column; gap: 10px; }
+  .kv { display: grid; grid-template-columns: 70px 1fr; row-gap: 6px; font-size: var(--fs-sm); }
+  .kv .k2 { color: var(--t3); }
+  .kv .v { color: var(--t1); display: flex; align-items: center; gap: 6px; }
+
+  /* runlog screen (the user's app) */
+  .rl { --rl-bg: #101114; --rl-s1: #1a1c21; --rl-t1: #f4f4f5; --rl-t2: #8a8f98; --rl-pri: #ff5a36; --rl-acc: #c6f432;
+        background: var(--rl-bg); color: var(--rl-t1); font-family: var(--sans); padding: 54px 22px 28px; display: flex; flex-direction: column; gap: 18px; }
+  .rl .bar { display: flex; justify-content: space-between; font-size: 15px; color: var(--rl-t2); }
+  .rl .big { font-family: var(--mono); font-size: 92px; font-weight: 600; letter-spacing: -0.04em; line-height: 0.95; }
+  .rl .big small { font-size: 28px; color: var(--rl-t2); letter-spacing: 0; margin-left: 6px; }
+  .rl .sub { font-size: 15px; color: var(--rl-t2); }
+  .rl .sub b { color: var(--rl-acc); font-weight: 600; }
+  .rl .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 14px; align-items: end; height: 120px; }
+  .rl .days i { display: block; border-radius: 4px; background: var(--rl-s1); }
+  .rl .days i.on { background: var(--rl-pri); }
+  .rl .card { background: var(--rl-s1); border-radius: 18px; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; }
+  .rl .card .rk { font-family: var(--mono); font-size: 22px; font-weight: 600; }
+  .rl .card .m { font-size: 13px; color: var(--rl-t2); }
+  .rl .empty { border: 1px dashed #2a2d33; border-radius: 18px; height: 132px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--rl-t2); }
+  .rl .cta { margin-top: auto; height: 64px; border-radius: 32px; background: var(--rl-pri); color: #fff; font-size: 19px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+<div class="ab">
+  <header data-shell="top" data-stage="deployment" data-progress="100,100,100,70"></header>
+
+  <div class="body">
+    <section class="cockpit" aria-label="Cockpit">
+      <div class="cbar">
+        <span class="runstate"><span class="dot live"></span>Running<span class="mono" style="font-weight:400;color:var(--t2)">pnpm dev</span><button class="stop" aria-label="Stop"><i data-i="square" data-s="10" data-w="2.5"></i></button></span>
+        <div class="url"><i data-i="globe" data-s="14"></i><span class="grow">http://127.0.0.1:5173/</span><button class="ibtn sm" aria-label="Reload"><i data-i="refresh-cw" data-s="13"></i></button><button class="ibtn sm" aria-label="Open in browser"><i data-i="external-link" data-s="13"></i></button></div>
+        <div class="seg">
+          <button class="on"><i data-i="smartphone" data-s="13"></i>Phone</button>
+          <button><i data-i="monitor" data-s="13"></i>Desktop</button>
+        </div>
+        <span class="grow"></span>
+        <button class="btn"><i data-i="flask-conical" data-s="14"></i>Test</button>
+        <button class="btn primary"><i data-i="rocket" data-s="14"></i>Deploy</button>
+      </div>
+
+      <div class="preview canvas" style="position:relative">
+        <div class="phone">
+          <div class="glass">
+            <div class="screen rl">
+              <div class="bar"><span>Week 43</span><span>Sun 25 Oct</span></div>
+              <div><div class="big">0.0<small>km</small></div><div class="sub" style="margin-top:8px">No runs this week yet</div></div>
+              <div class="days"><i style="height:8%"></i><i style="height:8%"></i><i style="height:8%"></i><i style="height:8%"></i><i style="height:8%"></i><i style="height:8%"></i><i style="height:8%"></i></div>
+              <div class="empty">Your runs show here</div>
+              <div class="cta">+ Log run</div>
+            </div>
+            <div class="test-mark" style="left:16px;top:68px;width:266px;height:108px"></div>
+            <span class="test-tip" style="left:16px;top:182px">Expected 5.2 km after reload</span>
+          </div>
+        </div>
+      </div>
+      <div class="pfoot"><span>375 × 812</span><span>2 requests · 0 errors in console</span><span class="grow"></span><span>HMR on</span></div>
+    </section>
+
+    <aside class="side" aria-label="Checks and deploy">
+      <div class="ready">
+        <div class="big">Almost ready</div>
+        <div class="sub">5 of 6 checks pass. One browser step failed.</div>
+        <div class="segs"><i></i><i></i><i></i><i></i><i></i><i class="bad"></i></div>
+      </div>
+
+      <div style="padding:8px 0;border-bottom:1px solid var(--b)">
+        <div class="lrow" style="min-height:26px"><span class="label">Checks</span><span class="grow"></span><button class="btn ghost sm"><i data-i="refresh-cw" data-s="12"></i>Run all</button></div>
+        <div class="chk"><i data-i="circle-check" data-s="15" class="ok"></i>Typecheck<span class="m">2.1s</span></div>
+        <div class="chk"><i data-i="circle-check" data-s="15" class="ok"></i>Lint<span class="m">1.4s</span></div>
+        <div class="chk"><i data-i="circle-check" data-s="15" class="ok"></i>Unit tests<span class="m">7 passed</span></div>
+        <div class="chk"><i data-i="circle-check" data-s="15" class="ok"></i>Build<span class="m">214 KB</span></div>
+        <div class="chk"><i data-i="circle-check" data-s="15" class="ok"></i>Audit<span class="m">0 high</span></div>
+        <div class="chk"><i data-i="circle-x" data-s="15" class="bad"></i>Browser test<span class="m">4 of 5</span></div>
+      </div>
+
+      <div style="padding:8px 0">
+        <div class="lrow" style="min-height:26px"><span class="label">Browser test</span><span class="t3" style="font-size:var(--fs-2xs)">Claude in Chrome</span><span class="grow"></span><button class="btn ghost sm">Full log</button></div>
+        <div class="step"><i data-i="circle-check" data-s="15" class="ok"></i>Home opens, week is empty<span class="shot"></span></div>
+        <div class="step"><i data-i="circle-check" data-s="15" class="ok"></i>Log a run: 5.2 km, 27:41<span class="shot"></span></div>
+        <div class="step"><i data-i="circle-check" data-s="15" class="ok"></i>Pace shows 5:19 /km<span class="shot"></span></div>
+        <div class="step"><i data-i="circle-check" data-s="15" class="ok"></i>Week view adds it up<span class="shot"></span></div>
+        <div class="step fail"><i data-i="circle-x" data-s="15" class="bad"></i><span>Run is still there after reload<span class="err">week shows 0.0 km</span></span><span class="shot"></span></div>
+        <div class="fixrow"><button class="btn sm"><i data-i="arrow-right" data-s="13"></i>Fix in Development</button><button class="btn ghost sm">Run again</button></div>
+      </div>
+
+      <div class="deploy">
+        <div class="row"><span class="label grow">Deploy</span><span class="tag">first deploy</span></div>
+        <div class="kv">
+          <span class="k2">Target</span><span class="v"><i data-i="globe" data-s="13" class="t3"></i>GitHub Pages</span>
+          <span class="k2">Repo</span><span class="v mono" style="font-size:12px">syedmehedihussain/runlog</span>
+          <span class="k2">Version</span><span class="v mono" style="font-size:12px">v0.1.0</span>
+        </div>
+      </div>
+    </aside>
+
+    <nav data-shell="rail"></nav>
+  </div>
+
+  <footer data-shell="status" data-ctx="12" data-changes="+0 -0" data-sync="↑3 ↓0" data-agent="Deployer" data-run="dev :5173"></footer>
+</div>
+</body>
+</html>

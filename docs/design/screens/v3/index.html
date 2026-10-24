@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="../../brand/icon-32.svg">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cherry V3 artboards</title>
+<script src="theme.js"></script>
+<link rel="stylesheet" href="v3.css">
+<script src="icons.js"></script>
+<style>
+  body { overflow: auto; }
+  .page { max-width: 1240px; margin: 0 auto; padding: 40px 24px 80px; }
+  .hero { display: flex; align-items: flex-end; gap: 24px; margin-bottom: 28px; }
+  .hero h1 { margin: 10px 0 6px; font-size: var(--fs-3xl); letter-spacing: var(--tracking-display); font-weight: 600; }
+  .hero p { margin: 0; color: var(--t2); font-size: var(--fs-lg); max-width: 640px; line-height: var(--lh-body); }
+  .themes { margin-left: auto; }
+  .new { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--b); border: 1px solid var(--b); border-radius: var(--r-xl); overflow: hidden; margin-bottom: 40px; }
+  .new div { background: var(--bg); padding: 14px 16px; }
+  .new b { display: block; color: var(--t1); font-weight: 500; margin-bottom: 3px; }
+  .new span { color: var(--t2); font-size: var(--fs-sm2); line-height: 1.5; }
+  .board { margin-bottom: 44px; }
+  .board-h { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+  .board-h h2 { margin: 0; font-size: var(--fs-xl); font-weight: 600; letter-spacing: var(--tracking-tight); }
+  .board-h .n { font-family: var(--mono); color: var(--t3); font-size: var(--fs-sm); }
+  .board-h a { margin-left: auto; font-size: var(--fs-sm); display: inline-flex; gap: 4px; align-items: center; }
+  .board p { margin: 0 0 12px; color: var(--t2); max-width: 820px; line-height: var(--lh-body); }
+  .frame { width: 100%; aspect-ratio: 1440 / 900; border: 1px solid var(--bs); border-radius: var(--r-xl); overflow: hidden; position: relative; background: var(--bg); }
+  .frame iframe { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; border: 0; transform-origin: 0 0; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="hero">
+    <div>
+      <i data-wordmark data-h="22"></i>
+      <h1>Version 3 artboards</h1>
+      <p>Roadmap task r0. Four stages, each its own kind of place, one Claude Code chat everywhere, and side views that stay closed until you open them. Colours are the same tokens as today; pick a theme to check each one.</p>
+    </div>
+    <div class="themes seg" role="radiogroup" aria-label="Theme">
+      <button data-t="just-black">Just black</button>
+      <button data-t="classic">Classic</button>
+      <button data-t="cherry-dark">Cherry dark</button>
+      <button data-t="cherry-light">Cherry light</button>
+    </div>
+  </div>
+
+  <div class="new">
+    <div><b>Top bar, 48 px</b><span>Four numbered stages with a progress line under each. A tick when a stage is done. Search and commands on the right.</span></div>
+    <div><b>Right rail</b><span>Overview, Live, GitHub and Chat as icons. Closed by default, a click opens one, Ctrl B hides it.</span></div>
+    <div><b>Status bar</b><span>Branch, changes, the running app, which agent, model, context and plan usage, in one quiet line.</span></div>
+    <div><b>Claude Code chat</b><span>Monospace, &gt; for you, ● for Claude, ⎿ for results, the turning star with a verb, prompts answered with 1 2 3.</span></div>
+    <div><b>Command palette</b><span>Ctrl K holds everything that left the screen: agents, scans, decisions, notes, history, push.</span></div>
+    <div><b>Fewer boxes</b><span>Hairlines and sections instead of cards inside cards. Cards only where a thing floats or needs you.</span></div>
+  </div>
+
+  <section class="board">
+    <div class="board-h"><span class="n">01</span><h2>Plan</h2><a href="01-plan.html" target="_blank">Open full size<i data-i="arrow-up-right" data-s="13"></i></a></div>
+    <p>A Claude chat that writes documents. The documents this project needs are listed on the right and ticked as they are written; one opens below to read or edit. Select text in a document to ask about it.</p>
+    <div class="frame"><iframe data-src="01-plan.html" title="Plan" loading="lazy"></iframe></div>
+  </section>
+
+  <section class="board">
+    <div class="board-h"><span class="n">02</span><h2>Design</h2><a href="02-design.html" target="_blank">Open full size<i data-i="arrow-up-right" data-s="13"></i></a></div>
+    <p>Like Claude Design. The brief on the left (references and where to find more, design system, components, images, colours, fonts), the screens on a canvas in the middle, the Designer on the right. Click an element to comment on it; the comment goes to the chat. Approve design writes the handoff.</p>
+    <div class="frame"><iframe data-src="02-design.html" title="Design" loading="lazy"></iframe></div>
+  </section>
+
+  <section class="board">
+    <div class="board-h"><span class="n">03</span><h2>Development</h2><a href="03-development.html" target="_blank">Open full size<i data-i="arrow-up-right" data-s="13"></i></a></div>
+    <p>VS Code with Claude Code in the middle. Explorer on the left, the Builder in the centre, the editor (Monaco) on the right with tabs and Claude's changes marked, a real terminal at the bottom.</p>
+    <div class="frame"><iframe data-src="03-development.html" title="Development" loading="lazy"></iframe></div>
+  </section>
+
+  <section class="board">
+    <div class="board-h"><span class="n">04</span><h2>Deployment</h2><a href="04-deployment.html" target="_blank">Open full size<i data-i="arrow-up-right" data-s="13"></i></a></div>
+    <p>The cockpit. The running app in the middle, checks on the right, and Test, where Claude in Chrome walks through the test plan and shows each step with a screenshot. A failed step marks the spot on the preview and offers Fix in Development. Deploy asks once.</p>
+    <div class="frame"><iframe data-src="04-deployment.html" title="Deployment" loading="lazy"></iframe></div>
+  </section>
+
+  <section class="board">
+    <div class="board-h"><span class="n">05</span><h2>Side view open, stage done</h2><a href="05-side-view-open.html" target="_blank">Open full size<i data-i="arrow-up-right" data-s="13"></i></a></div>
+    <p>Overview opened from the rail. When a stage reaches 100% the chat offers the next stage; it is a suggestion, every stage opens at any time.</p>
+    <div class="frame"><iframe data-src="05-side-view-open.html" title="Side view open" loading="lazy"></iframe></div>
+  </section>
+
+  <section class="board">
+    <div class="board-h"><span class="n">06</span><h2>Command palette</h2><a href="06-command-palette.html" target="_blank">Open full size<i data-i="arrow-up-right" data-s="13"></i></a></div>
+    <p>Ctrl K from anywhere. Views that are no longer on screen, actions, and files with &gt;.</p>
+    <div class="frame"><iframe data-src="06-command-palette.html" title="Command palette" loading="lazy"></iframe></div>
+  </section>
+
+  <section class="board">
+    <div class="board-h"><span class="n">07</span><h2>Permission prompt, Live open</h2><a href="07-permission-and-live.html" target="_blank">Open full size<i data-i="arrow-up-right" data-s="13"></i></a></div>
+    <p>A command that needs you asks inside the chat, the way the CLI does: 1 Yes, 2 Yes and don't ask again, 3 No (Esc). Live shows the Builder's steps and background agents.</p>
+    <div class="frame"><iframe data-src="07-permission-and-live.html" title="Permission and Live" loading="lazy"></iframe></div>
+  </section>
+</div>
+<script>
+  const theme = document.documentElement.getAttribute('data-theme');
+  document.querySelectorAll('.themes button').forEach((b) => {
+    b.classList.toggle('on', b.dataset.t === theme);
+    b.setAttribute('aria-checked', String(b.dataset.t === theme));
+    b.addEventListener('click', () => { location.search = '?theme=' + b.dataset.t; });
+  });
+  document.querySelectorAll('.frame iframe').forEach((f) => { f.src = f.dataset.src + '?theme=' + theme; });
+  document.querySelectorAll('.board-h a').forEach((a) => { a.href = a.getAttribute('href') + '?theme=' + theme; });
+  const fit = () => document.querySelectorAll('.frame').forEach((fr) => { fr.querySelector('iframe').style.transform = 'scale(' + fr.clientWidth / 1440 + ')'; });
+  addEventListener('resize', fit); fit();
+</script>
+</body>
+</html>

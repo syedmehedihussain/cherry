@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="../../brand/icon-32.svg">
+<title>V3 — Plan</title>
+<script src="theme.js"></script>
+<link rel="stylesheet" href="v3.css">
+<script src="shell.js"></script>
+<script src="icons.js"></script>
+<style>
+  .docs { width: 480px; flex: none; display: flex; flex-direction: column; border-left: 1px solid var(--b); min-height: 0; }
+  .docs-list { padding: 6px 0; border-bottom: 1px solid var(--b); }
+  .docs-list .lrow { min-height: 30px; }
+  .docs-list .lrow .ic.ok { color: var(--success); }
+  .docs-list .lrow .ic.todo { color: var(--t3); }
+  .docs-list .lrow.writing { color: var(--t1); }
+  .docs-list .lrow.writing .ic { color: var(--accent-text); animation: ap-spin 1.6s linear infinite; }
+  .reader-bar { height: 40px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 8px 0 16px; border-bottom: 1px solid var(--b); }
+  .reader { flex: 1 1 0; min-height: 0; overflow: hidden; padding: 20px 28px; position: relative; }
+  .ask-bubble { position: absolute; left: 236px; top: 222px; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: var(--r-md); border: 1px solid var(--bs); background: var(--s-float); box-shadow: 0 12px 32px rgba(0,0,0,.45); font-size: var(--fs-sm); color: var(--t1); font-weight: 500; }
+  .ask-bubble .kbd { margin-left: 4px; }
+  .cc-scroll { justify-content: flex-end; }
+</style>
+</head>
+<body>
+<div class="ab">
+  <header data-shell="top" data-stage="plan" data-progress="67,0,0,0"></header>
+
+  <div class="body">
+    <!-- Chat: the Planner, in the Claude Code look -->
+    <section class="cc-chat grow cc" aria-label="Plan chat">
+      <div class="cc-scroll">
+        <div class="cc-col">
+          <div class="cc-user">I want a small web app to log my runs: distance, time, how it felt, and a weekly view. Just for me, on my phone.</div>
+
+          <div class="cc-msg"><div>
+            <p>A personal run log, phone first. Three questions before I write anything:</p>
+            <ol>
+              <li>One person and data kept in the browser, or sign in?</li>
+              <li>Manual entry only, or import from Strava or a watch?</li>
+              <li>Pace in min/km or min/mi?</li>
+            </ol>
+          </div></div>
+
+          <div class="cc-user">No sign in, data stays on the phone. Manual for now, Strava later. min/km.</div>
+
+          <div class="cc-step">
+            <div class="cc-msg tool"><div><span class="cc-tool">Write</span><span class="cc-arg">(docs/prd.md)</span></div></div>
+            <div class="cc-res"><span>Wrote 142 lines to docs/prd.md</span></div>
+            <div class="cc-file"><i data-i="file-text" data-s="14"></i>PRD<span class="t3">docs/prd.md</span><span class="open">Open</span></div>
+          </div>
+
+          <div class="cc-step">
+            <div class="cc-msg tool"><div><span class="cc-tool">Write</span><span class="cc-arg">(docs/trd.md)</span></div></div>
+            <div class="cc-res"><span>Wrote 96 lines to docs/trd.md</span></div>
+            <div class="cc-file"><i data-i="file-text" data-s="14"></i>Technical requirements<span class="t3">docs/trd.md</span><span class="open">Open</span></div>
+          </div>
+
+          <div class="cc-fold">Wrote 4 more documents · architecture, data model, roadmap, CLAUDE.md · 2m 05s</div>
+
+          <div class="cc-msg"><div>
+            <p>Six of nine documents are done. Left: the API notes, the test plan and the ADRs.</p>
+            <p>One choice for the first ADR: keep runs in <code>IndexedDB</code> (room for years of runs, works offline) or <code>localStorage</code> (simpler, about 5 MB)? I suggest IndexedDB.</p>
+          </div></div>
+
+          <div class="cc-user">IndexedDB.</div>
+
+          <div class="cc-step">
+            <div class="cc-msg tool run"><div><span class="cc-tool">Write</span><span class="cc-arg">(docs/api.md)</span></div></div>
+          </div>
+          <div class="cc-spin"><span class="star">✻</span><span class="verb">Drafting…</span><span class="meta">(14s · ↓ 2.1k tokens · esc to interrupt)</span></div>
+        </div>
+      </div>
+
+      <div class="cc-input-wrap">
+        <div class="cc-col">
+          <div class="cc-input">
+            <span class="p">&gt;</span>
+            <span class="ph"><span class="caret"></span> Reply to the Planner</span>
+            <span class="tools"><button class="ibtn sm" aria-label="Attach"><i data-i="paperclip" data-s="14"></i></button></span>
+          </div>
+          <div class="cc-hint">
+            <span class="mode">⏵⏵ auto mode on <span class="t3">(shift+tab to cycle)</span></span>
+            <span class="r"><span>/ commands</span><span>@ files</span><span>? shortcuts</span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Documents: the plan's files, ticked as they are written; one open below -->
+    <aside class="docs" aria-label="Documents">
+      <div class="pane-head">
+        <span class="title">Documents</span>
+        <span class="t3 mono" style="font-size:var(--fs-2xs)">6 of 9</span>
+        <span class="grow"></span>
+        <button class="ibtn sm" aria-label="Collapse list"><i data-i="chevron-up" data-s="14"></i></button>
+      </div>
+      <div class="docs-list">
+        <div class="lrow sel"><i data-i="circle-check" data-s="15" class="ok"></i>PRD<span class="path">docs/prd.md</span></div>
+        <div class="lrow"><i data-i="circle-check" data-s="15" class="ok"></i>Technical requirements<span class="path">docs/trd.md</span></div>
+        <div class="lrow"><i data-i="circle-check" data-s="15" class="ok"></i>Architecture<span class="path">docs/architecture.md</span></div>
+        <div class="lrow"><i data-i="circle-check" data-s="15" class="ok"></i>Data model<span class="path">docs/data-model.md</span></div>
+        <div class="lrow"><i data-i="circle-check" data-s="15" class="ok"></i>Roadmap<span class="path">docs/roadmap.md</span></div>
+        <div class="lrow"><i data-i="circle-check" data-s="15" class="ok"></i>CLAUDE.md<span class="path">CLAUDE.md</span></div>
+        <div class="lrow writing"><i data-i="refresh-cw" data-s="15"></i>API<span class="path">writing…</span></div>
+        <div class="lrow"><i data-i="circle-dashed" data-s="15" class="todo"></i>Test plan<span class="path">docs/test-plan.md</span></div>
+        <div class="lrow"><i data-i="circle-dashed" data-s="15" class="todo"></i>Decisions (ADRs)<span class="path">docs/adr/</span></div>
+      </div>
+
+      <div class="reader-bar">
+        <i data-i="file-text" data-s="14" class="t3"></i>
+        <span class="mono t2" style="font-size:var(--fs-xs)">docs/prd.md</span>
+        <span class="grow"></span>
+        <button class="btn ghost sm"><i data-i="pencil" data-s="13"></i>Edit</button>
+        <button class="ibtn sm" aria-label="Copy path"><i data-i="copy" data-s="14"></i></button>
+        <button class="ibtn sm" aria-label="Open large"><i data-i="maximize" data-s="14"></i></button>
+      </div>
+      <div class="reader md">
+        <h1>runlog — PRD</h1>
+        <p class="t3" style="font-size:12.5px;margin-bottom:16px">Draft · written by the Planner · 2 min ago</p>
+        <h2>Problem</h2>
+        <p>I run three times a week and forget how each run went. Apps like Strava are made for sharing, not for a quick private note after a run.</p>
+        <h2>Goals</h2>
+        <ul>
+          <li>Log a run in <mark>under 15 seconds, one hand, on the phone</mark>.</li>
+          <li>See this week against last week: distance, time, pace.</li>
+          <li>Data stays on the phone. No account.</li>
+        </ul>
+        <h2>Not in v1</h2>
+        <ul>
+          <li>Strava and watch import (planned for v2).</li>
+          <li>Maps, routes, heart rate.</li>
+        </ul>
+        <h2>Users</h2>
+        <table>
+          <tr><th>Who</th><th>Needs</th></tr>
+          <tr><td>Me, after a run</td><td>Fast entry, big buttons</td></tr>
+          <tr><td>Me, on Sunday</td><td>Weekly totals, trend</td></tr>
+        </table>
+        <span class="ask-bubble"><i data-i="message-circle" data-s="13"></i>Ask about this<span class="kbd">Ctrl L</span></span>
+      </div>
+    </aside>
+
+    <nav data-shell="rail"></nav>
+  </div>
+
+  <footer data-shell="status" data-ctx="22" data-changes="+334 -0" data-sync="↑0 ↓0" data-agent="Planner"></footer>
+</div>
+</body>
+</html>

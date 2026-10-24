@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="../../brand/icon-32.svg">
+<title>V3 — Design</title>
+<script src="theme.js"></script>
+<link rel="stylesheet" href="v3.css">
+<script src="shell.js"></script>
+<script src="icons.js"></script>
+<style>
+  /* Brief panel */
+  .brief { width: 284px; flex: none; display: flex; flex-direction: column; border-right: 1px solid var(--b); min-height: 0; }
+  .brief-body { flex: 1 1 0; min-height: 0; overflow: hidden; }
+  .brief .section { padding: 12px 16px 14px; }
+  .brief .section-h { margin-bottom: 8px; }
+  .thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .thumb { aspect-ratio: 1 / 1; border-radius: var(--r-sm); border: 1px solid var(--b); overflow: hidden; position: relative; background: #111; }
+  .thumb.add { display: flex; align-items: center; justify-content: center; border-style: dashed; border-color: var(--bs); background: none; color: var(--t3); }
+  .linkrow { display: flex; align-items: center; gap: 6px; height: 26px; margin-top: 6px; font-size: var(--fs-xs); color: var(--t2); }
+  .linkrow .ic { color: var(--t3); }
+  .linkrow .u { font-family: var(--mono); font-size: 11px; color: var(--t2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .find { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 8px; font-size: var(--fs-xs); }
+  .find .t3 { width: 100%; }
+  .find a { display: inline-flex; align-items: center; gap: 3px; }
+  .attached { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 6px 0 8px; border-radius: var(--r-md); background: var(--s1); border: 1px solid var(--b); font-size: var(--fs-sm); }
+  .attached .ic { color: var(--t3); }
+  .drop { display: flex; align-items: center; gap: 8px; height: 30px; margin-top: 6px; padding: 0 8px; border-radius: var(--r-md); border: 1px dashed var(--bs); color: var(--t3); font-size: var(--fs-sm); }
+  .swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .sw { display: flex; flex-direction: column; gap: 4px; }
+  .sw .chip { height: 30px; border-radius: var(--r-sm); border: 1px solid var(--b); }
+  .sw.sel .chip { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .sw .nm { font-size: 10.5px; color: var(--t3); }
+  .sw .hx { font-family: var(--mono); font-size: 10px; color: var(--t2); }
+  .font-row { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 10px; height: 38px; }
+  .font-row .aa { font-size: 20px; color: var(--t1); line-height: 1; }
+  .font-row .fn { font-size: var(--fs-sm); color: var(--t1); }
+  .font-row .role { font-size: 10.5px; color: var(--t3); }
+
+  /* Canvas */
+  .canvas { flex: 1 1 0; min-width: 0; }
+  .boards { position: absolute; left: 24px; top: 168px; display: flex; gap: 22px; }
+  .board-label { display: flex; align-items: center; gap: 6px; height: 20px; margin-bottom: 6px; font-family: var(--mono); font-size: 11px; color: var(--t3); }
+  .board-label b { color: var(--t2); font-weight: 500; }
+  .board { width: 210px; height: 455px; border-radius: 18px; overflow: hidden; position: relative; box-shadow: 0 0 0 1px var(--bs); }
+  .board.sel { box-shadow: 0 0 0 2px var(--accent); }
+  .board .screen { width: 375px; height: 812px; transform: scale(0.56); transform-origin: 0 0; }
+  .canvas-actions { position: absolute; top: 12px; right: 12px; display: flex; gap: 6px; z-index: 3; }
+  .pin { position: absolute; width: 22px; height: 22px; border-radius: 11px 11px 11px 2px; background: var(--accent); color: var(--t-on-accent); font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px var(--bg); z-index: 4; }
+  .comment { position: absolute; width: 248px; padding: 10px 12px; z-index: 4; font-size: var(--fs-sm); color: var(--t1); }
+  .comment .who { display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); color: var(--t3); margin-bottom: 4px; }
+  .comment .sel-el { font-family: var(--mono); font-size: 10.5px; color: var(--accent-text); }
+  .zoomnote { position: absolute; left: 12px; bottom: 12px; font-family: var(--mono); font-size: 11px; color: var(--t3); display: flex; gap: 12px; }
+  .hover-box { position: absolute; border: 1px solid var(--accent); border-radius: 4px; pointer-events: none; z-index: 2; }
+
+  /* The runlog screens: the user's own design, so their own colours (not Cherry tokens). */
+  .rl { --rl-bg: #101114; --rl-s1: #1a1c21; --rl-t1: #f4f4f5; --rl-t2: #8a8f98; --rl-pri: #ff5a36; --rl-acc: #c6f432;
+        background: var(--rl-bg); color: var(--rl-t1); font-family: var(--sans); padding: 54px 22px 28px; display: flex; flex-direction: column; gap: 18px; }
+  .rl .bar { display: flex; justify-content: space-between; align-items: center; font-size: 15px; color: var(--rl-t2); }
+  .rl .big { font-family: var(--mono); font-size: 76px; font-weight: 600; letter-spacing: -0.04em; line-height: 0.95; }
+  .rl .big small { font-size: 26px; color: var(--rl-t2); letter-spacing: 0; margin-left: 6px; }
+  .rl .sub { font-size: 15px; color: var(--rl-t2); }
+  .rl .sub b { color: var(--rl-acc); font-weight: 600; }
+  .rl .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 120px; }
+  .rl .days i { display: block; border-radius: 6px; background: var(--rl-s1); }
+  .rl .days i.on { background: var(--rl-pri); }
+  .rl .dl { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; font-size: 12px; color: var(--rl-t2); margin-top: -10px; }
+  .rl .card { background: var(--rl-s1); border-radius: 18px; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; }
+  .rl .card .rk { font-family: var(--mono); font-size: 22px; font-weight: 600; }
+  .rl .card .m { font-size: 13px; color: var(--rl-t2); }
+  .rl .cta { margin-top: auto; height: 64px; border-radius: 32px; background: var(--rl-pri); color: #fff; font-size: 19px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+  .rl .field { display: flex; flex-direction: column; gap: 4px; padding: 14px 0; border-bottom: 1px solid #2a2d33; }
+  .rl .field .lab { font-size: 13px; color: var(--rl-t2); }
+  .rl .field .val { font-family: var(--mono); font-size: 44px; font-weight: 600; letter-spacing: -0.03em; }
+  .rl .field .val small { font-size: 20px; color: var(--rl-t2); margin-left: 6px; }
+  .rl .feel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .rl .feel span { height: 52px; border-radius: 14px; background: var(--rl-s1); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .rl .feel span.on { background: var(--rl-acc); color: #101114; font-weight: 600; }
+  .rl .wk { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; align-items: end; height: 220px; }
+  .rl .wk div { display: flex; gap: 3px; align-items: end; height: 100%; }
+  .rl .wk i { flex: 1; border-radius: 4px; background: #2a2d33; }
+  .rl .wk i.n { background: var(--rl-pri); }
+  .rl .legend { display: flex; gap: 16px; font-size: 13px; color: var(--rl-t2); }
+  .rl .legend span::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; background: var(--rl-pri); }
+  .rl .legend span.l::before { background: #2a2d33; }
+
+  /* Chat column */
+  .dchat { width: 392px; flex: none; border-left: 1px solid var(--b); }
+  .dchat .cc-scroll { padding: 16px 18px 8px; justify-content: flex-end; }
+  .dchat .cc-input-wrap { padding: 8px 18px 14px; }
+  .cc-comment { margin-left: 0; display: grid; grid-template-columns: 18px 1fr; padding: 6px 10px 6px 8px; border-radius: var(--r-sm); background: var(--neutral-fill); color: var(--t1); }
+  .cc-comment::before { content: '>'; color: var(--t3); }
+  .cc-comment .on { display: block; color: var(--accent-text); font-size: 11.5px; }
+</style>
+</head>
+<body>
+<div class="ab">
+  <header data-shell="top" data-stage="design" data-progress="100,45,0,0"></header>
+
+  <div class="body">
+    <!-- Brief: what the Designer works from -->
+    <aside class="brief" aria-label="Design brief">
+      <div class="pane-head"><span class="title">Brief</span><span class="grow"></span><button class="ibtn sm" aria-label="Add to brief"><i data-i="plus" data-s="15"></i></button></div>
+      <div class="brief-body">
+        <div class="section">
+          <div class="section-h"><span class="label">References</span><span class="t3 mono" style="font-size:11px">5</span></div>
+          <div class="thumbs">
+            <div class="thumb" style="background:linear-gradient(160deg,#16181d 0 55%,#ff5a36 55% 62%,#16181d 62%)"></div>
+            <div class="thumb" style="background:radial-gradient(circle at 50% 38%,#c6f432 0 18%,transparent 19%),#0d0e10"></div>
+            <div class="thumb" style="background:repeating-linear-gradient(90deg,#1d2026 0 10px,#0f1013 10px 14px),#0f1013"></div>
+            <div class="thumb" style="background:linear-gradient(#e8e4dc 0 40%,#111 40%)"></div>
+            <div class="thumb" style="background:conic-gradient(from 200deg at 50% 60%,#ff5a36,#1a1c21 40%,#1a1c21)"></div>
+            <div class="thumb add" aria-label="Add a reference"><i data-i="plus" data-s="16"></i></div>
+          </div>
+          <div class="linkrow"><i data-i="link" data-s="13"></i><span class="u">pinterest.com/pin/stopwatch-ui-dark</span></div>
+          <div class="find"><span class="t3">Find more</span><a href="#">Pinterest<i data-i="arrow-up-right" data-s="11"></i></a><a href="#">Dribbble<i data-i="arrow-up-right" data-s="11"></i></a><a href="#">Mobbin<i data-i="arrow-up-right" data-s="11"></i></a><a href="#">Godly<i data-i="arrow-up-right" data-s="11"></i></a></div>
+        </div>
+
+        <div class="section">
+          <div class="section-h"><span class="label">Design system</span></div>
+          <div class="attached"><i data-i="layers" data-s="14"></i><span class="grow">tokens.css</span><span class="t3 mono" style="font-size:10.5px">made by Claude</span><button class="ibtn sm" aria-label="Remove"><i data-i="x" data-s="13"></i></button></div>
+          <div class="row" style="gap:6px;margin-top:6px"><div class="drop" style="flex:1;margin:0"><i data-i="plus" data-s="13"></i>Design system</div><div class="drop" style="flex:1;margin:0"><i data-i="plus" data-s="13"></i>Components</div></div>
+        </div>
+
+        <div class="section">
+          <div class="section-h"><span class="label">Images</span><span class="t3 mono" style="font-size:11px">2</span></div>
+          <div class="row" style="gap:6px">
+            <div class="attached" style="flex:1"><i data-i="image" data-s="14"></i><span class="grow">logo.svg</span></div>
+            <div class="attached" style="flex:1"><i data-i="image" data-s="14"></i><span class="grow">trail.jpg</span></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-h"><span class="label">Colours</span><span class="tag ok">AA 4.9</span></div>
+          <div class="swatches">
+            <div class="sw sel"><div class="chip" style="background:#ff5a36"></div><span class="nm">Primary</span><span class="hx">FF5A36</span></div>
+            <div class="sw"><div class="chip" style="background:#c6f432"></div><span class="nm">Accent</span><span class="hx">C6F432</span></div>
+            <div class="sw"><div class="chip" style="background:#101114"></div><span class="nm">Surface</span><span class="hx">101114</span></div>
+            <div class="sw"><div class="chip" style="background:#f4f4f5"></div><span class="nm">Text</span><span class="hx">F4F4F5</span></div>
+            <div class="sw"><div class="chip" style="background:#8a8f98"></div><span class="nm">Muted</span><span class="hx">8A8F98</span></div>
+          </div>
+        </div>
+
+        <div class="section" style="border-bottom:0">
+          <div class="section-h"><span class="label">Fonts</span></div>
+          <div class="font-row"><span class="aa" style="font-weight:600">Aa</span><span><span class="fn">Geist</span><br><span class="role">Headings · 600</span></span><i data-i="chevron-down" data-s="14" class="t3"></i></div>
+          <div class="font-row"><span class="aa">Aa</span><span><span class="fn">Geist</span><br><span class="role">Body · 400</span></span><i data-i="chevron-down" data-s="14" class="t3"></i></div>
+          <div class="font-row"><span class="aa mono" style="font-weight:600">12</span><span><span class="fn">Geist Mono</span><br><span class="role">Numbers · 600</span></span><i data-i="chevron-down" data-s="14" class="t3"></i></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Canvas: every screen as an artboard -->
+    <section class="canvas" aria-label="Canvas">
+      <div class="canvas-bar">
+        <div class="seg">
+          <button class="on" aria-label="Select"><i data-i="mouse-pointer-2" data-s="14"></i></button>
+          <button aria-label="Pan"><i data-i="hand" data-s="14"></i></button>
+          <button aria-label="Comment"><i data-i="message-circle" data-s="14"></i></button>
+        </div>
+        <span class="sep" style="margin:4px 4px"></span>
+        <div class="seg">
+          <button class="on"><i data-i="smartphone" data-s="13"></i>Phone</button>
+          <button><i data-i="monitor" data-s="13"></i>Desktop</button>
+        </div>
+        <div class="seg">
+          <button class="on" aria-label="Dark"><i data-i="moon" data-s="13"></i></button>
+          <button aria-label="Light"><i data-i="sun" data-s="13"></i></button>
+        </div>
+        <span class="sep" style="margin:4px 4px"></span>
+        <button class="btn ghost sm mono" style="font-size:11px">56%</button>
+        <button class="ibtn sm" aria-label="Fit"><i data-i="maximize" data-s="13"></i></button>
+      </div>
+      <div class="canvas-actions">
+        <button class="btn sm"><i data-i="upload" data-s="13"></i>Export</button>
+        <button class="btn primary sm"><i data-i="check" data-s="13"></i>Approve design</button>
+      </div>
+
+      <div class="boards">
+        <div>
+          <div class="board-label"><b>Today</b>today.html</div>
+          <div class="board sel">
+            <div class="screen rl">
+              <div class="bar"><span>Week 43</span><span>Sun 25 Oct</span></div>
+              <div><div class="big">18.4<small>km</small></div><div class="sub" style="margin-top:8px"><b>+3.1 km</b> on last week</div></div>
+              <div class="days"><i class="on" style="height:55%"></i><i style="height:12%"></i><i class="on" style="height:80%"></i><i style="height:12%"></i><i style="height:12%"></i><i class="on" style="height:100%"></i><i style="height:12%"></i></div>
+              <div class="dl"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+              <div class="card"><div><div class="rk">7.2 km</div><div class="m">Sat · 38:05 · 5:17 /km</div></div><div class="m">Good</div></div>
+              <div class="card"><div><div class="rk">6.0 km</div><div class="m">Wed · 33:40 · 5:37 /km</div></div><div class="m">Hard</div></div>
+              <div class="cta">+ Log run</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="board-label"><b>Log run</b>log-run.html</div>
+          <div class="board">
+            <div class="screen rl">
+              <div class="bar"><span>Cancel</span><span style="color:#f4f4f5">New run</span><span style="color:#ff5a36">Save</span></div>
+              <div class="field"><span class="lab">Distance</span><span class="val">5.20<small>km</small></span></div>
+              <div class="field"><span class="lab">Time</span><span class="val">27:41</span></div>
+              <div class="field"><span class="lab">Pace</span><span class="val" style="color:#8a8f98">5:19<small>/km</small></span></div>
+              <div class="lab" style="font-size:13px;color:#8a8f98">How did it feel?</div>
+              <div class="feel"><span>Easy</span><span class="on">Good</span><span>Hard</span></div>
+              <div class="cta">Save run</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="board-label"><b>Week</b>week.html</div>
+          <div class="board">
+            <div class="screen rl">
+              <div class="bar"><span>‹ Week 42</span><span style="color:#f4f4f5">Week 43</span><span>›</span></div>
+              <div><div class="big" style="font-size:56px">18.4<small>km</small></div><div class="sub" style="margin-top:6px">3 runs · 1:39:26 · 5:24 /km</div></div>
+              <div class="wk">
+                <div><i style="height:40%"></i><i class="n" style="height:55%"></i></div>
+                <div><i style="height:0"></i><i class="n" style="height:0"></i></div>
+                <div><i style="height:70%"></i><i class="n" style="height:80%"></i></div>
+                <div><i style="height:30%"></i><i class="n" style="height:0"></i></div>
+                <div><i style="height:0"></i><i class="n" style="height:0"></i></div>
+                <div><i style="height:60%"></i><i class="n" style="height:100%"></i></div>
+                <div><i style="height:0"></i><i class="n" style="height:0"></i></div>
+              </div>
+              <div class="legend"><span>This week</span><span class="l">Last week</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hovered element and a comment on it -->
+      <div class="hover-box" style="left:34px;top:260px;width:152px;height:56px"></div>
+      <span class="pin" style="left:176px;top:248px">1</span>
+      <div class="comment float" style="left:202px;top:226px">
+        <div class="who"><span class="sel-el">Today › .big</span><span class="grow"></span>sent to chat</div>
+        Make the weekly number bigger and the bars thinner.
+      </div>
+
+      <div class="zoomnote"><span>3 screens</span><span>design/screens/</span></div>
+    </section>
+
+    <!-- The Designer -->
+    <section class="dchat cc-chat cc" aria-label="Design chat">
+      <div class="cc-scroll">
+        <div class="cc-user">Make it feel fast and bold, like a stopwatch. Dark.</div>
+        <div class="cc-msg"><div>
+          <p>From your 5 references: big numbers, one hot colour, lots of black. I'll use orange <code>#FF5A36</code> for action and lime for good news.</p>
+          <p>For more like this, search Mobbin for "fitness" and Dribbble for "running app dark".</p>
+        </div></div>
+        <div class="cc-step">
+          <div class="cc-msg tool"><div><span class="cc-tool">Write</span><span class="cc-arg">(design/tokens.css)</span></div></div>
+          <div class="cc-res"><span>Wrote 48 lines</span></div>
+        </div>
+        <div class="cc-fold">Drew 3 screens · today, log-run, week · 1m 40s</div>
+        <div class="cc-comment"><span><span class="on">comment on Today › .big</span>Make the weekly number bigger and the bars thinner.</span></div>
+        <div class="cc-step">
+          <div class="cc-msg tool run"><div><span class="cc-tool">Update</span><span class="cc-arg">(design/screens/today.html)</span></div></div>
+        </div>
+        <div class="cc-spin"><span class="star">✶</span><span class="verb">Restyling…</span><span class="meta">(6s · esc to interrupt)</span></div>
+      </div>
+      <div class="cc-input-wrap">
+        <div class="cc-input">
+          <span class="p">&gt;</span>
+          <span class="ph">Describe a change</span>
+          <span class="tools"><button class="ibtn sm" aria-label="Attach"><i data-i="paperclip" data-s="14"></i></button></span>
+        </div>
+        <div class="cc-hint" style="margin-top:6px">
+          <span class="mode">⏵⏵ auto mode on</span>
+          <span class="r"><span>/ commands</span><span>? shortcuts</span></span>
+        </div>
+      </div>
+    </section>
+
+    <nav data-shell="rail"></nav>
+  </div>
+
+  <footer data-shell="status" data-ctx="41" data-changes="+412 -18" data-sync="↑0 ↓0" data-agent="Designer"></footer>
+</div>
+</body>
+</html>

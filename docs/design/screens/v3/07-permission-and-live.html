@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="../../brand/icon-32.svg">
+<title>V3 — Permission and Live</title>
+<script src="theme.js"></script>
+<link rel="stylesheet" href="v3.css">
+<script src="shell.js"></script>
+<script src="icons.js"></script>
+<style>
+  .explorer { width: 200px; flex: none; display: flex; flex-direction: column; border-right: 1px solid var(--b); min-height: 0; }
+  .explorer .pane-head { height: 36px; padding-left: 14px; }
+  .tree .r { padding-left: calc(8px + var(--d, 0) * 14px); }
+  .work { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+  .split { flex: 1 1 0; min-height: 0; display: flex; }
+  .agent { width: 470px; flex: none; border-right: 1px solid var(--b); }
+  .agent .cc-scroll { padding: 16px 20px 8px; justify-content: flex-end; }
+  .agent .cc-input-wrap { padding: 8px 20px 12px; }
+  .editor { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+  .ed-actions { margin-left: auto; display: flex; align-items: center; gap: 2px; padding: 0 6px; }
+  .claude-edit { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px 0 14px; background: var(--edited-fill); color: var(--t1); font-size: var(--fs-xs); border-bottom: 1px solid var(--b); }
+  .claude-edit .ic { color: var(--edited); }
+  .term { height: 176px; }
+  .term .p { color: var(--success); }
+  .term .dim { color: var(--t3); }
+  .term .ok { color: var(--success); }
+  .term .u { color: var(--accent-text); }
+  .lv { display: flex; align-items: center; gap: 8px; height: 28px; color: var(--t2); font-size: var(--fs-sm2); }
+  .lv .ic { color: var(--t3); }
+  .lv .ok { color: var(--success); }
+  .lv.now { color: var(--t1); }
+  .lv .now { color: var(--accent-text); }
+  .lv .mono { font-size: 11px; }
+  .agent-card { padding: 10px 12px; border-radius: var(--r-lg); border: 1px solid var(--b); background: var(--s1); font-size: var(--fs-sm2); }
+  .editor { min-width: 0; }
+</style>
+</head>
+<body>
+<div class="ab">
+  <header data-shell="top" data-stage="development" data-progress="100,100,38,0"></header>
+
+  <div class="body">
+    <!-- Explorer -->
+    <aside class="explorer" aria-label="Explorer">
+      <div class="pane-head"><span class="label" style="flex:1">Explorer</span>
+        <button class="ibtn sm" aria-label="New file"><i data-i="file-plus" data-s="14"></i></button>
+        <button class="ibtn sm" aria-label="Search files"><i data-i="search" data-s="14"></i></button>
+      </div>
+      <div class="tree">
+        <div class="r" style="--d:0"><i data-i="chevron-down" data-s="13"></i><span class="name" style="color:var(--t1);font-weight:500">runlog</span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-right" data-s="13"></i><i data-i="folder" data-s="14"></i><span class="name">design</span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-right" data-s="13"></i><i data-i="folder" data-s="14"></i><span class="name">docs</span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-right" data-s="13"></i><i data-i="folder" data-s="14"></i><span class="name">public</span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-down" data-s="13"></i><i data-i="folder-open" data-s="14"></i><span class="name">src</span><span class="g M">•</span></div>
+        <div class="r" style="--d:2"><i data-i="chevron-right" data-s="13"></i><i data-i="folder" data-s="14"></i><span class="name">components</span></div>
+        <div class="r add" style="--d:2"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-ts)">TS</span><span class="name">db.ts</span><span class="g A">A</span></div>
+        <div class="r mod sel" style="--d:2"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-ts)">TS</span><span class="name">runs.ts</span><span class="g M">M</span></div>
+        <div class="r" style="--d:2"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-ts)">TS</span><span class="name">pace.ts</span><span class="g"></span></div>
+        <div class="r" style="--d:2"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-ts)">TSX</span><span class="name">App.tsx</span><span class="g"></span></div>
+        <div class="r" style="--d:2"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-css)">CSS</span><span class="name">index.css</span><span class="g"></span></div>
+        <div class="r" style="--d:2"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-ts)">TSX</span><span class="name">main.tsx</span><span class="g"></span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-right" data-s="13"></i><i data-i="folder" data-s="14"></i><span class="name">tests</span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-md)">MD</span><span class="name">CLAUDE.md</span><span class="g"></span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-html)">HTML</span><span class="name">index.html</span><span class="g"></span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-json)">JSON</span><span class="name">package.json</span><span class="g M">M</span></div>
+        <div class="r" style="--d:1"><i data-i="chevron-down" data-s="13" style="visibility:hidden"></i><span class="ft" style="color:var(--ft-ts)">TS</span><span class="name">vite.config.ts</span><span class="g"></span></div>
+      </div>
+    </aside>
+
+    <div class="work">
+      <div class="split">
+        <!-- The Builder, in the middle -->
+        <section class="agent cc-chat cc" aria-label="Development chat">
+          <div class="cc-scroll">
+            <div class="cc-user">Next task from the roadmap: save runs in IndexedDB.</div>
+            <div class="cc-step">
+              <div class="cc-msg tool"><div><span class="cc-tool">Update Todos</span></div></div>
+              <div class="cc-indent">
+                <div class="cc-todo done"><span class="box">☒</span><span>Add the db module (open, migrate)</span></div>
+                <div class="cc-todo now"><span class="box">☐</span><span>Save and list runs</span></div>
+                <div class="cc-todo"><span class="box">☐</span><span>Tests for runs.ts</span></div>
+              </div>
+            </div>
+            <div class="cc-fold">Read 3 files, wrote src/db.ts · 48s</div>
+            <div class="cc-step">
+              <div class="cc-msg tool"><div><span class="cc-tool">Update</span><span class="cc-arg">(src/runs.ts)</span></div></div>
+              <div class="cc-res"><span>Updated src/runs.ts with <span class="add">8 additions</span> and <span class="del">2 removals</span></span></div>
+              <div class="cc-diff">
+                <div class="c"><span class="ln">12</span><span> </span><span>export async function saveRun(run: Run) {</span></div>
+                <div class="d"><span class="ln">13</span><span>-</span><span>  runs.push(run);</span></div>
+                <div class="a"><span class="ln">13</span><span>+</span><span>  const db = await openDb();</span></div>
+                <div class="a"><span class="ln">14</span><span>+</span><span>  await db.put('runs', run);</span></div>
+                <div class="c"><span class="ln">15</span><span> </span><span>}</span></div>
+              </div>
+            </div>
+            <div class="cc-step">
+              <div class="cc-msg tool ask"><div><span class="cc-tool">Bash</span><span class="cc-arg">(pnpm add idb)</span></div></div>
+            </div>
+            <div class="cc-ask" role="group" aria-label="Permission">
+              <div class="head"><i data-i="terminal" data-s="14"></i>Bash command</div>
+              <div class="mono" style="color:var(--t1);padding:6px 10px;border-radius:6px;background:var(--s1)">pnpm add idb</div>
+              <div class="t3">Add the idb package (a small IndexedDB wrapper) to dependencies.</div>
+              <div class="q">Do you want to proceed?</div>
+              <div>
+                <div class="opt sel"><span>1. Yes</span></div>
+                <div class="opt"><span>2. Yes, and don't ask again for <b style="color:var(--t1);font-weight:600">pnpm add</b> in this project</span></div>
+                <div class="opt"><span>3. No, and tell Claude what to do differently <span class="t3">(esc)</span></span></div>
+              </div>
+            </div>
+          </div>
+          <div class="cc-input-wrap">
+            <div class="cc-input">
+              <span class="p">&gt;</span>
+              <span class="ph">Press 1, 2 or 3, or type to answer</span>
+              <span class="tools"><button class="ibtn sm" aria-label="Attach"><i data-i="paperclip" data-s="14"></i></button></span>
+            </div>
+            <div class="cc-hint" style="margin-top:6px">
+              <span class="mode">⏵⏵ accept edits on</span>
+              <span class="r"><span>/ commands</span><span>@ files</span><span>? shortcuts</span></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- The editor (Monaco) -->
+        <section class="editor" aria-label="Editor">
+          <div class="ed-tabs">
+            <div class="ed-tab on"><span class="ft" style="color:var(--ft-ts);width:auto">TS</span>runs.ts<i data-i="x" data-s="13" class="x"></i></div>
+            <div class="ed-tab"><span class="ft" style="color:var(--ft-ts);width:auto">TS</span>db.ts<span class="m" title="Unsaved"></span></div>
+            <div class="ed-tab"><span class="ft" style="color:var(--ft-md);width:auto">MD</span>roadmap.md</div>
+            <div class="ed-actions">
+              <button class="ibtn sm" aria-label="Show changes"><i data-i="split" data-s="14"></i></button>
+              <button class="ibtn sm" aria-label="More"><i data-i="ellipsis" data-s="14"></i></button>
+            </div>
+          </div>
+          <div class="claude-edit"><i data-i="pencil" data-s="13"></i>Claude changed this file 20s ago<span class="grow"></span><button class="btn ghost sm">Show diff</button><button class="btn ghost sm"><i data-i="undo-2" data-s="13"></i>Undo</button></div>
+          <div class="crumbs">src<i data-i="chevron-right" data-s="11"></i>runs.ts<i data-i="chevron-right" data-s="11"></i><span class="t2">saveRun</span></div>
+          <div class="code" role="textbox" aria-label="runs.ts">
+            <div class="l"><span class="n">1</span><span class="gut"></span><span><span class="k">import</span> <span class="pu">{</span> openDb <span class="pu">}</span> <span class="k">from</span> <span class="s">'./db'</span>;</span></div>
+            <div class="l"><span class="n">2</span><span class="gut"></span><span><span class="k">import</span> <span class="k">type</span> <span class="pu">{</span> <span class="ty">Run</span> <span class="pu">}</span> <span class="k">from</span> <span class="s">'./types'</span>;</span></div>
+            <div class="l"><span class="n">3</span><span class="gut"></span><span><span class="k">import</span> <span class="pu">{</span> paceOf <span class="pu">}</span> <span class="k">from</span> <span class="s">'./pace'</span>;</span></div>
+            <div class="l"><span class="n">4</span><span class="gut"></span><span></span></div>
+            <div class="l"><span class="n">5</span><span class="gut"></span><span><span class="cm">/** A run as the user typed it, with the pace worked out. */</span></span></div>
+            <div class="l"><span class="n">6</span><span class="gut"></span><span><span class="k">export function</span> <span class="f">newRun</span>(km: <span class="ty">number</span>, seconds: <span class="ty">number</span>, feel: <span class="ty">Feel</span>): <span class="ty">Run</span> <span class="pu">{</span></span></div>
+            <div class="l"><span class="n">7</span><span class="gut"></span><span>  <span class="k">return</span> <span class="pu">{</span></span></div>
+            <div class="l"><span class="n">8</span><span class="gut"></span><span>    id: crypto.<span class="f">randomUUID</span>(),</span></div>
+            <div class="l"><span class="n">9</span><span class="gut"></span><span>    at: <span class="ty">Date</span>.<span class="f">now</span>(),</span></div>
+            <div class="l"><span class="n">10</span><span class="gut"></span><span>    km, seconds, feel,</span></div>
+            <div class="l"><span class="n">11</span><span class="gut"></span><span>    pace: <span class="f">paceOf</span>(km, seconds),</span></div>
+            <div class="l"><span class="n">12</span><span class="gut"></span><span>  <span class="pu">}</span>;</span></div>
+            <div class="l"><span class="n">13</span><span class="gut"></span><span><span class="pu">}</span></span></div>
+            <div class="l"><span class="n">14</span><span class="gut"></span><span></span></div>
+            <div class="l"><span class="n">15</span><span class="gut"></span><span><span class="k">export async function</span> <span class="f">saveRun</span>(run: <span class="ty">Run</span>) <span class="pu">{</span></span></div>
+            <div class="l add"><span class="n">16</span><span class="gut"></span><span>  <span class="k">const</span> db = <span class="k">await</span> <span class="f">openDb</span>();</span></div>
+            <div class="l add"><span class="n">17</span><span class="gut"></span><span>  <span class="k">await</span> db.<span class="f">put</span>(<span class="s">'runs'</span>, run);</span></div>
+            <div class="l"><span class="n">18</span><span class="gut"></span><span><span class="pu">}</span></span></div>
+            <div class="l"><span class="n">19</span><span class="gut"></span><span></span></div>
+            <div class="l cur"><span class="n">20</span><span class="gut"></span><span><span class="k">export async function</span> <span class="f">listRuns</span>(weekStart: <span class="ty">number</span>)<span class="cursor"></span></span></div>
+            <div class="l"><span class="n">21</span><span class="gut"></span><span></span></div>
+          </div>
+          <div class="crumbs" style="height:24px;border-top:1px solid var(--b);justify-content:flex-end;gap:16px;font-family:var(--mono);font-size:11px"><span>Ln 20, Col 63</span><span>Spaces: 2</span><span>UTF-8</span><span>TypeScript</span></div>
+        </section>
+      </div>
+
+      <!-- Terminal -->
+      <section class="term" aria-label="Terminal">
+        <div class="term-head">
+          <span class="term-tab on"><i data-i="square-terminal" data-s="13"></i>Terminal</span>
+          <span class="term-tab">dev server</span>
+          <span class="grow"></span>
+          <button class="ibtn sm" aria-label="New terminal"><i data-i="plus" data-s="14"></i></button>
+          <button class="ibtn sm" aria-label="Hide terminal"><i data-i="chevron-down" data-s="14"></i></button>
+        </div>
+<div class="term-body"><span class="p">~/Projects/runlog</span> <span class="dim">main*</span> $ pnpm test
+<span class="dim"> RUN  v3.2.4 ~/Projects/runlog</span>
+ <span class="ok">✓</span> tests/pace.test.ts <span class="dim">(3 tests) 4ms</span>
+ <span class="ok">✓</span> tests/runs.test.ts <span class="dim">(4 tests) 18ms</span>
+<span class="dim"> Test Files</span>  <span class="ok">2 passed</span> (2)    <span class="dim">Tests</span>  <span class="ok">7 passed</span> (7)
+<span class="p">~/Projects/runlog</span> <span class="dim">main*</span> $ <span class="caret" style="display:inline-block;width:7px;height:14px;vertical-align:-2px;background:var(--t1)"></span></div>
+      </section>
+    </div>
+
+    <aside class="rail-panel" aria-label="Live">
+      <div class="pane-head"><span class="title">Live</span><span class="grow"></span><button class="ibtn sm" aria-label="Close"><i data-i="x" data-s="14"></i></button></div>
+      <div class="section">
+        <div class="section-h"><span class="label">Builder</span><span class="tag warn"><span class="dot warn"></span>Needs you</span></div>
+        <div class="lv"><i data-i="circle-check" data-s="14" class="ok"></i><span class="grow">Add the db module</span><span class="mono t3">48s</span></div>
+        <div class="lv now"><i data-i="circle-dot" data-s="14" class="now"></i><span class="grow">Save and list runs</span><span class="mono t3">1m 10s</span></div>
+        <div class="lv"><i data-i="circle-dashed" data-s="14"></i><span class="grow">Tests for runs.ts</span></div>
+      </div>
+      <div class="section">
+        <div class="section-h"><span class="label">Background agents</span><span class="mono t3" style="font-size:11px">1</span></div>
+        <div class="agent-card">
+          <div class="row"><span class="dot live"></span><span class="grow" style="color:var(--t1);font-weight:500">Write tests for pace.ts</span><span class="mono t3" style="font-size:11px">2m</span></div>
+          <div class="t3 mono" style="font-size:11px;margin-top:4px">agent/pace-tests · 3 of 5 steps</div>
+          <div class="meter" style="margin-top:8px"><i style="width:60%"></i></div>
+        </div>
+      </div>
+      <div class="section" style="border-bottom:0">
+        <div class="section-h"><span class="label">Chrome</span><span class="t3" style="font-size:var(--fs-xs)">idle</span></div>
+        <div class="t3" style="font-size:var(--fs-sm)">Browser steps show here while Claude uses Chrome.</div>
+      </div>
+    </aside>
+    <nav data-shell="rail" data-on="live" data-live></nav>
+  </div>
+
+  <footer data-shell="status" data-ctx="58" data-changes="+86 -11" data-agent="Builder" data-run="dev :5173"></footer>
+</div>
+</body>
+</html>
