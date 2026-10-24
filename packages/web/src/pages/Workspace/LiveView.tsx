@@ -1,5 +1,6 @@
-import { Check, ChevronRight, Globe, X } from 'lucide-react';
-import { chromeTool, relativeTime, type ChatItem, type PlanItem } from '@cherry/shared';
+import { Bot, Check, ChevronRight, Globe, X } from 'lucide-react';
+import { chromeTool, isSubagent, relativeTime, type ChatItem, type PlanItem } from '@cherry/shared';
+import { subagentLine } from '../../components/Timeline/Timeline.tsx';
 import { useAgents } from '../../api/agents.ts';
 import { useChat } from '../../api/chat.ts';
 import { useStage } from '../../state/stage.ts';
@@ -27,6 +28,51 @@ export function chromeSteps(items: ChatItem[]): ToolItem[] {
   const all = items.filter((i): i is ToolItem => i.kind === 'tool' && !!chromeTool(i.tool));
   const turn = all.at(-1)?.turnId;
   return turn ? all.filter((i) => i.turnId === turn) : [];
+}
+
+/** The subagents of the last turn that started any (V2.1 w7.5). */
+export function subagents(items: ChatItem[]): ToolItem[] {
+  const all = items.filter((i): i is ToolItem => i.kind === 'tool' && isSubagent(i.tool));
+  const turn = all.at(-1)?.turnId;
+  return turn ? all.filter((i) => i.turnId === turn) : [];
+}
+
+function SubagentsCard({ agents, busy }: { agents: ToolItem[]; busy: boolean }) {
+  const running = agents.filter((a) => a.status === 'running' || a.status === 'waiting').length;
+  return (
+    <section className={styles.card} aria-label="Subagents">
+      <div className={styles.head}>
+        <span className={styles.state} data-running={(busy && running > 0) || undefined}>
+          <Bot size={13} aria-hidden="true" />
+          {busy && running > 0
+            ? `${running} subagent${running === 1 ? '' : 's'} working`
+            : 'Subagents'}
+        </span>
+        <span className={styles.muted}>{agents.length} started</span>
+      </div>
+      <ol className={styles.chromeSteps}>
+        {agents.map((a) => (
+          <li key={a.id} data-status={a.status}>
+            <span className={styles.mark} aria-hidden="true">
+              {a.status === 'ok' ? (
+                <Check size={11} strokeWidth={3} />
+              ) : a.status === 'failed' || a.status === 'denied' ? (
+                <X size={11} strokeWidth={3} />
+              ) : busy ? (
+                <span className={styles.spin} />
+              ) : null}
+            </span>
+            <span className={styles.stepText}>
+              <span className={styles.stepTitle}>
+                {a.target} <span className={styles.muted}>· {a.sub?.type}</span>
+              </span>
+              <span className={styles.active}>{subagentLine(a)}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
 }
 
 /** The turn of the newest item, while Claude is working; else null. */
@@ -138,6 +184,7 @@ export function LiveView({
   const done = plan.filter((s) => s.status === 'completed').length;
   const doing = running ? nowDoing(state?.items ?? []) : null;
   const chrome = chromeSteps(state?.items ?? []);
+  const subs = subagents(state?.items ?? []);
   const busyAgents = (agents.data?.agents ?? []).filter(
     (a) => a.status === 'running' || a.status === 'waiting' || a.status === 'queued',
   );
@@ -161,6 +208,13 @@ export function LiveView({
         <ChromeCard
           steps={chrome}
           busy={chrome[0]!.turnId === currentTurn(state?.items ?? [], running)}
+        />
+      )}
+
+      {subs.length > 0 && (
+        <SubagentsCard
+          agents={subs}
+          busy={subs[0]!.turnId === currentTurn(state?.items ?? [], running)}
         />
       )}
 

@@ -106,3 +106,24 @@ test('Chrome steps show in Live, not as rows in the chat', async ({ page }) => {
   await expect(page.getByRole('button', { name: /Used Chrome · 4 steps/ })).toBeVisible();
   await expect(page.getByText('The page loads and the console is clean.')).toBeVisible();
 });
+
+// V2.1 w7.5: a subagent is one row in the chat and a card in Live, and starts without asking.
+test('subagents show as one row and in Live', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'core', exact: true }).first().click();
+  const aside = page.getByRole('complementary', { name: 'Repository and agents' });
+  await aside.getByRole('tab', { name: /^Live/ }).click();
+
+  await page.getByLabel('Message Claude').fill('Look around with an explorer');
+  await page.getByRole('button', { name: 'Send' }).click();
+
+  const card = aside.getByRole('region', { name: 'Subagents' });
+  await expect(card.getByText('1 subagent working')).toBeVisible();
+  await expect(card).toContainText('Find the streak code');
+  await expect(card).toContainText(/\d steps? · (Read|Grep)/);
+  await expect(page.getByText('The explorer found the streak code.')).toBeVisible();
+  await expect(card).toContainText('3 steps');
+  await expect(card.getByText('1 subagent working')).toBeHidden();
+  await expect(page.getByText('Approval needed')).toBeHidden();
+  await expect(page.getByText('Explore agent', { exact: true })).toBeVisible();
+});

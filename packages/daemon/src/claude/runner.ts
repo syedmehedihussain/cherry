@@ -14,6 +14,15 @@ export type RunnerEvent =
   | { t: 'thinking_end'; blockId: string }
   | { t: 'tool_start'; id: string; name: string; input: Record<string, unknown> }
   | { t: 'tool_end'; id: string; ok: boolean; output: string }
+  /** A subagent's own tool calls, under the Task / Agent call `parentId` (V2.1 w7.5). */
+  | {
+      t: 'sub_tool_start';
+      parentId: string;
+      id: string;
+      name: string;
+      input: Record<string, unknown>;
+    }
+  | { t: 'sub_tool_end'; parentId: string; id: string; ok: boolean }
   | {
       t: 'result';
       ok: boolean;
@@ -185,6 +194,9 @@ export const READ_TOOLS = [
   'TaskList',
   'TaskGet',
   'ToolSearch',
+  // Starting a subagent; its own edits and commands still ask (ADR-0042).
+  'Task',
+  'Agent',
 ];
 
 /** Loose input shape for the tool; the strict card schema is checked by the caller. */
@@ -358,8 +370,28 @@ export const sdkRunner: Runner = (req) => {
       } else if (ev.type === 'content_block_delta' && ev.delta.type === 'text_delta') {
         req.onEvent({ t: 'text', blockId: `${messageId}:${ev.index}`, delta: ev.delta.text });
       }
+    } else if (m.type === 'assistant' && m.parent_tool_use_id) {
+      for (const block of m.message.content)
+        if (block.type === 'tool_use')
+          req.onEvent({
+            t: 'sub_tool_start',
+            parentId: m.parent_tool_use_id,
+            id: block.id,
+            name: block.name,
+            input: (block.input ?? {}) as Record<string, unknown>,
+          });
+    } else if (m.type === 'user' && m.parent_tool_use_id) {
+      const content = m.message.content;
+      if (Array.isArray(content))
+        for (const block of content)
+          if (block.type === 'tool_result')
+            req.onEvent({
+              t: 'sub_tool_end',
+              parentId: m.parent_tool_use_id,
+              id: block.tool_use_id,
+              ok: !block.is_error,
+            });
     } else if (m.type === 'assistant') {
-      if (m.parent_tool_use_id) return;
       const u = m.message.usage;
       if (u)
         used =
@@ -378,7 +410,6 @@ export const sdkRunner: Runner = (req) => {
         }
       }
     } else if (m.type === 'user') {
-      if (m.parent_tool_use_id) return;
       const content = m.message.content;
       if (Array.isArray(content)) {
         for (const block of content) {

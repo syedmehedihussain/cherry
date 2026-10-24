@@ -1,5 +1,41 @@
 [
   {
+    "match": "^Look around with an explorer",
+    "steps": [
+      {
+        "subagent": {
+          "type": "Explore",
+          "description": "Find the streak code",
+          "ms": 500,
+          "steps": [
+            {
+              "name": "Read",
+              "input": {
+                "file_path": "README.md"
+              }
+            },
+            {
+              "name": "Grep",
+              "input": {
+                "pattern": "streak"
+              }
+            },
+            {
+              "name": "Read",
+              "input": {
+                "file_path": "lib/streaks.ts"
+              }
+            }
+          ],
+          "output": "lib/streaks.ts holds it."
+        }
+      },
+      {
+        "text": "The explorer found the streak code."
+      }
+    ]
+  },
+  {
     "match": "^Think it over",
     "steps": [
       {

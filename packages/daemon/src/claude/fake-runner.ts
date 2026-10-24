@@ -9,6 +9,17 @@ export type Step =
   | { decision: unknown }
   | { call: { name: string; input: unknown } }
   | { wait: number }
+  /** A subagent (Task tool) that runs `steps` and answers `output`. */
+  | {
+      subagent: {
+        type: string;
+        description: string;
+        steps: { name: string; input: Record<string, unknown>; fail?: boolean }[];
+        output?: string;
+        /** Pause after each step, so tests can see it run. */
+        ms?: number;
+      };
+    }
   /** Claude thinks for `ms` (default 0) and shows `think` (may be empty). */
   | { think: string; ms?: number }
   /** Tokens in the context after the turn (default 12k of a 200k window). */
@@ -52,6 +63,28 @@ export function fakeRunner(
           req.onEvent({ t: 'text_start', blockId });
           for (const chunk of step.text.match(/.{1,12}/gs) ?? [])
             req.onEvent({ t: 'text', blockId, delta: chunk });
+        } else if ('subagent' in step) {
+          const sa = step.subagent;
+          const id = `toolu_task_${n}_${i}`;
+          const input = { subagent_type: sa.type, description: sa.description, prompt: '' };
+          if (preToolGuard(req, 'Task', input) === null) {
+            req.onEvent({ t: 'tool_start', id, name: 'Task', input });
+            let k = 0;
+            for (const sub of sa.steps) {
+              if (stopped) break;
+              const subId = `${id}_${k++}`;
+              req.onEvent({
+                t: 'sub_tool_start',
+                parentId: id,
+                id: subId,
+                name: sub.name,
+                input: sub.input,
+              });
+              if (sa.ms) await new Promise((r) => setTimeout(r, sa.ms));
+              req.onEvent({ t: 'sub_tool_end', parentId: id, id: subId, ok: !sub.fail });
+            }
+            req.onEvent({ t: 'tool_end', id, ok: true, output: sa.output ?? 'done' });
+          }
         } else if ('think' in step) {
           const blockId = `msg_${n}:${i}`;
           req.onEvent({ t: 'thinking_start', blockId });

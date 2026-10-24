@@ -156,6 +156,17 @@ export const ChatItemSchema = z.discriminatedUnion('kind', [
     removed: z.number().nullable(),
     durationMs: z.number().nullable(),
     approvalId: z.string().nullable(),
+    /** A subagent's own steps (Task / Agent tool, V2.1 w7.5). */
+    sub: z
+      .object({
+        /** Its type, e.g. "Explore" or "general-purpose". */
+        type: z.string(),
+        steps: z.number(),
+        failed: z.number(),
+        /** The step it is on or did last, e.g. "Read lib/streaks.ts". */
+        last: z.string().nullable(),
+      })
+      .optional(),
   }),
   z.object({
     kind: z.literal('decision'),

@@ -3,6 +3,7 @@ import {
   DecisionCardInputSchema,
   chromeTool,
   classifyChrome,
+  isSubagent,
   type Approval,
   type ChatItem,
   type PlanItem,
@@ -234,6 +235,28 @@ export class Conversation {
         if (item?.kind === 'thinking') this.put({ ...item, durationMs: now - item.at });
         break;
       }
+      case 'sub_tool_start': {
+        const parent = this.items.get(ev.parentId);
+        if (parent?.kind !== 'tool' || !parent.sub) break;
+        const verb = verbFor(ev.name);
+        const target = this.targetOf(ev.name, ev.input);
+        const word =
+          verb === 'read' ? 'Read' : verb === 'edit' ? 'Edit' : verb === 'run' ? 'Run' : ev.name;
+        this.put(
+          {
+            ...parent,
+            sub: { ...parent.sub, steps: parent.sub.steps + 1, last: `${word} ${target}` },
+          },
+          false,
+        );
+        break;
+      }
+      case 'sub_tool_end': {
+        const parent = this.items.get(ev.parentId);
+        if (parent?.kind !== 'tool' || !parent.sub || ev.ok) break;
+        this.put({ ...parent, sub: { ...parent.sub, failed: parent.sub.failed + 1 } }, false);
+        break;
+      }
       case 'tool_start': {
         this.flushText();
         if (
@@ -261,6 +284,19 @@ export class Conversation {
           removed: null,
           durationMs: null,
           approvalId: null,
+          ...(isSubagent(ev.name)
+            ? {
+                sub: {
+                  type:
+                    typeof ev.input.subagent_type === 'string'
+                      ? ev.input.subagent_type
+                      : 'general-purpose',
+                  steps: 0,
+                  failed: 0,
+                  last: null,
+                },
+              }
+            : {}),
         });
         break;
       }

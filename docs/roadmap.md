@@ -111,7 +111,7 @@ New feedback is added here in build order.
       opens Development in Auto and starts the Builder. Docs-only stages default to Auto.
 - [x] w6 A calmer chat: a finished reply folds its tool rows into one "Worked … · N steps" line.
 - [ ] w7 Claude Code CLI parity: slash commands (done), @ file mentions (done), context meter and compact (done),
-      thinking (done), subagents, chat history and resume, remembered allow rules, keys
+      thinking (done), subagents (done), chat history and resume, remembered allow rules, keys
       (Esc, ↑, paste image); later rewind.
 
 **Done when:** in Plan you say "next I want X", the Planner fills the Plan bar, Approve plan

@@ -62,3 +62,7 @@ export function classifyChrome(name: string, input: Record<string, unknown>): Ch
   const action = what(name, input);
   return { title: `Claude wants to use Chrome: ${action}`, action, read: READS.has(name) };
 }
+
+/** Claude's subagent tool: Task in older Claude Code, Agent in newer (V2.1 w7.5, ADR-0042). */
+export const SUBAGENT_TOOLS = new Set(['Task', 'Agent']);
+export const isSubagent = (tool: string) => SUBAGENT_TOOLS.has(tool);

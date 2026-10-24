@@ -1,4 +1,5 @@
 import {
+  Bot,
   Check,
   ChevronRight,
   FileText,
@@ -9,12 +10,13 @@ import {
   X,
 } from 'lucide-react';
 import { useState } from 'react';
-import type { ChatItem } from '@cherry/shared';
+import { isSubagent, type ChatItem } from '@cherry/shared';
 import styles from './Timeline.module.css';
 
 export type ToolItem = Extract<ChatItem, { kind: 'tool' }>;
 
-type RowKind = 'read' | 'edit' | 'ran' | 'running' | 'waiting' | 'failed' | 'denied' | 'other';
+type RowKind =
+  'read' | 'edit' | 'ran' | 'running' | 'waiting' | 'failed' | 'denied' | 'agent' | 'other';
 
 function rowKind(t: ToolItem): RowKind {
   if (t.status === 'waiting') return 'waiting';
@@ -23,7 +25,8 @@ function rowKind(t: ToolItem): RowKind {
   if (t.verb === 'run') return t.status === 'running' ? 'running' : 'ran';
   if (t.verb === 'edit') return t.status === 'running' ? 'running' : 'edit';
   if (t.verb === 'read') return 'read';
-  return t.status === 'running' ? 'running' : 'other';
+  if (t.status === 'running') return 'running';
+  return t.sub ? 'agent' : 'other';
 }
 
 /** Cherry's own tools, in words. */
@@ -32,7 +35,18 @@ const TOOL_LABEL: Record<string, string> = {
   mcp__cherry__decision_done: 'Decision done',
   mcp__cherry__commit_changes: 'Committed',
 };
-const toolLabel = (t: ToolItem) => TOOL_LABEL[t.tool] ?? t.tool;
+const toolLabel = (t: ToolItem) =>
+  isSubagent(t.tool) ? `${t.sub?.type ?? 'Sub'} agent` : (TOOL_LABEL[t.tool] ?? t.tool);
+
+/** "4 steps · Read lib/streaks.ts" for a subagent row (V2.1 w7.5). */
+export function subagentLine(t: ToolItem): string {
+  if (!t.sub) return '';
+  const steps = `${t.sub.steps} step${t.sub.steps === 1 ? '' : 's'}`;
+  const failed = t.sub.failed ? ` · ${t.sub.failed} failed` : '';
+  return t.status === 'running' && t.sub.last
+    ? `${steps}${failed} · ${t.sub.last}`
+    : steps + failed;
+}
 
 const VERB: Record<RowKind, (t: ToolItem) => string> = {
   read: () => 'Read',
@@ -42,6 +56,7 @@ const VERB: Record<RowKind, (t: ToolItem) => string> = {
   waiting: () => 'Waiting',
   failed: () => 'Failed',
   denied: () => 'Denied',
+  agent: toolLabel,
   other: toolLabel,
 };
 
@@ -61,6 +76,8 @@ function Icon({ kind }: { kind: RowKind }) {
     case 'failed':
     case 'denied':
       return <X {...p} strokeWidth={2.4} />;
+    case 'agent':
+      return <Bot {...p} strokeWidth={2} />;
     default:
       return <Wrench {...p} strokeWidth={2} />;
   }
@@ -76,6 +93,8 @@ export function TimelineRow({ item, last }: { item: ToolItem; last?: boolean }) 
         <span className={styles.add}>+{item.added}</span>{' '}
         <span className={item.removed ? styles.del : styles.zero}>−{item.removed}</span>
       </>
+    ) : item.sub ? (
+      subagentLine(item)
     ) : (
       item.meta
     );
@@ -162,6 +181,8 @@ const SUMMARY_NOUN: Record<string, [string, string, string]> = {
   mcp__cherry__propose_decision: ['proposed', 'decision', 'decisions'],
   mcp__cherry__decision_done: ['finished', 'decision', 'decisions'],
   mcp__cherry__commit_changes: ['made', 'commit', 'commits'],
+  Task: ['ran', 'subagent', 'subagents'],
+  Agent: ['ran', 'subagent', 'subagents'],
 };
 
 /**

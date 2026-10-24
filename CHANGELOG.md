@@ -6,6 +6,9 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **Subagents** (ADR-0042) start without an approval card, like the CLI; their edits and
+  commands still ask. Each shows as one row ("Explore agent · Find the streak code · 3 steps")
+  with the step it is on, and as a card in Live.
 - **Thinking** shows like the CLI: one quiet "Thought for 12s" row at the top of a reply
   ("Thinking…" while it lasts); a click shows what Claude thought, when the model shares it.
 - **Context meter** next to the model chip: a small ring and the share of the context window
