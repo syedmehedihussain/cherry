@@ -1,5 +1,29 @@
 [
   {
+    "match": "^Think it over",
+    "steps": [
+      {
+        "think": "The streak lives in **lib/streaks.ts**.",
+        "ms": 1200
+      },
+      {
+        "tool": {
+          "name": "Read",
+          "input": {
+            "file_path": "lib/streaks.ts"
+          }
+        }
+      },
+      {
+        "think": "",
+        "ms": 300
+      },
+      {
+        "text": "I thought it over."
+      }
+    ]
+  },
+  {
     "match": "^Fill the context",
     "steps": [
       {

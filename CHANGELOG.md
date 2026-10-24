@@ -6,6 +6,8 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **Thinking** shows like the CLI: one quiet "Thought for 12s" row at the top of a reply
+  ("Thinking…" while it lasts); a click shows what Claude thought, when the model shares it.
 - **Context meter** next to the model chip: a small ring and the share of the context window
   the chat uses (hover for the tokens). From 70% it turns amber and offers **Compact**, which
   sends `/compact`.

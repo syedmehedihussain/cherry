@@ -209,3 +209,34 @@
   gap: 2px;
   color: var(--accent-text);
 }
+
+/* Thinking (V2.1 w7.4): one quiet folded row per reply. */
+.thinkingHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  padding: 2px 0;
+  color: var(--t3);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-style: italic;
+  cursor: pointer;
+}
+.thinkingHead:hover:not(:disabled) {
+  color: var(--t2);
+}
+.thinkingHead:disabled {
+  cursor: default;
+}
+.thinkingBusy {
+  animation: ap-pulse 1.2s ease-in-out infinite;
+}
+.thinkingText {
+  margin: 4px 0 2px 6px;
+  padding-left: 12px;
+  border-left: 2px solid var(--b);
+  color: var(--t2);
+  font-size: var(--fs-sm2);
+}

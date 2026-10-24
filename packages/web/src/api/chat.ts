@@ -170,7 +170,7 @@ export function useLiveChat(id: string): void {
             if (d.stage !== stage) continue;
             const i = items.findIndex((x) => x.id === d.itemId);
             const it = items[i];
-            if (it?.kind !== 'text') continue;
+            if (it?.kind !== 'text' && it?.kind !== 'thinking') continue;
             if (items === old.items) items = items.slice();
             items[i] = { ...it, text: it.text + d.text };
           }

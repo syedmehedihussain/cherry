@@ -209,6 +209,31 @@ export class Conversation {
         this.o.onDelta(item.id, this.turnId, ev.delta);
         break;
       }
+      case 'thinking_start':
+        this.put(
+          {
+            kind: 'thinking',
+            id: ev.blockId,
+            at: now,
+            turnId: this.turnId,
+            text: '',
+            durationMs: null,
+          },
+          false,
+        );
+        break;
+      case 'thinking': {
+        const item = this.items.get(ev.blockId);
+        if (item?.kind !== 'thinking') break;
+        item.text += ev.delta;
+        this.o.onDelta(item.id, this.turnId, ev.delta);
+        break;
+      }
+      case 'thinking_end': {
+        const item = this.items.get(ev.blockId);
+        if (item?.kind === 'thinking') this.put({ ...item, durationMs: now - item.at });
+        break;
+      }
       case 'tool_start': {
         this.flushText();
         if (
@@ -268,6 +293,9 @@ export class Conversation {
       }
       case 'result': {
         this.flushText();
+        for (const item of this.items.values())
+          if (item.kind === 'thinking' && item.durationMs === null && item.turnId === this.turnId)
+            this.put({ ...item, durationMs: now - item.at });
         const context = this.withWindow(ev.context);
         this.put({
           kind: 'turn-end',

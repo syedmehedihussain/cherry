@@ -62,8 +62,12 @@ type Block =
   | { t: 'user'; item: Extract<ChatItem, { kind: 'user' }> }
   | { t: 'claude'; id: string; parts: Part[] };
 
+type ThinkingItem = Extract<ChatItem, { kind: 'thinking' }>;
+
 type Part =
   | { t: 'text'; item: Extract<ChatItem, { kind: 'text' }> }
+  /** All of a reply's thinking as one row at its top, like the CLI (V2.1 w7.4). */
+  | { t: 'thinking'; items: ThinkingItem[] }
   | { t: 'tools'; items: ToolItem[] }
   /** Claude in Chrome steps of this reply, as one row; the steps show in Live (ADR-0038). */
   | { t: 'chrome'; items: ToolItem[] }
@@ -89,6 +93,10 @@ export function toBlocks(items: ChatItem[]): Block[] {
     const last = claude.parts[claude.parts.length - 1];
     if (item.kind === 'text') {
       if (item.text.trim()) claude.parts.push({ t: 'text', item });
+    } else if (item.kind === 'thinking') {
+      const thinking = claude.parts[0];
+      if (thinking?.t === 'thinking') thinking.items.push(item);
+      else claude.parts.unshift({ t: 'thinking', items: [item] });
     } else if (item.kind === 'tool' && chromeTool(item.tool)) {
       const chrome = claude.parts.find((p) => p.t === 'chrome');
       if (chrome?.t === 'chrome') chrome.items.push(item);
@@ -272,11 +280,14 @@ export function ChatTab({ projectId, stage, now }: ChatTabProps) {
               />
             ),
           )}
-          {state?.running && lastItem?.kind !== 'text' && !paused && (
-            <div className={styles.working}>
-              <span className="spinner" /> Claude is working…
-            </div>
-          )}
+          {state?.running &&
+            lastItem?.kind !== 'text' &&
+            !(lastItem?.kind === 'thinking' && lastItem.durationMs === null) &&
+            !paused && (
+              <div className={styles.working}>
+                <span className="spinner" /> Claude is working…
+              </div>
+            )}
         </div>
       </div>
       <div className={styles.composer}>
@@ -459,6 +470,8 @@ function ClaudeBlock({
                 ))}
               </Fragment>
             );
+          case 'thinking':
+            return <ThinkingRow key={p.items[0]!.id} items={p.items} now={now} />;
           case 'chrome':
             return <ChromeRow key={p.items[0]!.id} items={p.items} />;
           case 'plan':
@@ -651,6 +664,47 @@ function PlanCard({
         await dismissPlan(projectId, plan.id);
       }}
     />
+  );
+}
+
+const seconds = (ms: number) => `${Math.max(1, Math.round(ms / 1000))}s`;
+
+/** "Thought for 12s", folded; a click shows what Claude thought (V2.1 w7.4). */
+function ThinkingRow({ items, now }: { items: ThinkingItem[]; now: number }) {
+  const [open, setOpen] = useState(false);
+  const thinking = items.some((i) => i.durationMs === null);
+  const ms = items.reduce((sum, i) => sum + (i.durationMs ?? now - i.at), 0);
+  const text = items
+    .map((i) => i.text.trim())
+    .filter(Boolean)
+    .join('\n\n');
+  return (
+    <div className={styles.thinking}>
+      <button
+        type="button"
+        className={styles.thinkingHead}
+        aria-expanded={text ? open : undefined}
+        disabled={!text}
+        onClick={() => setOpen(!open)}
+      >
+        {text && (
+          <ChevronRight
+            size={12}
+            strokeWidth={2}
+            aria-hidden="true"
+            style={{ transform: open ? 'rotate(90deg)' : undefined }}
+          />
+        )}
+        <span className={thinking ? styles.thinkingBusy : undefined}>
+          {thinking ? 'Thinking…' : `Thought for ${seconds(ms)}`}
+        </span>
+      </button>
+      {open && text && (
+        <div className={styles.thinkingText}>
+          <Markdown source={text} variant="chat" />
+        </div>
+      )}
+    </div>
   );
 }
 

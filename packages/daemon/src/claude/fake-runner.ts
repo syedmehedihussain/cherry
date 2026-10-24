@@ -9,6 +9,8 @@ export type Step =
   | { decision: unknown }
   | { call: { name: string; input: unknown } }
   | { wait: number }
+  /** Claude thinks for `ms` (default 0) and shows `think` (may be empty). */
+  | { think: string; ms?: number }
   /** Tokens in the context after the turn (default 12k of a 200k window). */
   | { context: number; window?: number };
 
@@ -50,6 +52,12 @@ export function fakeRunner(
           req.onEvent({ t: 'text_start', blockId });
           for (const chunk of step.text.match(/.{1,12}/gs) ?? [])
             req.onEvent({ t: 'text', blockId, delta: chunk });
+        } else if ('think' in step) {
+          const blockId = `msg_${n}:${i}`;
+          req.onEvent({ t: 'thinking_start', blockId });
+          if (step.think) req.onEvent({ t: 'thinking', blockId, delta: step.think });
+          if (step.ms) await new Promise((r) => setTimeout(r, step.ms));
+          req.onEvent({ t: 'thinking_end', blockId });
         } else if ('context' in step) {
           used = step.context;
           window = step.window ?? window;

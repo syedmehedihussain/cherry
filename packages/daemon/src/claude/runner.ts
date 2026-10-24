@@ -8,6 +8,10 @@ export type RunnerEvent =
   | { t: 'session'; sessionId: string }
   | { t: 'text_start'; blockId: string }
   | { t: 'text'; blockId: string; delta: string }
+  /** Claude's thinking (V2.1 w7.4): start, text as it streams (may stay empty), end. */
+  | { t: 'thinking_start'; blockId: string }
+  | { t: 'thinking'; blockId: string; delta: string }
+  | { t: 'thinking_end'; blockId: string }
   | { t: 'tool_start'; id: string; name: string; input: Record<string, unknown> }
   | { t: 'tool_end'; id: string; ok: boolean; output: string }
   | {
@@ -316,6 +320,8 @@ export const sdkRunner: Runner = (req) => {
   });
 
   let messageId = '';
+  // Content block indexes of the current message that are thinking blocks.
+  const thinking = new Set<number>();
   // Tokens in the context after the last main-agent message, like the CLI's /context.
   let used: number | null = null;
   let sentResult = false;
@@ -330,8 +336,24 @@ export const sdkRunner: Runner = (req) => {
     } else if (m.type === 'stream_event') {
       if (m.parent_tool_use_id) return;
       const ev = m.event;
-      if (ev.type === 'message_start') messageId = ev.message.id;
-      else if (ev.type === 'content_block_start' && ev.content_block.type === 'text') {
+      if (ev.type === 'message_start') {
+        messageId = ev.message.id;
+        thinking.clear();
+      } else if (
+        ev.type === 'content_block_start' &&
+        (ev.content_block.type === 'thinking' || ev.content_block.type === 'redacted_thinking')
+      ) {
+        thinking.add(ev.index);
+        req.onEvent({ t: 'thinking_start', blockId: `${messageId}:${ev.index}` });
+      } else if (ev.type === 'content_block_delta' && ev.delta.type === 'thinking_delta') {
+        req.onEvent({
+          t: 'thinking',
+          blockId: `${messageId}:${ev.index}`,
+          delta: ev.delta.thinking,
+        });
+      } else if (ev.type === 'content_block_stop' && thinking.delete(ev.index)) {
+        req.onEvent({ t: 'thinking_end', blockId: `${messageId}:${ev.index}` });
+      } else if (ev.type === 'content_block_start' && ev.content_block.type === 'text') {
         req.onEvent({ t: 'text_start', blockId: `${messageId}:${ev.index}` });
       } else if (ev.type === 'content_block_delta' && ev.delta.type === 'text_delta') {
         req.onEvent({ t: 'text', blockId: `${messageId}:${ev.index}`, delta: ev.delta.text });

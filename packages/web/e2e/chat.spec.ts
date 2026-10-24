@@ -135,3 +135,17 @@ test('chat: the context meter fills and Compact frees it', async ({ page }) => {
   await expect(meter).toHaveText('15%');
   await expect(page.getByRole('button', { name: 'Compact', exact: true })).toBeHidden();
 });
+
+// V2.1 w7.4: thinking folds into one row at the top of the reply.
+test('chat: thinking shows as one folded row that opens', async ({ page }) => {
+  await page.goto('/p/core');
+  const box = page.getByLabel('Message Claude');
+  await box.fill('Think it over');
+  await box.press('Enter');
+  await expect(page.getByText('I thought it over.')).toBeVisible();
+  const row = page.getByRole('button', { name: /^Thought for \ds$/ });
+  await expect(row).toHaveCount(1);
+  await expect(page.getByText('The streak lives in')).toBeHidden();
+  await row.click();
+  await expect(page.getByText('The streak lives in')).toBeVisible();
+});

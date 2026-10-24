@@ -132,6 +132,16 @@ export const ChatItemSchema = z.discriminatedUnion('kind', [
     turnId: z.string(),
     text: z.string(),
   }),
+  /** Claude's thinking (V2.1 w7.4); the text may be empty when the model does not show it. */
+  z.object({
+    kind: z.literal('thinking'),
+    id: z.string(),
+    at: z.number(),
+    turnId: z.string(),
+    text: z.string(),
+    /** Null while Claude is still thinking. */
+    durationMs: z.number().nullable(),
+  }),
   z.object({
     kind: z.literal('tool'),
     id: z.string(),
