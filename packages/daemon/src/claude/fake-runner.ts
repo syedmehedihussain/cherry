@@ -8,7 +8,9 @@ export type Step =
   | { tool: { name: string; input: Record<string, unknown> }; output?: string; fail?: boolean }
   | { decision: unknown }
   | { call: { name: string; input: unknown } }
-  | { wait: number };
+  | { wait: number }
+  /** Tokens in the context after the turn (default 12k of a 200k window). */
+  | { context: number; window?: number };
 
 export interface FakeLog {
   requests: RunRequest[];
@@ -35,6 +37,8 @@ export function fakeRunner(
     let stopped = false;
     const sessionId = req.resume ?? `fake_session_${n}`;
     const started = Date.now();
+    let used = 12_000;
+    let window = 200_000;
     const done = (async () => {
       req.onEvent({ t: 'session', sessionId });
       let i = 0;
@@ -46,6 +50,9 @@ export function fakeRunner(
           req.onEvent({ t: 'text_start', blockId });
           for (const chunk of step.text.match(/.{1,12}/gs) ?? [])
             req.onEvent({ t: 'text', blockId, delta: chunk });
+        } else if ('context' in step) {
+          used = step.context;
+          window = step.window ?? window;
         } else if ('wait' in step) {
           await new Promise((r) => setTimeout(r, step.wait));
         } else if ('call' in step) {
@@ -130,6 +137,7 @@ export function fakeRunner(
         error: null,
         durationMs: Date.now() - started,
         costUsd: 0,
+        context: { used, window },
       });
     })();
     return {

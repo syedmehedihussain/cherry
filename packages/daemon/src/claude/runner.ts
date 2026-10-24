@@ -17,7 +17,14 @@ export type RunnerEvent =
       error: string | null;
       durationMs: number;
       costUsd: number | null;
+      /** How full the context window is after the turn (V2.1 w7.3); null if unknown. */
+      context?: ContextUse | null;
     };
+
+export interface ContextUse {
+  used: number;
+  window: number;
+}
 
 /** An extra in-process tool (served as mcp__cherry__<name>). */
 export interface CustomTool {
@@ -309,6 +316,8 @@ export const sdkRunner: Runner = (req) => {
   });
 
   let messageId = '';
+  // Tokens in the context after the last main-agent message, like the CLI's /context.
+  let used: number | null = null;
   let sentResult = false;
   let stopped = false;
   const started = Date.now();
@@ -316,6 +325,8 @@ export const sdkRunner: Runner = (req) => {
   const handle = (m: SDKMessage) => {
     if (m.type === 'system' && m.subtype === 'init') {
       req.onEvent({ t: 'session', sessionId: m.session_id });
+    } else if (m.type === 'system' && m.subtype === 'compact_boundary') {
+      used = m.compact_metadata.post_tokens ?? null;
     } else if (m.type === 'stream_event') {
       if (m.parent_tool_use_id) return;
       const ev = m.event;
@@ -327,6 +338,13 @@ export const sdkRunner: Runner = (req) => {
       }
     } else if (m.type === 'assistant') {
       if (m.parent_tool_use_id) return;
+      const u = m.message.usage;
+      if (u)
+        used =
+          u.input_tokens +
+          (u.cache_read_input_tokens ?? 0) +
+          (u.cache_creation_input_tokens ?? 0) +
+          u.output_tokens;
       for (const block of m.message.content) {
         if (block.type === 'tool_use') {
           req.onEvent({
@@ -369,6 +387,7 @@ export const sdkRunner: Runner = (req) => {
         error,
         durationMs: m.duration_ms,
         costUsd: m.total_cost_usd ?? null,
+        context: contextUse(used, m.modelUsage),
       });
     }
   };
@@ -412,3 +431,34 @@ export const sdkRunner: Runner = (req) => {
     },
   };
 };
+
+/**
+ * The context meter (V2.1 w7.3): `used` tokens of the main model's window. modelUsage has one
+ * entry per model the turn used (subagents and helpers too); the main model sent the most input.
+ * The window is 0 when no model was called.
+ */
+export function contextUse(
+  used: number | null,
+  modelUsage:
+    | Record<
+        string,
+        {
+          inputTokens: number;
+          cacheReadInputTokens: number;
+          cacheCreationInputTokens: number;
+          contextWindow: number;
+        }
+      >
+    | undefined,
+): ContextUse | null {
+  if (used === null) return null;
+  const main = Object.values(modelUsage ?? {}).sort(
+    (a, b) =>
+      b.inputTokens +
+      b.cacheReadInputTokens +
+      b.cacheCreationInputTokens -
+      (a.inputTokens + a.cacheReadInputTokens + a.cacheCreationInputTokens),
+  )[0];
+  // A /compact turn may call no model: window 0, the conversation keeps the last one it saw.
+  return { used, window: main?.contextWindow ?? 0 };
+}

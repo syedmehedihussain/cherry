@@ -87,6 +87,26 @@
 .modelWrap {
   position: relative;
 }
+/* Context meter (V2.1 w7.3): a small ring and the share of the window used. */
+.meter {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 4px;
+  color: var(--t3);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+}
+.ring {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: conic-gradient(currentColor calc(var(--share) * 360deg), var(--b) 0);
+}
+.meter[data-high] {
+  color: var(--warning);
+}
 /* Two classes, so these win over .menu (defined further down). */
 .menu.modeMenu {
   min-width: 270px;

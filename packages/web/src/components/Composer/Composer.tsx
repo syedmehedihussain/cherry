@@ -16,6 +16,7 @@ import {
   useRef,
   useState,
   type ClipboardEvent,
+  type CSSProperties,
   type DragEvent,
   type KeyboardEvent,
 } from 'react';
@@ -87,7 +88,14 @@ interface ComposerProps {
   commands?: SlashCommand[];
   /** Project files for @ mentions (V2.1 w7.2). */
   searchFiles?(q: string): Promise<string[]>;
+  /** How full the context window is after the last reply (V2.1 w7.3). */
+  context?: { used: number; window: number } | null;
+  /** Sends /compact; offered when the context is nearly full. */
+  onCompact?(): void;
 }
+
+/** From this share of the window the meter turns amber and offers Compact, like the CLI. */
+export const COMPACT_AT = 0.7;
 
 export function Composer({
   running,
@@ -107,6 +115,8 @@ export function Composer({
   onDiscard,
   commands = [],
   searchFiles,
+  context,
+  onCompact,
 }: ComposerProps) {
   const [text, setText] = useState('');
   // @ mentions: the "@query" just before the caret, and the files that match it.
@@ -570,6 +580,9 @@ export function Composer({
               )}
             </div>
           )}
+          {context && (
+            <ContextMeter context={context} onCompact={running ? undefined : onCompact} />
+          )}
           <span className={styles.spacer} />
           {running ? (
             <button type="button" className={styles.stop} onClick={onStop}>
@@ -591,6 +604,54 @@ export function Composer({
       </div>
       {fileError && <p className={styles.fileError}>{fileError}</p>}
     </div>
+  );
+}
+
+const tokens = (n: number) =>
+  n >= 1_000_000
+    ? `${+(n / 1_000_000).toFixed(1)}M`
+    : n >= 1000
+      ? `${Math.round(n / 1000)}k`
+      : String(n);
+
+/** Context used of the window, like the CLI's /context; Compact when it is nearly full. */
+function ContextMeter({
+  context,
+  onCompact,
+}: {
+  context: { used: number; window: number };
+  onCompact?: () => void;
+}) {
+  const share = Math.min(1, context.used / context.window);
+  const pct = Math.round(share * 100);
+  const high = share >= COMPACT_AT;
+  return (
+    <>
+      <span
+        className={styles.meter}
+        data-high={high || undefined}
+        role="meter"
+        aria-label="Context used"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={pct}
+        title={`${tokens(context.used)} of ${tokens(context.window)} tokens in context`}
+      >
+        <span className={styles.ring} style={{ '--share': share } as CSSProperties} />
+        {pct}%
+      </span>
+      {high && onCompact && (
+        <button
+          type="button"
+          className={styles.chip}
+          data-mode="auto"
+          title="Summarise the conversation so far to free up context"
+          onClick={onCompact}
+        >
+          Compact
+        </button>
+      )}
+    </>
   );
 }
 

@@ -1,5 +1,27 @@
 [
   {
+    "match": "^Fill the context",
+    "steps": [
+      {
+        "context": 170000
+      },
+      {
+        "text": "That was a lot of reading."
+      }
+    ]
+  },
+  {
+    "match": "^/compact",
+    "steps": [
+      {
+        "context": 30000
+      },
+      {
+        "text": "Compacted the conversation."
+      }
+    ]
+  },
+  {
     "match": "^Build the approved plan",
     "steps": [
       {
@@ -319,7 +341,7 @@
               "medium": 1,
               "low": 0
             },
-            "markdown": "## Summary\n\nThe project is in good shape apart from one token leak.\n\n## Findings\n\n### High · Session token in the log\n\n`lib/auth.ts:12` logs the whole request, including the cookie. Log the path only.\n\n### Medium · No rate limit on login\n\n`lib/auth.ts:30` accepts unlimited attempts. Add a small limit.\n\n## What to do next\n\n1. Stop logging the cookie.\n2. Add a login rate limit."
+            "markdown": "## Summary\n\nThe project is in good shape apart from one token leak.\n\n## Findings\n\n### High \u00b7 Session token in the log\n\n`lib/auth.ts:12` logs the whole request, including the cookie. Log the path only.\n\n### Medium \u00b7 No rate limit on login\n\n`lib/auth.ts:30` accepts unlimited attempts. Add a small limit.\n\n## What to do next\n\n1. Stop logging the cookie.\n2. Add a login rate limit."
           }
         }
       }
@@ -457,7 +479,7 @@
               {
                 "path": "CLAUDE.md",
                 "action": "create",
-                "content": "# CLAUDE.md — torongo\n\nTranslation app.\n"
+                "content": "# CLAUDE.md \u2014 torongo\n\nTranslation app.\n"
               },
               {
                 "path": "docs/architecture.md",

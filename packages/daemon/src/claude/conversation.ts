@@ -16,6 +16,7 @@ import { editPreview } from './preview.ts';
 import {
   DECISION_TOOL,
   type DecisionReply,
+  type ContextUse,
   type PermissionAnswer,
   type RunnerEvent,
 } from './runner.ts';
@@ -265,8 +266,9 @@ export class Conversation {
         this.put({ ...item, status: ok ? 'ok' : 'failed', meta: meta ?? item.meta, durationMs });
         break;
       }
-      case 'result':
+      case 'result': {
         this.flushText();
+        const context = this.withWindow(ev.context);
         this.put({
           kind: 'turn-end',
           id: `end_${this.turnId}`,
@@ -276,11 +278,22 @@ export class Conversation {
           stopped: ev.stopped,
           error: ev.error,
           durationMs: ev.durationMs,
+          ...(context ? { context } : {}),
         });
         break;
+      }
       case 'session':
         break;
     }
+  }
+
+  /** Fills a missing window (0) from the last turn that had one (V2.1 w7.3). */
+  private withWindow(context: ContextUse | null | undefined): ContextUse | null {
+    if (!context) return null;
+    if (context.window > 0) return context;
+    const last = [...this.items.values()].reverse().find((i) => i.kind === 'turn-end' && i.context);
+    const window = last?.kind === 'turn-end' ? last.context?.window : undefined;
+    return window ? { used: context.used, window } : null;
   }
 
   private setTool(toolUseId: string, patch: Partial<Extract<ChatItem, { kind: 'tool' }>>): void {

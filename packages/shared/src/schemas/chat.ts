@@ -172,6 +172,8 @@ export const ChatItemSchema = z.discriminatedUnion('kind', [
     stopped: z.boolean(),
     error: z.string().nullable(),
     durationMs: z.number(),
+    /** Tokens in the context window after this turn, of `window` (V2.1 w7.3). */
+    context: z.object({ used: z.number(), window: z.number() }).optional(),
   }),
   /** Magnet: inline project mini-cards. */
   z.object({

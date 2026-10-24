@@ -6,6 +6,9 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ### Added
 
+- **Context meter** next to the model chip: a small ring and the share of the context window
+  the chat uses (hover for the tokens). From 70% it turns amber and offers **Compact**, which
+  sends `/compact`.
 - **@ file mentions** in the chat: type `@` and pick a project file; Claude is told to read the
   files you mentioned (secret files are never offered).
 - **Slash commands** in the chat, like the CLI. Type `/` for a menu: `/clear`, `/stop`, `/ask`,

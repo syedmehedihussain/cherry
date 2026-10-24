@@ -120,3 +120,18 @@ test('chat: @ opens a file menu and inserts the picked path', async ({ page }) =
   await box.press('Enter');
   await expect(page.getByText('look at @lib/streaks.ts')).toBeVisible();
 });
+
+// V2.1 w7.3: the context meter, with Compact when it is nearly full.
+test('chat: the context meter fills and Compact frees it', async ({ page }) => {
+  await page.goto('/p/core');
+  const box = page.getByLabel('Message Claude');
+  await box.fill('Fill the context please');
+  await box.press('Enter');
+  const meter = page.getByRole('meter', { name: 'Context used' });
+  await expect(meter).toHaveText('85%');
+  await expect(meter).toHaveAttribute('title', '170k of 200k tokens in context');
+  await page.getByRole('button', { name: 'Compact', exact: true }).click();
+  await expect(page.getByText('Compacted the conversation.')).toBeVisible();
+  await expect(meter).toHaveText('15%');
+  await expect(page.getByRole('button', { name: 'Compact', exact: true })).toBeHidden();
+});
