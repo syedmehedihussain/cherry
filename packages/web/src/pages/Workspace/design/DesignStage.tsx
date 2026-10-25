@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { sendChat } from '../../../api/chat.ts';
 import { useDesignScreens } from '../../../api/design.ts';
+import { useProjectDetail } from '../../../api/workspace.ts';
+import { BriefPanel } from './BriefPanel.tsx';
 import { ChatTab, readMode } from '../ChatTab.tsx';
 import { Canvas, type CanvasComment } from './Canvas.tsx';
 import styles from './DesignStage.module.css';
@@ -27,6 +29,7 @@ export function DesignStage({
   const data = useDesignScreens(projectId).data;
   const screens = useMemo(() => data ?? [], [data]);
   const [focus, setFocus] = useState<string | null>(null);
+  const card = useProjectDetail(projectId).data?.card;
   const openFile = useCallback(
     (path: string) => {
       // A screen the Designer wrote: show it on the canvas, not in the editor.
@@ -37,6 +40,7 @@ export function DesignStage({
   );
   return (
     <div className={styles.design}>
+      <BriefPanel projectId={projectId} idea={card?.summary || card?.name || projectId} />
       <Canvas
         screens={screens}
         focus={focus}

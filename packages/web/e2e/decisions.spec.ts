@@ -23,7 +23,7 @@ test('decisions: Claude proposes, the user approves one in the chat and rejects 
 
   // Decisions is a view in the palette, with the pending count on it (ADR-0045).
   await page.keyboard.press('Control+k');
-  await page.getByRole('combobox').fill('Decisions');
+  await page.getByRole('combobox', { name: 'Search or run a command' }).fill('Decisions');
   await expect(page.getByRole('option', { name: /Decisions/ })).toContainText('2 proposed');
   await page.keyboard.press('Escape');
 
@@ -45,7 +45,7 @@ test('decisions: Claude proposes, the user approves one in the chat and rejects 
   await rename.getByRole('button', { name: 'Reject' }).click();
   await expect(rename).toHaveCount(0);
   await page.keyboard.press('Control+k');
-  await page.getByRole('combobox').fill('Decisions');
+  await page.getByRole('combobox', { name: 'Search or run a command' }).fill('Decisions');
   await expect(page.getByRole('option', { name: /Decisions/ })).not.toContainText('proposed');
   await page.keyboard.press('Escape');
 

@@ -8,6 +8,8 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 
 ## Decisions to review
 
+- ADR-0050: the brief in design/brief.json; fonts are the computer's and Geist only (no
+  Google Fonts).
 - ADR-0049: terminal shells live in the daemon and outlast a reload; the socket is under
   `/ws/` with the same session and Origin checks.
 - ADR-0048: how Monaco is used (bundled locally, theme from tokens, Undo puts the last
@@ -18,6 +20,18 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 ## Blocked
 
 - Nothing yet.
+
+## r8 Design brief — done 2026-10-25
+
+- Built: the Brief panel left of the canvas. References (drop or pick images, paste links,
+  "Find more" links to Pinterest, Dribbble, Mobbin, Godly, Land-book and Behance, opened only
+  on a click). Design system and components (files, or the tokens of another Cherry
+  project). Images. Five colour slots with a picker and the WCAG contrast of text on surface.
+  Fonts for headings, body and numbers with a live sample, from the computer (`fc-list`) and
+  Cherry's Geist. "Tell the Designer" sends one message. Saved in `design/brief.json` and
+  `design/{references,system,components,assets}/` (ADR-0050).
+- Tests: 429 unit (new: brief.test.ts, contrast.test.ts), 60 e2e pass.
+- Screens: match 02 (brief, canvas, chat) in Just black.
 
 ## r7 Design canvas — done 2026-10-25
 

@@ -37,7 +37,7 @@ test('a project Cherry cannot run has no Play button', async ({ page }) => {
   await expect(page.getByRole('contentinfo')).toContainText('Claude Code');
   await expect(page.getByRole('button', { name: 'Run the app on localhost' })).toHaveCount(0);
   await page.keyboard.press('Control+k');
-  await page.getByRole('combobox').fill('Run the app');
+  await page.getByRole('combobox', { name: 'Search or run a command' }).fill('Run the app');
   await expect(page.getByRole('option', { name: /Run the app/ })).toHaveCount(0);
 });
 

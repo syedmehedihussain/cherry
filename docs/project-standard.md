@@ -24,6 +24,10 @@ tab, its session hook and its project-notes skill keep working on the same files
 │   └── adr/
 │       ├── 0001-use-sqlite.md
 │       └── 0002-no-auth-in-v1.md
+├── design/                   committed  the Design stage (V3): brief.json, tokens.css,
+│   ├── screens/              one HTML file per screen (the canvas, r7)
+│   ├── references/ assets/ system/ components/   files from the Brief (ADR-0050)
+│   └── handoff/              written by Approve design (r9)
 ├── src/ ...                  committed  the code
 └── _project/                 ignored    via .git/info/exclude (cctop standard)
     ├── STATUS.md             where we left off, next steps (cctop format)

@@ -149,7 +149,7 @@ export async function runCommand(page: import('@playwright/test').Page, label: s
   await page.keyboard.press('Control+k');
   const palette = page.getByRole('dialog', { name: 'Command palette' });
   await palette
-    .getByRole('combobox')
+    .getByRole('combobox', { name: 'Search or run a command' })
     .fill(typeof label === 'string' ? label : label.source.replace(/[\\^$]/g, ''));
   await palette.getByRole('option', { name: label }).first().click();
 }

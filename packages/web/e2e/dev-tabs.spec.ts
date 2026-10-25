@@ -48,7 +48,7 @@ test('a file opened from another stage opens Development with its tab', async ({
   const stages = page.getByRole('navigation', { name: 'Lifecycle stages' });
   await stages.getByRole('button', { name: 'Design' }).click();
   await page.keyboard.press('Control+k');
-  await page.getByRole('combobox').fill('>streaks');
+  await page.getByRole('combobox', { name: 'Search or run a command' }).fill('>streaks');
   await page.getByRole('option', { name: /lib\/streaks\.ts/ }).click();
   await expect(page).toHaveURL(/\/p\/core\/files\/lib\/streaks\.ts$/);
   await expect(stages.getByRole('button', { name: 'Development' })).toHaveAttribute(

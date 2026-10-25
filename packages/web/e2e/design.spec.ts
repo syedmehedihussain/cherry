@@ -1,4 +1,4 @@
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { E2E_PROJECTS, loginCode } from './fixture.ts';
@@ -60,4 +60,45 @@ test('Design: screens on the canvas, open large, and a comment on an element', a
   await expect(
     page.getByText(/Comment on design\/screens\/home\.html, element `p\.big` \("12 orders"\)/),
   ).toBeVisible();
+});
+
+// V3 r8: the Brief keeps references, colours and fonts in design/brief.json.
+test('Design: the brief keeps references, a link, colours and fonts', async ({ page }) => {
+  await page.goto('/p/torongo');
+  await page
+    .getByRole('navigation', { name: 'Lifecycle stages' })
+    .getByRole('button', { name: 'Design' })
+    .click();
+  const brief = page.getByRole('complementary', { name: 'Brief' });
+  const refs = brief.getByRole('region', { name: 'References' });
+  await refs.locator('input[type=file]').setInputFiles({
+    name: 'Mood.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      'base64',
+    ),
+  });
+  await expect(refs.getByRole('img', { name: 'mood.png' })).toBeVisible();
+  await refs.getByLabel('Paste a reference link').fill('https://dribbble.com/shots/42');
+  await refs.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(refs.getByRole('link', { name: 'dribbble.com/shots/42' })).toBeVisible();
+  await expect(refs.getByRole('link', { name: /Mobbin/ })).toHaveAttribute('target', '_blank');
+
+  const colours = brief.getByRole('region', { name: 'Colours' });
+  await colours.getByLabel('Text colour').fill('#ffffff');
+  await colours.getByLabel('Surface colour').fill('#000000');
+  await expect(colours).toContainText('AAA 21');
+  await brief.getByLabel('Headings font').selectOption('Geist');
+
+  const file = path.join(design, 'brief.json');
+  await expect.poll(() => existsSync(file) && readFileSync(file, 'utf8')).toContain('"Geist"');
+  const saved = JSON.parse(readFileSync(file, 'utf8'));
+  expect(saved.references).toEqual([
+    { kind: 'file', value: 'design/references/mood.png', note: '' },
+    { kind: 'link', value: 'https://dribbble.com/shots/42', note: '' },
+  ]);
+  expect(saved.colours).toMatchObject({ text: '#FFFFFF', surface: '#000000' });
+  expect(saved.fonts.heading).toEqual({ family: 'Geist', weight: 400 });
+  expect(existsSync(path.join(design, 'references', 'mood.png'))).toBe(true);
 });
