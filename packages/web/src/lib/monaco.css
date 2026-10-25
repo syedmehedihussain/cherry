@@ -1,0 +1,12 @@
+/* Monaco's own DOM: lines Claude changed (V3 r5). Colours are tokens. */
+.cc-line-add {
+  background: var(--diff-add-bg);
+}
+.cc-gutter-add {
+  border-left: 3px solid var(--success);
+  margin-left: 3px;
+}
+.cc-gutter-chg {
+  border-left: 3px solid var(--accent);
+  margin-left: 3px;
+}

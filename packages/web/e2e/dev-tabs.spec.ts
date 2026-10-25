@@ -1,5 +1,7 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { loginCode } from './fixture.ts';
+import { E2E_PROJECTS, loginCode } from './fixture.ts';
 
 test.beforeEach(async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
@@ -60,4 +62,41 @@ test('a file opened from another stage opens Development with its tab', async ({
   await page.getByRole('button', { name: 'More' }).click();
   await page.getByRole('menuitem', { name: 'Close all tabs' }).click();
   await expect(page).toHaveURL(/\/p\/core$/);
+});
+
+// V3 r5: a file Claude changed shows a band with Show diff and Undo.
+test('a file Claude changed shows the band, its diff, and Undo', async ({ page }) => {
+  const hero = path.join(E2E_PROJECTS, 'shop', 'src', 'hero.ts');
+  const before = readFileSync(hero, 'utf8');
+  try {
+    await page.evaluate(() => fetch('/api/projects/shop/chat/new', { method: 'POST' }));
+    await page.goto('/p/shop');
+    await page
+      .getByRole('navigation', { name: 'Lifecycle stages' })
+      .getByRole('button', { name: 'Development' })
+      .click();
+    const box = page.getByLabel('Message Claude');
+    await box.fill('Bump the hero');
+    await box.press('Enter');
+    // The prompt has focus: 1 is Yes, like the CLI.
+    await expect(page.getByRole('group', { name: /Claude wants to edit/ })).toBeFocused();
+    await page.keyboard.press('1');
+    await expect(page.getByText('Hero bumped.')).toBeVisible();
+
+    const files = page.getByRole('complementary', { name: 'Files' });
+    await files.getByRole('treeitem', { name: /^src/ }).click();
+    await files.getByRole('treeitem', { name: /hero\.ts/ }).click();
+    const code = page.getByRole('region', { name: 'Contents of src/hero.ts' });
+    await expect(code.getByText(/Claude changed this file/)).toBeVisible();
+    await expect(code).toContainText(/hero\s=\s3/);
+    await code.getByRole('button', { name: 'Show diff' }).click();
+    await expect(code.getByRole('button', { name: 'Hide diff' })).toBeVisible();
+    await code.getByRole('button', { name: 'Undo' }).click();
+    // Undo puts the last commit's text in the editor; nothing is saved until Ctrl+S.
+    await expect(code.getByText('Not saved · Ctrl+S')).toBeVisible();
+    await expect(code).not.toContainText(/hero\s=\s3/);
+    expect(readFileSync(hero, 'utf8')).toContain('hero = 3');
+  } finally {
+    writeFileSync(hero, before);
+  }
 });

@@ -1,5 +1,23 @@
 [
   {
+    "match": "^Bump the hero",
+    "steps": [
+      {
+        "tool": {
+          "name": "Edit",
+          "input": {
+            "file_path": "src/hero.ts",
+            "old_string": "hero = 2",
+            "new_string": "hero = 3"
+          }
+        }
+      },
+      {
+        "text": "Hero bumped."
+      }
+    ]
+  },
+  {
     "match": "^Write the PRD",
     "steps": [
       {

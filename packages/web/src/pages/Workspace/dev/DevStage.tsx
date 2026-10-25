@@ -1,14 +1,17 @@
 import { Ellipsis, Plus, X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { newChat, useChat } from '../../../api/chat.ts';
 import { useProjectDetail } from '../../../api/workspace.ts';
 import { usePalette } from '../../../components/CommandPalette/CommandPalette.tsx';
 import { FileTree, TypeTag } from '../../../components/FileTree/FileTree.tsx';
-import { FileViewer } from '../../../components/FileViewer/FileViewer.tsx';
+import { disposeModel } from '../../../components/CodeEditor/editorModels.ts';
 import { tildify } from '../../../lib/paths.ts';
 import { ChatTab, useHistoryMenu } from '../ChatTab.tsx';
 import { tabKey, useDevTabs, useTabList, type ActiveTab, type DevTab } from './devTabs.ts';
 import styles from './DevStage.module.css';
+
+// Monaco is big: it loads with the first file tab, not with the page.
+const CodeEditor = lazy(() => import('../../../components/CodeEditor/CodeEditor.tsx'));
 
 /**
  * Development (V3 r4, artboard 03): the explorer, and one tabbed area. Claude is the first tab
@@ -34,6 +37,15 @@ export function DevStage({
   const close = useDevTabs((s) => s.close);
   const closeAll = useDevTabs((s) => s.closeAll);
   const dirty = useDevTabs((s) => s.dirty[projectId]);
+  const setDirty = useDevTabs((s) => s.setDirty);
+  // When Claude last changed each file in this chat (r5: the band in the editor).
+  const claudeAt = useMemo(() => {
+    const at = new Map<string, number>();
+    for (const i of chat.data?.items ?? [])
+      if (i.kind === 'tool' && i.verb === 'edit' && i.status === 'ok')
+        at.set(i.target.replace(/^\.\//, ''), i.at);
+    return at;
+  }, [chat.data?.items]);
   const openPalette = usePalette((s) => s.set);
   const activeKey = tabKey(active);
 
@@ -51,6 +63,7 @@ export function DevStage({
       !window.confirm(`${t.path} has changes that are not saved. Close it anyway?`)
     )
       return;
+    if (t.kind === 'file') disposeModel(projectId, t.path);
     const next = close(projectId, key);
     if (key === activeKey) onShow(next ?? { kind: 'claude' });
   };
@@ -116,6 +129,12 @@ export function DevStage({
               [
                 'Close all tabs',
                 () => {
+                  if (
+                    dirty?.length &&
+                    !window.confirm(`${dirty.length} file(s) are not saved. Close them anyway?`)
+                  )
+                    return;
+                  for (const t of tabs) if (t.kind === 'file') disposeModel(projectId, t.path);
                   closeAll(projectId);
                   onShow({ kind: 'claude' });
                 },
@@ -135,12 +154,16 @@ export function DevStage({
           </div>
           {active.kind === 'file' && (
             <div className={styles.pane}>
-              <FileViewer
-                key={active.path}
-                projectId={projectId}
-                path={active.path}
-                fileHref={(p) => `/p/${encodeURIComponent(projectId)}/files/${p}`}
-              />
+              <Suspense fallback={<div className={styles.loading} />}>
+                <CodeEditor
+                  key={active.path}
+                  projectId={projectId}
+                  path={active.path}
+                  claudeAt={claudeAt.get(active.path) ?? null}
+                  now={now}
+                  onDirty={(d) => setDirty(projectId, active.path, d)}
+                />
+              </Suspense>
             </div>
           )}
         </div>

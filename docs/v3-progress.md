@@ -8,12 +8,26 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 
 ## Decisions to review
 
+- ADR-0048: how Monaco is used (bundled locally, theme from tokens, Undo puts the last
+  commit's text in the buffer and does not save).
 - ADR-0047: where the V3 shell puts the old controls (views over the stage from the palette,
   Run in the status bar, Live does not open by itself).
 
 ## Blocked
 
 - Nothing yet.
+
+## r5 Code editor — done 2026-10-25
+
+- Built: file tabs use Monaco (ADR-0048), bundled with its workers; no CDN. The theme comes
+  from the tokens, so all four themes work. Ctrl+S saves with the unchanged-on-disk check; a
+  conflict offers Reload or Overwrite. Unsaved tabs show a dot and survive a tab switch;
+  closing one asks first. Lines that differ from the last commit have a gutter mark. A file
+  Claude changed shows "Claude changed this file" with Show diff (inline diff) and Undo.
+  Markdown files have Preview. Footer: line, column, indent, encoding, language.
+- Dependencies: monaco-editor 0.57, @monaco-editor/react 4.7 (approved; ADR-0003 updated).
+- Tests: 413 unit, 57 e2e pass. `pnpm --filter @cherry/web build` passes.
+- Screens: match 03 `?tab=file` in Just black.
 
 ## r4 Development layout — done 2026-10-25
 

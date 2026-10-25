@@ -198,3 +198,8 @@
 .pane[hidden] {
   display: none;
 }
+
+.loading {
+  flex: 1;
+  background: var(--code-bg);
+}

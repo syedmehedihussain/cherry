@@ -1,0 +1,136 @@
+/* A file tab (V3 r5, artboard 03 ?tab=file): band, crumbs, Monaco, footer. */
+.wrap {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--code-bg);
+}
+.grow {
+  flex: 1;
+}
+.band,
+.conflict {
+  height: 30px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 0 14px;
+  font-size: var(--fs-sm);
+  color: var(--t1);
+  background: var(--edited-fill);
+}
+.band svg {
+  color: var(--edited);
+}
+.conflict {
+  background: var(--warning-fill);
+  color: var(--warning);
+}
+.bandBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--t2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+.bandBtn:hover:not(:disabled),
+.bandBtn[aria-pressed='true'] {
+  color: var(--t1);
+  background: var(--neutral-fill);
+}
+.bandBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.band .bandBtn svg {
+  color: inherit;
+}
+.crumbs {
+  height: 28px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px 0 14px;
+  font-size: var(--fs-xs);
+  color: var(--t3);
+}
+.sep {
+  margin: 0 4px;
+}
+.crumbLast {
+  color: var(--t2);
+}
+.unsaved {
+  font-size: var(--fs-2xs);
+  color: var(--warning);
+}
+.iconBtn {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--t3);
+  cursor: pointer;
+}
+.iconBtn:hover {
+  color: var(--t1);
+  background: var(--neutral-fill);
+}
+.editor {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+}
+.layer {
+  position: absolute;
+  inset: 0;
+}
+.layer[hidden] {
+  display: none;
+}
+.preview {
+  overflow: auto;
+  padding: 20px 32px 40px;
+  background: var(--bg);
+}
+.foot {
+  height: 24px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 14px;
+  border-top: 1px solid var(--b);
+  font-family: var(--mono);
+  font-size: var(--fs-2xs);
+  color: var(--t3);
+}
+.note,
+.error {
+  margin: 0;
+  padding: 16px 20px;
+  color: var(--t3);
+  font-size: var(--fs-sm2);
+}
+.error {
+  padding: 6px 14px;
+  color: var(--danger-text);
+}
+.loading {
+  flex: 1;
+  background: var(--code-bg);
+}

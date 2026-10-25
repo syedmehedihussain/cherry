@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { loginCode, openSide, runCommand } from './fixture.ts';
+import { E2E_PROJECTS, loginCode, openSide, runCommand } from './fixture.ts';
 
 test.beforeEach(async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
@@ -32,42 +34,45 @@ test('opens a project with status, stage tabs and git box', async ({ page }) => 
   await expect(repo.getByText('1 uncommitted')).toBeVisible();
 });
 
+// V3 r5: files open in Monaco, in a tab; changed lines are marked in the gutter.
 test('browses the tree and shows changes in a file', async ({ page }) => {
   await page.goto('/p/core');
   await page.getByRole('treeitem', { name: /lib/ }).click();
   await page.getByRole('treeitem', { name: /streaks\.ts/ }).click();
   await expect(page).toHaveURL(/\/p\/core\/files\/lib\/streaks\.ts$/);
-  await expect(page.getByRole('button', { name: 'Edit file' })).toBeVisible();
-  await expect(page.getByRole('switch', { name: 'Show changes' })).toHaveAttribute(
-    'aria-checked',
-    'true',
-  );
   const code = page.getByRole('region', { name: 'Contents of lib/streaks.ts' });
-  await expect(code).toContainText('streaks = 1');
-  await expect(code).toContainText(/streaks = [23]/); // the chat e2e may have bumped it
-  await page.getByRole('switch', { name: 'Show changes' }).click();
-  await expect(code).not.toContainText('streaks = 1');
+  await expect(code).toContainText(/streaks\s=\s[23]/); // the chat e2e may have bumped it
+  await expect(code.locator('.cc-gutter-add')).toHaveCount(1);
+  await expect(code).toContainText('TypeScript');
 });
 
 test('edits and saves a file in the built-in editor', async ({ page }) => {
   await page.goto('/p/cctop/files/edit-me.txt');
-  await page.getByRole('button', { name: 'Edit file' }).click();
   const editor = page.getByRole('textbox', { name: 'Edit edit-me.txt' });
-  await editor.fill('one\ntwo\n');
-  await editor.press('Control+s');
-  const code = page.getByRole('region', { name: 'Contents of edit-me.txt' });
-  await expect(code).toContainText('two');
-  await expect(page.getByRole('button', { name: 'Edit file' })).toBeVisible();
+  await editor.focus();
+  await page.keyboard.press('Control+a');
+  await page.keyboard.type('one\ntwo\n');
+  await expect(page.getByText('Not saved · Ctrl+S')).toBeVisible();
+  const tab = page.getByRole('tablist', { name: 'Open tabs' });
+  await expect(tab.getByRole('button', { name: 'Close edit-me.txt' })).toHaveAttribute(
+    'data-dirty',
+    'true',
+  );
+  await page.keyboard.press('Control+s');
+  await expect(page.getByText('Not saved · Ctrl+S')).toBeHidden();
+  await expect
+    .poll(() => readFileSync(path.join(E2E_PROJECTS, 'cctop', 'edit-me.txt'), 'utf8'))
+    .toBe('one\ntwo\n');
 });
 
 test('previews a Markdown file, with the source one click away', async ({ page }) => {
   await page.goto('/p/torongo/files/README.md');
-  const preview = page.getByRole('region', { name: 'Preview of README.md' });
-  await expect(preview.getByRole('heading', { level: 1, name: 'torongo' })).toBeVisible();
-  await page.getByRole('button', { name: 'Source', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Contents of README.md' })).toContainText(
-    '# torongo',
-  );
+  const code = page.getByRole('region', { name: 'Contents of README.md' });
+  await expect(code).toContainText('# torongo');
+  await code.getByRole('button', { name: 'Preview' }).click();
+  await expect(code.getByRole('heading', { level: 1, name: 'torongo' })).toBeVisible();
+  await code.getByRole('button', { name: 'Edit', exact: true }).click();
+  await expect(code.getByRole('heading', { level: 1, name: 'torongo' })).toBeHidden();
 });
 
 test('reads docs in the Docs tab', async ({ page }) => {
