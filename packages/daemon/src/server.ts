@@ -93,7 +93,8 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
       return;
     }
     const needsSession =
-      (url.startsWith('/api/') || url === '/ws') && !PUBLIC_API.has(`${req.method} ${url}`);
+      (url.startsWith('/api/') || url === '/ws' || url.startsWith('/ws/')) &&
+      !PUBLIC_API.has(`${req.method} ${url}`);
     if (needsSession && !deps.auth.isValidSession(sessionId(req))) {
       return reply.code(401).send({
         error: {

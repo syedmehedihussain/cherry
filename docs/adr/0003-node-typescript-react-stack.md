@@ -31,6 +31,7 @@ streaming, and SQLite only for the app's own cache. This ADR pins the libraries.
 | Dev runner | `tsx` | runs the daemon and CLI from TS source with watch |
 | Fonts | `@fontsource-variable/geist`, `geist-mono` | self-hosted; the `geist` package only ships Next.js loaders, and Google Fonts would send requests off the machine |
 | Code editor (V3) | `monaco-editor` + `@monaco-editor/react` | the editor inside VS Code, bundled locally (ADR-0048) |
+| Terminal (V3) | `@xterm/xterm`, `@xterm/addon-fit` (web), `node-pty` (daemon) | what VS Code's terminal uses (ADR-0049) |
 
 ## Consequences
 

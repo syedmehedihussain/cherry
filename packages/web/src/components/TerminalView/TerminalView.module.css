@@ -1,0 +1,23 @@
+/* A terminal tab (V3 r6, artboard 03 ?tab=term). */
+.wrap {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--code-bg-deep);
+}
+.screen {
+  flex: 1 1 0;
+  min-height: 0;
+  padding: 6px 0 4px 12px;
+}
+.screen :global(.xterm-viewport) {
+  background: var(--code-bg-deep) !important;
+}
+.note {
+  margin: 0;
+  padding: 6px 14px;
+  border-top: 1px solid var(--b);
+  font-size: var(--fs-sm);
+  color: var(--warning);
+}

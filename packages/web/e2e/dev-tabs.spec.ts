@@ -100,3 +100,40 @@ test('a file Claude changed shows the band, its diff, and Undo', async ({ page }
     writeFileSync(hero, before);
   }
 });
+
+// V3 r6: a terminal tab is a real shell in the project folder; it outlasts a tab switch and a
+// reload, and closing the tab ends it.
+test('a terminal tab runs a shell in the project folder', async ({ page }) => {
+  await page.goto('/p/cctop');
+  await page
+    .getByRole('navigation', { name: 'Lifecycle stages' })
+    .getByRole('button', { name: 'Development' })
+    .click();
+  await page.getByRole('button', { name: 'Open', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'New terminal' }).click();
+  await expect(page).toHaveURL(/\/p\/cctop\/term\/t_/);
+  const tabs = page.getByRole('tablist', { name: 'Open tabs' });
+  await expect(tabs.getByRole('tab', { name: 'Terminal' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  const screen = page.getByRole('region', { name: 'Terminal' });
+  await screen.click();
+  await page.keyboard.type('echo cherry-$((6*7)) && ls\n');
+  await expect(screen).toContainText('cherry-42');
+  await expect(screen).toContainText('edit-me.txt');
+
+  await tabs.getByRole('tab', { name: 'Claude' }).click();
+  await tabs.getByRole('tab', { name: 'Terminal' }).click();
+  await expect(screen).toContainText('cherry-42');
+
+  await page.reload();
+  await expect(tabs.getByRole('tab', { name: 'Terminal' })).toBeVisible();
+  await tabs.getByRole('tab', { name: 'Terminal' }).click();
+  await expect(page.getByRole('region', { name: 'Terminal' })).toContainText('cherry-42');
+
+  await tabs.getByRole('button', { name: 'Close Terminal' }).click();
+  await expect(tabs.getByRole('tab', { name: 'Terminal' })).toHaveCount(0);
+  await page.reload();
+  await expect(tabs.getByRole('tab')).toHaveText(['Claude']);
+});

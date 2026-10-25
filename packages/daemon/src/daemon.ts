@@ -43,6 +43,8 @@ import { sdkRunner, type Runner } from './claude/runner.ts';
 import { buildServer } from './server.ts';
 import { RunService } from './run/service.ts';
 import { runRoutes } from './routes/run.ts';
+import { TerminalService } from './terminal/service.ts';
+import { terminalRoutes } from './routes/terminals.ts';
 import { watchFolders } from './watcher.ts';
 import pkg from '../package.json' with { type: 'json' };
 
@@ -64,6 +66,7 @@ export interface Daemon {
   health: HealthService;
   planUsage: PlanUsageService;
   runs: RunService;
+  terminals: TerminalService;
   cliSecret: string;
   close(): Promise<void>;
 }
@@ -150,6 +153,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
   );
   const notes = new NoteService(config, opts.runner ?? sdkRunner);
   const runs = new RunService(config, hub);
+  const terminals = new TerminalService(config);
   const gitActions = new GitActions(config, hub, approvals, gitInfo, opts.prList);
   const magnet = new MagnetService(
     config,
@@ -187,6 +191,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       noteRoutes(notes),
       commitRoutes(commits),
       runRoutes(runs),
+      terminalRoutes(terminals),
       adrRoutes(adrs),
       ideaRoutes(new IdeaStore(opts.home)),
       stageRoutes(opts.home, config),
@@ -227,7 +232,9 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     adrs,
     scans,
     magnet,
+    terminals,
     async close() {
+      terminals.stopAll();
       await runs.stopAll();
       await chat.stopAll();
       await agents.stopAll();

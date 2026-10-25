@@ -135,7 +135,7 @@ VS Code with Claude Code, Deployment like a cockpit. The plan is in
 - [x] r4 Development layout: explorer and one tabbed area (Claude pinned first, files and
       terminals as tabs, no split).
 - [x] r5 Code editor with tabs, Save and diff of Claude's edits.
-- [ ] r6 Terminal tabs (xterm.js, node-pty) in Development.
+- [x] r6 Terminal tabs (xterm.js, node-pty) in Development.
 - [ ] r7 Design canvas: HTML screens in `design/screens/`, pan, zoom, click to comment.
 - [ ] r8 Design brief: references, design system, components, images, colours, fonts.
 - [ ] r9 Design handoff: Approve design, `design/handoff/`, Export zip.

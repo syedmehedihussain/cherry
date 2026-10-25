@@ -99,6 +99,13 @@ To show a site Claude or a terminal already started, the daemon reads `/proc` (l
 ports, and the working folder and command line of the user's own processes) and sends one GET to
 `127.0.0.1:<port>` to check it answers HTTP. Nothing leaves the machine.
 
+## Terminal tabs (ADR-0049)
+
+A terminal tab is a shell the daemon runs in the project folder with node-pty. It can do what
+the user's own terminal can, so it is behind the same walls as everything else: the daemon
+binds 127.0.0.1, and the socket `/ws/term/:project/:id` needs the session cookie and a known
+Host and Origin. A terminal answers only to its own project. Claude never types into it.
+
 ## Files never read
 
 `.env`, `.env.*`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `id_rsa*`, `id_ed25519*`, `id_ecdsa*`,

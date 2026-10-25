@@ -1,7 +1,8 @@
-import { Ellipsis, Plus, X } from 'lucide-react';
+import { Ellipsis, Plus, SquareTerminal, X } from 'lucide-react';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { newChat, useChat } from '../../../api/chat.ts';
 import { useProjectDetail } from '../../../api/workspace.ts';
+import { closeTerminal, createTerminal, useTerminals } from '../../../api/terminals.ts';
 import { usePalette } from '../../../components/CommandPalette/CommandPalette.tsx';
 import { FileTree, TypeTag } from '../../../components/FileTree/FileTree.tsx';
 import { disposeModel } from '../../../components/CodeEditor/editorModels.ts';
@@ -12,6 +13,7 @@ import styles from './DevStage.module.css';
 
 // Monaco is big: it loads with the first file tab, not with the page.
 const CodeEditor = lazy(() => import('../../../components/CodeEditor/CodeEditor.tsx'));
+const TerminalView = lazy(() => import('../../../components/TerminalView/TerminalView.tsx'));
 
 /**
  * Development (V3 r4, artboard 03): the explorer, and one tabbed area. Claude is the first tab
@@ -50,6 +52,28 @@ export function DevStage({
   const activeKey = tabKey(active);
 
   // A file opened by URL (a link, the palette) gets its tab.
+  // Shells live in the daemon: after a reload their tabs come back; a gone one is dropped.
+  const terminals = useTerminals(projectId).data;
+  useEffect(() => {
+    if (!terminals) return;
+    const ids = new Set(terminals.map((t) => t.id));
+    for (const t of terminals) open(projectId, { kind: 'term', id: t.id, title: t.title });
+    for (const t of useDevTabs.getState().list(projectId))
+      if (t.kind === 'term' && !ids.has(t.id)) close(projectId, `term:${t.id}`);
+  }, [terminals, open, close, projectId]);
+  const [termError, setTermError] = useState<string | null>(null);
+  const newTerminal = () => {
+    setTermError(null);
+    void createTerminal(projectId)
+      .then((t) => {
+        open(projectId, { kind: 'term', id: t.id, title: t.title });
+        onShow({ kind: 'term', id: t.id });
+      })
+      .catch((e: unknown) =>
+        setTermError(e instanceof Error ? e.message : 'Could not start a terminal.'),
+      );
+  };
+
   const activePath = active.kind === 'file' ? active.path : null;
   useEffect(() => {
     if (activePath) open(projectId, { kind: 'file', path: activePath });
@@ -64,6 +88,7 @@ export function DevStage({
     )
       return;
     if (t.kind === 'file') disposeModel(projectId, t.path);
+    if (t.kind === 'term') void closeTerminal(projectId, t.id).catch(() => undefined);
     const next = close(projectId, key);
     if (key === activeKey) onShow(next ?? { kind: 'claude' });
   };
@@ -95,7 +120,13 @@ export function DevStage({
                 active={activeKey === tabKey(t)}
                 label={t.kind === 'file' ? (t.path.split('/').pop() ?? t.path) : t.title}
                 title={t.kind === 'file' ? t.path : t.title}
-                icon={t.kind === 'file' ? <TypeTag path={t.path} /> : undefined}
+                icon={
+                  t.kind === 'file' ? (
+                    <TypeTag path={t.path} />
+                  ) : (
+                    <SquareTerminal size={13} aria-hidden="true" />
+                  )
+                }
                 mark={t.kind === 'file' && dirty?.includes(t.path) ? 'dirty' : undefined}
                 onSelect={() => onShow(t)}
                 onClose={() => closeTab(t)}
@@ -106,7 +137,10 @@ export function DevStage({
           <Menu
             label="Open"
             icon={<Plus size={15} aria-hidden="true" />}
-            items={[['Open a file…  Ctrl K', () => openPalette(true)]]}
+            items={[
+              ['New terminal', newTerminal],
+              ['Open a file…  Ctrl K', () => openPalette(true)],
+            ]}
           />
           <Menu
             label="More"
@@ -134,7 +168,10 @@ export function DevStage({
                     !window.confirm(`${dirty.length} file(s) are not saved. Close them anyway?`)
                   )
                     return;
-                  for (const t of tabs) if (t.kind === 'file') disposeModel(projectId, t.path);
+                  for (const t of tabs) {
+                    if (t.kind === 'file') disposeModel(projectId, t.path);
+                    else void closeTerminal(projectId, t.id).catch(() => undefined);
+                  }
                   closeAll(projectId);
                   onShow({ kind: 'claude' });
                 },
@@ -142,6 +179,11 @@ export function DevStage({
             ]}
           />
         </div>
+        {termError && (
+          <p className={styles.error} role="alert">
+            {termError}
+          </p>
+        )}
         <div className={styles.body}>
           {/* The chat stays mounted, so its scroll and draft survive a tab switch. */}
           <div className={styles.pane} hidden={activeKey !== 'claude'}>
@@ -152,6 +194,22 @@ export function DevStage({
               onOpenFile={(path) => onShow({ kind: 'file', path })}
             />
           </div>
+          {/* Terminals stay mounted, so a tab switch keeps the shell's screen. */}
+          {tabs.map(
+            (t) =>
+              t.kind === 'term' && (
+                <div key={t.id} className={styles.pane} hidden={activeKey !== tabKey(t)}>
+                  <Suspense fallback={<div className={styles.loading} />}>
+                    <TerminalView
+                      projectId={projectId}
+                      id={t.id}
+                      title={t.title}
+                      active={activeKey === tabKey(t)}
+                    />
+                  </Suspense>
+                </div>
+              ),
+          )}
           {active.kind === 'file' && (
             <div className={styles.pane}>
               <Suspense fallback={<div className={styles.loading} />}>

@@ -8,6 +8,8 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 
 ## Decisions to review
 
+- ADR-0049: terminal shells live in the daemon and outlast a reload; the socket is under
+  `/ws/` with the same session and Origin checks.
 - ADR-0048: how Monaco is used (bundled locally, theme from tokens, Undo puts the last
   commit's text in the buffer and does not save).
 - ADR-0047: where the V3 shell puts the old controls (views over the stage from the palette,
@@ -16,6 +18,17 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 ## Blocked
 
 - Nothing yet.
+
+## r6 Terminal — done 2026-10-25
+
+- Built: `+` → New terminal opens a real shell in the project folder as a tab (xterm.js in
+  the browser, node-pty in the daemon, ADR-0049). The shell keeps running when the tab is
+  hidden or the page reloads; its tab comes back with the last output. Closing the tab ends
+  the shell. Colours come from the tokens. At most eight per project.
+- Dependencies: node-pty 1.1 (native build; python3, make and g++ were on this machine),
+  @xterm/xterm, @xterm/addon-fit. `pnpm-workspace.yaml` allows node-pty's build script.
+- Tests: 416 unit (new: terminals.test.ts), 58 e2e pass.
+- Screens: match 03 `?tab=term` in Just black.
 
 ## r5 Code editor — done 2026-10-25
 

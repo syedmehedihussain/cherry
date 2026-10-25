@@ -203,3 +203,9 @@
   flex: 1;
   background: var(--code-bg);
 }
+.error {
+  margin: 0;
+  padding: 6px 14px;
+  font-size: var(--fs-sm);
+  color: var(--danger-text);
+}
