@@ -7,6 +7,7 @@ import type { GitResult } from './workspace.ts';
 import type { Agent } from './agent.ts';
 import type { RunState } from './run.ts';
 import type { BrowserTest, Checks } from './deploy.ts';
+import type { AutopilotState } from './autopilot.ts';
 import type { Stage } from './common.ts';
 
 export type NoticeKind =
@@ -21,7 +22,9 @@ export type NoticeKind =
   | 'issue.sent'
   | 'issue.failed'
   | 'test.done'
-  | 'test.failed';
+  | 'test.failed'
+  | 'autopilot.done'
+  | 'autopilot.failed';
 
 /** A short message about work that ended; `link` is the web route that shows it. */
 export interface Notice {
@@ -92,6 +95,8 @@ export interface EventMap {
   'run.output': { projectId: string; text: string };
   /** A check in the Deployment cockpit started or finished (V3 r10). */
   'checks.updated': { projectId: string; checks: Checks };
+  /** Autopilot asked, flew a step, or landed (ADR-0046). */
+  'autopilot.updated': { projectId: string; state: AutopilotState };
   /** The browser test moved on (V3 r11). */
   'browsertest.updated': { projectId: string; test: BrowserTest };
   /** Something finished or needs you, for desktop notifications (topic "notices"). */

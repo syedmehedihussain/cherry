@@ -123,6 +123,22 @@ export class AdrService {
     return this.get(projectId, number);
   }
 
+  /**
+   * A choice already made (Autopilot, ADR-0046): written Accepted, with who decided it, and
+   * listed in Decisions for the user's review.
+   */
+  record(projectId: string, input: AdrProposal, decidedBy: string): Adr {
+    const { dir } = this.where(projectId);
+    const { number } = writeProposal(dir, input, decidedBy);
+    this.edit(projectId, number, {
+      Status: 'Accepted',
+      'Proposed by': null,
+      'Decided by': `${decidedBy}, for review`,
+    });
+    this.changed(projectId);
+    return this.get(projectId, number);
+  }
+
   private edit(projectId: string, number: number, set: Record<string, string | null>): void {
     const { dir } = this.where(projectId);
     const found = findAdr(dir, number);

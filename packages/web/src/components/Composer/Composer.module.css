@@ -367,3 +367,10 @@
     display: none;
   }
 }
+
+.apLine {
+  color: var(--accent-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

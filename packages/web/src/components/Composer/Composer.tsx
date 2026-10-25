@@ -94,6 +94,8 @@ interface ComposerProps {
   history?: string[];
   /** "Reply to the Builder". */
   placeholder?: string;
+  /** Autopilot (ADR-0046): replaces the mode in the hint line. */
+  autopilotLine?: string;
 }
 
 /** From this share of the window the meter turns amber and offers Compact, like the CLI. */
@@ -121,6 +123,7 @@ export function Composer({
   onCompact,
   history = [],
   placeholder,
+  autopilotLine,
 }: ComposerProps) {
   const [text, setText] = useState('');
   const [shortcuts, setShortcuts] = useState(false);
@@ -586,40 +589,44 @@ export function Composer({
         </div>
       </div>
       <div className={styles.hintLine}>
-        <div className={styles.menuWrap}>
-          <button
-            type="button"
-            className={styles.mode}
-            data-mode={mode}
-            aria-haspopup="menu"
-            aria-expanded={menu === 'mode'}
-            aria-label={`Mode: ${current.label}`}
-            title={`${current.detail}. Shift+Tab cycles the mode.`}
-            onClick={() => setMenu(menu === 'mode' ? null : 'mode')}
-          >
-            {MODE_LINE[mode]}
-            <span className={styles.dim}> (shift+tab to cycle)</span>
-          </button>
-          {menu === 'mode' && (
-            <div className={`${styles.menu} ${styles.modeMenu}`} role="menu" aria-label="Mode">
-              {MODES.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={m.id === mode}
-                  onClick={() => {
-                    onMode(m.id);
-                    setMenu(null);
-                  }}
-                >
-                  <span className={styles.modeLabel}>{m.label}</span>
-                  <span className={styles.modeDetail}>{m.detail}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {autopilotLine ? (
+          <span className={styles.apLine}>{autopilotLine}</span>
+        ) : (
+          <div className={styles.menuWrap}>
+            <button
+              type="button"
+              className={styles.mode}
+              data-mode={mode}
+              aria-haspopup="menu"
+              aria-expanded={menu === 'mode'}
+              aria-label={`Mode: ${current.label}`}
+              title={`${current.detail}. Shift+Tab cycles the mode.`}
+              onClick={() => setMenu(menu === 'mode' ? null : 'mode')}
+            >
+              {MODE_LINE[mode]}
+              <span className={styles.dim}> (shift+tab to cycle)</span>
+            </button>
+            {menu === 'mode' && (
+              <div className={`${styles.menu} ${styles.modeMenu}`} role="menu" aria-label="Mode">
+                {MODES.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={m.id === mode}
+                    onClick={() => {
+                      onMode(m.id);
+                      setMenu(null);
+                    }}
+                  >
+                    <span className={styles.modeLabel}>{m.label}</span>
+                    <span className={styles.modeDetail}>{m.detail}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         {context && <ContextMeter context={context} onCompact={running ? undefined : onCompact} />}
         <span className={styles.spacer} />
         <div className={styles.menuWrap}>

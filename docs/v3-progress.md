@@ -9,9 +9,17 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
   it: Settings → Claude Code → turn on Claude in Chrome; open a project, Deployment, Run, then
   Test. The first time, give the extension permanent access to localhost (the cockpit shows
   this hint once). Check that each step gets a row and a screenshot.
+- **Try Autopilot with real Claude (r13).** It was tested with the fake Claude only. Start
+  small: a project with a roadmap, Development, Autopilot, "Only the next task". It runs on the
+  project's default model and costs more tokens than one chat (ADR-0046).
 
 ## Decisions to review
 
+- r13 Autopilot: while Magnet flies, the composer is off (the artboard says "type to give him
+  a new order"; I chose stop-then-type so two voices never give orders at once). Magnet runs
+  as its own resumable Claude session with tools say, plan_tasks, order, task_result,
+  decide, choose, needs_you and land; read tools only. Stop rules: the same order twice, a
+  task failing twice, 60 orders.
 - r12 "Stuck?" shows after two failed replies in a row or the same message twice; it offers
   Ask Magnet (with the reason and the last error) and Rewind. My reading of "Stuck? hint".
 - r11 browser test: a background Claude run with Chrome on; Chrome and read tools only, edits
@@ -33,6 +41,23 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 ## Blocked
 
 - Nothing yet.
+
+## r13 Autopilot — done 2026-10-25
+
+- Built: the Autopilot button in the top bar of Plan, Design and Development (not
+  Deployment). A click: Magnet asks "What should I do, sir?" with suggestions (the next
+  roadmap milestone, "Only the next task" …); nothing runs until the answer; Esc cancels.
+  The answer (a chip or typed) starts the flight: Magnet gives the stage agent one order at a
+  time (shown as MAGNET → BUILDER), the agent runs in Auto, Magnet answers its decision cards,
+  records its own choices as ADRs (Accepted, "Decided by: Magnet (Autopilot), for review"),
+  and counts tasks ("Flying 3 of 8" pill with a bobbing Magnet). Pushes, publishes and
+  serious commands are refused and listed in Needs you. Esc or a click on the pill stops after
+  the current step. The report (ASD-STE100): Result, Decisions with Keep and Change, Needs
+  you, Next with Open <stage>. A desktop notice says when it lands.
+- Fixed on the way: an action's HTTP answer could be older than the live events; the page
+  now fetches the state again after each action.
+- Tests: 456 unit (new: autopilot.test.ts in daemon and web), 65 e2e (new: autopilot.spec.ts).
+- Screens: match 08 and 10 in Just black; 09 (flying) checked in a short flight.
 
 ## r12 Stage moves — done 2026-10-25
 

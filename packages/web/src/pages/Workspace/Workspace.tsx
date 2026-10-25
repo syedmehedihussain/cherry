@@ -23,7 +23,13 @@ import {
 import { useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { create } from 'zustand';
-import { STAGE_LABEL, WORKSPACE_STAGES, type WorkspaceStage } from '@cherry/shared';
+import {
+  AUTOPILOT_STAGES,
+  STAGE_LABEL,
+  WORKSPACE_STAGES,
+  type AutopilotStage,
+  type WorkspaceStage,
+} from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
 import { searchFiles, useLiveProject, useProjectDetail } from '../../api/workspace.ts';
 import { startRun, stopRun, useLiveRun, useRun } from '../../api/run.ts';
@@ -43,6 +49,8 @@ import {
 import { AgentsPanel } from '../../components/AgentsPanel/AgentsPanel.tsx';
 import { Decisions, usePendingDecisions } from '../../components/Decisions/Decisions.tsx';
 import { useStage, useStages } from '../../state/stage.ts';
+import { useAutopilot, useLiveAutopilot } from '../../api/autopilot.ts';
+import { AutopilotButton } from '../../components/Autopilot/Autopilot.tsx';
 import { useNow } from '../../lib/useNow.ts';
 import { useHistoryMenu } from './ChatTab.tsx';
 import { DocsTab } from './DocsTab.tsx';
@@ -111,6 +119,11 @@ export function Workspace() {
     (a) => a.status === 'running' || a.status === 'waiting',
   ).length;
   const openPalette = usePalette((s) => s.set);
+  useLiveAutopilot(id);
+  const apStage = (AUTOPILOT_STAGES as readonly string[]).includes(stage)
+    ? (stage as AutopilotStage)
+    : null;
+  const autopilot = useAutopilot(id, apStage).data;
   const setReport = useOpenReports((s) => s.set);
   const reportPath = route?.view === 'report' ? route.path : undefined;
   useEffect(() => {
@@ -190,6 +203,7 @@ export function Workspace() {
         projectId={id}
         projectName={card?.name ?? id}
         stages={<StageTabs projectId={id} active={stage} onSelect={selectStage} />}
+        actions={apStage && <AutopilotButton projectId={id} stage={apStage} state={autopilot} />}
         onSearch={() => openPalette(true)}
       />
       <div className={styles.body}>

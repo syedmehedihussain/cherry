@@ -1,0 +1,317 @@
+/* Autopilot: Magnet flies the stage (ADR-0046, artboards 08-10). */
+.button,
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 28px;
+  padding: 0 12px 0 10px;
+  margin-right: 4px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--bs);
+  background: none;
+  color: var(--t1);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.button:hover {
+  background: var(--neutral-fill);
+}
+.button svg {
+  color: var(--t2);
+}
+.pill {
+  border-color: var(--accent-border);
+  background: var(--accent-fill);
+  color: var(--accent-text-strong);
+}
+.n {
+  font-family: var(--mono);
+  font-size: var(--fs-2xs);
+  font-weight: 400;
+  color: var(--accent-text);
+}
+.mg {
+  display: inline-flex;
+  flex: none;
+}
+.mg[data-working] img {
+  animation: ap-bob 1.2s var(--ease) infinite;
+}
+@keyframes ap-bob {
+  50% {
+    transform: translateY(-2px) rotate(-3deg);
+  }
+}
+.dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: ap-dot 1.2s infinite;
+}
+.dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes ap-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+/* "What should I do, sir?" */
+.ask {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 14px;
+  padding: 18px 18px 16px;
+  border-radius: var(--r-xl);
+  border: 1px solid var(--accent-border);
+  background: var(--accent-fill-weak);
+  font-family: var(--sans);
+}
+.q {
+  margin: 2px 0 4px;
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+  color: var(--t1);
+}
+.d {
+  max-width: 560px;
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  color: var(--t2);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.error {
+  margin: 8px 0 0;
+  color: var(--danger-text);
+  font-size: var(--fs-sm);
+}
+
+/* Magnet's order, in place of the user's line. */
+.order {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  padding: 6px 10px 6px 6px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--accent-fill);
+  background: var(--accent-fill-weak);
+  color: var(--t1);
+}
+.order .mg {
+  margin-top: 2px;
+}
+.who {
+  display: block;
+  font-family: var(--sans);
+  font-size: var(--fs-2xs);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--accent-text);
+}
+.orderText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.decision {
+  display: grid;
+  grid-template-columns: 18px auto 1fr;
+  align-items: baseline;
+  gap: 0 6px;
+  color: var(--t1);
+}
+.decision::before {
+  content: '●' / '';
+  font-size: 10px;
+  color: var(--accent-text);
+}
+.decision[data-needs]::before {
+  color: var(--warning);
+}
+
+.tag {
+  height: 20px;
+  padding: 0 7px;
+  border-radius: var(--r-pill);
+  background: var(--accent-fill);
+  color: var(--accent-text-strong);
+  font-family: var(--sans);
+  font-size: var(--fs-2xs);
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+}
+.tag[data-warn] {
+  background: var(--warning-fill);
+  color: var(--warning);
+}
+.adr {
+  color: var(--t3);
+}
+.task {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--b);
+  color: var(--t2);
+  font-size: 12px;
+}
+.task svg {
+  flex: none;
+  color: var(--danger);
+}
+.task[data-ok] svg {
+  color: var(--success);
+}
+.task > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+  color: var(--t1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.taskMeta {
+  color: var(--t3);
+}
+.busy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--accent-text);
+  font-size: 12px;
+}
+.grow {
+  flex: 1;
+}
+.meta {
+  font-family: var(--mono);
+  font-size: var(--fs-2xs);
+  color: var(--t3);
+}
+
+/* The report (artboard 10). */
+.report {
+  border: 1px solid var(--bs);
+  border-radius: var(--r-xl);
+  background: var(--s1);
+  font-family: var(--sans);
+  font-size: var(--fs-base);
+  overflow: hidden;
+}
+.reportHead {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: start;
+  gap: 10px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--b);
+}
+.headline {
+  font-weight: 600;
+  color: var(--t1);
+}
+.close {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--t3);
+  cursor: pointer;
+}
+.close:hover {
+  color: var(--t1);
+  background: var(--neutral-fill);
+}
+.part {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--b);
+}
+.label {
+  font-size: var(--fs-2xs);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--t3);
+}
+.line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--t1);
+}
+.line svg {
+  flex: none;
+  color: var(--success);
+}
+.line[data-warn] svg {
+  color: var(--warning);
+}
+.dec {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--t1);
+}
+.dec > svg {
+  flex: none;
+  color: var(--t3);
+}
+.adrN {
+  font-family: var(--mono);
+  font-size: var(--fs-2xs);
+  color: var(--t3);
+}
+.decText {
+  flex: 1;
+  min-width: 0;
+}
+.reviewed {
+  font-size: var(--fs-sm);
+  color: var(--t3);
+}
+.reportFoot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  font-size: var(--fs-sm);
+  color: var(--t3);
+}
+.reportFoot span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

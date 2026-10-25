@@ -1,5 +1,118 @@
 [
   {
+    "match": "The job: \"Fly the test job\"",
+    "steps": [
+      {
+        "call": {
+          "name": "say",
+          "input": {
+            "text": "Yes, sir. The job has 2 tasks. I report when it is done."
+          }
+        }
+      },
+      {
+        "call": {
+          "name": "plan_tasks",
+          "input": {
+            "total": 2
+          }
+        }
+      },
+      {
+        "call": {
+          "name": "order",
+          "input": {
+            "text": "Task one of the test flight: add the streak test.",
+            "task": "Add the streak test"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "match": "^Task one of the test flight",
+    "steps": [
+      {
+        "text": "Added the streak test. Tests 3 passed."
+      }
+    ]
+  },
+  {
+    "match": "Added the streak test\\. Tests",
+    "steps": [
+      {
+        "call": {
+          "name": "task_result",
+          "input": {
+            "title": "Add the streak test",
+            "status": "done",
+            "tests": "pass"
+          }
+        }
+      },
+      {
+        "call": {
+          "name": "decide",
+          "input": {
+            "title": "Streaks reset at midnight",
+            "context": "The PRD does not say when a streak day ends.",
+            "decision": "A streak day ends at local midnight.",
+            "reason": "Simplest rule. The PRD does not say."
+          }
+        }
+      },
+      {
+        "call": {
+          "name": "order",
+          "input": {
+            "text": "Task two of the test flight: tidy the streak code.",
+            "task": "Tidy the streak code"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "match": "^Task two of the test flight",
+    "steps": [
+      {
+        "tool": {
+          "name": "Bash",
+          "input": {
+            "command": "git push origin main"
+          }
+        }
+      },
+      {
+        "text": "Tidied. Tests 3 passed. The push was refused."
+      }
+    ]
+  },
+  {
+    "match": "Tidied\\. Tests 3 passed",
+    "steps": [
+      {
+        "call": {
+          "name": "task_result",
+          "input": {
+            "title": "Tidy the streak code",
+            "status": "done",
+            "tests": "pass"
+          }
+        }
+      },
+      {
+        "call": {
+          "name": "land",
+          "input": {
+            "result": ["2 of 2 tasks are complete.", "All tests pass."],
+            "next": "Open Deployment. Run the browser test."
+          }
+        }
+      }
+    ]
+  },
+  {
     "match": "^The browser test failed",
     "steps": [
       {

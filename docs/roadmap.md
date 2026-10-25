@@ -142,7 +142,7 @@ VS Code with Claude Code, Deployment like a cockpit. The plan is in
 - [x] r10 Deployment cockpit: run and preview, checks, Deploy with one confirm.
 - [x] r11 Quiet browser test with Claude in Chrome from the test plan, step rows with screenshots.
 - [x] r12 Stage moves: next-step chip, Haiku handoff note, Stuck? hint.
-- [ ] r13 Autopilot (ADR-0046): Magnet asks once, drives the stage agent, decides from the
+- [x] r13 Autopilot (ADR-0046): Magnet asks once, drives the stage agent, decides from the
       documents, logs decisions, reports in ASD-STE100.
 - [ ] r14 Clean-up: remove dead code, update docs and e2e tests.
 - [ ] r15 Real run: one new project from Plan to Deploy, with Autopilot for M1.

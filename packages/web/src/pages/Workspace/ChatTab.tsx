@@ -20,6 +20,8 @@ import {
   type ChatState,
   type Effort,
   type Stage,
+  AUTOPILOT_STAGES,
+  type AutopilotStage,
 } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
 import {
@@ -67,6 +69,21 @@ import { PlanProposal } from '../../components/PlanProposal/PlanProposal.tsx';
 import { useStages } from '../../state/stage.ts';
 import { useSideView } from './SidePanel.tsx';
 import { NextStageChip, StuckHint } from './StageHints.tsx';
+import {
+  AutopilotReport,
+  MagnetAsk,
+  MagnetBusy,
+  MagnetEvent,
+  MagnetOrder,
+  flying,
+  taskCount,
+} from '../../components/Autopilot/Autopilot.tsx';
+import {
+  dismissAutopilot,
+  startAutopilot,
+  stopAutopilot,
+  useAutopilot,
+} from '../../api/autopilot.ts';
 import styles from './Chat.module.css';
 
 type Block =
@@ -122,6 +139,14 @@ export function toBlocks(items: ChatItem[]): Block[] {
     // projects / action items belong to Magnet's panel.
   }
   return blocks;
+}
+
+/** When a Claude block began: its first item's time. */
+function firstAt(b: Extract<Block, { t: 'claude' }>): number {
+  const p = b.parts[0];
+  if (!p) return 0;
+  if (p.t === 'thinking' || p.t === 'tools' || p.t === 'chrome') return p.items[0]!.at;
+  return p.item.at;
 }
 
 /** ADR numbers Claude proposed in these rows (propose_decision; the row's meta is "ADR-0012"). */
@@ -222,6 +247,31 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
   const turnStart = lastUser?.at;
   const turnSeed = lastUser?.id ?? 'turn';
   const agentName = stageInfo(useStageInfo().data, stage)?.name;
+  // Autopilot (ADR-0046): Magnet flies Plan, Design and Development.
+  const apStage = (AUTOPILOT_STAGES as readonly Stage[]).includes(stage)
+    ? (stage as AutopilotStage)
+    : null;
+  const ap = useAutopilot(projectId, apStage).data;
+  const apFlying = flying(ap);
+  const apAsking = ap?.status === 'asking';
+  // Esc stops Magnet (after the current step) or cancels his question.
+  useEffect(() => {
+    if (!apStage || (!apFlying && !apAsking)) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      if (apFlying) void stopAutopilot(projectId, apStage).catch(() => undefined);
+      else void dismissAutopilot(projectId, apStage).catch(() => undefined);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [apStage, apFlying, apAsking, projectId]);
+  const setStages = useStages((st) => st.set);
+  const sideView = useSideView((st) => st.set);
+  // Magnet's own lines, placed between the turns by time.
+  const events = ap?.events ?? [];
+  const starts = blocks.map((b) => (b.t === 'user' ? b.item.at : b.parts.length ? firstAt(b) : 0));
+  const eventsAfter = (i: number) =>
+    events.filter((e) => e.at >= (starts[i] ?? 0) && e.at < (starts[i + 1] ?? Infinity));
 
   useLayoutEffect(() => {
     const el = scroller.current;
@@ -284,78 +334,110 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
               onSkill={(name) => setDraft(projectId, `/cherry-${stage}:${name} `)}
             />
           )}
-          {blocks.map((b) =>
-            b.t === 'user' ? (
-              <div key={b.item.id} className={styles.userBlock}>
-                <CcUser
-                  actions={
-                    !state?.running &&
-                    rewindAt !== b.item.id && (
-                      <button
-                        type="button"
-                        className={styles.rewindBtn}
-                        aria-label="Rewind to before this message"
-                        title="Rewind to before this message"
-                        onClick={() => setRewindAt(b.item.id)}
-                      >
-                        <Undo2 size={13} aria-hidden="true" />
-                      </button>
-                    )
+          {events
+            .filter((e) => e.at < (starts[0] ?? Infinity))
+            .map((e) => (
+              <MagnetEvent key={`ev-${e.at}`} event={e} />
+            ))}
+          {blocks.map((b, bi) => (
+            <Fragment key={b.t === 'user' ? b.item.id : b.id}>
+              {b.t === 'user' && b.item.by === 'magnet' ? (
+                <MagnetOrder
+                  text={b.item.text}
+                  role={b.item.role}
+                  source={b.item.source}
+                  agent={agentName ?? 'agent'}
+                />
+              ) : b.t === 'user' ? (
+                <div key={b.item.id} className={styles.userBlock}>
+                  <CcUser
+                    actions={
+                      !state?.running &&
+                      rewindAt !== b.item.id && (
+                        <button
+                          type="button"
+                          className={styles.rewindBtn}
+                          aria-label="Rewind to before this message"
+                          title="Rewind to before this message"
+                          onClick={() => setRewindAt(b.item.id)}
+                        >
+                          <Undo2 size={13} aria-hidden="true" />
+                        </button>
+                      )
+                    }
+                  >
+                    <span>
+                      {b.item.attachments && b.item.attachments.length > 0 && (
+                        <Attachments projectId={projectId} files={b.item.attachments} />
+                      )}
+                      {b.item.text}
+                    </span>
+                  </CcUser>
+                  {rewindAt === b.item.id && (
+                    <RewindPanel
+                      hasCheckpoint={!!b.item.checkpoint}
+                      onCancel={() => setRewindAt(null)}
+                      onRewind={async (code, chat) => {
+                        const r = await rewindChat(projectId, stage, {
+                          itemId: b.item.id,
+                          code,
+                          chat,
+                        });
+                        setRewindAt(null);
+                        if (chat) setDraft(projectId, r.text);
+                        setNotice(
+                          [
+                            chat ? 'Rewound the chat; your message is back in the box.' : null,
+                            code
+                              ? r.files.length
+                                ? `Put back ${r.files.length} file${r.files.length === 1 ? '' : 's'}: ${r.files.join(', ')}.`
+                                : 'No files had changed since that message.'
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(' '),
+                        );
+                      }}
+                    />
+                  )}
+                </div>
+              ) : (
+                <ClaudeBlock
+                  key={b.id}
+                  projectId={projectId}
+                  block={b}
+                  now={now}
+                  running={!!state?.running}
+                  streamingId={state?.running && lastItem?.kind === 'text' ? lastItem.id : null}
+                  onOpenFile={onOpenFile}
+                  onRetry={
+                    lastUserText
+                      ? () => void send(lastUserText, mode.mode, model ?? state?.model ?? 'opus')
+                      : undefined
                   }
-                >
-                  <span>
-                    {b.item.attachments && b.item.attachments.length > 0 && (
-                      <Attachments projectId={projectId} files={b.item.attachments} />
-                    )}
-                    {b.item.text}
-                  </span>
-                </CcUser>
-                {rewindAt === b.item.id && (
-                  <RewindPanel
-                    hasCheckpoint={!!b.item.checkpoint}
-                    onCancel={() => setRewindAt(null)}
-                    onRewind={async (code, chat) => {
-                      const r = await rewindChat(projectId, stage, {
-                        itemId: b.item.id,
-                        code,
-                        chat,
-                      });
-                      setRewindAt(null);
-                      if (chat) setDraft(projectId, r.text);
-                      setNotice(
-                        [
-                          chat ? 'Rewound the chat; your message is back in the box.' : null,
-                          code
-                            ? r.files.length
-                              ? `Put back ${r.files.length} file${r.files.length === 1 ? '' : 's'}: ${r.files.join(', ')}.`
-                              : 'No files had changed since that message.'
-                            : null,
-                        ]
-                          .filter(Boolean)
-                          .join(' '),
-                      );
-                    }}
-                  />
-                )}
-              </div>
-            ) : (
-              <ClaudeBlock
-                key={b.id}
-                projectId={projectId}
-                block={b}
-                now={now}
-                running={!!state?.running}
-                streamingId={state?.running && lastItem?.kind === 'text' ? lastItem.id : null}
-                onOpenFile={onOpenFile}
-                onRetry={
-                  lastUserText
-                    ? () => void send(lastUserText, mode.mode, model ?? state?.model ?? 'opus')
-                    : undefined
-                }
-              />
-            ),
+                />
+              )}
+              {eventsAfter(bi).map((e) => (
+                <MagnetEvent key={`ev-${e.at}`} event={e} />
+              ))}
+            </Fragment>
+          ))}
+          {ap && apAsking && (
+            <MagnetAsk projectId={projectId} state={ap} agent={agentName ?? 'agent'} />
           )}
-          {state && !state.running && items.length > 0 && (
+          {ap && apFlying && !state?.running && <MagnetBusy state={ap} now={now} />}
+          {ap?.report && (
+            <AutopilotReport
+              projectId={projectId}
+              state={ap}
+              onChange={(adr, title) =>
+                setDraft(projectId, `Change ADR-${String(adr).padStart(4, '0')} (${title}): `)
+              }
+              onOpenStage={(s2) => setStages(projectId, s2)}
+              onNeedsYou={(n) => sideView(/^Push/.test(n) ? 'github' : 'overview')}
+            />
+          )}
+          {state && !state.running && items.length > 0 && !apFlying && !apAsking && (
             <>
               <StuckHint
                 projectId={projectId}
@@ -395,7 +477,35 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
           onMode={changeMode}
           draft={draft}
           onDraftUsed={() => setDraft(projectId, '')}
-          onSend={send}
+          onSend={
+            apAsking && apStage
+              ? async (text) => {
+                  try {
+                    await startAutopilot(projectId, apStage, text);
+                    return true;
+                  } catch (e) {
+                    setError(e instanceof ApiFailure ? e.message : 'Could not start Autopilot.');
+                    return false;
+                  }
+                }
+              : send
+          }
+          disabled={apFlying ? 'Magnet is flying. Click the pill or press Esc to stop him.' : null}
+          autopilotLine={
+            apAsking
+              ? 'autopilot · waiting for you · nothing runs until you answer · esc cancels'
+              : apFlying && ap
+                ? [
+                    'autopilot',
+                    ap.goal,
+                    taskCount(ap) && `task ${taskCount(ap)}`,
+                    ap.decisions.length &&
+                      `${ap.decisions.length} decision${ap.decisions.length === 1 ? '' : 's'}`,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')
+                : undefined
+          }
           onStop={() => void stopChat(projectId, stage)}
           onUpload={(file) => uploadAttachment(projectId, file)}
           onDiscard={(file) => void discardAttachment(projectId, file).catch(() => undefined)}
@@ -406,7 +516,9 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
           context={context}
           history={sentTexts}
           onCompact={() => void send('/compact', mode.mode, model ?? state?.model ?? 'opus')}
-          placeholder={agentName ? `Reply to the ${agentName}` : undefined}
+          placeholder={
+            apAsking ? 'Tell Magnet the job' : agentName ? `Reply to the ${agentName}` : undefined
+          }
         />
       </div>
     </div>

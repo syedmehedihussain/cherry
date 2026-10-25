@@ -141,6 +141,12 @@ export const ChatItemSchema = z.discriminatedUnion('kind', [
     attachments: z.array(z.string()).optional(),
     /** Claude Code's file checkpoint for this message: Rewind puts the files back (w7.9). */
     checkpoint: z.string().optional(),
+    /** Sent by Magnet flying the stage (ADR-0046), not typed by the user. */
+    by: z.literal('magnet').optional(),
+    /** Magnet's order, or its answer to the agent's question. */
+    role: z.enum(['order', 'answer']).optional(),
+    /** Where Magnet's answer came from, e.g. "PRD, Goals". */
+    source: z.string().optional(),
   }),
   z.object({
     kind: z.literal('text'),

@@ -160,13 +160,25 @@ export class Conversation {
     this.o.onItem(item);
   }
 
-  addUser(id: string, text: string, attachments: string[] = []): void {
+  addUser(
+    id: string,
+    text: string,
+    attachments: string[] = [],
+    magnet?: { role: 'order' | 'answer'; source?: string },
+  ): void {
     this.put({
       kind: 'user',
       id,
       at: Date.now(),
       text,
       ...(attachments.length ? { attachments } : {}),
+      ...(magnet
+        ? {
+            by: 'magnet' as const,
+            role: magnet.role,
+            ...(magnet.source ? { source: magnet.source } : {}),
+          }
+        : {}),
     });
   }
 
