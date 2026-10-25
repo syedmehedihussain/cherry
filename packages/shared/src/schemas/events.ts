@@ -6,6 +6,7 @@ import type { CalibrationState } from './calibration.ts';
 import type { GitResult } from './workspace.ts';
 import type { Agent } from './agent.ts';
 import type { RunState } from './run.ts';
+import type { Checks } from './deploy.ts';
 import type { Stage } from './common.ts';
 
 export type NoticeKind =
@@ -87,6 +88,8 @@ export interface EventMap {
   'run.state': { projectId: string; state: Omit<RunState, 'output' | 'servers'> };
   /** New output from the project's app. */
   'run.output': { projectId: string; text: string };
+  /** A check in the Deployment cockpit started or finished (V3 r10). */
+  'checks.updated': { projectId: string; checks: Checks };
   /** Something finished or needs you, for desktop notifications (topic "notices"). */
   notice: Notice;
   'approval.requested': { approval: Approval };

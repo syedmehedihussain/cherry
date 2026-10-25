@@ -8,6 +8,8 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 
 ## Decisions to review
 
+- ADR-0051: cockpit checks run the project's package.json scripts on a click; Deploy asks
+  once and hands one order to the Shipper (whose push still asks).
 - Export zips with a small ZIP writer on Node's zlib (no new dependency). Checked with
   unzip and Python's zipfile.
 - ADR-0050: the brief in design/brief.json; fonts are the computer's and Geist only (no
@@ -22,6 +24,19 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 ## Blocked
 
 - Nothing yet.
+
+## r10 Deployment cockpit — done 2026-10-25
+
+- Built: Deployment is the cockpit. Left: Run or Stop with the command, the address with
+  reload and open in a new tab, Phone and Desktop, and the live preview of the app in a
+  frame. Right: a summary ("Ready to ship", "Almost ready") with one bar per check; the checks
+  (typecheck, lint, unit tests, build, audit, from package.json) run on Run all, one row each
+  with one fact; a click shows the output; a failed check has Fix in Development and Run
+  again. The Deploy section shows the target, repo, version and last tag. Deploy asks once
+  (what, where, version, failed checks, uncommitted files) and hands the order to the
+  Shipper, whose chat is the Shipper tab (ADR-0051).
+- Tests: 441 unit (new: checks.test.ts, messages.test.ts), 63 e2e (new: deploy.spec.ts).
+- Screens: match 04 (without the browser test, which is r11) in Just black.
 
 ## r9 Design handoff — done 2026-10-25
 

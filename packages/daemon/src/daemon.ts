@@ -46,6 +46,8 @@ import { runRoutes } from './routes/run.ts';
 import { TerminalService } from './terminal/service.ts';
 import { terminalRoutes } from './routes/terminals.ts';
 import { designRoutes, fontRoutes } from './routes/design.ts';
+import { ChecksService } from './deploy/checks.ts';
+import { deployRoutes } from './routes/deploy.ts';
 import { watchFolders } from './watcher.ts';
 import pkg from '../package.json' with { type: 'json' };
 
@@ -155,6 +157,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
   const notes = new NoteService(config, opts.runner ?? sdkRunner);
   const runs = new RunService(config, hub);
   const terminals = new TerminalService(config);
+  const checks = new ChecksService(config, hub);
   const gitActions = new GitActions(config, hub, approvals, gitInfo, opts.prList);
   const magnet = new MagnetService(
     config,
@@ -195,6 +198,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       terminalRoutes(terminals),
       designRoutes(config),
       fontRoutes(),
+      deployRoutes(config, checks),
       adrRoutes(adrs),
       ideaRoutes(new IdeaStore(opts.home)),
       stageRoutes(opts.home, config),
@@ -238,6 +242,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     terminals,
     async close() {
       terminals.stopAll();
+      checks.stopAll();
       await runs.stopAll();
       await chat.stopAll();
       await agents.stopAll();

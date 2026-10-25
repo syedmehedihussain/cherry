@@ -18,6 +18,8 @@ test('stage tabs open each agent', async ({ page }) => {
     ['Plan', 'Planner'],
   ]) {
     await stages.getByRole('button', { name: stage }).click();
+    // Deployment is the cockpit; its agent's chat is the Shipper tab (V3 r10).
+    if (stage === 'Deployment') await page.getByRole('tab', { name: 'Shipper' }).click();
     await expect(page.getByRole('heading', { name: `${stage}: the ${agent}` })).toBeVisible();
     await expect(stages.getByRole('button', { name: stage })).toHaveAttribute(
       'aria-pressed',

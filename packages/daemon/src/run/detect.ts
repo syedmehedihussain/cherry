@@ -31,7 +31,7 @@ const WEB_DEPS = [
   'serve',
 ];
 
-function packageManager(dir: string): 'pnpm' | 'yarn' | 'bun' | 'npm' {
+export function packageManager(dir: string): 'pnpm' | 'yarn' | 'bun' | 'npm' {
   if (existsSync(path.join(dir, 'pnpm-lock.yaml'))) return 'pnpm';
   if (existsSync(path.join(dir, 'yarn.lock'))) return 'yarn';
   if (existsSync(path.join(dir, 'bun.lockb')) || existsSync(path.join(dir, 'bun.lock')))

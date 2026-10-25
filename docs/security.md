@@ -99,6 +99,13 @@ To show a site Claude or a terminal already started, the daemon reads `/proc` (l
 ports, and the working folder and command line of the user's own processes) and sends one GET to
 `127.0.0.1:<port>` to check it answers HTTP. Nothing leaves the machine.
 
+## Cockpit checks (ADR-0051)
+
+The Deployment cockpit runs the project's own package.json scripts (typecheck, lint, test,
+build) and an audit, only on a click, in the project folder, one at a time, at most ten
+minutes each. Deploy never runs a command itself: it sends one order to the Shipper, whose
+push and publish still ask (ADR-0033).
+
 ## Terminal tabs (ADR-0049)
 
 A terminal tab is a shell the daemon runs in the project folder with node-pty. It can do what

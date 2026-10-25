@@ -2,6 +2,7 @@ import type { WorkspaceStage } from '@cherry/shared';
 import { ChatTab } from './ChatTab.tsx';
 import { PlanStage } from './plan/PlanStage.tsx';
 import { DesignStage } from './design/DesignStage.tsx';
+import { DeployStage } from './deploy/DeployStage.tsx';
 import styles from './Workspace.module.css';
 
 /** The open stage's own layout (ADR-0045). */
@@ -20,6 +21,7 @@ export function StageBody({
     return <PlanStage projectId={projectId} now={now} onOpenFile={onOpenFile} />;
   if (stage === 'design')
     return <DesignStage projectId={projectId} now={now} onOpenFile={onOpenFile} />;
+  if (stage === 'deployment') return <DeployStage projectId={projectId} now={now} />;
   return (
     <div className={styles.centre}>
       <ChatTab projectId={projectId} stage={stage} now={now} onOpenFile={onOpenFile} />

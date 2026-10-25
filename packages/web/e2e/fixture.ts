@@ -71,7 +71,15 @@ export function createFixture(): void {
   // Something the Run button can start: prints a local address and stays up until stopped.
   write(
     path.join(E2E_PROJECTS, 'cctop', 'package.json'),
-    JSON.stringify({ scripts: { dev: 'node server.js' }, dependencies: { express: '^5' } }),
+    JSON.stringify({
+      scripts: {
+        dev: 'node server.js',
+        // The Deployment cockpit's checks (V3 r10): one passes, one fails.
+        test: 'echo " Tests  7 passed (7)"',
+        lint: 'echo "src/a.ts: 1 problem" && exit 1',
+      },
+      dependencies: { express: '^5' },
+    }),
   );
   write(
     path.join(E2E_PROJECTS, 'cctop', 'server.js'),
