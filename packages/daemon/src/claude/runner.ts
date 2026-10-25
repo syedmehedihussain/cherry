@@ -15,7 +15,14 @@ export type RunnerEvent =
   | { t: 'thinking'; blockId: string; delta: string }
   | { t: 'thinking_end'; blockId: string }
   | { t: 'tool_start'; id: string; name: string; input: Record<string, unknown> }
-  | { t: 'tool_end'; id: string; ok: boolean; output: string }
+  | {
+      t: 'tool_end';
+      id: string;
+      ok: boolean;
+      output: string;
+      /** Pictures in the result, e.g. a Chrome screenshot (V3 r11), base64. */
+      images?: { mediaType: string; data: string }[];
+    }
   /** A subagent's own tool calls, under the Task / Agent call `parentId` (V2.1 w7.5). */
   | {
       t: 'sub_tool_start';
@@ -240,6 +247,20 @@ const decisionShape = {
   allowCustom: z.boolean().optional(),
 };
 
+/** Image blocks of a tool result (a Chrome screenshot), base64. */
+export function imagesOf(content: unknown): { mediaType: string; data: string }[] {
+  if (!Array.isArray(content)) return [];
+  return content.flatMap((c: unknown) => {
+    const b = c as {
+      type?: string;
+      source?: { type?: string; media_type?: string; data?: string };
+    };
+    return b?.type === 'image' && b.source?.type === 'base64' && typeof b.source.data === 'string'
+      ? [{ mediaType: b.source.media_type ?? 'image/png', data: b.source.data }]
+      : [];
+  });
+}
+
 function textOf(content: unknown): string {
   if (typeof content === 'string') return content;
   if (Array.isArray(content)) {
@@ -460,11 +481,13 @@ export const sdkRunner: Runner = (req) => {
       if (Array.isArray(content)) {
         for (const block of content) {
           if (block.type === 'tool_result') {
+            const images = imagesOf(block.content);
             req.onEvent({
               t: 'tool_end',
               id: block.tool_use_id,
               ok: !block.is_error,
               output: textOf(block.content),
+              ...(images.length ? { images } : {}),
             });
           }
         }

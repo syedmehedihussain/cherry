@@ -4,10 +4,17 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 
 ## Needs you
 
-- Nothing yet.
+- **Try the browser test with real Chrome (r11).** Claude in Chrome could not run on the
+  build machine, so the browser test was built and tested with the fake Claude only. To try
+  it: Settings → Claude Code → turn on Claude in Chrome; open a project, Deployment, Run, then
+  Test. The first time, give the extension permanent access to localhost (the cockpit shows
+  this hint once). Check that each step gets a row and a screenshot.
 
 ## Decisions to review
 
+- r11 browser test: a background Claude run with Chrome on; Chrome and read tools only, edits
+  and commands refused; one test_step call per step, the newest Chrome screenshot is kept
+  with it under `cherry/tests/` (git-ignored).
 - ADR-0051: cockpit checks run the project's package.json scripts on a click; Deploy asks
   once and hands one order to the Shipper (whose push still asks).
 - Export zips with a small ZIP writer on Node's zlib (no new dependency). Checked with
@@ -24,6 +31,21 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 ## Blocked
 
 - Nothing yet.
+
+## r11 Quiet browser test — done 2026-10-25
+
+- Built: Test in the cockpit starts Claude in Chrome in the background on the app's localhost
+  address. It takes the steps from `docs/test-plan.md` (or the main flow of the PRD), records
+  each with `test_step` (name, pass or fail, what it saw) and finishes with `test_done`. Each
+  step is one row with its screenshot (a click opens it large); the summary counts the test as
+  one more check. No prompts: Chrome and read tools run without asking; edits and commands are
+  refused. The full log opens on a click. A failed step has Fix in Development and Run again.
+  A one-time hint says to give the extension permanent access to localhost. Test is off, with
+  the reason, when Claude in Chrome is off in Settings or the app is not running. A desktop
+  notice says when the test ends.
+- Daemon: tool results now carry their images (`tool_end.images`), so screenshots are kept.
+- Tests: 444 unit (new: browser-test.test.ts), 64 e2e. Not tried with real Chrome (Needs you).
+- Screens: match 04 (browser test rows) in Just black.
 
 ## r10 Deployment cockpit — done 2026-10-25
 

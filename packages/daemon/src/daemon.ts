@@ -47,7 +47,8 @@ import { TerminalService } from './terminal/service.ts';
 import { terminalRoutes } from './routes/terminals.ts';
 import { designRoutes, fontRoutes } from './routes/design.ts';
 import { ChecksService } from './deploy/checks.ts';
-import { deployRoutes } from './routes/deploy.ts';
+import { browserTestRoutes, deployRoutes } from './routes/deploy.ts';
+import { BrowserTestService } from './deploy/browser-test.ts';
 import { watchFolders } from './watcher.ts';
 import pkg from '../package.json' with { type: 'json' };
 
@@ -70,6 +71,7 @@ export interface Daemon {
   planUsage: PlanUsageService;
   runs: RunService;
   terminals: TerminalService;
+  browserTests: BrowserTestService;
   cliSecret: string;
   close(): Promise<void>;
 }
@@ -158,6 +160,14 @@ export function createDaemon(opts: DaemonOptions): Daemon {
   const runs = new RunService(config, hub);
   const terminals = new TerminalService(config);
   const checks = new ChecksService(config, hub);
+  const browserTests = new BrowserTestService(
+    config,
+    hub,
+    approvals,
+    decisions,
+    opts.runner ?? sdkRunner,
+    opts.home,
+  );
   const gitActions = new GitActions(config, hub, approvals, gitInfo, opts.prList);
   const magnet = new MagnetService(
     config,
@@ -199,6 +209,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       designRoutes(config),
       fontRoutes(),
       deployRoutes(config, checks),
+      browserTestRoutes(browserTests),
       adrRoutes(adrs),
       ideaRoutes(new IdeaStore(opts.home)),
       stageRoutes(opts.home, config),
@@ -240,9 +251,11 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     scans,
     magnet,
     terminals,
+    browserTests,
     async close() {
       terminals.stopAll();
       checks.stopAll();
+      await browserTests.stopAll();
       await runs.stopAll();
       await chat.stopAll();
       await agents.stopAll();

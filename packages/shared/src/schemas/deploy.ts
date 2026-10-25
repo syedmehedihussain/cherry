@@ -40,3 +40,31 @@ export const DeployInfoSchema = z.object({
   changes: z.number(),
 });
 export type DeployInfo = z.infer<typeof DeployInfoSchema>;
+
+/** One step of the browser test, from the test plan (V3 r11). */
+export const TestStepSchema = z.object({
+  n: z.number(),
+  name: z.string(),
+  ok: z.boolean(),
+  /** What Claude saw when it failed, or a short note. */
+  detail: z.string(),
+  /** The screenshot file under cherry/tests/<run>/, when Chrome took one. */
+  shot: z.string().nullable(),
+});
+export type TestStep = z.infer<typeof TestStepSchema>;
+
+/** The cockpit's browser test with Claude in Chrome (V3 r11). */
+export const BrowserTestSchema = z.object({
+  id: z.string().nullable(),
+  status: z.enum(['idle', 'running', 'done', 'failed', 'stopped']),
+  url: z.string().nullable(),
+  startedAt: z.number().nullable(),
+  finishedAt: z.number().nullable(),
+  steps: z.array(TestStepSchema),
+  summary: z.string().nullable(),
+  /** The full log: what Claude did in Chrome, one line each. */
+  log: z.array(z.string()),
+  /** Why it cannot run (Chrome is off in Settings), when it cannot. */
+  blocked: z.string().nullable(),
+});
+export type BrowserTest = z.infer<typeof BrowserTestSchema>;

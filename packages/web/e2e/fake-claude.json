@@ -1,5 +1,74 @@
 [
   {
+    "match": "^The browser test failed",
+    "steps": [
+      {
+        "text": "I will look at why the run is lost."
+      }
+    ]
+  },
+  {
+    "match": "^The lint check fails",
+    "steps": [
+      {
+        "text": "I will fix the lint error."
+      }
+    ]
+  },
+  {
+    "match": "^Test the app at",
+    "steps": [
+      {
+        "tool": {
+          "name": "mcp__claude-in-chrome__navigate",
+          "input": {
+            "url": "http://localhost/"
+          }
+        },
+        "output": "Navigated"
+      },
+      {
+        "tool": {
+          "name": "mcp__claude-in-chrome__computer",
+          "input": {
+            "action": "screenshot"
+          }
+        },
+        "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+      },
+      {
+        "call": {
+          "name": "test_step",
+          "input": {
+            "name": "Home opens",
+            "ok": true
+          }
+        }
+      },
+      {
+        "wait": 300
+      },
+      {
+        "call": {
+          "name": "test_step",
+          "input": {
+            "name": "Run is still there after reload",
+            "ok": false,
+            "detail": "week shows 0.0 km"
+          }
+        }
+      },
+      {
+        "call": {
+          "name": "test_done",
+          "input": {
+            "summary": "1 of 2 steps pass. A run is lost on reload."
+          }
+        }
+      }
+    ]
+  },
+  {
     "match": "^Bump the hero",
     "steps": [
       {
@@ -203,7 +272,9 @@
         "call": {
           "name": "stage_checklist",
           "input": {
-            "done": ["t22"]
+            "done": [
+              "t22"
+            ]
           }
         }
       },
@@ -231,7 +302,10 @@
             "title": "Offline mode",
             "summary": "Works without a network.",
             "spec": "docs/specs/offline.md",
-            "tasks": ["Cache the data", "Sync on reconnect"]
+            "tasks": [
+              "Cache the data",
+              "Sync on reconnect"
+            ]
           }
         }
       },
@@ -247,8 +321,14 @@
         "call": {
           "name": "stage_checklist",
           "input": {
-            "done": ["t3", "t4", "t5"],
-            "drop": ["t6"]
+            "done": [
+              "t3",
+              "t4",
+              "t5"
+            ],
+            "drop": [
+              "t6"
+            ]
           }
         }
       },
@@ -267,7 +347,10 @@
         "call": {
           "name": "stage_checklist",
           "input": {
-            "done": ["t1", "t2"]
+            "done": [
+              "t1",
+              "t2"
+            ]
           }
         }
       },
@@ -315,7 +398,9 @@
               }
             ],
             "proposal": "We propose **SQLite** because queries stay simple.",
-            "consequences": ["Good: fast reads"]
+            "consequences": [
+              "Good: fast reads"
+            ]
           }
         }
       },
@@ -534,7 +619,9 @@
         "call": {
           "name": "show_projects",
           "input": {
-            "ids": ["cctop"]
+            "ids": [
+              "cctop"
+            ]
           }
         }
       },
@@ -646,7 +733,9 @@
           "input": {
             "summary": "Real-time translation",
             "phase": "development",
-            "stack": ["Node 20"],
+            "stack": [
+              "Node 20"
+            ],
             "files": [
               {
                 "path": "CLAUDE.md",

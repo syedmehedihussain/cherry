@@ -15,6 +15,7 @@ const FAILED = new Set<Notice['kind']>([
   'scan.failed',
   'chat.failed',
   'issue.failed',
+  'test.failed',
 ]);
 
 const hidden = () => document.hidden || !document.hasFocus();

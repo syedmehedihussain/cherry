@@ -1,5 +1,7 @@
+import { spawn } from 'node:child_process';
+import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { loginCode } from './fixture.ts';
+import { E2E_PROJECTS, loginCode } from './fixture.ts';
 
 test.beforeEach(async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
@@ -59,4 +61,68 @@ test('Deployment: Deploy asks once, then hands it to the Shipper', async ({ page
   await expect(
     page.getByText(/^Deploy the current commit to A tag and a GitHub release/),
   ).toBeVisible();
+});
+
+// V3 r11: the quiet browser test: one row per step with its screenshot, no prompts.
+test('Deployment: the browser test shows one row per step', async ({ page }) => {
+  // A site already running from the atlas folder, as Claude or a terminal would start it.
+  const child = spawn(
+    process.execPath,
+    [
+      '-e',
+      "require('http').createServer((q, r) => r.end('<h1>atlas</h1>')).listen(0, '127.0.0.1', function () { console.log(this.address().port) })",
+    ],
+    {
+      cwd: path.join(E2E_PROJECTS, 'atlas'),
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { PATH: process.env.PATH },
+    },
+  );
+  const setChrome = (on: boolean) =>
+    page.evaluate(
+      (chrome) =>
+        fetch('/api/config', {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ claude: { chrome } }),
+        }),
+      on,
+    );
+  try {
+    await new Promise<void>((resolve) => child.stdout!.once('data', () => resolve()));
+    await page.goto('/p/atlas');
+    await page
+      .getByRole('navigation', { name: 'Lifecycle stages' })
+      .getByRole('button', { name: 'Deployment' })
+      .click();
+    const section = page.getByRole('region', { name: 'Browser test' });
+    await expect(section).toContainText('Claude in Chrome is off');
+    await expect(page.getByRole('button', { name: 'Test', exact: true })).toBeDisabled();
+
+    await setChrome(true);
+    await page.reload();
+    await expect(section).toContainText('allow it on localhost for good');
+    await section.getByRole('button', { name: 'Got it' }).click();
+    await page.getByRole('button', { name: 'Test', exact: true }).click();
+    const steps = section.getByRole('list', { name: 'Test steps' });
+    await expect(steps.getByRole('listitem').first()).toContainText('Home opens');
+    await expect(steps.getByRole('button', { name: 'Screenshot of Home opens' })).toBeVisible();
+    await expect(steps).toContainText('week shows 0.0 km');
+    await expect(section).toContainText('1 of 2 steps pass.');
+    await expect(page.getByText('1 browser step failed.')).toBeVisible();
+    // Quiet: no prompt in the page, the log only on a click.
+    await expect(page.getByText('Do you want to proceed?')).toHaveCount(0);
+    await section.getByRole('button', { name: 'Full log' }).click();
+    await expect(page.getByLabel('Browser test log')).toContainText('navigate');
+
+    await steps.getByRole('button', { name: 'Screenshot of Home opens' }).click();
+    await expect(page.getByRole('dialog', { name: 'Screenshot of Home opens' })).toBeVisible();
+    await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
+
+    await section.getByRole('button', { name: 'Fix in Development' }).click();
+    await expect(page.getByText(/^The browser test failed at step 2/)).toBeVisible();
+  } finally {
+    child.kill();
+    await setChrome(false);
+  }
 });

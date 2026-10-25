@@ -4,6 +4,7 @@ import {
   CircleCheck,
   CircleDashed,
   CircleX,
+  FlaskConical,
   Globe,
   Monitor,
   Play,
@@ -16,7 +17,17 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { relativeTime, type Check, type DeployInfo } from '@cherry/shared';
 import { sendChat, useChat } from '../../../api/chat.ts';
 import { ApiFailure } from '../../../api/client.ts';
-import { runChecks, useChecks, useDeployInfo, useLiveChecks } from '../../../api/deploy.ts';
+import {
+  runChecks,
+  startBrowserTest,
+  stopBrowserTest,
+  useBrowserTest,
+  useChecks,
+  useDeployInfo,
+  useLiveBrowserTest,
+  useLiveChecks,
+} from '../../../api/deploy.ts';
+import { BrowserTestSection, stepFixMessage } from './BrowserTest.tsx';
 import { startRun, stopRun, useRun } from '../../../api/run.ts';
 import { shortUrl } from '../../../components/RunButton/RunButton.tsx';
 import { useStages } from '../../../state/stage.ts';
@@ -46,6 +57,8 @@ export function DeployStage({ projectId, now }: { projectId: string; now: number
   const checks = useChecks(projectId).data;
   useLiveChecks(projectId);
   const info = useDeployInfo(projectId).data;
+  const test = useBrowserTest(projectId).data;
+  useLiveBrowserTest(projectId);
   const shipping = !!useChat(projectId, 'deployment').data?.running;
   const [device, setDevice] = useState<'phone' | 'desktop'>('desktop');
   const [side, setSide] = useState<'cockpit' | 'shipper'>('cockpit');
@@ -57,10 +70,31 @@ export function DeployStage({ projectId, now }: { projectId: string; now: number
   const url = app?.running ? app.url : (app?.servers[0]?.url ?? null);
 
   const list = checks?.checks ?? [];
-  const passed = list.filter((c) => c.status === 'pass').length;
-  const failed = list.filter((c) => c.status === 'fail').length;
+  // The browser test counts as one more check once it has run (artboard 04).
+  const testFailed = test?.steps.filter((s) => !s.ok).length ?? 0;
+  const testState: Check['status'] | null =
+    !test || test.status === 'idle'
+      ? null
+      : test.status === 'running'
+        ? 'running'
+        : test.status === 'done' && !testFailed
+          ? 'pass'
+          : test.status === 'stopped'
+            ? 'idle'
+            : 'fail';
+  const states = [...list.map((c) => c.status), ...(testState ? [testState] : [])];
+  const passed = states.filter((st) => st === 'pass').length;
+  const failed = states.filter((st) => st === 'fail').length;
   const running = list.some((c) => c.status === 'running');
-  const checked = list.some((c) => c.status === 'pass' || c.status === 'fail');
+  const checked = states.some((st) => st === 'pass' || st === 'fail');
+  const testing = test?.status === 'running';
+  const runTest = () => {
+    if (!url) return;
+    setError(null);
+    void startBrowserTest(projectId, url).catch((e: unknown) =>
+      setError(e instanceof ApiFailure ? e.message : 'Could not start the browser test.'),
+    );
+  };
   const headline = running
     ? 'Checking…'
     : !checked
@@ -155,6 +189,32 @@ export function DeployStage({ projectId, now }: { projectId: string; now: number
             </button>
           </div>
           <span className={styles.grow} />
+          {testing ? (
+            <button
+              type="button"
+              className={styles.testBtn}
+              onClick={() => void stopBrowserTest(projectId).catch(() => undefined)}
+            >
+              <Square size={10} fill="currentColor" aria-hidden="true" />
+              Stop test
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={styles.testBtn}
+              disabled={!url || !!test?.blocked}
+              title={
+                test?.blocked ??
+                (url
+                  ? 'Claude in Chrome walks through the app from the test plan'
+                  : 'Run the app first')
+              }
+              onClick={runTest}
+            >
+              <FlaskConical size={13} aria-hidden="true" />
+              Test
+            </button>
+          )}
           <button
             type="button"
             className={styles.deploy}
@@ -201,14 +261,14 @@ export function DeployStage({ projectId, now }: { projectId: string; now: number
             <div className={styles.summary}>
               <h2>{headline}</h2>
               <p>
-                {list.length
-                  ? `${passed} of ${list.length} checks pass.`
+                {states.length
+                  ? `${passed} of ${states.length} check${states.length === 1 ? '' : 's'} pass${states.length === 1 ? 'es' : ''}.${testFailed ? ` ${testFailed} browser step${testFailed === 1 ? '' : 's'} failed.` : ''}`
                   : (checks?.none ?? 'Looking for checks…')}
               </p>
-              {list.length > 0 && (
+              {states.length > 0 && (
                 <div className={styles.segments} aria-hidden="true">
-                  {list.map((c) => (
-                    <i key={c.id} data-status={c.status} />
+                  {states.map((st, i) => (
+                    <i key={i} data-status={st} />
                   ))}
                 </div>
               )}
@@ -234,6 +294,7 @@ export function DeployStage({ projectId, now }: { projectId: string; now: number
                 )
               }
             >
+              {list.length === 0 && checks?.none && <p className={styles.muted}>{checks.none}</p>}
               <ul className={styles.checks} aria-label="Checks">
                 {list.map((c) => (
                   <li key={c.id}>
@@ -277,6 +338,26 @@ export function DeployStage({ projectId, now }: { projectId: string; now: number
                 ))}
               </ul>
             </Section>
+            {test && (
+              <BrowserTestSection
+                projectId={projectId}
+                test={test}
+                onRun={runTest}
+                onFix={(step) => {
+                  setError(null);
+                  void sendChat(
+                    projectId,
+                    'development',
+                    stepFixMessage(test, step),
+                    readMode(projectId, 'development'),
+                  )
+                    .then(() => setStage(projectId, 'development'))
+                    .catch((e: unknown) =>
+                      setError(e instanceof ApiFailure ? e.message : 'Could not send it.'),
+                    );
+                }}
+              />
+            )}
             {info && <DeploySection info={info} now={now} />}
           </div>
         )}

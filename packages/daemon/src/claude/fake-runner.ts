@@ -5,7 +5,13 @@ import { preToolGuard, type RunHandle, type Runner, type RunRequest } from './ru
 /** One step of a fake Claude script (docs/testing.md → The fake Claude). */
 export type Step =
   | { text: string }
-  | { tool: { name: string; input: Record<string, unknown> }; output?: string; fail?: boolean }
+  | {
+      tool: { name: string; input: Record<string, unknown> };
+      output?: string;
+      fail?: boolean;
+      /** A picture in the result (a Chrome screenshot), base64 PNG. */
+      image?: string;
+    }
   | { decision: unknown }
   | { call: { name: string; input: unknown } }
   | { wait: number }
@@ -181,6 +187,7 @@ export function fakeRunner(
             id,
             ok: !step.fail,
             output: step.output ?? (name === 'Read' ? '     1→x\n     2→y' : 'ok'),
+            ...(step.image ? { images: [{ mediaType: 'image/png', data: step.image }] } : {}),
           });
         }
       }
