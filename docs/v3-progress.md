@@ -19,6 +19,20 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 
 - Nothing yet.
 
+## r7 Design canvas — done 2026-10-25
+
+- Built: Design is the canvas plus the Designer chat. Every `design/screens/*.html` is an
+  artboard in a sandboxed frame (scripts only, no same-origin). The daemon inlines the
+  screen's local CSS, fonts and images (inside the project only; no secrets, no web
+  addresses), so the frame needs no cookie and loads nothing. Pan (drag, Space or the hand
+  tool, wheel), zoom (Ctrl+wheel, 100%), Fit, phone and desktop sizes, light and dark
+  (`data-theme` on the screen). Click a screen to focus it, double-click to open it large.
+  The comment tool outlines the element under the pointer; a click opens a comment box; Send
+  puts "Comment on <file>, element `<selector>`" in the Designer chat and leaves a pin.
+- Changed: the Designer's AGENT.md (screens, tokens, brief and handoff paths).
+- Tests: 422 unit (new: design.test.ts, frame.test.ts), 59 e2e pass (new: design.spec.ts).
+- Screens: match 02 (canvas and chat) in Just black. The Brief panel comes in r8.
+
 ## r6 Terminal — done 2026-10-25
 
 - Built: `+` → New terminal opens a real shell in the project folder as a tab (xterm.js in

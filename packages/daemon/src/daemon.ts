@@ -45,6 +45,7 @@ import { RunService } from './run/service.ts';
 import { runRoutes } from './routes/run.ts';
 import { TerminalService } from './terminal/service.ts';
 import { terminalRoutes } from './routes/terminals.ts';
+import { designRoutes } from './routes/design.ts';
 import { watchFolders } from './watcher.ts';
 import pkg from '../package.json' with { type: 'json' };
 
@@ -192,6 +193,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       commitRoutes(commits),
       runRoutes(runs),
       terminalRoutes(terminals),
+      designRoutes(config),
       adrRoutes(adrs),
       ideaRoutes(new IdeaStore(opts.home)),
       stageRoutes(opts.home, config),

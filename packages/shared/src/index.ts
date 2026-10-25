@@ -17,3 +17,4 @@ export * from './schemas/adr.ts';
 export * from './schemas/idea.ts';
 export * from './schemas/issue.ts';
 export * from './schemas/terminal.ts';
+export * from './schemas/design.ts';

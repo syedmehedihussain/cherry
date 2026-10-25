@@ -1,0 +1,14 @@
+/* Design (V3 r7-r9, artboard 02): brief, canvas, chat. */
+.design {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--v3-side-chat-w);
+}
+.chat {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--b);
+}

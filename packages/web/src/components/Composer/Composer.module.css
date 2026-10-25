@@ -1,6 +1,7 @@
 /* The Claude Code input (V3, artboard 01): a bordered box with the prompt sign, then the
    CLI's hint line under it. */
 .wrap {
+  container-type: inline-size;
   width: 100%;
   max-width: var(--prompt-max);
   margin: 0 auto;
@@ -357,4 +358,12 @@
   flex: none;
   font-size: var(--fs-2xs);
   color: var(--t3);
+}
+
+/* A narrow chat (Design, the rail): the hint line keeps the mode and the model. */
+@container (max-width: 520px) {
+  .dim,
+  .hintLine .hintBtn:nth-last-child(-n + 3):not([aria-haspopup]) {
+    display: none;
+  }
 }
