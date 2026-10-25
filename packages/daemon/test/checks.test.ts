@@ -48,6 +48,8 @@ describe('deployment cockpit (V3 r10)', () => {
   it('reads one short fact from the output', () => {
     expect(summarize('test', true, ' Tests  7 passed (7)')).toBe('7 passed');
     expect(summarize('test', false, 'Tests  2 failed | 5 passed')).toBe('2 failed');
+    expect(summarize('test', true, 'ℹ tests 19\nℹ pass 19\nℹ fail 0')).toBe('19 passed');
+    expect(summarize('test', false, 'ℹ pass 17\nℹ fail 2')).toBe('2 failed');
     expect(summarize('build', true, 'dist/a.js  200.4 kB\ndist/b.css  14 kB')).toBe('214 KB');
     // npm echoes the script; its numbers do not count.
     expect(summarize('build', true, '> echo "x 214.0 kB"\nx 214.0 kB')).toBe('214 KB');

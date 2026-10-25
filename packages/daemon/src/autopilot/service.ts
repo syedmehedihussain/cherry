@@ -697,10 +697,12 @@ export class AutopilotService {
           ]
         : []),
     ];
-    const goal = run.state.goal ?? 'The job';
+    // A short job names itself ("Finish M1"); a long one is "The job".
+    const raw = (run.state.goal ?? '').split(/[.·:\n]/)[0]!.trim();
+    const goal = raw && raw.length <= 40 ? raw : 'The job';
     const headline =
       status === 'done'
-        ? `Welcome back, sir. ${goal.replace(/[.·].*$/, '').trim()} is complete.`
+        ? `Welcome back, sir. ${goal} is complete.`
         : status === 'stopped'
           ? 'Welcome back, sir. I stopped, as you asked.'
           : 'Welcome back, sir. I had to stop.';

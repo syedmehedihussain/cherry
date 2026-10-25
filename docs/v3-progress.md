@@ -2,6 +2,37 @@
 
 How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-STE100.
 
+## Final report — 2026-10-25
+
+**Result.** All V3 tasks (r0 to r15) are done on the branch `v3`. Cherry has four stages, each
+with its own layout: Plan (chat and Documents), Design (Brief, canvas, chat, handoff),
+Development (explorer, Claude tab, Monaco and terminal tabs), Deployment (preview, checks,
+browser test, deploy). Every chat has the Claude Code look. The rail, the status bar and the
+palette hold everything else. Autopilot flies Plan, Design and Development.
+Tests: 456 unit and 65 end-to-end tests pass; typecheck, lint and the web build pass.
+
+**Real run (r15).** A new project, `~/Projects/tipsplit`, went through all four stages with
+real Claude (Sonnet, to save plan use; the default is back to Opus):
+- Plan: Autopilot wrote all nine documents in 4 minutes, 6 of 6 tasks, and 2 ADRs for review.
+- Design: the Designer drew one screen; the canvas showed it in dark and light; a comment
+  picked `main > h1`; Approve design wrote `design/handoff/`.
+- Development: one Builder turn built M1 (split rule, page, 19 passing tests).
+- Deployment: Run started the app; the preview showed it; the checks passed (19 passed).
+  Deploy was not done: the project has no GitHub remote, and a deploy leaves the machine.
+- Fixed from the run: Ctrl+K and Ctrl+B now work inside a terminal; node:test results show
+  as "19 passed"; the Autopilot headline is short for a long job.
+- Found in the demo app (not Cherry): its inputs are not wired yet, so the result does not
+  change when you type. That is the next Builder task.
+- The demo used about 2% of the week; the week was at 97% at the end.
+
+**Needs you.** See the list below: real Chrome for the browser test, real Autopilot on a
+longer job, merging `v3` into `main`.
+
+**Decisions to review.** See the list below (ADR-0047 to ADR-0051 and the notes).
+
+**Next.** Open Cherry (`pnpm cherry --no-open` in the repo prints a login link), look at
+`tipsplit`, try the browser test with Chrome, then merge `v3` when you are happy.
+
 ## Needs you
 
 - **Try the browser test with real Chrome (r11).** Claude in Chrome could not run on the
@@ -9,7 +40,8 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
   it: Settings → Claude Code → turn on Claude in Chrome; open a project, Deployment, Run, then
   Test. The first time, give the extension permanent access to localhost (the cockpit shows
   this hint once). Check that each step gets a row and a screenshot.
-- **Try Autopilot with real Claude (r13).** It was tested with the fake Claude only. Start
+- **Merge `v3` into `main`** when you are happy (the build run does not merge or open a PR).
+- **Try Autopilot with real Claude (r13).** It flew the Plan stage of `tipsplit` well (r15). It was tested with the fake Claude only. Start
   small: a project with a roadmap, Development, Autopilot, "Only the next task". It runs on the
   project's default model and costs more tokens than one chat (ADR-0046).
 
@@ -40,7 +72,15 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 
 ## Blocked
 
-- Nothing yet.
+- Nothing. Known flaky: `dev-tabs.spec.ts` "files open as tabs…" failed once in six full
+  runs (the tab list kept README.md after Close); it passes alone and on rerun.
+
+## r15 Real run — done 2026-10-25
+
+- Ran: Cherry from a fresh install (welcome, tools check, theme), a new project `tipsplit`
+  from Plan to Deployment with real Claude, all in headless Chromium. See the final report.
+- Fixed: terminal keys (Ctrl+K, Ctrl+B), node:test summaries, the Autopilot headline.
+- Tests: 456 unit, 65 e2e pass.
 
 ## r14 Clean-up — done 2026-10-25
 

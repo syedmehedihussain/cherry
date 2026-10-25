@@ -71,6 +71,10 @@ export default function TerminalView({
       theme: xtermTheme(),
       allowProposedApi: false,
     });
+    // Cherry's own keys reach Cherry, not the shell: Ctrl+K (palette), Ctrl+B (side view).
+    t.attachCustomKeyEventHandler(
+      (e) => !((e.ctrlKey || e.metaKey) && !e.altKey && /^[kb]$/i.test(e.key)),
+    );
     const f = new FitAddon();
     t.loadAddon(f);
     t.open(el);

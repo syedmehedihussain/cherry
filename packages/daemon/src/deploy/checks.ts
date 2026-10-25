@@ -79,8 +79,11 @@ export function summarize(id: CheckId, ok: boolean, out: string): string | null 
     .filter((l) => !/^\s*[$>] /.test(l))
     .join('\n');
   if (id === 'test') {
-    const passed = /(\d+)\s+(?:tests?\s+)?passed/i.exec(text)?.[1];
-    const failed = /(\d+)\s+(?:tests?\s+)?failed/i.exec(text)?.[1];
+    // Vitest and Jest ("7 passed"), and node:test ("ℹ pass 19", "ℹ fail 0").
+    const passed =
+      /(\d+)\s+(?:tests?\s+)?passed/i.exec(text)?.[1] ?? /^\W*pass (\d+)\s*$/m.exec(text)?.[1];
+    const failed =
+      /(\d+)\s+(?:tests?\s+)?failed/i.exec(text)?.[1] ?? /^\W*fail (\d+)\s*$/m.exec(text)?.[1];
     if (failed && Number(failed) > 0) return `${failed} failed`;
     if (passed) return `${passed} passed`;
   }

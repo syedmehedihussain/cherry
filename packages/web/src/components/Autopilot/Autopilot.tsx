@@ -300,7 +300,9 @@ export function AutopilotReport({
         <div>
           <div className={styles.headline}>{r.headline}</div>
           <div className={styles.meta}>
-            {STAGE_LABEL[state.stage]} · {state.goal} · {minutes(r.durationMs)} · {r.orders} order
+            {STAGE_LABEL[state.stage]} ·{' '}
+            {state.goal && state.goal.length > 40 ? `${state.goal.slice(0, 40)}…` : state.goal} ·{' '}
+            {minutes(r.durationMs)} · {r.orders} order
             {r.orders === 1 ? '' : 's'}
             {r.answers ? ` · ${r.answers} answer${r.answers === 1 ? '' : 's'}` : ''}
           </div>
