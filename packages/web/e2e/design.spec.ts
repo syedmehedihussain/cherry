@@ -102,3 +102,31 @@ test('Design: the brief keeps references, a link, colours and fonts', async ({ p
   expect(saved.fonts.heading).toEqual({ family: 'Geist', weight: 400 });
   expect(existsSync(path.join(design, 'references', 'mood.png'))).toBe(true);
 });
+
+// V3 r9: Approve design writes design/handoff/ and opens Development; Export is a zip.
+test('Design: Approve design writes the handoff, Export downloads a zip', async ({ page }) => {
+  await page.goto('/p/torongo');
+  const stages = page.getByRole('navigation', { name: 'Lifecycle stages' });
+  await stages.getByRole('button', { name: 'Design' }).click();
+  const canvas = page.getByRole('region', { name: 'Design canvas' });
+
+  const href = await canvas.getByRole('link', { name: 'Export' }).getAttribute('href');
+  const zip = await page.request.get(href!);
+  expect(zip.status()).toBe(200);
+  expect(zip.headers()['content-type']).toBe('application/zip');
+  expect((await zip.body()).subarray(0, 2).toString()).toBe('PK');
+
+  await canvas.getByRole('button', { name: 'Approve design' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Approve design' });
+  await expect(dialog).toContainText('2 screens');
+  await dialog.getByRole('button', { name: 'Approve and open Development' }).click();
+  await expect(stages.getByRole('button', { name: 'Development' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByLabel('Message Claude')).toHaveValue(/^The design is approved\./);
+  await expect.poll(() => existsSync(path.join(design, 'handoff', 'README.md'))).toBe(true);
+  expect(readFileSync(path.join(design, 'handoff', 'screens', 'home.html'), 'utf8')).toContain(
+    'font-size:48px',
+  );
+});

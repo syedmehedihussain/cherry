@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { z } from 'zod';
 import {
   BriefSchema,
   DesignScreensSchema,
@@ -88,3 +89,15 @@ export const useFonts = () =>
     queryFn: () => api('GET', '/api/fonts', undefined, FontListSchema),
     staleTime: 10 * 60_000,
   });
+
+/** Approve design (r9): writes design/handoff/ and moves the phase to Development. */
+export const approveDesign = (projectId: string) =>
+  api(
+    'POST',
+    `/api/projects/${encodeURIComponent(projectId)}/design/handoff`,
+    undefined,
+    z.object({ files: z.array(z.string()) }),
+  );
+
+export const exportUrl = (projectId: string) =>
+  `/api/projects/${encodeURIComponent(projectId)}/design/export`;

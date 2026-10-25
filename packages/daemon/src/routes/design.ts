@@ -14,6 +14,8 @@ import {
   writeBrief,
 } from '../design/brief.ts';
 import { listScreens } from '../design/screens.ts';
+import { exportZip, writeHandoff } from '../design/handoff.ts';
+import { setPhase } from '../stages/checklist.ts';
 import { projectDir } from '../projects/workspace.ts';
 
 const IdParams = z.object({ id: z.string().min(1).max(200) });
@@ -26,6 +28,25 @@ export function designRoutes(config: ConfigStore) {
     app.get('/api/projects/:id/design/screens', async (req) => ({
       screens: listScreens(dirOf(req.params)),
     }));
+    // Approve design (r9): writes the handoff and moves the project on to Development.
+    app.post('/api/projects/:id/design/handoff', async (req) => {
+      const dir = dirOf(req.params);
+      const result = writeHandoff(dir);
+      try {
+        setPhase(dir, 'development');
+      } catch {
+        // A project without project.json keeps no phase; the handoff still stands.
+      }
+      return result;
+    });
+    app.get('/api/projects/:id/design/export', async (req, reply) => {
+      const { id } = IdParams.parse(req.params);
+      const body = exportZip(dirOf(req.params), id);
+      return reply
+        .header('content-type', 'application/zip')
+        .header('content-disposition', `attachment; filename="${id}-plan-and-design.zip"`)
+        .send(body);
+    });
     app.get('/api/projects/:id/design/brief', async (req) => readBrief(dirOf(req.params)));
     app.put('/api/projects/:id/design/brief', async (req) =>
       writeBrief(dirOf(req.params), BriefSchema.parse(req.body)),

@@ -8,6 +8,8 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 
 ## Decisions to review
 
+- Export zips with a small ZIP writer on Node's zlib (no new dependency). Checked with
+  unzip and Python's zipfile.
 - ADR-0050: the brief in design/brief.json; fonts are the computer's and Geist only (no
   Google Fonts).
 - ADR-0049: terminal shells live in the daemon and outlast a reload; the socket is under
@@ -20,6 +22,18 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 ## Blocked
 
 - Nothing yet.
+
+## r9 Design handoff — done 2026-10-25
+
+- Built: Approve design (one confirm that lists what is written) writes `design/handoff/`:
+  each screen standalone (CSS and images inside), `tokens.css`, `components.md` (the classes
+  the screens share, shared first) and `README.md` (screens, colours, fonts and steps for the
+  Builder). The Designer's `notes.md` is never replaced. The project phase moves to
+  Development, Development opens, and the Builder's first message waits in the box (not
+  sent). Export downloads `<project>-plan-and-design.zip` with CLAUDE.md, README.md, docs/
+  and design/ (no secrets, no issues).
+- Tests: 434 unit (new: handoff.test.ts), 61 e2e pass.
+- Screens: match 02 (Export and Approve design) in Just black and Cherry light.
 
 ## r8 Design brief — done 2026-10-25
 
