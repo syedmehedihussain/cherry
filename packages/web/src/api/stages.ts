@@ -52,3 +52,12 @@ export function useStageProgress(projectId: string, stage: Stage) {
   if (stage === 'issues') return null;
   return stageProgress(tasks, stage, stage === 'preparation' ? readiness : []);
 }
+
+/** The handoff note to the next stage (V3 r12), written by Haiku or, failing that, by Cherry. */
+export const handoffNote = (projectId: string, from: WorkspaceStage, to: WorkspaceStage) =>
+  api(
+    'POST',
+    `/api/projects/${encodeURIComponent(projectId)}/stages/handoff`,
+    { from, to },
+    z.object({ note: z.string(), by: z.enum(['haiku', 'cherry']) }),
+  );

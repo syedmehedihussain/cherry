@@ -12,6 +12,8 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 
 ## Decisions to review
 
+- r12 "Stuck?" shows after two failed replies in a row or the same message twice; it offers
+  Ask Magnet (with the reason and the last error) and Rewind. My reading of "Stuck? hint".
 - r11 browser test: a background Claude run with Chrome on; Chrome and read tools only, edits
   and commands refused; one test_step call per step, the newest Chrome screenshot is kept
   with it under `cherry/tests/` (git-ignored).
@@ -31,6 +33,17 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 ## Blocked
 
 - Nothing yet.
+
+## r12 Stage moves — done 2026-10-25
+
+- Built: at 100% the chat shows "<Stage> is done. Move to <next>?" with Open and Not now (Not
+  now hides it until the checklist changes; never a gate). Open, and Move on the Overview, ask
+  a small Haiku job for a handoff note (at most 6 lines, capped prompt, no tools but the one
+  that saves the note; Cherry writes a plain note from the checklist when Haiku fails), move
+  the phase, open the next stage and put the note in its box, not sent. "Stuck?" hint (see
+  Decisions to review). The Overview is flat (hairlines, not cards), as in artboard 05.
+- Tests: 450 unit (new: handoff-note.test.ts, stageHints.test.ts), 64 e2e.
+- Screens: match 05 in Just black.
 
 ## r11 Quiet browser test — done 2026-10-25
 

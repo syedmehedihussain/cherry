@@ -445,3 +445,65 @@
 .spacer {
   flex: 1;
 }
+
+/* The next-step chip and the Stuck? hint (V3 r12, artboard 05). */
+.next {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  margin-left: 18px;
+  padding: 8px 8px 8px 12px;
+  border: 1px solid var(--b);
+  border-radius: var(--r-lg);
+  background: var(--s1);
+  font-family: var(--sans);
+  font-size: var(--fs-base);
+  color: var(--t2);
+}
+.next b {
+  color: var(--t1);
+  font-weight: 500;
+}
+.nextIcon {
+  color: var(--success);
+  flex: none;
+}
+.stuckIcon {
+  color: var(--warning);
+  flex: none;
+}
+.nextGo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--t1);
+  color: var(--t-on-primary);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+.nextGo:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.nextLater {
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  background: none;
+  color: var(--t2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+.nextLater:hover {
+  color: var(--t1);
+}

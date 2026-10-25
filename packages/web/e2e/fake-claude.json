@@ -272,9 +272,7 @@
         "call": {
           "name": "stage_checklist",
           "input": {
-            "done": [
-              "t22"
-            ]
+            "done": ["t22"]
           }
         }
       },
@@ -302,10 +300,7 @@
             "title": "Offline mode",
             "summary": "Works without a network.",
             "spec": "docs/specs/offline.md",
-            "tasks": [
-              "Cache the data",
-              "Sync on reconnect"
-            ]
+            "tasks": ["Cache the data", "Sync on reconnect"]
           }
         }
       },
@@ -321,14 +316,8 @@
         "call": {
           "name": "stage_checklist",
           "input": {
-            "done": [
-              "t3",
-              "t4",
-              "t5"
-            ],
-            "drop": [
-              "t6"
-            ]
+            "done": ["t3", "t4", "t5"],
+            "drop": ["t6"]
           }
         }
       },
@@ -347,10 +336,7 @@
         "call": {
           "name": "stage_checklist",
           "input": {
-            "done": [
-              "t1",
-              "t2"
-            ]
+            "done": ["t1", "t2"]
           }
         }
       },
@@ -398,9 +384,7 @@
               }
             ],
             "proposal": "We propose **SQLite** because queries stay simple.",
-            "consequences": [
-              "Good: fast reads"
-            ]
+            "consequences": ["Good: fast reads"]
           }
         }
       },
@@ -619,9 +603,7 @@
         "call": {
           "name": "show_projects",
           "input": {
-            "ids": [
-              "cctop"
-            ]
+            "ids": ["cctop"]
           }
         }
       },
@@ -733,9 +715,7 @@
           "input": {
             "summary": "Real-time translation",
             "phase": "development",
-            "stack": [
-              "Node 20"
-            ],
+            "stack": ["Node 20"],
             "files": [
               {
                 "path": "CLAUDE.md",

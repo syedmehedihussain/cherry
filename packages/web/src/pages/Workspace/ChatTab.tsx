@@ -66,6 +66,7 @@ import { stepsSummary, type ToolItem } from '../../components/Timeline/Timeline.
 import { PlanProposal } from '../../components/PlanProposal/PlanProposal.tsx';
 import { useStages } from '../../state/stage.ts';
 import { useSideView } from './SidePanel.tsx';
+import { NextStageChip, StuckHint } from './StageHints.tsx';
 import styles from './Chat.module.css';
 
 type Block =
@@ -353,6 +354,20 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
                 }
               />
             ),
+          )}
+          {state && !state.running && items.length > 0 && (
+            <>
+              <StuckHint
+                projectId={projectId}
+                stage={stage}
+                items={items}
+                onRewind={() => {
+                  const last = items.findLast((i) => i.kind === 'user');
+                  if (last) setRewindAt(last.id);
+                }}
+              />
+              <NextStageChip projectId={projectId} stage={stage} />
+            </>
           )}
           {state?.running && !paused && <CcSpinner since={turnStart ?? now} seed={turnSeed} />}
         </div>

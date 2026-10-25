@@ -141,7 +141,7 @@ VS Code with Claude Code, Deployment like a cockpit. The plan is in
 - [x] r9 Design handoff: Approve design, `design/handoff/`, Export zip.
 - [x] r10 Deployment cockpit: run and preview, checks, Deploy with one confirm.
 - [x] r11 Quiet browser test with Claude in Chrome from the test plan, step rows with screenshots.
-- [ ] r12 Stage moves: next-step chip, Haiku handoff note, Stuck? hint.
+- [x] r12 Stage moves: next-step chip, Haiku handoff note, Stuck? hint.
 - [ ] r13 Autopilot (ADR-0046): Magnet asks once, drives the stage agent, decides from the
       documents, logs decisions, reports in ASD-STE100.
 - [ ] r14 Clean-up: remove dead code, update docs and e2e tests.

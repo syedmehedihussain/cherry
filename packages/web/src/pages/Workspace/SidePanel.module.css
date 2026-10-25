@@ -166,3 +166,18 @@
   flex: none;
   border-top: 1px solid var(--b);
 }
+
+/* Overview (artboard 05): sections divided by hairlines, not cards. */
+.flat {
+  display: flex;
+  flex-direction: column;
+}
+.flat > * {
+  margin: 0 !important;
+  padding: 14px 16px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--b) !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+}

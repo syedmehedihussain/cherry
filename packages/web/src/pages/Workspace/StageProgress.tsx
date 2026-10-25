@@ -2,8 +2,7 @@ import { ArrowRight, RefreshCw } from 'lucide-react';
 import { STAGE_LABEL, type WorkspaceStage } from '@cherry/shared';
 import { useChatDraft } from '../../api/chat.ts';
 import { nextStage, stageInfo, useStageInfo, useStageProgress } from '../../api/stages.ts';
-import { setPhase } from '../../api/workspace.ts';
-import { useStages } from '../../state/stage.ts';
+import { useMoveStage } from './stageMoves.ts';
 import styles from './StageProgress.module.css';
 
 const SHOWN = 4;
@@ -41,7 +40,7 @@ export function StageProgressCard({
 }) {
   const progress = useStageProgress(projectId, stage);
   const setDraft = useChatDraft((s) => s.set);
-  const setStage = useStages((s) => s.set);
+  const { move, moving } = useMoveStage(projectId);
   const agent = stageInfo(useStageInfo().data, stage)?.name ?? 'stage agent';
   const label = STAGE_LABEL[stage];
   const next = nextStage(stage);
@@ -112,16 +111,9 @@ export function StageProgressCard({
           <button
             type="button"
             className="btn btn-primary btn-sm"
+            disabled={moving}
             onClick={() => {
-              void (async () => {
-                await setPhase(projectId, next).catch(() => undefined);
-                setStage(projectId, next);
-                setDraft(
-                  projectId,
-                  `${label} is finished. Read _project/STATUS.md and what ${label} produced, then start ${STAGE_LABEL[next]}: say what you understood and what you will do first.`,
-                );
-                onOpenChat();
-              })();
+              void move(stage, next).then(onOpenChat);
             }}
           >
             Move to {STAGE_LABEL[next]}

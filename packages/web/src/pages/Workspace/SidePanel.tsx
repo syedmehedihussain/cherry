@@ -175,7 +175,7 @@ export function SidePanel({
       <div className={styles.body}>
         {view === 'overview' && (
           <div className={styles.scrollAll}>
-            <div className={styles.pad}>
+            <div className={styles.flat}>
               <StageProgressCard
                 projectId={projectId}
                 stage={stage}

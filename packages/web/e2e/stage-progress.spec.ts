@@ -34,13 +34,16 @@ test('the Plan bar fills as the Planner works, then Move to Design', async ({ pa
   await page.getByRole('button', { name: 'Send' }).click();
   await expect(card).toContainText('100%');
   await expect(card).toContainText('ready for Design');
-  await card.getByRole('button', { name: 'Move to Design' }).click();
+  // V3 r12: at 100% the chat suggests the next stage; Haiku writes the handoff note.
+  const chip = page.getByRole('status').filter({ hasText: 'Plan is done.' });
+  await expect(chip).toContainText('Move to Design?');
+  await chip.getByRole('button', { name: 'Open Design' }).click();
   const stages = page.getByRole('navigation', { name: 'Lifecycle stages' });
   await expect(stages.getByRole('button', { name: 'Design' })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
-  await expect(page.getByPlaceholder(/^Reply to/)).toHaveValue(/^Plan is finished\./);
+  await expect(page.getByLabel('Message Claude')).toHaveValue(/^Handoff from Plan:\n/);
   await expect(aside.getByRole('region', { name: 'Design progress' })).toContainText('5 left');
 });
 
