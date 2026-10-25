@@ -21,7 +21,7 @@ streaming, and SQLite only for the app's own cache. This ADR pins the libraries.
 | UI | React 19 + Vite + React Router | standard |
 | UI state | TanStack Query (server state) + Zustand (UI state) | small |
 | Styling | plain CSS modules + `tokens.css` | the design is custom; no UI kit to fight |
-| Code highlight | Shiki | same grammars as VS Code |
+| Code highlight | Shiki until V3; Monaco's own since r5 (ADR-0048) | same grammars as VS Code |
 | Markdown | `react-markdown` + `remark-gfm` | tables, task lists |
 | Diff | `diff` package for previews; `git diff` for files | |
 | Icons | `lucide-react` | matches the stroke style in the designs |

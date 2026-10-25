@@ -4,6 +4,27 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ## Unreleased
 
+### V3: four stages, each its own kind of place (ADR-0045)
+
+- **Shell**: four numbered stage tabs (Plan, Design, Development, Deployment) with a progress
+  line; Preparation and Issues are gone (their chats stay in History). A right rail closed by
+  default (`Ctrl B`), a status bar, and a command palette (`Ctrl K`) for every hidden view
+  (ADR-0047).
+- **One chat in the Claude Code CLI look** for every stage, with inline numbered permission
+  prompts and Shift+Tab for the mode.
+- **Plan**: a Documents panel with the nine plan documents, a reader and editor, Ask about this.
+- **Design**: a canvas of HTML screens (pan, zoom, fit, phone/desktop, light/dark, comments on
+  elements), a Brief (references, design system, images, colours, local fonts; ADR-0050),
+  Approve design writes `design/handoff/`, Export downloads plan and design as a zip.
+- **Development**: an explorer and one tabbed area with Claude pinned first; Monaco file tabs
+  with Save, Claude's diff and Undo (ADR-0048); terminal tabs with xterm.js and node-pty
+  (ADR-0049).
+- **Deployment cockpit**: Run and preview, checks from package.json with Fix in Development,
+  a quiet browser test with Claude in Chrome and a screenshot per step, Deploy with one confirm
+  (ADR-0051).
+- **Stage moves**: a next-step chip at 100% with a Haiku handoff note; a Stuck? hint.
+- **Autopilot** (ADR-0046): Magnet asks once, flies the stage, and reports in ASD-STE100.
+
 ### Added
 
 - **Rewind** (ADR-0044), like the CLI's Esc Esc: the button by a message you sent (or `/rewind`)

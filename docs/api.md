@@ -101,7 +101,56 @@ folder (see `security.md`).
 | GET | `/api/stages` | `{ stages: [{ stage, label, name, summary, docsOnly, skills: [{ name, description, source }] }] }`: each stage agent and its skills (`source` is `bundled` or `user`) |
 | GET | `/api/projects/:id/stage?stage=` | `{ files, readiness }`: the stage's key files that exist (shown first in the file panel), and for `preparation` a file-only readiness checklist `[{ id, label, ok, detail }]` (no Claude, no commands); `readiness` is null for other stages |
 
+| POST | `/api/projects/:id/stages/handoff` | `{ from, to }` (plan, design, development, deployment) → `{ note, by: haiku\|cherry }`: a short handoff note written by a small Haiku job (capped prompt, one tool), or from the checklist when Haiku fails (V3 r12) |
+
+## Design (V3 r7–r9, ADR-0050)
+
+| Method | Path | Does |
+| --- | --- | --- |
+| GET | `/api/projects/:id/design/screens` | `{ screens: [{ path, name, title, html, mtime }] }`: every `design/screens/*.html`, with its local CSS, fonts and images inlined (inside the project only; no secrets, no web addresses) for a sandboxed frame |
+| GET / PUT | `/api/projects/:id/design/brief` | `design/brief.json` (schema 1: references, system, components, images, colours, fonts) |
+| POST | `/api/projects/:id/design/brief/files?list=&name=` | raw file body → saved in `design/{references,system,components,assets}/`, added to the brief |
+| DELETE | `/api/projects/:id/design/brief/item?list=&value=` | removes an item; a file of the brief's own folder is deleted |
+| POST | `/api/projects/:id/design/brief/tokens-from` | `{ from }` → copies another project's `design/tokens.css` (or `docs/design/tokens.css`) into `design/system/` |
+| GET | `/api/projects/:id/design/file?path=` | a file under `design/` (thumbnails), sandboxed |
+| POST | `/api/projects/:id/design/handoff` | Approve design → `{ files }`: writes `design/handoff/` (standalone screens, tokens.css, components.md, README.md; never `notes.md`) and sets the phase to development |
+| GET | `/api/projects/:id/design/export` | `<id>-plan-and-design.zip`: CLAUDE.md, README.md, docs/ (no issues) and design/, no secrets |
+| GET | `/api/fonts` | `{ families, bundled }`: fonts on this computer (`fc-list`) and Cherry's Geist |
+
+## Development: terminals (V3 r6, ADR-0049)
+
+| Method | Path | Does |
+| --- | --- | --- |
+| GET | `/api/projects/:id/terminals` | `{ terminals: [{ id, projectId, title, alive, exitCode, createdAt }] }` |
+| POST | `/api/projects/:id/terminals` | `{ cols, rows }` → a shell (`$SHELL`) in the project folder; at most 8 per project |
+| DELETE | `/api/projects/:id/terminals/:tid` | ends the shell |
+| WS | `/ws/term/:id/:tid` | browser → `{ t: 'in', d }` or `{ t: 'resize', cols, rows }`; daemon → `{ t: 'out', d }` (the kept output first) and `{ t: 'exit', code }`. Same session, Host and Origin checks as `/ws` |
+
+## Deployment (V3 r10–r11, ADR-0051)
+
+| Method | Path | Does |
+| --- | --- | --- |
+| GET | `/api/projects/:id/checks` | `{ checks: [{ id, label, command, status, summary, durationMs, output, finishedAt }], none }` from package.json |
+| POST | `/api/projects/:id/checks/run` | `{ ids? }` → runs the checks one after another (all when none named) |
+| GET | `/api/projects/:id/deploy` | `{ target: { kind, label, source }, repo, version, last: { tag, at }, branch, changes }` |
+| GET / POST / DELETE | `/api/projects/:id/browser-test` | the browser test: state; `{ url }` (localhost only, Claude in Chrome on) starts it; DELETE stops it |
+| GET | `/api/projects/:id/browser-test/shot/:run/:file` | a step's screenshot from `cherry/tests/<run>/` |
+
+## Autopilot (V3 r13, ADR-0046)
+
+| Method | Path | Does |
+| --- | --- | --- |
+| GET | `/api/projects/:id/autopilot?stage=` | the state: `{ stage, status: off\|asking\|flying\|stopping\|done\|stopped\|failed, goal, suggestions, orders, answers, total, tasks, events, decisions, needsYou, report, magnetBusy, error }` (plan, design, development only) |
+| POST | `/api/projects/:id/autopilot/ask` | `{ stage }`: Magnet asks; nothing runs |
+| POST | `/api/projects/:id/autopilot/start` | `{ stage, goal }`: the user's one answer; Magnet flies |
+| POST | `/api/projects/:id/autopilot/stop` | `{ stage }`: stops after the current step |
+| POST | `/api/projects/:id/autopilot/dismiss` | `{ stage }`: closes the question or puts the report away |
+| POST | `/api/projects/:id/autopilot/review` | `{ stage, adr, review: kept\|changed }` |
+
 ## Issues (ADR-0035)
+
+The Issues tab is gone in V3 (ADR-0045); these routes and `docs/issues/` stay.
+
 
 | Method | Path | Does |
 | --- | --- | --- |
@@ -230,7 +279,10 @@ One socket at `/ws`. Every event: `{ type, at, ...payload }`. The client subscri
 | `calibrate.proposal` | proposal | project:id |
 | `run.state` | `{ projectId, state }` the app started, stopped or printed its local address (no output, no servers) | project:id |
 | `run.output` | `{ projectId, text }` new output, colour codes removed, sent at most every 100 ms | project:id |
-| `notice` | `{ projectId, kind, title, body, link }` work ended or needs you: `agent.done`, `agent.failed`, `scan.done`, `scan.failed`, `decision.proposed`, `chat.done`, `chat.failed`; `link` is the web route. The web shows a toast, a desktop notification while the tab is in the background, and a count in the tab title | notices |
+| `notice` | `{ projectId, kind, title, body, link }` work ended or needs you: `agent.done`, `agent.failed`, `scan.done`, `scan.failed`, `decision.proposed`, `chat.done`, `chat.failed`, `test.done`, `test.failed`, `autopilot.done`, `autopilot.failed`; `link` is the web route. The web shows a toast, a desktop notification while the tab is in the background, and a count in the tab title | notices |
+| `checks.updated` | `{ projectId, checks }` a cockpit check started or finished (V3 r10) | project:id |
+| `browsertest.updated` | `{ projectId, test }` the browser test moved on (V3 r11) | project:id |
+| `autopilot.updated` | `{ projectId, state }` Magnet asked, flew a step or landed (V3 r13) | project:id |
 | `magnet.item` / `magnet.delta` / `magnet.state` | Magnet's conversations; `scope` is `home` or `project:<id>` (items include `projects` and `action`) | magnet |
 
 On reconnect the client re-subscribes and re-fetches state with GET calls. Events are not replayed.

@@ -7,6 +7,7 @@ import {
   type AllowRule,
   type MagnetFileName,
   type Usage,
+  isWorkspaceStage,
 } from '@cherry/shared';
 import { removeAllowRule, useAllowRules } from '../../api/chat.ts';
 import { ApiFailure } from '../../api/client.ts';
@@ -402,9 +403,9 @@ function CheckAgain() {
   );
 }
 
-/** The six stage agents and their skills (ADR-0034). */
+/** The four stage agents and their skills (ADR-0034, ADR-0045). */
 function AgentsSection() {
-  const stages = useStageInfo().data;
+  const stages = useStageInfo().data?.filter((s) => isWorkspaceStage(s.stage));
   return (
     <section className={styles.section}>
       <h1>Stage agents</h1>

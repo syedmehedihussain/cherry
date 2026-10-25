@@ -59,18 +59,20 @@ calibrated**, and the card shows a small "project.json has errors" note.
 Skipped while scanning: dot-folders (`.cherry-worktrees`, `.Trash` …) and anything in
 `config.json → scan.ignore`.
 
-## Stages (ADR-0034)
+## Stages (ADR-0034, ADR-0045)
 
-Work goes round a loop of six stages, each with its own agent and chat in Cherry:
+Since V3, Cherry shows four stages, each with its own agent, chat and layout:
 
-`plan` → `design` → `preparation` → `development` → `deployment` → `issues` → `plan` …
+`plan` → `design` → `development` → `deployment`
 
-There is no "current stage" to keep up to date: the user opens whichever stage they work in.
-Agents hand work to each other through the files above: Plan writes `docs/prd.md` or
-`docs/specs/<name>.md` and the roadmap; Design writes the design and architecture docs;
-Development builds and ticks the roadmap; Deployment writes the CHANGELOG and runbook; Issues
-writes `docs/issues/`, which feeds the next Plan. `project.json → phase` is an old field: it is
-still written by calibration and the survey but no longer shown or used.
+Any stage opens at any time; at 100% the chat suggests the next one and Haiku writes a short
+handoff note. Agents hand work to each other through the files above: Plan writes the plan
+documents (`docs/prd.md`, `trd.md`, `architecture.md`, `data-model.md`, `api.md`,
+`roadmap.md`, `test-plan.md`, ADRs, `CLAUDE.md`); Design writes `design/` and, on Approve
+design, `design/handoff/`; Development builds and ticks the roadmap; Deployment runs the
+checks, the browser test and the deploy. Preparation and Issues are gone (ADR-0045): their old
+chats stay readable in History and `docs/issues/` stays on disk. `project.json → phase` is
+moved on by Approve plan, Approve design and the next-stage chip.
 
 ## Issue files (ADR-0035)
 

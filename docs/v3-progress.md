@@ -42,6 +42,17 @@ How to work: [`v3-start.md`](v3-start.md). Newest entries first. Write in ASD-ST
 
 - Nothing yet.
 
+## r14 Clean-up — done 2026-10-25
+
+- Removed: the old file viewer, the Status pill, the Run button, the Issues tab and its client,
+  the Readiness box, Shiki (Monaco highlights now), and CSS rules nothing uses. The daemon's
+  issue routes and `docs/issues/` stay (ADR-0045).
+- Settings lists the four stage agents.
+- Docs: api.md (design, terminals, deployment, browser test, Autopilot, new events),
+  screens.md (the V3 artboards), project-standard.md (four stages, `design/`), README
+  features, CHANGELOG.
+- Tests: 456 unit, 65 e2e pass; the web build passes.
+
 ## r13 Autopilot — done 2026-10-25
 
 - Built: the Autopilot button in the top bar of Plan, Design and Development (not

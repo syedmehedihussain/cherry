@@ -90,33 +90,34 @@ Reassurance line "Nothing is being written." `ScanProgress`. Right: "Found so fa
 Clinics in Bangladesh) + **Change answers**. Then `ProposalList` (400) and the preview pane.
 "5 new files and 1 change to README.md. Untick anything you don't want."
 
-## 4. Project workspace
+## 4. Project workspace (V3, ADR-0045) — `screens/v3/*.html`
 
-Top bar: crumbs, `StageTabs` (ADR-0034; the open stage picks the chat's agent), status pill when needed, Claude status, Settings, Magnet.
+The V3 artboards are the source of truth (`docs/design/screens/v3/`, overview in `index.html`).
 
-**Left (280):** `FileTree` with header and filter chips, then the change counts at the bottom.
+**Shell (all stages):** top bar 48 px (badge, wordmark, project switcher, four numbered stage
+tabs with a progress line, Autopilot in Plan/Design/Development, search with `Ctrl K`,
+settings); right rail 44 px (Overview, Live, GitHub, Chat; closed by default, `Ctrl B`), its
+panel 340 px; status bar 26 px (branch, ahead/behind, changed files, Run, agent, model,
+context, plan use, Claude Code, `Ctrl K`). Command palette: views, stages, actions, files.
 
-**Centre:** tabs **Chat · Docs · Notes & Tasks**, the `StatusNotch` in the middle of the tab row,
-session meta right ("session 14 · 38 min").
+- `01-plan.html` — **Plan**: Claude Code chat; Documents panel (480 px) with the nine plan
+  documents ticked when written, the open document below with Edit and Ask about this.
+- `02-design.html` — **Design**: Brief (284 px: references, design system, images, colours,
+  fonts) · canvas of `design/screens/*.html` (pan, zoom, fit, phone/desktop, light/dark,
+  comment tool, Export, Approve design) · Designer chat (392 px).
+- `03-development.html` — **Development**: Explorer (248 px) · one tabbed area: Claude pinned
+  first (`?tab=chat`), Monaco file tabs with the Claude band (`?tab=file`), terminal tabs
+  (`?tab=term`). No split.
+- `04-deployment.html` — **Deployment cockpit**: Run, address, phone/desktop, preview; right:
+  summary, checks, browser test rows with screenshots, deploy target; Deploy asks once.
+- `05-side-view-open.html` — rail Overview open; next-step chip at 100%.
+- `06-command-palette.html` — `Ctrl K`.
+- `07-permission-and-live.html` — inline CLI permission prompt; Live open.
+- `08`–`10` — Autopilot: ask, flying, report.
 
-**Right (360):** `GitHubBox`, then tabs **Agents (3) · Magnet**, **New agent**, `AgentCard`s.
-
-Artboards:
-- `Main.dc.html` — **decision waiting**: user message, Claude text, collapsed "Read 3 files",
-  `DecisionCard` open with one recommended option.
-- `Workspace-Approval.dc.html` — **approval waiting**: confirmed decision line, Claude text,
-  edit `ApprovalCard` for 2 files with diff; top bar "Approval needed"; composer shows the paused
-  hint. Agent card in **waiting** state.
-- `Workspace-Working.dc.html` — **Claude working**: "Allowed" collapsed line, timeline (Edited,
-  Edited, Ran ✓, Running), streaming text with cursor; composer shows **Stop**; the right
-  column shows a compact GitHub box and the **Magnet** tab open with a proposed action.
-- `Workspace-Docs.dc.html` — **Docs tab**: `DocsList` (210 px) + `DocReader` showing
-  `architecture.md`; `ApprovalToast` bottom right.
-- `Workspace-File.dc.html` — **file viewer** for `streaks.ts` with **Show changes** on.
-
-Notes & Tasks (*not designed*): two columns — `notes.md` as a simple Markdown editor (the only
-place the user types free text into a file) and the `tasks.json` list grouped by phase with
-status checkboxes. Use the same card and list styles.
+Views from the palette (Docs, Notes and tasks, Agents, Decisions, Status report, Run output,
+scan reports) open over the stage with a title and a close button (ADR-0047). The V2 artboards
+(`Main.dc.html`, `Workspace-*.dc.html`) are history.
 
 ## 5. Settings — `Settings.dc.html`
 

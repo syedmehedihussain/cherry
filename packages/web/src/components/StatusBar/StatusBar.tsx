@@ -1,7 +1,7 @@
 import { ArrowUpRight, GitBranch, Play } from 'lucide-react';
 import { MODELS, type GitSummary, type RunState } from '@cherry/shared';
 import { usePlanUsage } from '../../api/queries.ts';
-import { shortUrl } from '../RunButton/RunButton.tsx';
+import { shortUrl } from '../../lib/paths.ts';
 import { useClaudeState } from '../TopBar/TopBar.tsx';
 import styles from './StatusBar.module.css';
 

@@ -25,13 +25,6 @@
   min-width: 0;
   min-height: 0;
 }
-.dev {
-  flex: 1 1 0;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: var(--v3-explorer-w) minmax(0, 1fr);
-}
-
 /* A view from the palette, over the stage. */
 .view {
   flex: 1 1 0;

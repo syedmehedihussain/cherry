@@ -29,7 +29,7 @@ import {
 } from '../../../api/deploy.ts';
 import { BrowserTestSection, stepFixMessage } from './BrowserTest.tsx';
 import { startRun, stopRun, useRun } from '../../../api/run.ts';
-import { shortUrl } from '../../../components/RunButton/RunButton.tsx';
+import { shortUrl } from '../../../lib/paths.ts';
 import { useStages } from '../../../state/stage.ts';
 import { ChatTab, readMode } from '../ChatTab.tsx';
 import styles from './DeployStage.module.css';

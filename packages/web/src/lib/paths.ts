@@ -11,3 +11,8 @@ export function tildify(p: string): string {
   const m = /^\/(?:home|Users)\/[^/]+(\/.*)?$/.exec(p);
   return m ? `~${m[1] ?? ''}` : p;
 }
+
+/** Shows an address without the scheme: "localhost:5173". */
+export function shortUrl(url: string): string {
+  return url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+}

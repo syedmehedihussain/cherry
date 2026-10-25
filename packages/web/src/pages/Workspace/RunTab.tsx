@@ -2,7 +2,7 @@ import { ArrowUpRight, Play, RotateCcw, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { ApiFailure } from '../../api/client.ts';
 import { startRun, stopRun, useRun } from '../../api/run.ts';
-import { shortUrl } from '../../components/RunButton/RunButton.tsx';
+import { shortUrl } from '../../lib/paths.ts';
 import styles from './RunTab.module.css';
 
 /** The project's app on localhost: its command, address, Stop / Restart and the live output. */

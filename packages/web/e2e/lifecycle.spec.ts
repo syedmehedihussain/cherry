@@ -34,5 +34,8 @@ test('Settings lists the stage agents and their bundled skills', async ({ page }
   await expect(page.getByRole('heading', { name: 'Stage agents' })).toBeVisible();
   await expect(page.getByText('Deployment: the Shipper')).toBeVisible();
   await expect(page.getByText('release', { exact: true })).toBeVisible();
-  await expect(page.getByText('project-readiness', { exact: true })).toBeVisible();
+  await expect(page.getByText('tdd', { exact: true })).toBeVisible();
+  // V3 (ADR-0045): four stage agents; Preparation and Issues are gone.
+  await expect(page.getByText(/^Preparation: the /)).toHaveCount(0);
+  await expect(page.getByText(/^Issues: the /)).toHaveCount(0);
 });

@@ -23,16 +23,6 @@
 .grow {
   flex: 1;
 }
-.path {
-  flex: 1 1 0;
-  min-width: 0;
-  font-family: var(--mono);
-  font-size: var(--fs-2xs);
-  color: var(--t3);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .scroll {
   flex: 1;
   overflow: auto;
