@@ -11,7 +11,6 @@ Read this page, then open only what your task needs.
 | [`roadmap.md`](roadmap.md) | In what order do we build, and when is each milestone done? |
 | [`v3-redesign.md`](v3-redesign.md) | The V3 redesign: four stages, each with its own layout, and the Claude Code look. |
 | [`v4-office.md`](v4-office.md) | V4, The Office: seven gated stages, staff agents, client sign-off, Maintenance. |
-| [`v3-progress.md`](v3-progress.md) | What V3 work is done, what needs the user, decisions to review. |
 
 ## Engineering
 
@@ -33,7 +32,6 @@ Read this page, then open only what your task needs.
 | [`design-system.md`](design-system.md) | Colours, type, spacing, radius, icons, motion. |
 | [`components.md`](components.md) | Every reusable part, its props and states. |
 | [`design/tokens.css`](design/tokens.css) | The tokens as CSS variables. Import this; never hard-code hex. |
-| [`design/prompts/`](design/prompts/) | Prompts that draft the V4 screens (HTML prototype, Claude Design). |
 | [`design/screens/`](design/screens/) | `v4/office-prototype.html` (V4 source of truth) and the V3 artboards (`v3/`). |
 
 

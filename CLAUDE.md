@@ -21,7 +21,6 @@ docs/                 product, engineering and design docs (committed)
   design/tokens.css   design tokens; the web package imports this file
   design/screens/v4/  the V4 prototype (office-prototype.html), source of truth for layout
   design/screens/v3/  V3 artboards (stage layouts reused inside V4 rooms)
-  design/prompts/     prompts that draft the V4 screens
 packages/             cli, daemon, web, shared (see Stack)
 _project/             personal state, git-excluded, never committed
 ```

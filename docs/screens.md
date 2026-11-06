@@ -3,7 +3,7 @@
 The project workspace is drawn in [`design/screens/v3/`](design/screens/v3/). The V1 artboards
 (Home, Calibration, Settings, Components) were removed on 2026-11-06; the built screens are now
 the reference for those. V4 (The Office, `v4-office.md`) replaces the workspace; its screens
-come from Claude Design (`design/prompts/v4-claude-design.md`).
+are in `design/screens/v4/office-prototype.html`.
 
 Routes are hash-free client routes served by the daemon.
 
