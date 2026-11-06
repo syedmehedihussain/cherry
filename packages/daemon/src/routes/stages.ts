@@ -9,7 +9,7 @@ import {
   type StageInfo,
 } from '@cherry/shared';
 import type { ChatService } from '../chat/service.ts';
-import type { Runner } from '../claude/runner.ts';
+import { badRequest } from '../http.ts';
 import { writeHandoffNote } from '../stages/handoff.ts';
 import type { ConfigStore } from '../config.ts';
 import { projectDir } from '../projects/workspace.ts';
@@ -46,8 +46,8 @@ export function stageRoutes(home: string, config: ConfigStore) {
   };
 }
 
-/** The handoff note between stages (V3 r12): a small Haiku job, on the user's move. */
-export function handoffRoutes(config: ConfigStore, runner: Runner, chat: ChatService) {
+/** The handoff note between stages (V3 r12), written by Cherry with no model call (ADR-0055). */
+export function handoffRoutes(config: ConfigStore, chat: ChatService) {
   return (app: FastifyInstance) => {
     app.post('/api/projects/:id/stages/handoff', async (req) => {
       const { id } = z.object({ id: z.string().min(1).max(200) }).parse(req.params);
@@ -61,7 +61,8 @@ export function handoffRoutes(config: ConfigStore, runner: Runner, chat: ChatSer
       } catch {
         state = null;
       }
-      return writeHandoffNote(runner, dir, from, to, state);
+      if (from === to) throw badRequest('Move to another stage.');
+      return writeHandoffNote(dir, from, state);
     });
   };
 }

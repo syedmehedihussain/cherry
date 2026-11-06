@@ -11,7 +11,7 @@ export function handoffDraft(from: WorkspaceStage, to: WorkspaceStage, note: str
 }
 
 /**
- * Moves the project to the next stage (V3 r12): Haiku writes a short handoff note, the phase
+^ * Moves the project to the next stage (V3 r12): Cherry writes a short handoff note, the phase
  * moves on, the stage opens, and the note waits in the box for the user to send.
  */
 export function useMoveStage(projectId: string) {

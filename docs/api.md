@@ -101,7 +101,7 @@ folder (see `security.md`).
 | GET | `/api/stages` | `{ stages: [{ stage, label, name, summary, docsOnly, skills: [{ name, description, source }] }] }`: each stage agent and its skills (`source` is `bundled` or `user`) |
 | GET | `/api/projects/:id/stage?stage=` | `{ files, readiness }`: the stage's key files that exist (shown first in the file panel), and for `preparation` a file-only readiness checklist `[{ id, label, ok, detail }]` (no Claude, no commands); `readiness` is null for other stages |
 
-| POST | `/api/projects/:id/stages/handoff` | `{ from, to }` (plan, design, development, deployment) → `{ note, by: haiku\|cherry }`: a short handoff note written by a small Haiku job (capped prompt, one tool), or from the checklist when Haiku fails (V3 r12) |
+| POST | `/api/projects/:id/stages/handoff` | `{ from, to }` (plan, design, development, deployment) → `{ note, by: cherry }`: a short handoff note from the checklist and the files written, with no model call (V3 r12, ADR-0055) |
 
 ## Design (V3 r7–r9, ADR-0050)
 
@@ -136,16 +136,6 @@ folder (see `security.md`).
 | GET / POST / DELETE | `/api/projects/:id/browser-test` | the browser test: state; `{ url }` (localhost only, Claude in Chrome on) starts it; DELETE stops it |
 | GET | `/api/projects/:id/browser-test/shot/:run/:file` | a step's screenshot from `cherry/tests/<run>/` |
 
-## Autopilot (V3 r13, ADR-0046)
-
-| Method | Path | Does |
-| --- | --- | --- |
-| GET | `/api/projects/:id/autopilot?stage=` | the state: `{ stage, status: off\|asking\|flying\|stopping\|done\|stopped\|failed, goal, suggestions, orders, answers, total, tasks, events, decisions, needsYou, report, magnetBusy, error }` (plan, design, development only) |
-| POST | `/api/projects/:id/autopilot/ask` | `{ stage }`: Magnet asks; nothing runs |
-| POST | `/api/projects/:id/autopilot/start` | `{ stage, goal }`: the user's one answer; Magnet flies |
-| POST | `/api/projects/:id/autopilot/stop` | `{ stage }`: stops after the current step |
-| POST | `/api/projects/:id/autopilot/dismiss` | `{ stage }`: closes the question or puts the report away |
-| POST | `/api/projects/:id/autopilot/review` | `{ stage, adr, review: kept\|changed }` |
 
 ## Issues (ADR-0035)
 
@@ -303,10 +293,9 @@ One socket at `/ws`. Every event: `{ type, at, ...payload }`. The client subscri
 | `calibrate.proposal` | proposal | project:id |
 | `run.state` | `{ projectId, state }` the app started, stopped or printed its local address (no output, no servers) | project:id |
 | `run.output` | `{ projectId, text }` new output, colour codes removed, sent at most every 100 ms | project:id |
-| `notice` | `{ projectId, kind, title, body, link }` work ended or needs you: `agent.done`, `agent.failed`, `scan.done`, `scan.failed`, `decision.proposed`, `chat.done`, `chat.failed`, `test.done`, `test.failed`, `autopilot.done`, `autopilot.failed`; `link` is the web route. The web shows a toast, a desktop notification while the tab is in the background, and a count in the tab title | notices |
+| `notice` | `{ projectId, kind, title, body, link }` work ended or needs you: `agent.done`, `agent.failed`, `scan.done`, `scan.failed`, `decision.proposed`, `chat.done`, `chat.failed`, `test.done`, `test.failed`; `link` is the web route. The web shows a toast, a desktop notification while the tab is in the background, and a count in the tab title | notices |
 | `checks.updated` | `{ projectId, checks }` a cockpit check started or finished (V3 r10) | project:id |
 | `browsertest.updated` | `{ projectId, test }` the browser test moved on (V3 r11) | project:id |
-| `autopilot.updated` | `{ projectId, state }` Magnet asked, flew a step or landed (V3 r13) | project:id |
 | `magnet.item` / `magnet.delta` / `magnet.state` | Magnet's conversations; `scope` is `home` or `project:<id>` (items include `projects` and `action`) | magnet |
 
 On reconnect the client re-subscribes and re-fetches state with GET calls. Events are not replayed.

@@ -170,8 +170,8 @@ Core office
 - [x] o3 Staff agents: Idea, Requirements and Testing join the stages with their AGENT.md; the
       office brief and `stage_ready` in every stage chat of a project with an office; the
       user's own persona in `~/.cherry/staff/<agent>.md`.
-- [ ] o4 Click only (ADR-0055): remove Autopilot (ADR-0046), the automatic handoff note and
-      every other automatic model call.
+- [x] o4 Click only (ADR-0055): Autopilot (ADR-0046) removed; the handoff note is written by
+      Cherry with no model call; every other model call already starts from a user action.
 - [ ] o5 Projects page: Client projects and Personal projects; New project with the kind switch.
 - [ ] o6 Project page: name only, the tab bar, the Stages tab with the seven cards and Live.
 - [ ] o7 Stage room: chat with the stage agent, documents panel, Auto mode, Sign off, the

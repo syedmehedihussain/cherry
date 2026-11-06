@@ -51,8 +51,6 @@ import { designRoutes, fontRoutes } from './routes/design.ts';
 import { ChecksService } from './deploy/checks.ts';
 import { browserTestRoutes, deployRoutes } from './routes/deploy.ts';
 import { BrowserTestService } from './deploy/browser-test.ts';
-import { AutopilotService } from './autopilot/service.ts';
-import { autopilotRoutes } from './routes/autopilot.ts';
 import { watchFolders } from './watcher.ts';
 import pkg from '../package.json' with { type: 'json' };
 
@@ -76,7 +74,6 @@ export interface Daemon {
   runs: RunService;
   terminals: TerminalService;
   browserTests: BrowserTestService;
-  autopilot: AutopilotService;
   cliSecret: string;
   close(): Promise<void>;
 }
@@ -167,15 +164,6 @@ export function createDaemon(opts: DaemonOptions): Daemon {
   const runs = new RunService(config, hub);
   const terminals = new TerminalService(config);
   const checks = new ChecksService(config, hub);
-  const autopilot = new AutopilotService(
-    config,
-    hub,
-    chat,
-    approvals,
-    decisions,
-    adrs,
-    opts.runner ?? sdkRunner,
-  );
   const browserTests = new BrowserTestService(
     config,
     hub,
@@ -226,12 +214,11 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       fontRoutes(),
       deployRoutes(config, checks),
       browserTestRoutes(browserTests),
-      autopilotRoutes(autopilot),
       adrRoutes(adrs),
       ideaRoutes(new IdeaStore(opts.home)),
       officeRoutes(office, config),
       stageRoutes(opts.home, config),
-      handoffRoutes(config, opts.runner ?? sdkRunner, chat),
+      handoffRoutes(config, chat),
       issueRoutes(new IssueService(config, approvals, hub)),
     ],
   });
@@ -271,12 +258,10 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     magnet,
     terminals,
     browserTests,
-    autopilot,
     async close() {
       terminals.stopAll();
       checks.stopAll();
       await browserTests.stopAll();
-      await autopilot.stopAll();
       await runs.stopAll();
       await chat.stopAll();
       await agents.stopAll();

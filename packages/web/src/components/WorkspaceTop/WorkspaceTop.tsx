@@ -12,7 +12,7 @@ interface WorkspaceTopProps {
   projectName: string;
   /** The stage tabs, in the centre. */
   stages?: ReactNode;
-  /** Before the search: the Autopilot button (ADR-0046). */
+  /** Before the search: extra buttons for the stage. */
   actions?: ReactNode;
   onSearch(): void;
 }

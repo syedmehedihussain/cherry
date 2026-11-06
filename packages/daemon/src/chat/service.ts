@@ -263,12 +263,7 @@ export class ChatService {
     });
   }
 
-  send(
-    projectId: string,
-    body: ChatSend,
-    /** Autopilot (ADR-0046): the message is Magnet's order or answer. */
-    magnet?: { role: 'order' | 'answer'; source?: string },
-  ): { turnId: string; conversationId: string } {
+  send(projectId: string, body: ChatSend): { turnId: string; conversationId: string } {
     const dir = projectDir(this.config.projectsDir(), projectId);
     const stage = body.stage;
     let live = this.current(projectId, stage);
@@ -302,7 +297,7 @@ export class ChatService {
     current.conversation.startTurn(turnId);
     current.conversation.setAuto(body.mode === 'auto');
     current.mode = body.mode;
-    current.conversation.addUser(`u_${turnId}`, body.text, body.attachments, magnet);
+    current.conversation.addUser(`u_${turnId}`, body.text, body.attachments);
 
     // The office (V4): the staff brief, the user's own persona file and stage_ready.
     let officeFile: OfficeFile | null;

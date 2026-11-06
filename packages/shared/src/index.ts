@@ -19,5 +19,4 @@ export * from './schemas/issue.ts';
 export * from './schemas/terminal.ts';
 export * from './schemas/design.ts';
 export * from './schemas/deploy.ts';
-export * from './schemas/autopilot.ts';
 export * from './schemas/office.ts';

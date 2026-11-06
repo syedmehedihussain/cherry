@@ -29,38 +29,13 @@ describe('stage handoff note', () => {
       }),
     );
 
-  it('runs on Haiku with a small prompt and returns its note', async () => {
+  it('writes the note from the checklist, with no model call (ADR-0055)', async () => {
     const log: FakeLog = { requests: [], permissions: [], decisions: [] };
-    d = await testDaemon({
-      runner: fakeRunner(
-        [
-          {
-            call: {
-              name: 'handoff_note',
-              input: { note: 'Plan wrote `docs/prd.md`. The test plan is open.' },
-            },
-          },
-        ],
-        log,
-      ),
-    });
-    tasks(path.join(d.projectsDir, 'core'));
-    const res = await post({ from: 'plan', to: 'design' });
-    expect(res.json()).toEqual({
-      note: 'Plan wrote `docs/prd.md`. The test plan is open.',
-      by: 'haiku',
-    });
-    expect(log.requests[0]!.model).toBe('haiku');
-    expect(log.requests[0]!.allowedTools).toEqual([]);
-    expect(log.requests[0]!.prompt).toContain('- [x] PRD');
-    expect(log.requests[0]!.prompt.length).toBeLessThan(6000);
-  });
-
-  it('falls back to the checklist when Haiku does not answer', async () => {
-    d = await testDaemon({ runner: fakeRunner([{ text: 'no tool' }]) });
+    d = await testDaemon({ runner: fakeRunner([{ text: 'never' }], log) });
     tasks(path.join(d.projectsDir, 'core'));
     const res = await post({ from: 'plan', to: 'design' });
     expect(res.json()).toEqual({ note: 'Done: PRD.', by: 'cherry' });
+    expect(log.requests).toEqual([]);
     expect((await post({ from: 'plan', to: 'issues' })).statusCode).toBe(400);
   });
 });
