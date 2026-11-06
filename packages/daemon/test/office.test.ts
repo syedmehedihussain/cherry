@@ -1,4 +1,4 @@
-import { readFileSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { gitInit, HOST, ORIGIN, testDaemon, type TestDaemon } from './helpers.ts';
@@ -197,5 +197,48 @@ describe('the office (V4, ADR-0052, ADR-0054)', () => {
     expect(res.statusCode).toBe(500);
     expect(res.json().error.code).toBe('office_invalid');
     expect(readFileSync(file, 'utf8')).toBe('{ not json');
+  });
+});
+
+describe('stage documents (ADR-0053)', () => {
+  let d: TestDaemon | null = null;
+  afterEach(async () => {
+    await d?.cleanup();
+    d = null;
+  });
+
+  it('lists docs/<stage>/client|technical with their titles, then V3 flat docs where they are', async () => {
+    d = await testDaemon();
+    const dir = path.join(d.projectsDir, 'proj');
+    gitInit(dir);
+    const put = (rel: string, text: string) => {
+      mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
+      writeFileSync(path.join(dir, rel), text);
+    };
+    put('docs/plan/client/summary.md', '# How we will build it\n\nText');
+    put('docs/plan/technical/system-design.md', 'No heading here');
+    put('docs/plan/technical/diagrams/data.md', '# Data diagram');
+    put('docs/plan/technical/notes.png', 'binary');
+    put('docs/prd.md', '# PRD\n');
+    put('docs/adr/0001-expo.md', '# 0001 Expo\n');
+    const cookie = await d.login();
+    const get = (stage: string) =>
+      d!.app.inject({
+        method: 'GET',
+        url: `/api/projects/proj/office/docs?stage=${stage}`,
+        headers: { host: HOST, origin: ORIGIN, cookie },
+      });
+    const res = (await get('plan')).json();
+    expect(res.client).toEqual([
+      { path: 'docs/plan/client/summary.md', title: 'How we will build it', legacy: false },
+    ]);
+    expect(res.technical).toEqual([
+      { path: 'docs/plan/technical/diagrams/data.md', title: 'Data diagram', legacy: false },
+      { path: 'docs/plan/technical/system-design.md', title: 'system-design', legacy: false },
+      { path: 'docs/prd.md', title: 'PRD', legacy: true },
+      { path: 'docs/adr/0001-expo.md', title: '0001 Expo', legacy: true },
+    ]);
+    expect((await get('idea')).json()).toEqual({ client: [], technical: [] });
+    expect((await get('nope')).statusCode).toBe(400);
   });
 });

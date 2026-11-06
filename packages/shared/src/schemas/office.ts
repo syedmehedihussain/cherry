@@ -238,3 +238,18 @@ export function currentStage(cycle: Cycle): OfficeStage | null {
   }
   return null;
 }
+
+/** One document of a stage (ADR-0053). `legacy`: a V3 flat file read where it is. */
+export const StageDocSchema = z.object({
+  path: z.string(),
+  title: z.string(),
+  legacy: z.boolean(),
+});
+export type StageDoc = z.infer<typeof StageDocSchema>;
+
+/** GET /api/projects/:id/office/docs?stage=: the stage's client and technical documents. */
+export const StageDocsSchema = z.object({
+  client: z.array(StageDocSchema),
+  technical: z.array(StageDocSchema),
+});
+export type StageDocs = z.infer<typeof StageDocsSchema>;

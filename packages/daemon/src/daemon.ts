@@ -227,7 +227,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       autopilotRoutes(autopilot),
       adrRoutes(adrs),
       ideaRoutes(new IdeaStore(opts.home)),
-      officeRoutes(new OfficeService(config, hub)),
+      officeRoutes(new OfficeService(config, hub), config),
       stageRoutes(opts.home, config),
       handoffRoutes(config, opts.runner ?? sdkRunner, chat),
       issueRoutes(new IssueService(config, approvals, hub)),

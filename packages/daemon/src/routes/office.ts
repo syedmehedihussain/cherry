@@ -11,14 +11,17 @@ import {
   SignOffInputSchema,
   TimeInputSchema,
 } from '@cherry/shared';
+import type { ConfigStore } from '../config.ts';
+import { stageDocs } from '../office/docs.ts';
 import type { OfficeService } from '../office/service.ts';
+import { projectDir } from '../projects/workspace.ts';
 
 const Id = z.object({ id: z.string().min(1).max(200) });
 const StageParams = Id.extend({ stage: OfficeStageSchema });
 const ItemParams = Id.extend({ item: z.string().min(1).max(40) });
 
 /** The office of a project (V4, ADR-0052, ADR-0054). See docs/api.md, Office. */
-export function officeRoutes(office: OfficeService) {
+export function officeRoutes(office: OfficeService, config: ConfigStore) {
   return (app: FastifyInstance) => {
     const base = '/api/projects/:id/office';
     app.get(base, async (req) => ({ office: office.get(Id.parse(req.params).id) }));
@@ -28,6 +31,12 @@ export function officeRoutes(office: OfficeService) {
     app.patch(base, async (req) => ({
       office: office.settings(Id.parse(req.params).id, OfficeSettingsSchema.parse(req.body)),
     }));
+
+    app.get(`${base}/docs`, async (req) => {
+      const { id } = Id.parse(req.params);
+      const { stage } = z.object({ stage: OfficeStageSchema }).parse(req.query);
+      return stageDocs(projectDir(config.projectsDir(), id), stage);
+    });
 
     app.post(`${base}/stages/:stage/ready`, async (req) => {
       const { id, stage } = StageParams.parse(req.params);
