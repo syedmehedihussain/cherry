@@ -11,7 +11,10 @@ tab, its session hook and its project-notes skill keep working on the same files
 ├── CLAUDE.md                 committed  front door for Claude, short, points to docs
 ├── README.md                 committed
 ├── docs/                     committed  engineering documents
-│   ├── prd.md                the Plan stage's documents (V3, docs/v3-redesign.md):
+│   ├── <stage>/              V4 (ADR-0053): idea, requirements, plan, design, development,
+│   │   ├── client/           testing, deployment. client/ = plain language for the client;
+│   │   └── technical/        technical/ = for the next agents (e.g. requirements/technical/srs.md)
+│   ├── prd.md                V3 projects: the Plan stage's documents (docs/v3-redesign.md):
 │   ├── trd.md                technical requirements
 │   ├── architecture.md
 │   ├── data-model.md
@@ -58,6 +61,17 @@ calibrated**, and the card shows a small "project.json has errors" note.
 
 Skipped while scanning: dot-folders (`.cherry-worktrees`, `.Trash` …) and anything in
 `config.json → scan.ignore`.
+
+## Stages in V4 (ADR-0052)
+
+V4 has seven gated stages, each with a staff agent:
+
+`idea` → `requirements` → `plan` → `design` → `development` → `testing` → `deployment` → Live
+
+Only `idea` is open in a new project. A stage opens when the one before it is signed off (with a
+client approval or "internal only"). Each stage writes `docs/<stage>/client/` and
+`docs/<stage>/technical/` (ADR-0053). The plan is in `docs/v4-office.md`. The section below is
+the V3 model, kept until V4 is built.
 
 ## Stages (ADR-0034, ADR-0045)
 

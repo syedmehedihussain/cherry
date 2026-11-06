@@ -1,7 +1,7 @@
 # Components
 
-Every reusable UI part, with props and states. All states are drawn on the **Component sheet**
-artboard (`design/screens/Components.dc.html`). Build each one in `packages/web/src/components/`
+Every reusable UI part, with props and states. (The V1 component sheet artboard was removed on
+2026-11-06; V4 gets a new one from Claude Design.) Build each one in `packages/web/src/components/`
 with a test per state.
 
 ## Shell

@@ -1,6 +1,6 @@
 # Design system
 
-Source of truth: the artboards in [`design/screens/`](design/screens/) and the tokens in
+Source of truth: the artboards in [`design/screens/v3/`](design/screens/v3/) and the tokens in
 [`design/tokens.css`](design/tokens.css). This page explains the rules behind them.
 
 ## Feeling
@@ -109,8 +109,7 @@ Small and functional. 120–200 ms with `--ease`.
 
 Original robot butler: round visor head with two eyes, one antenna, bow tie, small body, one
 wheel. Sizes 96, 48, 24, and a 16 px mono glyph (bow tie and arms drop out below 24 px). The
-SVG source is in `design/screens/Components.dc.html` — extract it into
-`packages/web/src/assets/magnet/*.svg`.
+SVGs are in `packages/web/src/assets/magnet/`.
 
 ## Brand
 
@@ -160,4 +159,3 @@ and icons, never for UI states.
 | README | `lockup-dark.svg` / `lockup-light.svg` + tagline |
 | `cherry --help` | first line ends with the tagline |
 
-The artboards show an "H" (for Harness) in the badge's place; build it with these pieces.

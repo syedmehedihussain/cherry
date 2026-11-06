@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-25
+- **Amended by:** 0052 (seven gated stages on a project home, no stage tabs)
 - **Decided by:** Meddy
 
 ## Context

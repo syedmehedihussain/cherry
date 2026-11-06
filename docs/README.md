@@ -7,10 +7,10 @@ Read this page, then open only what your task needs.
 | File | What it answers |
 | --- | --- |
 | [`prd.md`](prd.md) | What are we building, for whom, what is in and out of the MVP? |
-| [`screens.md`](screens.md) | What does each screen do, which design artboard shows it, what are its states? |
+| [`screens.md`](screens.md) | What does each screen do, and what are its states? |
 | [`roadmap.md`](roadmap.md) | In what order do we build, and when is each milestone done? |
 | [`v3-redesign.md`](v3-redesign.md) | The V3 redesign: four stages, each with its own layout, and the Claude Code look. |
-| [`v3-start.md`](v3-start.md) | How Claude works through V3 on its own ("start work of version 3"). |
+| [`v4-office.md`](v4-office.md) | V4, The Office: seven gated stages, staff agents, client sign-off, Maintenance. |
 | [`v3-progress.md`](v3-progress.md) | What V3 work is done, what needs the user, decisions to review. |
 
 ## Engineering
@@ -33,7 +33,8 @@ Read this page, then open only what your task needs.
 | [`design-system.md`](design-system.md) | Colours, type, spacing, radius, icons, motion. |
 | [`components.md`](components.md) | Every reusable part, its props and states. |
 | [`design/tokens.css`](design/tokens.css) | The tokens as CSS variables. Import this; never hard-code hex. |
-| [`design/screens/`](design/screens/) | The design artboards (`*.dc.html`) exported from the canvas. Source of truth for layout. |
+| [`design/prompts/`](design/prompts/) | Prompts that draft the V4 screens (HTML prototype, Claude Design). |
+| [`design/screens/`](design/screens/) | The V3 artboards (`v3/`). Source of truth for layout until the V4 screens arrive. |
 
 
 ## Outside docs/
@@ -43,13 +44,3 @@ Read this page, then open only what your task needs.
 | [`../site/`](../site/) | The landing page, deployed to GitHub Pages by `.github/workflows/pages.yml`. |
 | [`../scripts/media/`](../scripts/media/) | The made-up demo used for README screenshots, the video and the landing page. |
 | [`images/`](images/) | Screenshots and the demo GIF used in the README. |
-
-## Note on the design files
-
-The artboards were made in Claude Design while the app was still called **Harness**. Wherever
-they say "Harness" or `~/.harness/`, build it as **Cherry** and `~/.cherry/`. The artboards
-also use a small runtime (`support.js`) that is not included; read them as HTML/CSS reference,
-not as code to ship: loops (`<sc-for>`) and `{{holes}}` will not fill in, so read the markup and
-the `renderVals()` sample data at the bottom of each file.
-
-Live canvas (every screen rendered): https://claude.ai/code/artifact/cf5ced28-473e-4402-a201-ffe30ff442bc

@@ -6,12 +6,11 @@ projects in `~/Projects`. A CLI starts a daemon on `127.0.0.1`; a React UI talks
 ## Read first
 
 - `_project/STATUS.md` — where we left off and what is next. Always read this first (it is not
-  in git; on a fresh clone use `docs/v3-progress.md`).
+  in git; on a fresh clone use `docs/roadmap.md`).
 - `docs/roadmap.md` — the milestone being built and its **Done when** list.
 - `docs/README.md` — map of the docs. Open other docs **only when the task needs them**.
-- **Version 3:** when the user says "start work of version 3" (or "continue version 3"),
-  follow `docs/v3-start.md`. It says what to read, how to work task by task without stopping,
-  and what you may decide alone.
+- **Version 4 (The Office):** the plan is `docs/v4-office.md`, the decision ADR-0052. Seven
+  gated stages with a staff agent each; nothing runs unless the user gives a job.
 
 ## Repo layout
 
@@ -20,7 +19,8 @@ CLAUDE.md, README.md
 docs/                 product, engineering and design docs (committed)
   adr/                one file per decision
   design/tokens.css   design tokens; the web package imports this file
-  design/screens/     artboards (*.dc.html), source of truth for layout
+  design/screens/v3/  V3 artboards, source of truth for layout until V4 screens arrive
+  design/prompts/     prompts that draft the V4 screens
 packages/             cli, daemon, web, shared (see Stack)
 _project/             personal state, git-excluded, never committed
 ```
@@ -64,9 +64,9 @@ Workspace packages import each other's TypeScript source directly (`exports` poi
 5. **Edits in the UI only through the built-in editor** (ADR-0021). The file viewer has **Edit**;
    Save writes one text file after an unchanged-on-disk check. Secret and binary files stay
    blocked. Claude's edits still need approval.
-6. **Match the design.** Screens are in `docs/design/screens/`. Use tokens, not raw hex.
-7. **The designs say "Harness"** (the first name; it was later Apeiron, ADR-0014). Build it as **Cherry**, `~/.cherry/` and the
-   `cherry` command. Replace the "H" app mark with the Cherry badge (`docs/design-system.md` → Brand).
+6. **Match the design.** Screens are in `docs/design/screens/` (V4 screens from Claude Design). Use tokens, not raw hex.
+7. **Nothing runs without the user** (ADR-0052). A stage agent starts only when the user gives
+   it a job. No Autopilot, no background or scheduled runs. Auto mode still finishes a job.
 8. **Every real choice becomes an ADR** in `docs/adr/`. Use `docs/adr/template.md`.
 9. **Work milestone by milestone.** Finish and test one roadmap task before the next. Tick the
    box in `docs/roadmap.md` and update `_project/STATUS.md` when a task is done.

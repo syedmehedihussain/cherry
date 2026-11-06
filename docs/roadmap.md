@@ -151,6 +151,51 @@ VS Code with Claude Code, Deployment like a cockpit. The plan is in
 handoff on the Design canvas, to code built in the Development layout with the editor, to a
 tested and deployed app from the cockpit, and no stage shows a panel the user did not open.
 
+## V4 — The Office (ADR-0052)
+
+From the user's brief (2026-11-06): Cherry works like a software company that builds an app for
+a client. Seven gated stages, each with a staff agent; the client approves at every gate;
+nothing runs unless the user gives a job. The plan is in [`v4-office.md`](v4-office.md).
+No launch date; finish each task well.
+
+Design
+- [ ] o0 Screens from Claude Design (`design/prompts/v4-claude-design.md`): the user runs it
+      and brings back the screens, component sheet and handoff note into
+      `docs/design/screens/v4/`; review and approve.
+
+Core office
+- [ ] o1 Project state (ADR): stage status, sign-offs, client approvals, internal only, version;
+      shared zod schemas, daemon store and API, events.
+- [ ] o2 Stage documents (ADR-0053): `docs/<stage>/client|technical/`, read V3 flat docs where
+      they are; documents panel with Client / Technical tabs.
+- [ ] o3 Staff agents: one agent and prompt per stage (Business Analyst, System Analyst,
+      System Architect, UI/UX Designer, Development Team, QA Engineer, DevOps Engineer); the
+      agent says when the stage is ready; no turn without the user (Auto mode finishes a job).
+- [ ] o4 Remove Autopilot (ADR-0046) and anything that starts work without the user.
+- [ ] o5 Project home: seven stage windows with their states, project status, client and
+      version; no stage tabs.
+- [ ] o6 Stage room: chat with the stage agent, documents panel, Auto mode, Sign off, back to
+      the office; reuse the V3 Plan, Design, Development and Deployment layouts inside.
+- [ ] o7 Sign-off: client approval form or internal only, next stage unlocks.
+- [ ] o8 New stages: Idea (brief), Requirements (questions for the client, interview log, SRS,
+      feasibility), Testing (test plan, runs, bug list, UAT).
+- [ ] o9 Development inside gate: prototype, Send to client, approval before the full build.
+- [ ] o10 Client documents export (ADR: PDF, link or both).
+
+Change control
+- [ ] o11 Small change: edit and change-log line. Big change: change request, impact note,
+      approve or reject, needs-update flags cleared by a new sign-off.
+
+After Live
+- [ ] o12 Go Live and the Maintenance office: Support, QA, Issues, Bug fixing, Upgrades.
+- [ ] o13 New version: Start v2.0 runs a new cycle next to the live v1.
+- [ ] o14 Magnet's place in the office (answers and overview, never drives the agents).
+- [ ] o15 Clean-up, docs, e2e tests, and one real run (Fitness Master) from Idea to Live.
+
+**Done when:** a new project starts with only Idea open, moves stage by stage with a client
+approval at each gate, each stage leaves client and technical documents, a big change flags the
+right stages, the app goes Live into Maintenance, and no agent ever ran without the user.
+
 ## After the MVP: scan agents
 
 - [x] Ready-made scan agents (Security review, Test runner, Code health, Dependency audit),
@@ -235,7 +280,7 @@ specs, exit checks) become Plan stage work.
       Development: files, Source Control, agents; Deployment: GitHub, releases, CI).
 - [x] l6 Issues stage and the loop: write issues, Plan this starts the next cycle in Plan
       (storage decided with the user first).
-- [x] l7 Bundle the skills the user picked (docs/skill_link.md): 23 third-party skills, each read
+- [x] l7 Bundle the skills the user picked (list now in the skills' SOURCES.md): 23 third-party skills, each read
       and licence-checked, plus Cherry's own three; sources in `packages/daemon/stages/SOURCES.md`.
       Open: the HyperFrames video skills (user decision) and installing the agent-browser CLI.
 - [x] l8 Tests, docs, CHANGELOG; real-Claude check (Plan guard refuses code, Deployment uses its

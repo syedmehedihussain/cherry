@@ -1,6 +1,6 @@
 # 0046 — Autopilot: Magnet flies the stage
 
-- **Status:** Accepted
+- **Status:** Superseded by 0052
 - **Date:** 2026-10-25
 - **Decided by:** Meddy
 
