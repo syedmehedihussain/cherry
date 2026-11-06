@@ -161,3 +161,29 @@ export async function runCommand(page: import('@playwright/test').Page, label: s
     .fill(typeof label === 'string' ? label : label.source.replace(/[\\^$]/g, ''));
   await palette.getByRole('option', { name: label }).first().click();
 }
+
+/**
+ * A project without an office, made through the API: it opens in the V3 workspace on Plan.
+ * The V3 stage screens are tested this way until they move into the V4 stage rooms (o7).
+ */
+export async function startV3Project(
+  page: import('@playwright/test').Page,
+  name: string,
+  idea: string,
+): Promise<void> {
+  // The login cookie is set once Home has loaded.
+  await page
+    .getByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)$/ })
+    .waitFor();
+  const origin = `http://127.0.0.1:${E2E_WEB_PORT}`;
+  const res = await page.request.post(`${origin}/api/projects/start`, {
+    data: { name, idea },
+    headers: { origin },
+  });
+  if (!res.ok()) throw new Error(`start failed: ${res.status()} ${await res.text()}`);
+  await page.goto(`/p/${name}`);
+  await page
+    .getByRole('navigation', { name: 'Lifecycle stages' })
+    .getByRole('button', { name: 'Plan' })
+    .click();
+}

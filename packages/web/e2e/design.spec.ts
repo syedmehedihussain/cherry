@@ -17,7 +17,9 @@ test.beforeEach(async ({ page }) => {
   );
   writeFileSync(path.join(design, 'screens', 'item.html'), '<title>Item</title><p>Blue mug</p>');
   await page.goto(`/#login=${await loginCode()}`);
-  await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)$/ }),
+  ).toBeVisible();
 });
 test.afterEach(() => rmSync(design, { recursive: true, force: true }));
 

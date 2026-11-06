@@ -1,0 +1,148 @@
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 28px 24px 72px;
+  width: 100%;
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.name {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.track {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 6px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+  color: var(--t3);
+}
+.track li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.track li + li::before {
+  content: '';
+  width: 18px;
+  height: 1px;
+  margin: 0 8px;
+  background: var(--bs);
+}
+.track li[data-done] {
+  color: var(--t2);
+}
+.track li[data-current] {
+  color: var(--t1);
+  font-weight: 600;
+}
+.track li[data-live] {
+  color: var(--success);
+  font-weight: 600;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+.below {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 18px;
+  margin-top: 28px;
+}
+.panel {
+  background: var(--s1);
+  border: 1px solid var(--b);
+  border-radius: var(--r-xl);
+  padding: 16px 18px;
+}
+.panel h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: var(--fs-sm2);
+  color: var(--t2);
+}
+.row + .row {
+  border-top: 1px solid var(--b-faint);
+}
+.row b {
+  color: var(--t1);
+  font-weight: 500;
+}
+.rowText {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.rowText :global(.btn),
+.when {
+  margin-left: auto;
+}
+.when {
+  color: var(--t3);
+  font-size: var(--fs-xs);
+}
+.empty {
+  margin: 0;
+  padding: 8px 0;
+  color: var(--t3);
+  font-size: var(--fs-sm2);
+}
+.acc {
+  color: var(--accent-text);
+  flex: none;
+}
+.warn {
+  color: var(--warning);
+  flex: none;
+}
+.av {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  background: var(--s3);
+  color: var(--t1);
+}
+@media (max-width: 1000px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .below {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}

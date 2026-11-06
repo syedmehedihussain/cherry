@@ -11,7 +11,9 @@ const PNG = Buffer.from(
 
 test('attach a picture and a file to a chat message', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
-  await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)$/ }),
+  ).toBeVisible();
   await page.getByRole('link', { name: 'cctop', exact: true }).first().click();
 
   const chooser = page.waitForEvent('filechooser');

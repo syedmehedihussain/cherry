@@ -1,7 +1,7 @@
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { E2E_PROJECTS, loginCode, openSide } from './fixture.ts';
+import { E2E_PROJECTS, loginCode, startV3Project, openSide } from './fixture.ts';
 
 test.afterEach(() => {
   for (const p of ['kite-log', 'orbit-log'])
@@ -12,11 +12,7 @@ test.afterEach(() => {
 // follow; at 100% Move to Design opens the next stage.
 test('the Plan bar fills as the Planner works, then Move to Design', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
-  await page.goto('/new');
-  await page.getByRole('textbox', { name: 'Idea' }).fill('A kite log for windy days');
-  await page.getByLabel('Folder name').fill('kite-log');
-  await page.getByRole('button', { name: 'Start planning' }).click();
-  await expect(page).toHaveURL(/\/p\/kite-log$/);
+  await startV3Project(page, 'kite-log', 'A kite log for windy days');
 
   const aside = await openSide(page, 'Overview');
   const card = aside.getByRole('region', { name: 'Plan progress' });
@@ -24,6 +20,11 @@ test('the Plan bar fills as the Planner works, then Move to Design', async ({ pa
   await expect(card).toContainText('6 left');
   await expect(card).toContainText('Problem and who it is for');
 
+  await page
+    .getByPlaceholder(/^Reply to/)
+    .fill(
+      'This is a new project. Here is the idea:\n\nA kite log for windy days\n\nHelp me plan it.',
+    );
   await page.getByRole('button', { name: 'Send' }).click();
   await expect(page.getByText('Two of six done.')).toBeVisible();
   await expect(card).toContainText('33%');
@@ -50,11 +51,7 @@ test('the Plan bar fills as the Planner works, then Move to Design', async ({ pa
 // ADR-0041: plan the next piece in Plan, Approve plan, and the Builder starts in Development.
 test('Approve plan opens Development and the Builder starts on the tasks', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
-  await page.goto('/new');
-  await page.getByRole('textbox', { name: 'Idea' }).fill('An orbit log');
-  await page.getByLabel('Folder name').fill('orbit-log');
-  await page.getByRole('button', { name: 'Start planning' }).click();
-  await expect(page).toHaveURL(/\/p\/orbit-log$/);
+  await startV3Project(page, 'orbit-log', 'An orbit log');
 
   // Plan opens in Auto: the Planner writes its spec without an approval card.
   const composer = page.getByPlaceholder(/^Reply to/);

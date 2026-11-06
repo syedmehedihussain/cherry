@@ -75,7 +75,10 @@ export function DevStage({
   };
 
   const activePath = active.kind === 'file' ? active.path : null;
+  const closing = useRef<string | null>(null);
   useEffect(() => {
+    if (activePath && closing.current === `file:${activePath}`) return;
+    closing.current = null;
     if (activePath) open(projectId, { kind: 'file', path: activePath });
   }, [activePath, open, projectId]);
 
@@ -89,8 +92,15 @@ export function DevStage({
       return;
     if (t.kind === 'file') disposeModel(projectId, t.path);
     if (t.kind === 'term') void closeTerminal(projectId, t.id).catch(() => undefined);
+    // The URL is the truth: a navigation still in its transition can leave `active` one tab
+    // behind the address bar.
+    const shown = decodeURIComponent(window.location.pathname).endsWith(
+      t.kind === 'file' ? `/files/${t.path}` : `/term/${t.id}`,
+    );
+    // Until the URL moves on, the effect above must not open the closed tab again.
+    closing.current = key;
     const next = close(projectId, key);
-    if (key === activeKey) onShow(next ?? { kind: 'claude' });
+    if (key === activeKey || shown) onShow(next ?? { kind: 'claude' });
   };
 
   return (

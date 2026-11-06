@@ -173,7 +173,7 @@ Core office
 - [x] o4 Click only (ADR-0055): Autopilot (ADR-0046) removed; the handoff note is written by
       Cherry with no model call; every other model call already starts from a user action.
 - [x] o5 Projects page: Client projects and Personal projects; New project with the kind switch.
-- [ ] o6 Project page: name only, the tab bar, the Stages tab with the seven cards and Live.
+- [x] o6 Project page: name only, the tab bar, the Stages tab with the seven cards and Live.
 - [ ] o7 Stage room: chat with the stage agent, documents panel, Auto mode, Sign off, the
       chat status line (model, context, 5-hour, week); V3 Design, Development and Deployment
       layouts reused inside.

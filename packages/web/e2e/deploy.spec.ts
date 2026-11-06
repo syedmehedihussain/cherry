@@ -5,7 +5,9 @@ import { E2E_PROJECTS, loginCode } from './fixture.ts';
 
 test.beforeEach(async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
-  await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)$/ }),
+  ).toBeVisible();
   for (const stage of ['development', 'deployment'])
     await page.evaluate(
       (s) => fetch(`/api/projects/cctop/chat/new?stage=${s}`, { method: 'POST' }),

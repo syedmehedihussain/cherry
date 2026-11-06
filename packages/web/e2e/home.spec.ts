@@ -15,16 +15,19 @@ test('the app opens on a dark page with the top bar', async ({ page }) => {
   expect(font).toContain('Geist');
 });
 
-test('Home lists the projects, with Calibrate on folders not set up', async ({ page }) => {
-  const table = page.getByRole('table');
+test('Home lists the projects without an office, with Set up office and Calibrate', async ({
+  page,
+}) => {
+  const section = page.getByRole('region', { name: 'Not in the office yet' });
+  const table = section.getByRole('table');
   await expect(table.getByRole('row')).toHaveCount(6);
   const row = (name: string) =>
     table.getByRole('row').filter({ has: page.getByRole('link', { name, exact: true }) });
-  await expect(row('core')).toContainText('1 change');
-  // No State column: a folder Cherry has not set up offers Calibrate instead.
+  await expect(row('core').getByRole('button', { name: 'Set up office' })).toBeVisible();
+  // A folder Cherry has not set up offers Calibrate too.
   await expect(row('cctop').getByRole('link', { name: 'Calibrate' })).toBeVisible();
   await expect(row('core').getByRole('link', { name: 'Calibrate' })).toHaveCount(0);
-  await expect(page.getByText('Next: Build the Study Room floor')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Client projects' })).toHaveCount(0);
 });
 
 test('search filters the table', async ({ page }) => {
@@ -37,16 +40,22 @@ test('search filters the table', async ({ page }) => {
 });
 
 test('the login link works once and the cookie keeps you in', async ({ page }) => {
-  await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)$/ }),
+  ).toBeVisible();
   await expect(page).toHaveURL(/\/$/); // the code is stripped from the URL
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)$/ }),
+  ).toBeVisible();
 });
 
 test('a used login link is refused', async ({ page, context }) => {
   const code = await loginCode();
   await page.goto(`/#login=${code}`);
-  await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)$/ }),
+  ).toBeVisible();
   await context.clearCookies();
   await page.goto(`/#login=${code}`);
   await expect(page.getByRole('heading', { name: 'That login link has expired' })).toBeVisible();

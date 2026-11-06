@@ -5,7 +5,9 @@ import { E2E_PROJECTS, loginCode, runCommand } from './fixture.ts';
 
 test.beforeEach(async ({ page, request }) => {
   await page.goto(`/#login=${await loginCode()}`);
-  await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)$/ }),
+  ).toBeVisible();
   // Each test starts a fresh conversation.
   await page.evaluate(() => fetch('/api/projects/core/chat/new', { method: 'POST' }));
   void request;

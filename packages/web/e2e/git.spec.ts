@@ -12,7 +12,9 @@ test('push from the GitHub box only after Allow', async ({ page }) => {
   const remote = path.join(E2E_REMOTES, 'atlas.git');
   const before = head(remote, 'main');
   await page.goto(`/#login=${await loginCode()}`);
-  await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)$/ }),
+  ).toBeVisible();
   await page.getByRole('link', { name: 'atlas', exact: true }).first().click();
   const box = (await openSide(page, 'Overview')).getByRole('region', { name: 'Repository' });
   await expect(box.getByLabel('1 ahead, 0 behind')).toBeVisible();

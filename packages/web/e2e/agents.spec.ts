@@ -9,7 +9,9 @@ test('agent: start → runs on its own → needs you → review diff → merge �
   page,
 }) => {
   await page.goto(`/#login=${await loginCode()}`);
-  await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)$/ }),
+  ).toBeVisible();
   await page.getByRole('link', { name: 'core', exact: true }).first().click();
 
   // Started from the box in the side Chat tab (ADR-0039); the Agents tab in the centre opens.

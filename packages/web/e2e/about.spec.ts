@@ -3,7 +3,9 @@ import { loginCode } from './fixture.ts';
 
 test('the About page credits the author with working links', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
-  await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)$/ }),
+  ).toBeVisible();
   await page.goto('/settings/about');
   await expect(page.getByRole('heading', { name: 'A side quest of smh' })).toBeVisible();
   await expect(page.getByRole('link', { name: /Website/ })).toHaveAttribute(

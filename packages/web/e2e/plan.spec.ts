@@ -1,7 +1,7 @@
 import { readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { E2E_PROJECTS, loginCode } from './fixture.ts';
+import { E2E_PROJECTS, loginCode, startV3Project } from './fixture.ts';
 
 test.afterEach(() =>
   rmSync(path.join(E2E_PROJECTS, 'kite-docs'), { recursive: true, force: true }),
@@ -12,12 +12,10 @@ test('Plan: the Planner writes a document, the panel ticks it, Ask about this an
   page,
 }) => {
   await page.goto(`/#login=${await loginCode()}`);
-  await expect(page.getByRole('heading', { name: 'What are we building?' })).toBeVisible();
-  await page.goto('/new');
-  await page.getByRole('textbox', { name: 'Idea' }).fill('A kite log');
-  await page.getByLabel('Folder name').fill('kite-docs');
-  await page.getByRole('button', { name: 'Start planning' }).click();
-  await expect(page).toHaveURL(/\/p\/kite-docs$/);
+  await expect(
+    page.getByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)$/ }),
+  ).toBeVisible();
+  await startV3Project(page, 'kite-docs', 'A kite log');
 
   const panel = page.getByRole('complementary', { name: 'Documents' });
   await expect(panel).toContainText('0 of 9');

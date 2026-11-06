@@ -38,15 +38,17 @@ test('ideas: add, edit, remove, and start one as a project', async ({ page }) =>
   await bird.getByRole('button', { name: 'Start' }).click();
   await expect(page.getByRole('textbox', { name: 'Idea' })).toHaveValue('Bird log');
   await expect(page.getByLabel('Folder name')).toHaveValue('bird-log');
-  await page.getByRole('button', { name: 'Start planning' }).click();
-  // ADR-0036: no survey; the project opens on Plan with the idea ready to send.
+  await page.getByRole('radio', { name: 'Personal project' }).click();
+  await page.getByRole('button', { name: 'Create project' }).click();
+  // V4: the project page, with only Idea open.
   await expect(page).toHaveURL(/\/p\/bird-log$/);
-  const stages = page.getByRole('navigation', { name: 'Lifecycle stages' });
-  await expect(stages.getByRole('button', { name: 'Plan' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
+  await expect(page.getByRole('heading', { level: 1, name: 'bird-log' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Requirements, locked' })).toBeVisible();
+  const office = JSON.parse(
+    readFileSync(path.join(E2E_PROJECTS, 'bird-log', '_project', 'office.json'), 'utf8'),
   );
-  await expect(page.getByPlaceholder(/^Reply to/)).toHaveValue(/Bird log\n\nHelp me plan it\./);
+  expect(office.kind).toBe('personal');
   expect(
     readFileSync(path.join(E2E_PROJECTS, 'bird-log', '_project', 'STATUS.md'), 'utf8'),
   ).toContain('Bird log');
