@@ -1,0 +1,177 @@
+.page {
+  flex: 1;
+  overflow: auto;
+  padding: 22px 24px 40px;
+  max-width: 1180px;
+  width: 100%;
+}
+.h {
+  margin: 0 0 4px;
+  font-size: var(--fs-xl);
+  font-weight: 600;
+}
+.sub {
+  margin: 0 0 18px;
+  color: var(--t2);
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.stat {
+  padding: 12px 14px;
+  border: 1px solid var(--b);
+  border-radius: var(--r-xl);
+  background: var(--s1);
+}
+.v {
+  font-family: var(--mono);
+  font-size: var(--fs-2xl);
+  font-weight: 600;
+}
+.l {
+  color: var(--t3);
+  font-size: var(--fs-xs);
+}
+.cols {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.sect {
+  margin-bottom: 26px;
+}
+.sect h3,
+.invoice h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm2);
+}
+.table th {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--b);
+  color: var(--t3);
+  font-weight: 500;
+  font-size: var(--fs-xs);
+}
+.table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--b-faint);
+  vertical-align: middle;
+}
+.table tfoot td {
+  border-top: 1px solid var(--bs);
+  border-bottom: 0;
+  font-weight: 600;
+}
+.num {
+  text-align: right !important;
+  font-family: var(--mono);
+}
+.dim {
+  color: var(--t3);
+  font-size: var(--fs-xs);
+}
+.x {
+  border: 0;
+  background: none;
+  color: var(--t3);
+  padding: 2px;
+  border-radius: 4px;
+}
+.x:hover {
+  color: var(--t1);
+  background: var(--neutral-fill);
+}
+.add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.add input,
+.add select,
+.rate input {
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--bs);
+  border-radius: var(--r-md);
+  background: var(--s2);
+  color: var(--t1);
+  font-size: var(--fs-sm);
+  min-width: 0;
+}
+.add input:first-child {
+  flex: 1;
+}
+.entries {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  font-size: var(--fs-xs);
+  color: var(--t2);
+}
+.entries li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.invoice {
+  padding: 20px 22px;
+  border: 1px solid var(--b);
+  border-radius: var(--r-xl);
+  background: var(--s1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.invHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.to {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+.total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--bs);
+  font-size: var(--fs-xl);
+  font-weight: 600;
+}
+.rate {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-sm);
+}
+.rate input {
+  width: 80px;
+}
+.error {
+  color: var(--danger-text);
+}
+@media (max-width: 900px) {
+  .cols {
+    grid-template-columns: 1fr;
+  }
+  .stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -88,6 +88,8 @@ export const addChange = (id: string, input: ChangeInput) => change(id, 'POST', 
 export const decideChange = (id: string, cr: string, approve: boolean) =>
   change(id, 'POST', `/changes/${encodeURIComponent(cr)}/${approve ? 'approve' : 'reject'}`);
 export const addCost = (id: string, input: CostInput) => change(id, 'POST', '/costs', input);
+export const billCost = (id: string, costId: string, bill: boolean) =>
+  change(id, 'PATCH', `/costs/${encodeURIComponent(costId)}`, { bill });
 export const removeCost = (id: string, costId: string) =>
   change(id, 'DELETE', `/costs/${encodeURIComponent(costId)}`);
 export const addTime = (id: string, input: TimeInput) => change(id, 'POST', '/time', input);

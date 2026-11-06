@@ -49,3 +49,25 @@
     max-width: none;
   }
 }
+
+.inv {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 18px;
+}
+.inv th,
+.inv td {
+  text-align: left;
+  padding: 8px 6px;
+  border-bottom: 1px solid #e2e2e6;
+}
+.inv th:last-child,
+.inv td:last-child {
+  text-align: right;
+}
+.inv tfoot td {
+  border-top: 2px solid #1b1b1d;
+  border-bottom: 0;
+  font-weight: 700;
+  font-size: 16px;
+}

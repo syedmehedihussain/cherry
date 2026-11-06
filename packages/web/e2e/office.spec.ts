@@ -286,3 +286,51 @@ test('Claude usage: the turns by stage and the project budget', async ({ page })
   await limits.getByRole('button', { name: 'Save' }).click();
   await expect(limits).toContainText('of 8.00M');
 });
+
+// o13: the Invoice tab: costs, time, and the invoice for the client.
+test('Invoice: costs, time and the invoice at the rate', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByLabel('Client', { exact: true }).fill('Fitness Master Gym');
+  await page.getByLabel('Client contact').fill('Nusrat Jahan');
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await page
+    .getByRole('navigation', { name: 'Project' })
+    .getByRole('link', { name: 'Invoice' })
+    .click();
+  await expect(page).toHaveURL(/\/p\/gym-app\/invoice$/);
+
+  const costs = page.getByRole('region', { name: 'Costs' });
+  await costs.getByLabel('Cost').fill('Domain');
+  await costs.getByLabel('Vendor').fill('Namecheap');
+  await costs.getByLabel('Amount').fill('14.99');
+  await costs.getByRole('button', { name: 'Add cost' }).click();
+  await expect(costs.getByRole('row', { name: /Domain/ })).toContainText('$14.99');
+
+  const time = page.getByRole('region', { name: 'Time' });
+  await time.getByLabel('Stage').selectOption('idea');
+  await time.getByLabel('Hours').fill('2');
+  await time.getByLabel('Note').fill('Client call');
+  await time.getByRole('button', { name: 'Add time' }).click();
+  await expect(time.getByRole('row', { name: /^Idea/ })).toContainText('2.0h');
+
+  const invoice = page.getByRole('complementary', { name: 'Invoice for the client' });
+  await expect(invoice).toContainText('Fitness Master Gym');
+  // 2 h at $25, plus the domain billed to the client.
+  await expect(invoice).toContainText('$64.99');
+  await costs.getByLabel('Bill Domain to the client').click();
+  await expect(invoice).toContainText('$50.00');
+  await invoice.getByLabel('Rate per hour').fill('30');
+  await invoice.getByRole('button', { name: 'Update' }).click();
+  await expect(invoice).toContainText('$60.00');
+
+  await page.addInitScript(() => {
+    window.print = () => document.body.setAttribute('data-printed', 'yes');
+  });
+  await page.goto('/p/gym-app/print/invoice');
+  await expect(page.getByRole('heading', { level: 1, name: 'Invoice' })).toBeVisible();
+  await expect(page.getByRole('table')).toContainText('$60.00');
+  await expect(page.locator('body')).toHaveAttribute('data-printed', 'yes');
+});

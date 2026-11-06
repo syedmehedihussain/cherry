@@ -189,7 +189,7 @@ Project tabs
 - [x] o11 Version control tab, on the project and in each stage: staged and changed files,
       Write message on a click, commit as the user, history by agent and stage, push asks.
 - [x] o12 Claude usage tab: limits, context, project token budget, tokens by stage, agent, model.
-- [ ] o13 Invoice tab: time by stage, costs, Claude share, total, client invoice; Costs for a
+- [x] o13 Invoice tab: time by stage, costs, Claude share, total, client invoice; Costs for a
       personal project.
 - [ ] o14 Docs tab: document vault (tree, search, read and edit, links, backlinks, outline,
       graph), documents only.

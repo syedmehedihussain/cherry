@@ -190,6 +190,7 @@ calls a model (ADR-0055).
 | POST | `/api/projects/:id/office/changes` | `{ kind: 'small', stage, text }` logs it; `{ kind: 'big', title, text, stages }` adds change request `CR-NNN` |
 | POST | `/api/projects/:id/office/changes/:cr/approve` | flags the named stages that are signed off as `update` (ready false) |
 | POST | `/api/projects/:id/office/changes/:cr/reject` | keeps it as rejected |
+| PATCH | `/api/projects/:id/office/costs/:costId` | `{ bill }`: bill it to the client or not (never on a personal project) |
 | POST / DELETE | `/api/projects/:id/office/costs[/:costId]` | `{ item, vendor?, period?, amount, bill? }` (bill is false on a personal project) |
 | POST / DELETE | `/api/projects/:id/office/time[/:timeId]` | `{ stage?, hours, note?, date? }` manual time |
 | POST | `/api/projects/:id/office/versions` | `{ version, title }`: a new cycle next to the live one; Idea carries over, Requirements opens; 409 if the last cycle is not live |

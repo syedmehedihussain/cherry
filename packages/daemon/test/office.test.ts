@@ -184,6 +184,8 @@ describe('the office (V4, ADR-0052, ADR-0054)', () => {
     expect(o.time[0]).toMatchObject({ stage: 'idea', hours: 1.5 });
     o = await ok('PATCH', '', { rate: 30, budgetTokens: 8_000_000 });
     expect(o).toMatchObject({ rate: 30, budgetTokens: 8_000_000 });
+    o = await ok('PATCH', `/costs/${o.costs[0].id}`, { bill: false });
+    expect(o.costs[0].bill).toBe(false);
     o = await ok('DELETE', `/costs/${o.costs[0].id}`);
     expect(o.costs).toEqual([]);
     expect((await call('DELETE', '/costs/cost_nope')).statusCode).toBe(404);

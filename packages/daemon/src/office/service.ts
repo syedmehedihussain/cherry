@@ -277,6 +277,16 @@ export class OfficeService {
     });
   }
 
+  /** Bill a cost to the client, or not (a personal project never bills). */
+  billCost(id: string, costId: string, bill: boolean): OfficeFile {
+    return this.change(id, (o) => {
+      const c = o.costs.find((x) => x.id === costId);
+      if (!c) throw notFound('That cost is gone.');
+      if (o.kind === 'personal' && bill) throw badRequest('A personal project has no client.');
+      c.bill = bill;
+    });
+  }
+
   removeCost(id: string, costId: string): OfficeFile {
     return this.change(id, (o) => {
       const next = o.costs.filter((x) => x.id !== costId);

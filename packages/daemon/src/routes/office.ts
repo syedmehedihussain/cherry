@@ -85,6 +85,11 @@ export function officeRoutes(office: OfficeService, config: ConfigStore, db: Db)
     app.post(`${base}/costs`, async (req) => ({
       office: office.addCost(Id.parse(req.params).id, CostInputSchema.parse(req.body)),
     }));
+    app.patch(`${base}/costs/:item`, async (req) => {
+      const { id, item } = ItemParams.parse(req.params);
+      const { bill } = z.object({ bill: z.boolean() }).parse(req.body);
+      return { office: office.billCost(id, item, bill) };
+    });
     app.delete(`${base}/costs/:item`, async (req) => {
       const { id, item } = ItemParams.parse(req.params);
       return { office: office.removeCost(id, item) };

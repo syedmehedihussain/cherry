@@ -7,7 +7,8 @@ import { useProjects } from '../../api/queries.ts';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
 import { Workspace } from '../Workspace/Workspace.tsx';
 import { StagesTab } from './Office.tsx';
-import { PrintView } from './PrintView.tsx';
+import { InvoicePrint, PrintView } from './PrintView.tsx';
+import { Invoice } from './Invoice.tsx';
 import { StageRoom } from './StageRoom.tsx';
 import { Usage } from './Usage.tsx';
 import { VersionControl } from './VersionControl.tsx';
@@ -27,6 +28,7 @@ export function ProjectPage() {
   if (!office.data) return <Workspace />;
   const splat = params['*'] ?? '';
   // /p/:id/print/:stage, the client documents to save as PDF (ADR-0058).
+  if (splat === 'print/invoice') return <PrintPage id={id} stage={null} />;
   const print = OfficeStageSchema.safeParse(/^print\/([a-z]+)$/.exec(splat)?.[1]);
   if (print.success) return <PrintPage id={id} stage={print.data} />;
   // /p/:id/s/:stage, a stage room (o7); /vc after it, its Version control tab (o11).
@@ -52,10 +54,15 @@ export function ProjectPage() {
         )}
       </div>
     );
-  return <OfficeShell id={id} tab={splat === 'vc' || splat === 'usage' ? splat : 'stages'} />;
+  return (
+    <OfficeShell
+      id={id}
+      tab={splat === 'vc' || splat === 'usage' || splat === 'invoice' ? splat : 'stages'}
+    />
+  );
 }
 
-function OfficeShell({ id, tab }: { id: string; tab: 'stages' | 'vc' | 'usage' }) {
+function OfficeShell({ id, tab }: { id: string; tab: 'stages' | 'vc' | 'usage' | 'invoice' }) {
   const office = useOffice(id).data!;
   const card = useProjects().data?.cards.find((c) => c.id === id);
   const name = card?.name ?? id;
@@ -64,6 +71,7 @@ function OfficeShell({ id, tab }: { id: string; tab: 'stages' | 'vc' | 'usage' }
     ['', live ? 'Maintenance' : 'Stages'],
     ['/vc', 'Version control'],
     ['/usage', 'Claude usage'],
+    ['/invoice', office.kind === 'personal' ? 'Costs' : 'Invoice'],
   ];
   return (
     <div className={styles.page}>
@@ -89,6 +97,8 @@ function OfficeShell({ id, tab }: { id: string; tab: 'stages' | 'vc' | 'usage' }
           <VersionControl projectId={id} />
         ) : tab === 'usage' ? (
           <Usage projectId={id} office={office} />
+        ) : tab === 'invoice' ? (
+          <Invoice projectId={id} office={office} />
         ) : (
           <StagesTab projectId={id} name={name} office={office} />
         )}
@@ -97,8 +107,12 @@ function OfficeShell({ id, tab }: { id: string; tab: 'stages' | 'vc' | 'usage' }
   );
 }
 
-function PrintPage({ id, stage }: { id: string; stage: OfficeStage }) {
+function PrintPage({ id, stage }: { id: string; stage: OfficeStage | null }) {
   const office = useOffice(id).data!;
   const name = useProjects().data?.cards.find((c) => c.id === id)?.name ?? id;
-  return <PrintView projectId={id} name={name} stage={stage} office={office} />;
+  return stage ? (
+    <PrintView projectId={id} name={name} stage={stage} office={office} />
+  ) : (
+    <InvoicePrint projectId={id} name={name} office={office} />
+  );
 }
