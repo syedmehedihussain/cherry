@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { Clock, Globe } from 'lucide-react';
 import { OFFICE_STAGE_LABEL, relativeTime, type ProjectCard } from '@cherry/shared';
 import { removeProject } from '../OpenFolder/OpenFolder.tsx';
-import { projectHref } from '../ProjectCard/ProjectCard.tsx';
+import { projectHref } from '../../lib/projectHref.ts';
 import { SetUpOffice } from '../SetUpOffice/SetUpOffice.tsx';
 import { tildify } from '../../lib/paths.ts';
 import styles from './OfficeTable.module.css';

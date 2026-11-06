@@ -9,10 +9,17 @@ Routes are hash-free client routes served by the daemon.
 
 | Route | Screen |
 | --- | --- |
-| `/` | Home |
+| `/` | Projects: client projects, personal projects, folders not in the office yet |
+| `/new` | New project: client or personal, the idea, the folder |
 | `/p/:id/calibrate` | Calibration |
-| `/p/:id` | Project workspace (V3 stages) |
-| `/settings/:section` | Settings |
+| `/p/:id` | With an office (V4): the Stages tab, or Maintenance once Live. Without: the V3 workspace |
+| `/p/:id/stages`, `/maintenance` | The stage cards; the maintenance office |
+| `/p/:id/s/:stage[/vc\|/usage]` | A stage room, its Version control or Claude usage tab |
+| `/p/:id/meeting`, `/docs[/<path>]`, `/code[/files/<path>]`, `/vc`, `/usage`, `/invoice` | The project tabs |
+| `/p/:id/print/:stage`, `/print/invoice` | Print pages for a PDF (ADR-0058) |
+| `/settings/:section` | Settings (Agents shows the staff personas) |
+
+The V4 screens follow `design/screens/v4/office-prototype.html`.
 
 ---
 

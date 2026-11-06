@@ -1,9 +1,14 @@
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { E2E_PROJECTS, loginCode } from './fixture.ts';
 
-test.afterEach(() => rmSync(path.join(E2E_PROJECTS, 'gym-app'), { recursive: true, force: true }));
+// Each test has its own project: the e2e daemon keeps chats and usage by project id.
+test.afterEach(() => {
+  for (const name of readdirSync(E2E_PROJECTS))
+    if (name.startsWith('gym-app-'))
+      rmSync(path.join(E2E_PROJECTS, name), { recursive: true, force: true });
+});
 
 // V4 o5, o6: a client project starts with only Idea open, on the project page.
 test('a new client project opens on the project page with only Idea open', async ({ page }) => {
@@ -17,11 +22,11 @@ test('a new client project opens on the project page with only Idea open', async
   await page.getByLabel('Client', { exact: true }).fill('Fitness Master Gym');
   await page.getByLabel('Client contact').fill('Nusrat Jahan');
   await page.getByRole('textbox', { name: 'Idea' }).fill('A members app for a gym');
-  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByLabel('Folder name').fill('gym-app-2');
   await page.getByRole('button', { name: 'Create project' }).click();
 
-  await expect(page).toHaveURL(/\/p\/gym-app$/);
-  await expect(page.getByRole('heading', { level: 1, name: 'gym-app' })).toBeVisible();
+  await expect(page).toHaveURL(/\/p\/gym-app-2$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'gym-app-2' })).toBeVisible();
   const status = page.getByRole('list', { name: 'Project status' });
   await expect(status).toContainText('Idea');
   await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
@@ -30,21 +35,21 @@ test('a new client project opens on the project page with only Idea open', async
   await expect(page.getByRole('button', { name: 'Live, after Deployment' })).toBeVisible();
   // A locked stage does not open.
   await page.getByRole('button', { name: 'Plan, locked' }).click({ force: true });
-  await expect(page).toHaveURL(/\/p\/gym-app$/);
+  await expect(page).toHaveURL(/\/p\/gym-app-2$/);
   await expect(page.getByRole('region', { name: 'Waiting on you' })).toContainText(
     'Give the Business Analyst a job in Idea.',
   );
 
   const office = JSON.parse(
-    readFileSync(path.join(E2E_PROJECTS, 'gym-app', '_project', 'office.json'), 'utf8'),
+    readFileSync(path.join(E2E_PROJECTS, 'gym-app-2', '_project', 'office.json'), 'utf8'),
   );
   expect(office.client).toEqual({ name: 'Fitness Master Gym', contact: 'Nusrat Jahan' });
 
   // Home lists it under Client projects, on Idea.
   await page.getByRole('link', { name: 'Projects' }).click();
   const client = page.getByRole('region', { name: 'Client projects' });
-  await expect(client.getByRole('row', { name: /gym-app/ })).toContainText('Fitness Master Gym');
-  await expect(client.getByRole('row', { name: /gym-app/ })).toContainText('Idea');
+  await expect(client.getByRole('row', { name: /gym-app-2/ })).toContainText('Fitness Master Gym');
+  await expect(client.getByRole('row', { name: /gym-app-2/ })).toContainText('Idea');
 });
 
 // V4 o7: a stage room is the agent's chat and the stage's documents.
@@ -55,10 +60,10 @@ test('the Idea room: the Business Analyst writes the brief and says the stage is
   await page.getByRole('link', { name: 'New project' }).click();
   await page.getByRole('radio', { name: 'Personal project' }).click();
   await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
-  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByLabel('Folder name').fill('gym-app-4');
   await page.getByRole('button', { name: 'Create project' }).click();
   await page.getByRole('button', { name: 'Idea, On-going' }).click();
-  await expect(page).toHaveURL(/\/p\/gym-app\/s\/idea$/);
+  await expect(page).toHaveURL(/\/p\/gym-app-4\/s\/idea$/);
   await expect(page.getByText('Business Analyst', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Sign off' })).toBeDisabled();
   const docs = page.getByRole('complementary', { name: 'Documents' });
@@ -81,7 +86,7 @@ test('the Idea room: the Business Analyst writes the brief and says the stage is
   const dialog = page.getByRole('dialog', { name: 'Sign off Idea' });
   await expect(dialog).toContainText('you approve it yourself');
   await dialog.getByRole('button', { name: 'Sign off' }).click();
-  await expect(page).toHaveURL(/\/p\/gym-app$/);
+  await expect(page).toHaveURL(/\/p\/gym-app-4$/);
   await expect(page.getByRole('button', { name: 'Idea, complete' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Requirements, On-going' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Recent' })).toContainText(
@@ -96,7 +101,7 @@ test('a client stage is sent, waits for the client, then is signed off', async (
   await page.getByLabel('Client', { exact: true }).fill('Fitness Master Gym');
   await page.getByLabel('Client contact').fill('Nusrat Jahan');
   await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
-  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByLabel('Folder name').fill('gym-app-6');
   await page.getByRole('button', { name: 'Create project' }).click();
   await page.getByRole('button', { name: 'Idea, On-going' }).click();
   const box = page.getByLabel('Message Claude');
@@ -120,7 +125,7 @@ test('a client stage is sent, waits for the client, then is signed off', async (
     'Idea signed off by Nusrat Jahan',
   );
   const office = JSON.parse(
-    readFileSync(path.join(E2E_PROJECTS, 'gym-app', '_project', 'office.json'), 'utf8'),
+    readFileSync(path.join(E2E_PROJECTS, 'gym-app-6', '_project', 'office.json'), 'utf8'),
   );
   expect(office.cycles[0].stages.idea.signOffs[0]).toMatchObject({
     by: 'Nusrat Jahan',
@@ -135,7 +140,7 @@ test('Requirements: questions for the client, answered and sent back', async ({ 
   await page.getByRole('link', { name: 'New project' }).click();
   await page.getByRole('radio', { name: 'Personal project' }).click();
   await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
-  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByLabel('Folder name').fill('gym-app-8');
   await page.getByRole('button', { name: 'Create project' }).click();
   await page.getByRole('button', { name: 'Idea, On-going' }).click();
   const box = page.getByLabel('Message Claude');
@@ -158,7 +163,7 @@ test('Requirements: questions for the client, answered and sent back', async ({ 
   await expect(box).toHaveValue(/2 of 2 questions are answered/);
   expect(
     readFileSync(
-      path.join(E2E_PROJECTS, 'gym-app', 'docs/requirements/technical/questions.md'),
+      path.join(E2E_PROJECTS, 'gym-app-8', 'docs/requirements/technical/questions.md'),
       'utf8',
     ),
   ).toContain('   Answer: Monthly and 3 months.');
@@ -170,12 +175,12 @@ test('Development: the prototype gate, and client documents to save as PDF', asy
   await page.getByRole('link', { name: 'New project' }).click();
   await page.getByLabel('Client', { exact: true }).fill('Fitness Master Gym');
   await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
-  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByLabel('Folder name').fill('gym-app-10');
   await page.getByRole('button', { name: 'Create project' }).click();
   await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
 
   // Jump to Development: the earlier stages signed off in the file.
-  const dir = path.join(E2E_PROJECTS, 'gym-app');
+  const dir = path.join(E2E_PROJECTS, 'gym-app-10');
   const file = path.join(dir, '_project', 'office.json');
   const office = JSON.parse(readFileSync(file, 'utf8'));
   const signed = {
@@ -195,7 +200,7 @@ test('Development: the prototype gate, and client documents to save as PDF', asy
     '# Progress\n\nWeek 3: workouts are built.\n',
   );
 
-  await page.goto('/p/gym-app/s/development');
+  await page.goto('/p/gym-app-10/s/development');
   const docs = page.getByRole('complementary', { name: 'Documents' });
   const gate = docs.getByRole('list', { name: 'Prototype gate' });
   await expect(gate).toContainText('Client approves the prototype');
@@ -210,13 +215,13 @@ test('Development: the prototype gate, and client documents to save as PDF', asy
   await docs.getByRole('tab', { name: /Client/ }).click();
   await expect(docs.getByRole('link', { name: 'Export PDF' })).toHaveAttribute(
     'href',
-    '/p/gym-app/print/development',
+    '/p/gym-app-10/print/development',
   );
   await page.addInitScript(() => {
     window.print = () => document.body.setAttribute('data-printed', 'yes');
   });
-  await page.goto('/p/gym-app/print/development');
-  await expect(page.getByRole('heading', { level: 1, name: 'gym-app' })).toBeVisible();
+  await page.goto('/p/gym-app-10/print/development');
+  await expect(page.getByRole('heading', { level: 1, name: 'gym-app-10' })).toBeVisible();
   await expect(page.getByText('for Fitness Master Gym', { exact: false })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Progress' })).toBeVisible();
   await expect(page.locator('body')).toHaveAttribute('data-printed', 'yes');
@@ -228,11 +233,11 @@ test('Version control: changes, commit, and the history by stage', async ({ page
   await page.getByRole('link', { name: 'New project' }).click();
   await page.getByRole('radio', { name: 'Personal project' }).click();
   await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
-  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByLabel('Folder name').fill('gym-app-12');
   await page.getByRole('button', { name: 'Create project' }).click();
   await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
 
-  const dir = path.join(E2E_PROJECTS, 'gym-app');
+  const dir = path.join(E2E_PROJECTS, 'gym-app-12');
   mkdirSync(path.join(dir, 'docs/idea/client'), { recursive: true });
   writeFileSync(path.join(dir, 'docs/idea/client/brief.md'), '# Brief\n');
 
@@ -240,11 +245,11 @@ test('Version control: changes, commit, and the history by stage', async ({ page
     .getByRole('navigation', { name: 'Project' })
     .getByRole('link', { name: 'Version control' })
     .click();
-  await expect(page).toHaveURL(/\/p\/gym-app\/vc$/);
+  await expect(page).toHaveURL(/\/p\/gym-app-12\/vc$/);
   const history = page.getByRole('region', { name: 'History' });
   await expect(history).toBeVisible();
 
-  await page.goto('/p/gym-app/s/idea/vc');
+  await page.goto('/p/gym-app-12/s/idea/vc');
   await expect(page.getByRole('radio', { name: 'Idea' })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('region', { name: 'History' })).toContainText(
     'No commits for Idea yet.',
@@ -261,7 +266,7 @@ test('Claude usage: the turns by stage and the project budget', async ({ page })
   await page.getByRole('link', { name: 'New project' }).click();
   await page.getByRole('radio', { name: 'Personal project' }).click();
   await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
-  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByLabel('Folder name').fill('gym-app-14');
   await page.getByRole('button', { name: 'Create project' }).click();
   await page.getByRole('button', { name: 'Idea, On-going' }).click();
   const box = page.getByLabel('Message Claude');
@@ -278,7 +283,7 @@ test('Claude usage: the turns by stage and the project budget', async ({ page })
   await expect(byStage.getByRole('row', { name: /^Idea Business Analyst/ })).toContainText('1');
   await expect(page.getByRole('region', { name: 'Business Analyst' })).toContainText('turns');
 
-  await page.goto('/p/gym-app/usage');
+  await page.goto('/p/gym-app-14/usage');
   const limits = page.getByRole('region', { name: 'Limits' });
   await expect(limits).toContainText('of 6.00M');
   await limits.getByRole('button', { name: 'Change budget' }).click();
@@ -294,13 +299,13 @@ test('Invoice: costs, time and the invoice at the rate', async ({ page }) => {
   await page.getByLabel('Client', { exact: true }).fill('Fitness Master Gym');
   await page.getByLabel('Client contact').fill('Nusrat Jahan');
   await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
-  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByLabel('Folder name').fill('gym-app-16');
   await page.getByRole('button', { name: 'Create project' }).click();
   await page
     .getByRole('navigation', { name: 'Project' })
     .getByRole('link', { name: 'Invoice' })
     .click();
-  await expect(page).toHaveURL(/\/p\/gym-app\/invoice$/);
+  await expect(page).toHaveURL(/\/p\/gym-app-16\/invoice$/);
 
   const costs = page.getByRole('region', { name: 'Costs' });
   await costs.getByLabel('Cost').fill('Domain');
@@ -329,7 +334,7 @@ test('Invoice: costs, time and the invoice at the rate', async ({ page }) => {
   await page.addInitScript(() => {
     window.print = () => document.body.setAttribute('data-printed', 'yes');
   });
-  await page.goto('/p/gym-app/print/invoice');
+  await page.goto('/p/gym-app-16/print/invoice');
   await expect(page.getByRole('heading', { level: 1, name: 'Invoice' })).toBeVisible();
   await expect(page.getByRole('table')).toContainText('$60.00');
   await expect(page.locator('body')).toHaveAttribute('data-printed', 'yes');
@@ -341,10 +346,10 @@ test('Docs: the tree, links and backlinks, search, graph and a new note', async 
   await page.getByRole('link', { name: 'New project' }).click();
   await page.getByRole('radio', { name: 'Personal project' }).click();
   await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
-  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByLabel('Folder name').fill('gym-app-18');
   await page.getByRole('button', { name: 'Create project' }).click();
   await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
-  const dir = path.join(E2E_PROJECTS, 'gym-app');
+  const dir = path.join(E2E_PROJECTS, 'gym-app-18');
   mkdirSync(path.join(dir, 'docs/idea/client'), { recursive: true });
   mkdirSync(path.join(dir, 'docs/requirements/technical'), { recursive: true });
   writeFileSync(
@@ -362,7 +367,7 @@ test('Docs: the tree, links and backlinks, search, graph and a new note', async 
     .click();
   const tree = page.getByRole('complementary', { name: 'Documents' });
   await tree.getByRole('button', { name: 'brief.md' }).click();
-  await expect(page).toHaveURL(/\/p\/gym-app\/docs\/docs\/idea\/client\/brief\.md$/);
+  await expect(page).toHaveURL(/\/p\/gym-app-18\/docs\/docs\/idea\/client\/brief\.md$/);
   const about = page.getByRole('complementary', { name: 'About this document' });
   await expect(about).toContainText('Users');
   await about.getByRole('button', { name: 'SRS' }).click();
@@ -393,10 +398,10 @@ test('Code: open a file from the explorer, edit it in a tab, close it', async ({
   await page.getByRole('link', { name: 'New project' }).click();
   await page.getByRole('radio', { name: 'Personal project' }).click();
   await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
-  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByLabel('Folder name').fill('gym-app-20');
   await page.getByRole('button', { name: 'Create project' }).click();
   await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
-  const dir = path.join(E2E_PROJECTS, 'gym-app');
+  const dir = path.join(E2E_PROJECTS, 'gym-app-20');
   mkdirSync(path.join(dir, 'src'), { recursive: true });
   writeFileSync(path.join(dir, 'src/app.ts'), 'export const app = 1;\n');
 
@@ -404,7 +409,7 @@ test('Code: open a file from the explorer, edit it in a tab, close it', async ({
     .getByRole('navigation', { name: 'Project' })
     .getByRole('link', { name: 'Code' })
     .click();
-  await expect(page).toHaveURL(/\/p\/gym-app\/code$/);
+  await expect(page).toHaveURL(/\/p\/gym-app-20\/code$/);
   await expect(page.getByText('No file open.')).toBeVisible();
   const tabs = page.getByRole('tablist', { name: 'Open tabs' });
   await expect(tabs.getByRole('tab', { name: 'Claude' })).toHaveCount(0);
@@ -412,7 +417,7 @@ test('Code: open a file from the explorer, edit it in a tab, close it', async ({
   const files = page.getByRole('complementary', { name: 'Files' });
   await files.getByRole('treeitem', { name: /src/ }).click();
   await files.getByRole('treeitem', { name: /app\.ts/ }).click();
-  await expect(page).toHaveURL(/\/p\/gym-app\/code\/files\/src\/app\.ts$/);
+  await expect(page).toHaveURL(/\/p\/gym-app-20\/code\/files\/src\/app\.ts$/);
   await expect(tabs.getByRole('tab', { name: /app\.ts/ })).toHaveAttribute('aria-selected', 'true');
   // Monaco loads with the first file tab; the first load can be slow.
   await expect(page.getByRole('region', { name: 'Contents of src/app.ts' })).toContainText(
@@ -421,7 +426,7 @@ test('Code: open a file from the explorer, edit it in a tab, close it', async ({
   );
 
   await tabs.getByRole('button', { name: 'Close app.ts' }).click();
-  await expect(page).toHaveURL(/\/p\/gym-app\/code$/);
+  await expect(page).toHaveURL(/\/p\/gym-app-20\/code$/);
   await expect(page.getByText('No file open.')).toBeVisible();
 });
 
@@ -431,13 +436,13 @@ test('Meeting: the staff, action items, notes, and asking an agent', async ({ pa
   await page.getByRole('link', { name: 'New project' }).click();
   await page.getByRole('radio', { name: 'Personal project' }).click();
   await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
-  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByLabel('Folder name').fill('gym-app-22');
   await page.getByRole('button', { name: 'Create project' }).click();
   await page
     .getByRole('navigation', { name: 'Project' })
     .getByRole('link', { name: 'Meeting' })
     .click();
-  await expect(page).toHaveURL(/\/p\/gym-app\/meeting$/);
+  await expect(page).toHaveURL(/\/p\/gym-app-22\/meeting$/);
 
   const staff = page.getByRole('list', { name: 'Staff' });
   const ba = staff.getByRole('listitem', { name: 'Business Analyst' });
@@ -455,11 +460,14 @@ test('Meeting: the staff, action items, notes, and asking an agent', async ({ pa
   await page.getByRole('button', { name: 'Save notes' }).click();
   const day = new Date().toISOString().slice(0, 10);
   await expect(page.getByText(`docs/meetings/${day}.md`)).toBeVisible();
-  const notes = readFileSync(path.join(E2E_PROJECTS, 'gym-app', `docs/meetings/${day}.md`), 'utf8');
+  const notes = readFileSync(
+    path.join(E2E_PROJECTS, 'gym-app-22', `docs/meetings/${day}.md`),
+    'utf8',
+  );
   expect(notes).toContain('- [ ] Ask for the bKash keys (you)');
 
   await ba.getByRole('button', { name: 'Ask' }).click();
-  await expect(page).toHaveURL(/\/p\/gym-app\/s\/idea$/);
+  await expect(page).toHaveURL(/\/p\/gym-app-22\/s\/idea$/);
   await expect(page.getByLabel('Message Claude')).toHaveValue(/Where are we on Idea\?/);
 });
 
@@ -471,10 +479,10 @@ test('Change control: a small change, a change request, approve, needs update', 
   await page.getByRole('link', { name: 'New project' }).click();
   await page.getByRole('radio', { name: 'Personal project' }).click();
   await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
-  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByLabel('Folder name').fill('gym-app-24');
   await page.getByRole('button', { name: 'Create project' }).click();
   await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
-  const file = path.join(E2E_PROJECTS, 'gym-app', '_project', 'office.json');
+  const file = path.join(E2E_PROJECTS, 'gym-app-24', '_project', 'office.json');
   const office = JSON.parse(readFileSync(file, 'utf8'));
   const signed = {
     by: 'you',
@@ -488,7 +496,7 @@ test('Change control: a small change, a change request, approve, needs update', 
   office.cycles[0].stages.plan.state = 'active';
   writeFileSync(file, JSON.stringify(office));
 
-  await page.goto('/p/gym-app/s/requirements');
+  await page.goto('/p/gym-app-24/s/requirements');
   await page.getByRole('button', { name: 'Request change' }).click();
   let dialog = page.getByRole('dialog', { name: 'Request a change' });
   await dialog.getByLabel('What should change?').fill('Call it membership plan, not package.');
@@ -527,10 +535,10 @@ test('Go Live: the moment, then the maintenance office', async ({ page }) => {
   await page.getByRole('link', { name: 'New project' }).click();
   await page.getByRole('radio', { name: 'Personal project' }).click();
   await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
-  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByLabel('Folder name').fill('gym-app-26');
   await page.getByRole('button', { name: 'Create project' }).click();
   await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
-  const file = path.join(E2E_PROJECTS, 'gym-app', '_project', 'office.json');
+  const file = path.join(E2E_PROJECTS, 'gym-app-26', '_project', 'office.json');
   const office = JSON.parse(readFileSync(file, 'utf8'));
   const signed = {
     by: 'you',
@@ -545,14 +553,14 @@ test('Go Live: the moment, then the maintenance office', async ({ page }) => {
   office.cycles[0].devGate = 'approved';
   writeFileSync(file, JSON.stringify(office));
 
-  await page.goto('/p/gym-app/s/deployment');
+  await page.goto('/p/gym-app-26/s/deployment');
   await page.getByRole('button', { name: 'Sign off' }).click();
   const dialog = page.getByRole('dialog', { name: 'Sign off Deployment' });
   await expect(dialog).toContainText('The project goes Live.');
   await dialog.getByRole('button', { name: 'Sign off' }).click();
 
   const moment = page.getByRole('dialog', { name: 'The project is live' });
-  await expect(moment).toContainText('gym-app v1.0 is live');
+  await expect(moment).toContainText('gym-app-26 v1.0 is live');
   await moment.getByRole('button', { name: 'Open the maintenance office' }).click();
   await expect(
     page.getByRole('navigation', { name: 'Project' }).getByRole('link', { name: 'Maintenance' }),
@@ -564,10 +572,10 @@ test('Go Live: the moment, then the maintenance office', async ({ page }) => {
   await bugs.getByRole('button', { name: 'Flag' }).click();
   await expect(bugs).toContainText('bKash paid but the app says expired');
   await bugs.getByRole('button', { name: 'Fix now' }).click();
-  await expect(page).toHaveURL(/\/p\/gym-app\/s\/development$/);
+  await expect(page).toHaveURL(/\/p\/gym-app-26\/s\/development$/);
   await expect(page.getByLabel('Message Claude')).toHaveValue(/Fix issue #1: bKash paid/);
 
-  await page.goto('/p/gym-app/stages');
+  await page.goto('/p/gym-app-26/stages');
   await expect(page.getByRole('button', { name: 'Live, v1.0 is live' })).toBeVisible();
   await expect(page.getByRole('dialog', { name: 'The project is live' })).toHaveCount(0);
 });
@@ -578,10 +586,10 @@ test('New version: Start v2.0 next to the live v1.0', async ({ page }) => {
   await page.getByRole('link', { name: 'New project' }).click();
   await page.getByRole('radio', { name: 'Personal project' }).click();
   await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
-  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByLabel('Folder name').fill('gym-app-28');
   await page.getByRole('button', { name: 'Create project' }).click();
   await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
-  const file = path.join(E2E_PROJECTS, 'gym-app', '_project', 'office.json');
+  const file = path.join(E2E_PROJECTS, 'gym-app-28', '_project', 'office.json');
   const office = JSON.parse(readFileSync(file, 'utf8'));
   const signed = {
     by: 'you',
@@ -596,7 +604,7 @@ test('New version: Start v2.0 next to the live v1.0', async ({ page }) => {
   office.cycles[0].liveAt = new Date().toISOString();
   writeFileSync(file, JSON.stringify(office));
 
-  await page.goto('/p/gym-app');
+  await page.goto('/p/gym-app-28');
   await page.getByRole('button', { name: 'Open the maintenance office' }).click();
   await page.getByRole('button', { name: /New version/ }).click();
   const dialog = page.getByRole('dialog', { name: 'Start a new version' });
@@ -604,12 +612,12 @@ test('New version: Start v2.0 next to the live v1.0', async ({ page }) => {
   await dialog.getByLabel('What it is about').fill('Class booking');
   await dialog.getByRole('button', { name: 'Start v2.0' }).click();
 
-  await expect(page).toHaveURL(/\/p\/gym-app\/stages$/);
+  await expect(page).toHaveURL(/\/p\/gym-app-28\/stages$/);
   await expect(page.getByRole('button', { name: 'Idea, from the last version' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Requirements, On-going' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Live, v2.0 after Deployment' })).toBeVisible();
   await page.getByRole('link', { name: 'v1.0 live, in maintenance' }).click();
-  await expect(page).toHaveURL(/\/p\/gym-app\/maintenance$/);
+  await expect(page).toHaveURL(/\/p\/gym-app-28\/maintenance$/);
   await expect(page.getByRole('region', { name: 'Version history' })).toContainText(
     'v2.0 Class booking',
   );

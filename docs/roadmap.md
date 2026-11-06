@@ -206,6 +206,7 @@ Change control and after Live
 - [x] o19 Go Live and the Maintenance office: Support, QA, Issues, Bug fixing, Upgrades.
 - [x] o20 New version: Start v2.0 runs a new cycle next to the live v1.
 - [ ] o21 Clean-up, docs, e2e tests, and one real run (Fitness Master) from Idea to Live.
+      Clean-up, docs and e2e done 2026-11-07; the real run is the user's (real Claude turns).
 
 **Done when:** a new project starts with only Idea open, moves stage by stage with a client
 approval at each gate (or the user's own sign-off for a personal project), each stage leaves

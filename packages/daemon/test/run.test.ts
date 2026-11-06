@@ -90,7 +90,7 @@ describe.runIf(process.platform === 'linux')('projectListeners', () => {
       process.execPath,
       [
         '-e',
-        "require('http').createServer((q, r) => r.end('ok')).listen(0, '127.0.0.1', function () { console.log(this.address().port) })",
+        "require('http').createServer((q, r) => r.end('ok')).listen(0, '127.0.0.1', function () { process.stdout.write(String(this.address().port)) })",
       ],
       { cwd: dir, stdio: ['ignore', 'pipe', 'ignore'] },
     );
@@ -178,7 +178,7 @@ describe('Run the app', () => {
         process.execPath,
         [
           '-e',
-          "require('http').createServer((q, r) => r.end('ok')).listen(0, '127.0.0.1', function () { console.log(this.address().port) })",
+          "require('http').createServer((q, r) => r.end('ok')).listen(0, '127.0.0.1', function () { process.stdout.write(String(this.address().port)) })",
         ],
         { cwd: dir, stdio: ['ignore', 'pipe', 'ignore'] },
       );

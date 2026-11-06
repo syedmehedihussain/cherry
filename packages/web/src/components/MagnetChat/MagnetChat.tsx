@@ -22,7 +22,7 @@ import { useNow } from '../../lib/useNow.ts';
 import { ApprovalCard } from '../ApprovalCard/ApprovalCard.tsx';
 import { MagnetAvatar } from '../MagnetAvatar/MagnetAvatar.tsx';
 import { Markdown } from '../Markdown/Markdown.tsx';
-import { projectHref } from '../ProjectCard/ProjectCard.tsx';
+import { projectHref } from '../../lib/projectHref.ts';
 import styles from './MagnetChat.module.css';
 
 const CHIPS = ["What's stuck this week?", 'Start a project', 'Summarise today'] as const;

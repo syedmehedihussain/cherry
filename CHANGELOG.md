@@ -4,6 +4,26 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ## Unreleased
 
+### V4: the office (ADR-0052)
+
+- **Seven gated stages** with a staff agent each, from Idea to Deployment; a stage opens when the
+  one before it is signed off. State in `_project/office.json` (ADR-0054).
+- **Sign-off** with the client's approval (who, date, notes), internal only, or sent and waiting;
+  personal projects sign off themselves (ADR-0057).
+- **Stage rooms**: the agent's chat, client and technical documents in `docs/<stage>/`
+  (ADR-0053), Questions for the client, the prototype gate, the acceptance test, Export PDF
+  (ADR-0058), and the `stage_ready` tool the agent uses to say a stage is ready.
+- **Project tabs**: Meeting, Docs (a vault), Code, Version control, Claude usage with the
+  project's token budget (`turn_usage`), and Invoice.
+- **Change control**: small changes logged, change requests approved or rejected; approving one
+  flags the stages it touches until they are signed off again.
+- **Live and maintenance**: Support, Issues, QA, Bug fixing, Upgrades, and New version.
+- **Magnet is the project manager** (ADR-0056): he reads each project's office and never starts
+  an agent.
+- **Every model call starts from a click** (ADR-0055): Autopilot is removed, and the handoff
+  note between V3 stages no longer uses Haiku.
+- Settings, Agents shows each staff persona; your own file in `~/.cherry/staff/` replaces it.
+
 ### V3: four stages, each its own kind of place (ADR-0045)
 
 - **Shell**: four numbered stage tabs (Plan, Design, Development, Deployment) with a progress
