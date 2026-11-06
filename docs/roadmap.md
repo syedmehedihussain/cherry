@@ -180,7 +180,7 @@ Core office
       Development edits code in the Code tab (o15).
 - [x] o8 Sign-off: client approval form, internal only, sent and waiting; personal sign-off
       (ADR-0057); the next stage unlocks.
-- [ ] o9 New stages: Idea (brief), Requirements (questions for the client, interview log, SRS,
+- [x] o9 New stages: Idea (brief), Requirements (questions for the client, interview log, SRS,
       feasibility), Testing (test plan, runs, bugs, UAT).
 - [ ] o10 Development inside gate (prototype, send, approval) and the client documents export
       (ADR: PDF, link or both).

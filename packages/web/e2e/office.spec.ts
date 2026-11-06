@@ -128,3 +128,38 @@ test('a client stage is sent, waits for the client, then is signed off', async (
     internal: false,
   });
 });
+
+// o9: Requirements prepares the client interview; the answers go back into the file.
+test('Requirements: questions for the client, answered and sent back', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByRole('radio', { name: 'Personal project' }).click();
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await page.getByRole('button', { name: 'Idea, On-going' }).click();
+  const box = page.getByLabel('Message Claude');
+  await box.fill('A gym wants a members app');
+  await box.press('Enter');
+  await page.getByRole('button', { name: 'Sign off' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Sign off' }).click();
+  await page.getByRole('button', { name: 'Requirements, On-going' }).click();
+
+  const docs = page.getByRole('complementary', { name: 'Documents' });
+  await docs.getByRole('tab', { name: 'Questions' }).click();
+  await docs.getByRole('button', { name: 'Ask for the questions' }).click();
+  await expect(box).toHaveValue('Write the questions I should ask the client.');
+  await box.press('Enter');
+  await expect(page.getByText('Two questions are in the Questions tab.')).toBeVisible();
+  await expect(docs.getByText('Does each branch have its own trainers?')).toBeVisible();
+  await docs.getByLabel('Does each branch have its own trainers?').fill('Own trainers.');
+  await docs.getByLabel('Which payment plans do members have?').fill('Monthly and 3 months.');
+  await docs.getByRole('button', { name: 'Send answers to the agent' }).click();
+  await expect(box).toHaveValue(/2 of 2 questions are answered/);
+  expect(
+    readFileSync(
+      path.join(E2E_PROJECTS, 'gym-app', 'docs/requirements/technical/questions.md'),
+      'utf8',
+    ),
+  ).toContain('   Answer: Monthly and 3 months.');
+});

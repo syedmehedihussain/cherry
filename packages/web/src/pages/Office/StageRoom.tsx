@@ -19,6 +19,7 @@ import { ChatTab } from '../Workspace/ChatTab.tsx';
 import { DeployStage } from '../Workspace/deploy/DeployStage.tsx';
 import { DesignStage } from '../Workspace/design/DesignStage.tsx';
 import { DocReader } from '../Workspace/plan/PlanStage.tsx';
+import { BugsTab, QuestionsTab, UatTab } from './StageExtras.tsx';
 import styles from './StageRoom.module.css';
 
 const STATE_WORD = {
@@ -149,13 +150,22 @@ function DocsPanel({
   useEffect(() => {
     void refetch();
   }, [items, refetch]);
-  const [tab, setTab] = useState<'client' | 'technical'>('client');
-  const list: StageDoc[] = docs?.[tab] ?? [];
+  type Tab = 'client' | 'technical' | 'questions' | 'uat' | 'bugs';
+  const [tab, setTab] = useState<Tab>('client');
+  const isDocs = tab === 'client' || tab === 'technical';
+  const list: StageDoc[] = isDocs ? (docs?.[tab] ?? []) : [];
   const shown = open ?? list[0]?.path ?? null;
-  const tabs = [
+  const tabs: [Tab, string, number | null][] = [
     ['client', personal ? 'Summary' : 'Client', docs?.client.length ?? 0],
     ['technical', 'Technical', docs?.technical.length ?? 0],
-  ] as const;
+    ...(stage === 'requirements' ? [['questions', 'Questions', null] as [Tab, string, null]] : []),
+    ...(stage === 'testing'
+      ? ([
+          ['uat', 'UAT', null],
+          ['bugs', 'Bugs', null],
+        ] as [Tab, string, null][])
+      : []),
+  ];
   return (
     <aside className={styles.docs} aria-label="Documents">
       <div className={styles.docsHead} role="tablist" aria-label="Documents for">
@@ -167,11 +177,14 @@ function DocsPanel({
             aria-selected={tab === k}
             onClick={() => setTab(k)}
           >
-            {label} <span className={styles.n}>{n}</span>
+            {label} {n !== null && <span className={styles.n}>{n}</span>}
           </button>
         ))}
       </div>
-      {list.length > 0 && (
+      {tab === 'questions' && <QuestionsTab projectId={projectId} />}
+      {tab === 'uat' && <UatTab projectId={projectId} />}
+      {tab === 'bugs' && <BugsTab projectId={projectId} />}
+      {isDocs && list.length > 0 && (
         <ul className={styles.list}>
           {list.map((d) => (
             <li key={d.path}>
@@ -189,7 +202,7 @@ function DocsPanel({
           ))}
         </ul>
       )}
-      {shown ? (
+      {!isDocs ? null : shown ? (
         <DocReader key={shown} projectId={projectId} path={shown} now={now} extra={false} />
       ) : (
         <p className={styles.empty}>

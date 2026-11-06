@@ -1,5 +1,22 @@
 [
   {
+    "match": "^Write the questions I should ask the client",
+    "steps": [
+      {
+        "tool": {
+          "name": "Write",
+          "input": {
+            "file_path": "docs/requirements/technical/questions.md",
+            "content": "# Questions for the client\n\n1. Does each branch have its own trainers?\n2. Which payment plans do members have?\n"
+          }
+        }
+      },
+      {
+        "text": "Two questions are in the Questions tab. Ask them at the meeting."
+      }
+    ]
+  },
+  {
     "match": "A gym wants a members app",
     "steps": [
       {
@@ -128,7 +145,10 @@
         "call": {
           "name": "land",
           "input": {
-            "result": ["2 of 2 tasks are complete.", "All tests pass."],
+            "result": [
+              "2 of 2 tasks are complete.",
+              "All tests pass."
+            ],
             "next": "Open Deployment. Run the browser test."
           }
         }
@@ -408,7 +428,9 @@
         "call": {
           "name": "stage_checklist",
           "input": {
-            "done": ["t22"]
+            "done": [
+              "t22"
+            ]
           }
         }
       },
@@ -436,7 +458,10 @@
             "title": "Offline mode",
             "summary": "Works without a network.",
             "spec": "docs/specs/offline.md",
-            "tasks": ["Cache the data", "Sync on reconnect"]
+            "tasks": [
+              "Cache the data",
+              "Sync on reconnect"
+            ]
           }
         }
       },
@@ -452,8 +477,14 @@
         "call": {
           "name": "stage_checklist",
           "input": {
-            "done": ["t3", "t4", "t5"],
-            "drop": ["t6"]
+            "done": [
+              "t3",
+              "t4",
+              "t5"
+            ],
+            "drop": [
+              "t6"
+            ]
           }
         }
       },
@@ -472,7 +503,10 @@
         "call": {
           "name": "stage_checklist",
           "input": {
-            "done": ["t1", "t2"]
+            "done": [
+              "t1",
+              "t2"
+            ]
           }
         }
       },
@@ -520,7 +554,9 @@
               }
             ],
             "proposal": "We propose **SQLite** because queries stay simple.",
-            "consequences": ["Good: fast reads"]
+            "consequences": [
+              "Good: fast reads"
+            ]
           }
         }
       },
@@ -739,7 +775,9 @@
         "call": {
           "name": "show_projects",
           "input": {
-            "ids": ["cctop"]
+            "ids": [
+              "cctop"
+            ]
           }
         }
       },
@@ -851,7 +889,9 @@
           "input": {
             "summary": "Real-time translation",
             "phase": "development",
-            "stack": ["Node 20"],
+            "stack": [
+              "Node 20"
+            ],
             "files": [
               {
                 "path": "CLAUDE.md",
