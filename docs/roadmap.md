@@ -178,7 +178,7 @@ Core office
       Technical documents with the reader, Sign off button, the chat status line (model,
       context, 5-hour, week); Design and Deployment keep their V3 canvas and cockpit inside.
       Development edits code in the Code tab (o15).
-- [ ] o8 Sign-off: client approval form, internal only, sent and waiting; personal sign-off
+- [x] o8 Sign-off: client approval form, internal only, sent and waiting; personal sign-off
       (ADR-0057); the next stage unlocks.
 - [ ] o9 New stages: Idea (brief), Requirements (questions for the client, interview log, SRS,
       feasibility), Testing (test plan, runs, bugs, UAT).

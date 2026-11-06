@@ -96,3 +96,45 @@
     grid-template-columns: 1fr;
   }
 }
+.field textarea,
+.field input[type='date'] {
+  padding: 8px 10px;
+  border: 1px solid var(--bs);
+  border-radius: var(--r-md);
+  background: var(--s2);
+  color: var(--t1);
+  font: inherit;
+  font-size: var(--fs-base);
+}
+.field textarea {
+  resize: vertical;
+}
+.field input:disabled {
+  opacity: 0.45;
+}
+.docList {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--t1);
+  font-weight: 400;
+}
+.docList .mono {
+  color: var(--t3);
+  font-size: var(--fs-2xs);
+}
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--t1);
+  font-size: var(--fs-base);
+}
+.check input {
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+.check small {
+  display: block;
+  color: var(--t3);
+  font-size: var(--fs-xs);
+}

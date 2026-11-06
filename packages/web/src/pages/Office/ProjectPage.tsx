@@ -1,5 +1,7 @@
 import { NavLink, useParams } from 'react-router';
+import { useState } from 'react';
 import { OfficeStageSchema } from '@cherry/shared';
+import { SignOffDialog } from '../../components/SetUpOffice/SignOffDialog.tsx';
 import { useOffice, useLiveOffice } from '../../api/office.ts';
 import { useProjects } from '../../api/queries.ts';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
@@ -17,6 +19,7 @@ export function ProjectPage() {
   const id = params.id ?? '';
   const office = useOffice(id);
   useLiveOffice(id);
+  const [signing, setSigning] = useState(false);
   if (office.isPending) return <div className={styles.loading} aria-busy="true" />;
   if (!office.data) return <Workspace />;
   // /p/:id/s/:stage, a stage room (o7).
@@ -28,8 +31,16 @@ export function ProjectPage() {
           projectId={id}
           stage={room.data}
           office={office.data}
-          onSignOff={() => undefined}
+          onSignOff={() => setSigning(true)}
         />
+        {signing && (
+          <SignOffDialog
+            projectId={id}
+            stage={room.data}
+            office={office.data}
+            onClose={() => setSigning(false)}
+          />
+        )}
       </div>
     );
   return <OfficeShell id={id} />;

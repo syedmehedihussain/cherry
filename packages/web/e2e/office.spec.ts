@@ -74,4 +74,57 @@ test('the Idea room: the Business Analyst writes the brief and says the stage is
   await expect(docs.getByRole('heading', { name: 'Fitness Master: members app' })).toBeVisible();
   await page.getByRole('link', { name: 'Office' }).click();
   await expect(page.getByRole('button', { name: 'Idea, ready to sign off' })).toBeVisible();
+
+  // o8: a personal project signs off itself; Requirements opens.
+  await page.getByRole('button', { name: 'Idea, ready to sign off' }).click();
+  await page.getByRole('button', { name: 'Sign off' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Sign off Idea' });
+  await expect(dialog).toContainText('you approve it yourself');
+  await dialog.getByRole('button', { name: 'Sign off' }).click();
+  await expect(page).toHaveURL(/\/p\/gym-app$/);
+  await expect(page.getByRole('button', { name: 'Idea, complete' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Requirements, On-going' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Recent' })).toContainText(
+    'Idea signed off by you',
+  );
+});
+
+// o8: a client project waits for the client, then records who approved it.
+test('a client stage is sent, waits for the client, then is signed off', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByLabel('Client', { exact: true }).fill('Fitness Master Gym');
+  await page.getByLabel('Client contact').fill('Nusrat Jahan');
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await page.getByRole('button', { name: 'Idea, On-going' }).click();
+  const box = page.getByLabel('Message Claude');
+  await box.fill('A gym wants a members app');
+  await box.press('Enter');
+  await expect(page.getByRole('button', { name: 'Sign off' })).toBeEnabled();
+
+  await page.getByRole('button', { name: 'Sign off' }).click();
+  let dialog = page.getByRole('dialog', { name: 'Sign off Idea' });
+  await expect(dialog).toContainText('Fitness Master: members app');
+  await dialog.getByRole('button', { name: 'Sent, waiting for client' }).click();
+  await expect(page.getByText('waiting for client')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Record approval' }).click();
+  dialog = page.getByRole('dialog', { name: 'Sign off Idea' });
+  await expect(dialog.getByLabel('Approved by')).toHaveValue('Nusrat Jahan');
+  await dialog.getByLabel('Notes').fill('Approved in the meeting.');
+  await dialog.getByRole('button', { name: 'Sign off' }).click();
+  await expect(page.getByRole('button', { name: 'Requirements, On-going' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Recent' })).toContainText(
+    'Idea signed off by Nusrat Jahan',
+  );
+  const office = JSON.parse(
+    readFileSync(path.join(E2E_PROJECTS, 'gym-app', '_project', 'office.json'), 'utf8'),
+  );
+  expect(office.cycles[0].stages.idea.signOffs[0]).toMatchObject({
+    by: 'Nusrat Jahan',
+    notes: 'Approved in the meeting.',
+    internal: false,
+  });
 });
