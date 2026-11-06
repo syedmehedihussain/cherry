@@ -1,7 +1,14 @@
 import { existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { tildify } from '../paths.ts';
-import { PHASE_LABEL, STATE_LABEL, gitChip, relativeTime, type ProjectCard } from '@cherry/shared';
+import {
+  PHASE_LABEL,
+  STATE_LABEL,
+  gitChip,
+  relativeTime,
+  type ProjectCard,
+  OFFICE_STAGE_LABEL,
+} from '@cherry/shared';
 import { writeFileAtomic } from '../fsutil.ts';
 
 export const MAGNET_USER_FILES = ['MAGNET.md', 'me.md', 'work.md'] as const;
@@ -52,6 +59,17 @@ export function projectLine(card: ProjectCard, now = Date.now()): string {
   parts.push(`git: ${gitChip(card.git).label}`);
   if (card.lastWorked) parts.push(`last ${relativeTime(card.lastWorked, now)}`);
   if (card.nextStep) parts.push(`next: ${card.nextStep}`);
+  const o = card.office;
+  if (o) {
+    const signed = o.stages.filter((s) => s === 'signed' || s === 'carried').length;
+    parts.push(
+      `office: ${o.kind === 'client' ? `client ${o.client ?? ''}` : 'personal'}, v${o.version}, ${
+        o.stage
+          ? `on ${OFFICE_STAGE_LABEL[o.stage]}${o.stages.includes('waiting') ? ' (waiting for client)' : ''}`
+          : 'all signed off'
+      }, ${signed}/7 signed${o.stages.includes('update') ? ', needs update' : ''}${o.live ? ', live' : ''}`,
+    );
+  }
   return `- ${parts.join(' · ')}`;
 }
 

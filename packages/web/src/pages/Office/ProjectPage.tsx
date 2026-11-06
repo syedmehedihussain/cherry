@@ -11,6 +11,7 @@ import { InvoicePrint, PrintView } from './PrintView.tsx';
 import { Invoice } from './Invoice.tsx';
 import { StageRoom } from './StageRoom.tsx';
 import { CodeTab } from './CodeTab.tsx';
+import { Meeting } from './Meeting.tsx';
 import { Usage } from './Usage.tsx';
 import { Vault } from './Vault.tsx';
 import { VersionControl } from './VersionControl.tsx';
@@ -65,7 +66,11 @@ export function ProjectPage() {
   return (
     <OfficeShell
       id={id}
-      tab={splat === 'vc' || splat === 'usage' || splat === 'invoice' ? splat : 'stages'}
+      tab={
+        splat === 'meeting' || splat === 'vc' || splat === 'usage' || splat === 'invoice'
+          ? splat
+          : 'stages'
+      }
     />
   );
 }
@@ -76,7 +81,7 @@ function OfficeShell({
   doc = null,
 }: {
   id: string;
-  tab: 'stages' | 'docs' | 'code' | 'vc' | 'usage' | 'invoice';
+  tab: 'stages' | 'meeting' | 'docs' | 'code' | 'vc' | 'usage' | 'invoice';
   /** The open document (Docs) or the rest of the path (Code). */
   doc?: string | null;
 }) {
@@ -86,6 +91,7 @@ function OfficeShell({
   const live = !!office.cycles.find((c) => c.liveAt) && office.cycles.length === 1;
   const tabs: [string, string][] = [
     ['', live ? 'Maintenance' : 'Stages'],
+    ['/meeting', 'Meeting'],
     ['/docs', 'Docs'],
     ['/code', 'Code'],
     ['/vc', 'Version control'],
@@ -112,7 +118,9 @@ function OfficeShell({
         }
       />
       <main className={styles.main} data-tab={tab}>
-        {tab === 'docs' ? (
+        {tab === 'meeting' ? (
+          <Meeting projectId={id} name={name} office={office} />
+        ) : tab === 'docs' ? (
           <Vault projectId={id} open={doc} />
         ) : tab === 'code' ? (
           <CodeTab projectId={id} rest={doc ?? ''} />

@@ -424,3 +424,41 @@ test('Code: open a file from the explorer, edit it in a tab, close it', async ({
   await expect(page).toHaveURL(/\/p\/gym-app\/code$/);
   await expect(page.getByText('No file open.')).toBeVisible();
 });
+
+// o16: the Meeting tab: the staff at one table, action items, notes, and Ask.
+test('Meeting: the staff, action items, notes, and asking an agent', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByRole('radio', { name: 'Personal project' }).click();
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await page
+    .getByRole('navigation', { name: 'Project' })
+    .getByRole('link', { name: 'Meeting' })
+    .click();
+  await expect(page).toHaveURL(/\/p\/gym-app\/meeting$/);
+
+  const staff = page.getByRole('list', { name: 'Staff' });
+  const ba = staff.getByRole('listitem', { name: 'Business Analyst' });
+  await expect(ba).toContainText('Waiting for a job.');
+  await expect(staff.getByRole('listitem', { name: 'QA Engineer' })).toContainText(
+    'Opens when Development is signed off',
+  );
+
+  const actions = page.getByRole('region', { name: 'Action items' });
+  await actions.getByLabel('New action item').fill('Ask for the bKash keys');
+  await actions.getByRole('button', { name: 'Add action item' }).click();
+  await expect(actions).toContainText('Ask for the bKash keys');
+  await expect(page.getByRole('region', { name: 'Agenda' })).toContainText('1 open action item');
+
+  await page.getByRole('button', { name: 'Save notes' }).click();
+  const day = new Date().toISOString().slice(0, 10);
+  await expect(page.getByText(`docs/meetings/${day}.md`)).toBeVisible();
+  const notes = readFileSync(path.join(E2E_PROJECTS, 'gym-app', `docs/meetings/${day}.md`), 'utf8');
+  expect(notes).toContain('- [ ] Ask for the bKash keys (you)');
+
+  await ba.getByRole('button', { name: 'Ask' }).click();
+  await expect(page).toHaveURL(/\/p\/gym-app\/s\/idea$/);
+  await expect(page.getByLabel('Message Claude')).toHaveValue(/Where are we on Idea\?/);
+});

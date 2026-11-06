@@ -16,7 +16,7 @@ import type { Db } from '../db.ts';
 import { projectUsage } from '../usage.ts';
 import { stageDocs } from '../office/docs.ts';
 import { history } from '../office/history.ts';
-import { newNote, readVault } from '../office/vault.ts';
+import { meetingNotes, newNote, readVault } from '../office/vault.ts';
 import type { OfficeService } from '../office/service.ts';
 import { projectDir } from '../projects/workspace.ts';
 
@@ -110,6 +110,28 @@ export function officeRoutes(office: OfficeService, config: ConfigStore, db: Db)
     app.delete(`${base}/time/:item`, async (req) => {
       const { id, item } = ItemParams.parse(req.params);
       return { office: office.removeTime(id, item) };
+    });
+
+    // The Meeting tab (o16): action items, and the notes saved as a document.
+    const Owner = z.union([z.literal('you'), OfficeStageSchema]);
+    app.post(`${base}/actions`, async (req) => {
+      const { text, owner } = z
+        .object({ text: z.string().trim().min(1).max(300), owner: Owner.default('you') })
+        .parse(req.body);
+      return { office: office.addAction(Id.parse(req.params).id, text, owner) };
+    });
+    app.patch(`${base}/actions/:item`, async (req) => {
+      const { id, item } = ItemParams.parse(req.params);
+      const { done } = z.object({ done: z.boolean() }).parse(req.body);
+      return { office: office.setAction(id, item, done) };
+    });
+    app.delete(`${base}/actions/:item`, async (req) => {
+      const { id, item } = ItemParams.parse(req.params);
+      return { office: office.removeAction(id, item) };
+    });
+    app.post(`${base}/meeting-notes`, async (req) => {
+      const { text } = z.object({ text: z.string().min(1).max(100_000) }).parse(req.body);
+      return meetingNotes(projectDir(config.projectsDir(), Id.parse(req.params).id), text);
     });
 
     app.post(`${base}/versions`, async (req) => {

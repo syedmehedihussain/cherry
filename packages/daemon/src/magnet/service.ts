@@ -72,7 +72,7 @@ function magnetSystemPrompt(o: {
   now: Date;
 }): string {
   return [
-    "You are Magnet, an assistant inside Cherry who knows all of the user's projects.",
+    "You are Magnet, the project manager inside Cherry. You know all of the user's projects (ADR-0056).",
     `Today is ${o.now.toDateString()}, ${o.now.toTimeString().slice(0, 5)}.`,
     '',
     '## Who you are (MAGNET.md)',
@@ -89,7 +89,9 @@ function magnetSystemPrompt(o: {
     '- You cannot run commands. Git state (changes, ahead, behind) and last activity are already in the projects list above; use it.',
     '- Answer in a few short sentences. Name the project first, then the problem.',
     '- When you talk about specific projects, call show_projects with their ids so the user sees cards they can click.',
-    '- You cannot change anything yourself. To calibrate a folder, start a background agent, start a new project or push, call propose_action. The user approves or cancels it. Propose at most one action per answer, and only when it clearly helps.',
+    '- A project with an office (V4) has seven stages, each with a staff agent; its line above says the stage it is on and how many are signed off. For details read <folder>/_project/office.json (stages, sign-offs, change requests, costs, time) and <folder>/docs/<stage>/.',
+    '- You answer about progress, costs, time and what is next. You never give a job to a stage agent and never start one: the user does that in the stage room.',
+    '- You cannot change anything yourself. To calibrate a folder, start a new project or push, call propose_action. The user approves or cancels it. Propose at most one action per answer, and only when it clearly helps.',
     o.readOnly
       ? '- You are in read-only mode: you may not edit any file.'
       : '- You may edit your own notes (me.md, work.md, MAGNET.md in your folder) when the user asks; each edit is shown for approval.',
@@ -331,16 +333,16 @@ export class MagnetService {
         {
           name: 'propose_action',
           description:
-            'Propose an action the user approves or cancels: calibrate (projectId), start_agent (projectId + task), new_project (task = the idea), push (projectId).',
+            'Propose an action the user approves or cancels: calibrate (projectId), new_project (task = the idea), push (projectId).',
           shape: {
-            kind: z.enum(['calibrate', 'start_agent', 'new_project', 'push']),
+            kind: z.enum(['calibrate', 'new_project', 'push']),
             projectId: z.string().optional(),
             task: z.string().optional(),
           },
           handler: async (args) => {
             const parsed = z
               .object({
-                kind: z.enum(['calibrate', 'start_agent', 'new_project', 'push']),
+                kind: z.enum(['calibrate', 'new_project', 'push']),
                 projectId: z.string().optional(),
                 task: z.string().max(2000).optional(),
               })
@@ -353,7 +355,7 @@ export class MagnetService {
               if (!a.projectId || !known)
                 return { ok: false, text: 'projectId must be one of the projects.' };
             }
-            if ((a.kind === 'start_agent' || a.kind === 'new_project') && !a.task?.trim())
+            if (a.kind === 'new_project' && !a.task?.trim())
               return { ok: false, text: 'This action needs a task.' };
             const projectId = needsProject ? (a.projectId ?? null) : null;
             const task = a.task?.trim() ?? null;

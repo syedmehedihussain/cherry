@@ -118,3 +118,15 @@ export function newNote(dir: string, name: string): { path: string } {
   writeFileAtomic(file, `# ${name.trim()}\n\n`);
   return { path: rel };
 }
+
+/** The Meeting tab's notes, `docs/meetings/<date>.md`; a second meeting that day gets -2. */
+export function meetingNotes(dir: string, text: string): { path: string } {
+  const day = new Date().toISOString().slice(0, 10);
+  for (let n = 1; n < 100; n++) {
+    const rel = `docs/meetings/${day}${n === 1 ? '' : `-${n}`}.md`;
+    if (existsSync(path.join(dir, rel))) continue;
+    writeFileAtomic(path.join(dir, rel), text.endsWith('\n') ? text : `${text}\n`);
+    return { path: rel };
+  }
+  throw conflict('Too many meeting notes today.');
+}

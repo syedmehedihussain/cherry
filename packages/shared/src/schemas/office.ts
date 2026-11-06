@@ -147,6 +147,16 @@ export const TimeEntrySchema = z.object({
 });
 export type TimeEntry = z.infer<typeof TimeEntrySchema>;
 
+/** An action item from the Meeting tab (o16). `owner` is the user or a stage's agent. */
+export const ActionItemSchema = z.object({
+  id: z.string(),
+  text: z.string(),
+  owner: z.union([z.literal('you'), OfficeStageSchema]),
+  done: z.boolean(),
+  at: z.string(),
+});
+export type ActionItem = z.infer<typeof ActionItemSchema>;
+
 export const OfficeKindSchema = z.enum(['client', 'personal']);
 export type OfficeKind = z.infer<typeof OfficeKindSchema>;
 
@@ -167,6 +177,8 @@ export const OfficeFileSchema = z.object({
   changelog: z.array(ChangeLogEntrySchema),
   costs: z.array(CostSchema),
   time: z.array(TimeEntrySchema),
+  /** Meeting action items (o16); older files have none. */
+  actions: z.array(ActionItemSchema).default([]),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

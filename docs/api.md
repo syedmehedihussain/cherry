@@ -195,6 +195,8 @@ calls a model (ADR-0055).
 | PATCH | `/api/projects/:id/office/costs/:costId` | `{ bill }`: bill it to the client or not (never on a personal project) |
 | POST / DELETE | `/api/projects/:id/office/costs[/:costId]` | `{ item, vendor?, period?, amount, bill? }` (bill is false on a personal project) |
 | POST / DELETE | `/api/projects/:id/office/time[/:timeId]` | `{ stage?, hours, note?, date? }` manual time |
+| POST / PATCH / DELETE | `/api/projects/:id/office/actions[/:actionId]` | meeting action items: `{ text, owner: you\|<stage> }`, `{ done }` |
+| POST | `/api/projects/:id/office/meeting-notes` | `{ text }` writes `docs/meetings/<date>.md` (`-2`, `-3` for more that day) |
 | POST | `/api/projects/:id/office/versions` | `{ version, title }`: a new cycle next to the live one; Idea carries over, Requirements opens; 409 if the last cycle is not live |
 
 ## Start project

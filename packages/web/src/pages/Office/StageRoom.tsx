@@ -1,4 +1,4 @@
-import { ChevronLeft, CircleCheck, FileText, Printer } from 'lucide-react';
+import { ChevronLeft, CircleCheck, FileText, MessageCircle, Printer } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router';
 import {
@@ -15,6 +15,7 @@ import { usePlanUsage } from '../../api/queries.ts';
 import { useLiveProject } from '../../api/workspace.ts';
 import { resetText } from '../../components/PlanUsage/PlanUsage.tsx';
 import { useNow } from '../../lib/useNow.ts';
+import { useUi } from '../../state/ui.ts';
 import { ChatTab } from '../Workspace/ChatTab.tsx';
 import { DeployStage } from '../Workspace/deploy/DeployStage.tsx';
 import { DesignStage } from '../Workspace/design/DesignStage.tsx';
@@ -53,6 +54,7 @@ export function StageRoom({
   onSignOff(): void;
 }) {
   const now = useNow(30_000);
+  const openMagnet = useUi((s) => s.openMagnet);
   useLiveChat(projectId);
   useLiveProject(projectId);
   const cycle = office.cycles[office.cycles.length - 1]!;
@@ -120,6 +122,15 @@ export function StageRoom({
           ))}
         </nav>
         <span className={styles.grow} />
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          title="Magnet, your project manager"
+          onClick={() => openMagnet()}
+        >
+          <MessageCircle size={14} aria-hidden="true" />
+          Magnet
+        </button>
         {rec.state === 'signed' || rec.state === 'carried' ? (
           <span className={styles.signed}>
             <CircleCheck size={14} aria-hidden="true" />

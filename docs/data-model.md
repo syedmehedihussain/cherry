@@ -249,6 +249,7 @@ Schema in `packages/shared/src/schemas/office.ts`.
   "costs": [{ "id": "cost_1a2b3c4d", "item": "Domain", "vendor": "Namecheap", "period": "1 year",
     "amount": 14.99, "bill": true, "addedAt": "…" }],
   "time": [{ "id": "time_1a2b3c4d", "stage": "idea", "hours": 1.5, "note": "Client call", "date": "2026-11-06" }],
+  "actions": [{ "id": "act_1a2b3c4d", "text": "Ask for the bKash keys", "owner": "you", "done": false, "at": "…" }],
   "createdAt": "…",
   "updatedAt": "…"
 }

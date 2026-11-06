@@ -151,7 +151,8 @@ describe('Magnet', () => {
     expect(c.body.status).toBe('cancelled');
   });
 
-  it('a proposed agent starts through the agent manager after Approve', async () => {
+  // ADR-0056: Magnet is the project manager; he never starts an agent, not even with an approval.
+  it('cannot propose to start an agent', async () => {
     magnetScript = [
       {
         call: {
@@ -159,17 +160,13 @@ describe('Magnet', () => {
           input: { kind: 'start_agent', projectId: 'core', task: 'Write tests' },
         },
       },
-      { call: { name: 'propose_action', input: { kind: 'calibrate', projectId: 'ghost' } } },
     ];
     await api('POST', '/api/magnet/chat', { text: 'tests please', projectId: 'core' });
     await idle();
     expect(log.requests[0]!.prompt).toContain('looking at the project "core"');
-    expect(log.calls?.[1]).toMatchObject({ name: 'propose_action', ok: false });
-    const item = await actionItem();
-    const r = await api('POST', `/api/magnet/actions/${item.id}/approve`);
-    expect(r.body.status).toBe('approved');
-    expect(r.body.href).toMatch(/^\/p\/core\?agent=ag_/);
-    expect((await d.agents.list('core')).agents[0]).toMatchObject({ task: 'Write tests' });
+    expect(log.requests[0]!.appendSystemPrompt).toContain('never give a job to a stage agent');
+    expect(log.calls?.[0]).toMatchObject({ name: 'propose_action', ok: false });
+    expect((await d.agents.list('core')).agents).toEqual([]);
   });
 
   it('keeps one conversation, resumes it, and New starts over', async () => {

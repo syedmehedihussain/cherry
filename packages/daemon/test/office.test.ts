@@ -483,3 +483,46 @@ describe('the document vault (o14)', () => {
     ).toBe(409);
   });
 });
+
+describe('the meeting (o16)', () => {
+  let d: TestDaemon | null = null;
+  afterEach(async () => {
+    await d?.cleanup();
+    d = null;
+  });
+
+  it('keeps action items in office.json and saves the notes as a new document each time', async () => {
+    d = await testDaemon();
+    const dir = path.join(d.projectsDir, 'proj');
+    gitInit(dir);
+    const cookie = await d.login();
+    const api = (method: 'POST' | 'PATCH' | 'DELETE', url: string, payload?: object) =>
+      d!.app.inject({
+        method,
+        url: `/api/projects/proj/office${url}`,
+        headers: { host: HOST, origin: ORIGIN, cookie },
+        ...(payload ? { payload } : {}),
+      });
+    await api('POST', '', { kind: 'personal' });
+    let o = (await api('POST', '/actions', { text: 'Ask for the bKash keys' })).json().office;
+    expect(o.actions[0]).toMatchObject({
+      text: 'Ask for the bKash keys',
+      owner: 'you',
+      done: false,
+    });
+    o = (await api('PATCH', `/actions/${o.actions[0].id}`, { done: true })).json().office;
+    expect(o.actions[0].done).toBe(true);
+    o = (await api('POST', '/actions', { text: 'Sync the SRS', owner: 'requirements' })).json()
+      .office;
+    expect(o.actions[1].owner).toBe('requirements');
+    o = (await api('DELETE', `/actions/${o.actions[0].id}`)).json().office;
+    expect(o.actions).toHaveLength(1);
+
+    const day = new Date().toISOString().slice(0, 10);
+    const a = (await api('POST', '/meeting-notes', { text: '# Meeting\n\nAll good.' })).json();
+    const b = (await api('POST', '/meeting-notes', { text: '# Meeting 2' })).json();
+    expect(a.path).toBe(`docs/meetings/${day}.md`);
+    expect(b.path).toBe(`docs/meetings/${day}-2.md`);
+    expect(readFileSync(path.join(dir, a.path), 'utf8')).toBe('# Meeting\n\nAll good.\n');
+  });
+});

@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { appendFileSync, existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import {
+  type ActionItem,
   OFFICE_STAGES,
   OFFICE_STAGE_LABEL,
   OfficeFileSchema,
@@ -129,6 +130,7 @@ export class OfficeService {
       changelog: [],
       costs: [],
       time: [],
+      actions: [],
       createdAt: now,
       updatedAt: now,
     };
@@ -312,6 +314,28 @@ export class OfficeService {
       const next = o.time.filter((x) => x.id !== timeId);
       if (next.length === o.time.length) throw notFound('That time entry is gone.');
       o.time = next;
+    });
+  }
+
+  addAction(id: string, text: string, owner: ActionItem['owner']): OfficeFile {
+    return this.change(id, (o) => {
+      o.actions.push({ id: newId('act'), text, owner, done: false, at: new Date().toISOString() });
+    });
+  }
+
+  setAction(id: string, actionId: string, done: boolean): OfficeFile {
+    return this.change(id, (o) => {
+      const a = o.actions.find((x) => x.id === actionId);
+      if (!a) throw notFound('That action item is gone.');
+      a.done = done;
+    });
+  }
+
+  removeAction(id: string, actionId: string): OfficeFile {
+    return this.change(id, (o) => {
+      const next = o.actions.filter((x) => x.id !== actionId);
+      if (next.length === o.actions.length) throw notFound('That action item is gone.');
+      o.actions = next;
     });
   }
 

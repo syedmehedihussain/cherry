@@ -97,5 +97,11 @@ export const removeCost = (id: string, costId: string) =>
 export const addTime = (id: string, input: TimeInput) => change(id, 'POST', '/time', input);
 export const removeTime = (id: string, timeId: string) =>
   change(id, 'DELETE', `/time/${encodeURIComponent(timeId)}`);
+export const addAction = (id: string, text: string, owner: 'you' | OfficeStage = 'you') =>
+  change(id, 'POST', '/actions', { text, owner });
+export const setAction = (id: string, actionId: string, done: boolean) =>
+  change(id, 'PATCH', `/actions/${encodeURIComponent(actionId)}`, { done });
+export const removeAction = (id: string, actionId: string) =>
+  change(id, 'DELETE', `/actions/${encodeURIComponent(actionId)}`);
 export const startVersion = (id: string, version: string, title: string) =>
   change(id, 'POST', '/versions', { version, title });
