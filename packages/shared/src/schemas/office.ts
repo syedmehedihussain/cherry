@@ -326,3 +326,20 @@ export const ProjectUsageSchema = z.object({
   models: z.array(UsageRowSchema.extend({ model: z.string() })),
 });
 export type ProjectUsage = z.infer<typeof ProjectUsageSchema>;
+
+/** One document in the Docs tab (o14). Code is never listed. */
+export const VaultDocSchema = z.object({
+  path: z.string(),
+  title: z.string(),
+  headings: z.array(z.object({ level: z.number(), text: z.string() })),
+  /** Paths of the documents it links to (Markdown links and [[wiki links]]). */
+  links: z.array(z.string()),
+  words: z.number(),
+  mtime: z.number(),
+  /** The plain text, for search (cut at 20 000 characters). */
+  text: z.string(),
+});
+export type VaultDoc = z.infer<typeof VaultDocSchema>;
+
+/** GET /api/projects/:id/office/vault. */
+export const VaultSchema = z.object({ docs: z.array(VaultDocSchema), truncated: z.boolean() });

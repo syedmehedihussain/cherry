@@ -180,6 +180,8 @@ calls a model (ADR-0055).
 | GET | `/api/projects/:id/office` | `{ office }`, or `{ office: null }` before the office is started |
 | POST | `/api/projects/:id/office` | `{ kind: 'client', client: { name, contact? } }` or `{ kind: 'personal' }`; Idea opens; 409 if it exists |
 | PATCH | `/api/projects/:id/office` | `{ client?, rate?, currency?, budgetTokens? }`; 400 for a client on a personal project |
+| GET | `/api/projects/:id/office/vault` | `{ docs: [{ path, title, headings, links, words, mtime, text }], truncated }`: every Markdown document outside code, build folders and `_project/` (500 at most); `links` from Markdown links and `[[wiki links]]` |
+| POST | `/api/projects/:id/office/notes` | `{ name }` makes `docs/notes/<name>.md`; 409 if it exists |
 | GET | `/api/projects/:id/usage` | `{ total, stages: [{ stage, ... }], models: [{ model, ... }] }`, each `{ tokens, costUsd, turns, ms }`: every chat turn of the project from `turn_usage`; `costUsd` is the API value |
 | GET | `/api/projects/:id/git/history?stage=` | `{ commits: [{ hash, subject, author, at, tags, files }] }`, newest 60; `stage` keeps one stage's paths (docs/<stage>/, or the code for Development) |
 | GET | `/api/projects/:id/office/docs?stage=` | `{ client, technical }`, each `[{ path, title, legacy }]`: Markdown in `docs/<stage>/client\|technical/` (one sub-folder deep), titles from the first `# ` heading; then V3 flat docs read where they are (`legacy: true`, ADR-0053) |

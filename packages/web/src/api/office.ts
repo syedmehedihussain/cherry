@@ -46,6 +46,8 @@ export function useLiveOffice(projectId: string): void {
         queryClient.setQueryData(officeKey(projectId), event.office);
       if (event.type === 'project.changed' && event.projectId === projectId)
         void queryClient.invalidateQueries({ queryKey: ['office-docs', projectId] });
+      if (event.type === 'project.changed' && event.projectId === projectId)
+        void queryClient.invalidateQueries({ queryKey: ['vault', projectId] });
     });
     return () => {
       unsub();

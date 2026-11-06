@@ -11,6 +11,7 @@ import { InvoicePrint, PrintView } from './PrintView.tsx';
 import { Invoice } from './Invoice.tsx';
 import { StageRoom } from './StageRoom.tsx';
 import { Usage } from './Usage.tsx';
+import { Vault } from './Vault.tsx';
 import { VersionControl } from './VersionControl.tsx';
 import styles from './ProjectPage.module.css';
 
@@ -54,6 +55,9 @@ export function ProjectPage() {
         )}
       </div>
     );
+  // /p/:id/docs[/<path>], the Docs tab with a document open (o14).
+  const doc = /^docs(?:\/(.+))?$/.exec(splat);
+  if (doc) return <OfficeShell id={id} tab="docs" doc={doc[1] ?? null} />;
   return (
     <OfficeShell
       id={id}
@@ -62,13 +66,22 @@ export function ProjectPage() {
   );
 }
 
-function OfficeShell({ id, tab }: { id: string; tab: 'stages' | 'vc' | 'usage' | 'invoice' }) {
+function OfficeShell({
+  id,
+  tab,
+  doc = null,
+}: {
+  id: string;
+  tab: 'stages' | 'docs' | 'vc' | 'usage' | 'invoice';
+  doc?: string | null;
+}) {
   const office = useOffice(id).data!;
   const card = useProjects().data?.cards.find((c) => c.id === id);
   const name = card?.name ?? id;
   const live = !!office.cycles.find((c) => c.liveAt) && office.cycles.length === 1;
   const tabs: [string, string][] = [
     ['', live ? 'Maintenance' : 'Stages'],
+    ['/docs', 'Docs'],
     ['/vc', 'Version control'],
     ['/usage', 'Claude usage'],
     ['/invoice', office.kind === 'personal' ? 'Costs' : 'Invoice'],
@@ -83,7 +96,7 @@ function OfficeShell({ id, tab }: { id: string; tab: 'stages' | 'vc' | 'usage' |
               <NavLink
                 key={label}
                 to={`/p/${encodeURIComponent(id)}${path}`}
-                end
+                end={path === ''}
                 className={({ isActive }) => (isActive ? styles.on : undefined)}
               >
                 {label}
@@ -93,7 +106,9 @@ function OfficeShell({ id, tab }: { id: string; tab: 'stages' | 'vc' | 'usage' |
         }
       />
       <main className={styles.main} data-tab={tab}>
-        {tab === 'vc' ? (
+        {tab === 'docs' ? (
+          <Vault projectId={id} open={doc} />
+        ) : tab === 'vc' ? (
           <VersionControl projectId={id} />
         ) : tab === 'usage' ? (
           <Usage projectId={id} office={office} />

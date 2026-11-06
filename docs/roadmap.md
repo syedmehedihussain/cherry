@@ -191,7 +191,7 @@ Project tabs
 - [x] o12 Claude usage tab: limits, context, project token budget, tokens by stage, agent, model.
 - [x] o13 Invoice tab: time by stage, costs, Claude share, total, client invoice; Costs for a
       personal project.
-- [ ] o14 Docs tab: document vault (tree, search, read and edit, links, backlinks, outline,
+- [x] o14 Docs tab: document vault (tree, search, read and edit, links, backlinks, outline,
       graph), documents only.
 - [ ] o15 Code tab: VS Code-like editor on Monaco (explorer, tabs, search, terminal panel,
       status bar); secret files blocked.

@@ -11,6 +11,7 @@
   display: flex;
   flex-direction: column;
 }
+.main[data-tab='docs'],
 .main[data-tab='vc'] {
   overflow: hidden;
 }

@@ -334,3 +334,55 @@ test('Invoice: costs, time and the invoice at the rate', async ({ page }) => {
   await expect(page.getByRole('table')).toContainText('$60.00');
   await expect(page.locator('body')).toHaveAttribute('data-printed', 'yes');
 });
+
+// o14: the Docs tab, a vault of the project's documents.
+test('Docs: the tree, links and backlinks, search, graph and a new note', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByRole('radio', { name: 'Personal project' }).click();
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
+  const dir = path.join(E2E_PROJECTS, 'gym-app');
+  mkdirSync(path.join(dir, 'docs/idea/client'), { recursive: true });
+  mkdirSync(path.join(dir, 'docs/requirements/technical'), { recursive: true });
+  writeFileSync(
+    path.join(dir, 'docs/idea/client/brief.md'),
+    '# Project brief\n\n## Users\n\nSee [[SRS]].\n',
+  );
+  writeFileSync(
+    path.join(dir, 'docs/requirements/technical/srs.md'),
+    '# SRS\n\nFR-01 renew with bKash.\n',
+  );
+
+  await page
+    .getByRole('navigation', { name: 'Project' })
+    .getByRole('link', { name: 'Docs' })
+    .click();
+  const tree = page.getByRole('complementary', { name: 'Documents' });
+  await tree.getByRole('button', { name: 'brief.md' }).click();
+  await expect(page).toHaveURL(/\/p\/gym-app\/docs\/docs\/idea\/client\/brief\.md$/);
+  const about = page.getByRole('complementary', { name: 'About this document' });
+  await expect(about).toContainText('Users');
+  await about.getByRole('button', { name: 'SRS' }).click();
+  await expect(page).toHaveURL(/srs\.md$/);
+  await expect(about.getByRole('button', { name: 'Project brief' })).toBeVisible();
+
+  await tree.getByLabel('Search documents').fill('bkash');
+  await expect(tree.getByRole('button', { name: 'srs.md' })).toBeVisible();
+  await expect(tree.getByRole('button', { name: 'brief.md' })).toHaveCount(0);
+  await tree.getByLabel('Search documents').fill('');
+
+  await page.getByRole('radio', { name: 'Graph' }).click();
+  await page.getByRole('button', { name: 'Open Project brief' }).locator('circle').click();
+  await expect(page).toHaveURL(/brief\.md$/);
+
+  await tree.getByRole('button', { name: 'New note' }).click();
+  await tree.getByLabel('Note name').fill('Call with Nusrat');
+  await tree.getByLabel('Note name').press('Enter');
+  await expect(page).toHaveURL(/docs\/notes\/call-with-nusrat\.md$/);
+  expect(readFileSync(path.join(dir, 'docs/notes/call-with-nusrat.md'), 'utf8')).toBe(
+    '# Call with Nusrat\n\n',
+  );
+});

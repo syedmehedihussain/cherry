@@ -424,3 +424,62 @@ describe('Claude usage per project (o12)', () => {
     ]);
   });
 });
+
+describe('the document vault (o14)', () => {
+  let d: TestDaemon | null = null;
+  afterEach(async () => {
+    await d?.cleanup();
+    d = null;
+  });
+
+  it('lists documents only, with headings, links both ways and text; a new note never overwrites', async () => {
+    d = await testDaemon();
+    const dir = path.join(d.projectsDir, 'proj');
+    gitInit(dir);
+    const put = (rel: string, text: string) => {
+      mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
+      writeFileSync(path.join(dir, rel), text);
+    };
+    put('README.md', '# Gym app\n\nSee [the brief](docs/idea/client/brief.md).\n');
+    put('docs/idea/client/brief.md', '# Project brief\n\n## Users\n\nMembers. Also see [[SRS]].\n');
+    put('docs/requirements/technical/srs.md', '# SRS\n\nFR-01 bKash renewals.\n');
+    put('src/app.ts', 'export {};\n');
+    put('node_modules/x/README.md', '# not a doc\n');
+    put('_project/STATUS.md', '# personal\n');
+    const cookie = await d.login();
+    const api = (method: 'GET' | 'POST', url: string, payload?: object) =>
+      d!.app.inject({
+        method,
+        url,
+        headers: { host: HOST, origin: ORIGIN, cookie },
+        ...(payload ? { payload } : {}),
+      });
+    const v = (await api('GET', '/api/projects/proj/office/vault')).json();
+    expect(v.docs.map((x: { path: string }) => x.path)).toEqual([
+      'README.md',
+      'docs/idea/client/brief.md',
+      'docs/requirements/technical/srs.md',
+    ]);
+    const brief = v.docs[1];
+    expect(brief).toMatchObject({
+      title: 'Project brief',
+      headings: [
+        { level: 1, text: 'Project brief' },
+        { level: 2, text: 'Users' },
+      ],
+      links: ['docs/requirements/technical/srs.md'],
+    });
+    expect(v.docs[0].links).toEqual(['docs/idea/client/brief.md']);
+    expect(v.docs[2].text).toContain('bKash renewals');
+
+    const n = await api('POST', '/api/projects/proj/office/notes', { name: 'Call with Nusrat' });
+    expect(n.json()).toEqual({ path: 'docs/notes/call-with-nusrat.md' });
+    expect(readFileSync(path.join(dir, 'docs/notes/call-with-nusrat.md'), 'utf8')).toBe(
+      '# Call with Nusrat\n\n',
+    );
+    expect(
+      (await api('POST', '/api/projects/proj/office/notes', { name: 'Call with Nusrat' }))
+        .statusCode,
+    ).toBe(409);
+  });
+});
