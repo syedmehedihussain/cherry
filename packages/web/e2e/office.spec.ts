@@ -520,3 +520,54 @@ test('Change control: a small change, a change request, approve, needs update', 
   await page.getByRole('button', { name: 'Ask to sync' }).click();
   await expect(page.getByLabel('Message Claude')).toHaveValue(/Sync this stage with CR-001/);
 });
+
+// o19: Deployment signed off: Live, and the project page becomes the maintenance office.
+test('Go Live: the moment, then the maintenance office', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByRole('radio', { name: 'Personal project' }).click();
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
+  const file = path.join(E2E_PROJECTS, 'gym-app', '_project', 'office.json');
+  const office = JSON.parse(readFileSync(file, 'utf8'));
+  const signed = {
+    by: 'you',
+    date: '2026-11-06',
+    notes: '',
+    internal: true,
+    at: new Date().toISOString(),
+  };
+  for (const s of ['idea', 'requirements', 'plan', 'design', 'development', 'testing'])
+    office.cycles[0].stages[s] = { state: 'signed', ready: true, sentAt: null, signOffs: [signed] };
+  office.cycles[0].stages.deployment = { state: 'active', ready: true, sentAt: null, signOffs: [] };
+  office.cycles[0].devGate = 'approved';
+  writeFileSync(file, JSON.stringify(office));
+
+  await page.goto('/p/gym-app/s/deployment');
+  await page.getByRole('button', { name: 'Sign off' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Sign off Deployment' });
+  await expect(dialog).toContainText('The project goes Live.');
+  await dialog.getByRole('button', { name: 'Sign off' }).click();
+
+  const moment = page.getByRole('dialog', { name: 'The project is live' });
+  await expect(moment).toContainText('gym-app v1.0 is live');
+  await moment.getByRole('button', { name: 'Open the maintenance office' }).click();
+  await expect(
+    page.getByRole('navigation', { name: 'Project' }).getByRole('link', { name: 'Maintenance' }),
+  ).toBeVisible();
+  await expect(page.getByText('v1.0 live', { exact: true })).toBeVisible();
+
+  const bugs = page.getByRole('region', { name: 'Bugs' });
+  await bugs.getByLabel('Flag a bug').fill('bKash paid but the app says expired');
+  await bugs.getByRole('button', { name: 'Flag' }).click();
+  await expect(bugs).toContainText('bKash paid but the app says expired');
+  await bugs.getByRole('button', { name: 'Fix now' }).click();
+  await expect(page).toHaveURL(/\/p\/gym-app\/s\/development$/);
+  await expect(page.getByLabel('Message Claude')).toHaveValue(/Fix issue #1: bKash paid/);
+
+  await page.goto('/p/gym-app/stages');
+  await expect(page.getByRole('button', { name: 'Live, v1.0 is live' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'The project is live' })).toHaveCount(0);
+});

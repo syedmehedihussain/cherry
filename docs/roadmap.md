@@ -203,7 +203,7 @@ Project tabs
 Change control and after Live
 - [x] o18 Change control: small change and change log; big change, impact note, approve or
       reject, needs-update flags cleared by a new sign-off.
-- [ ] o19 Go Live and the Maintenance office: Support, QA, Issues, Bug fixing, Upgrades.
+- [x] o19 Go Live and the Maintenance office: Support, QA, Issues, Bug fixing, Upgrades.
 - [ ] o20 New version: Start v2.0 runs a new cycle next to the live v1.
 - [ ] o21 Clean-up, docs, e2e tests, and one real run (Fitness Master) from Idea to Live.
 

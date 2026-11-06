@@ -12,7 +12,9 @@ import { Invoice } from './Invoice.tsx';
 import { StageRoom } from './StageRoom.tsx';
 import { ChangeDialog } from './Changes.tsx';
 import { CodeTab } from './CodeTab.tsx';
+import { Maintenance } from './Maintenance.tsx';
 import { Meeting } from './Meeting.tsx';
+import { LiveMoment } from './LiveMoment.tsx';
 import { Usage } from './Usage.tsx';
 import { Vault } from './Vault.tsx';
 import { VersionControl } from './VersionControl.tsx';
@@ -78,9 +80,13 @@ export function ProjectPage() {
     <OfficeShell
       id={id}
       tab={
-        splat === 'meeting' || splat === 'vc' || splat === 'usage' || splat === 'invoice'
+        splat === 'meeting' ||
+        splat === 'vc' ||
+        splat === 'usage' ||
+        splat === 'invoice' ||
+        splat === 'stages'
           ? splat
-          : 'stages'
+          : 'home'
       }
     />
   );
@@ -92,7 +98,8 @@ function OfficeShell({
   doc = null,
 }: {
   id: string;
-  tab: 'stages' | 'meeting' | 'docs' | 'code' | 'vc' | 'usage' | 'invoice';
+  /** `stages` is the cards even when Live; the bare page is Maintenance once Live (o19). */
+  tab: 'home' | 'stages' | 'meeting' | 'docs' | 'code' | 'vc' | 'usage' | 'invoice';
   /** The open document (Docs) or the rest of the path (Code). */
   doc?: string | null;
 }) {
@@ -128,6 +135,7 @@ function OfficeShell({
           </nav>
         }
       />
+      {live && <LiveMoment projectId={id} name={name} version={office.cycles[0]!.version} />}
       <main className={styles.main} data-tab={tab}>
         {tab === 'meeting' ? (
           <Meeting projectId={id} name={name} office={office} />
@@ -141,6 +149,8 @@ function OfficeShell({
           <Usage projectId={id} office={office} />
         ) : tab === 'invoice' ? (
           <Invoice projectId={id} office={office} />
+        ) : tab === 'home' && live ? (
+          <Maintenance projectId={id} name={name} office={office} />
         ) : (
           <StagesTab projectId={id} name={name} office={office} />
         )}

@@ -137,7 +137,7 @@ export function StagesTab({
           label={
             live ? `v${office.cycles.find((c) => c.liveAt)!.version} is live` : 'after Deployment'
           }
-          onOpen={() => void navigate(`/p/${encodeURIComponent(projectId)}/maintenance`)}
+          onOpen={() => void navigate(`/p/${encodeURIComponent(projectId)}`)}
         />
       </div>
       <div className={styles.below}>

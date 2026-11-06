@@ -1,0 +1,50 @@
+.live {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  background: var(--office-red);
+  color: var(--office-on-red);
+  animation: fade 400ms ease-out;
+}
+.big {
+  font-size: min(24vw, 220px);
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 0.9;
+  animation: stamp 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.live p {
+  margin: 18px 0 26px;
+  font-size: var(--fs-xl);
+}
+.btn {
+  height: var(--h-btn-lg);
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--r-lg);
+  background: var(--office-on-red);
+  color: var(--office-red);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes stamp {
+  from {
+    transform: scale(1.25) rotate(-4deg);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live,
+  .big {
+    animation: none;
+  }
+}
