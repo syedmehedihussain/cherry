@@ -19,6 +19,7 @@ const card: Card = {
   lastWorked: now - 2 * 3600_000,
   projectJsonError: false,
   missing: false,
+  office: null,
 };
 
 const renderCard = (c: Card) =>

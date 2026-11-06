@@ -5,27 +5,22 @@
 .main {
   max-width: var(--home-max);
   margin: 0 auto;
-  padding: 72px 24px 80px;
+  padding: 56px 24px 80px;
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  gap: 36px;
 }
-.start {
+.head {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-  align-items: center;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 .hello {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  text-align: center;
-}
-.brand {
-  color: var(--wordmark);
-  margin-bottom: 18px;
+  gap: 6px;
 }
 .title {
   margin: 0;
@@ -33,70 +28,47 @@
   font-weight: 600;
   letter-spacing: var(--tracking-display);
 }
+.lead {
+  margin: 0;
+  color: var(--t2);
+}
 .cta {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 8px;
   flex-wrap: wrap;
-  justify-content: center;
 }
-.hint {
-  font-size: var(--fs-base);
+.note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
   color: var(--t3);
+  font-size: var(--fs-sm);
 }
 .section {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
 }
 .sectionHead {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: baseline;
+  justify-content: flex-start;
   gap: 12px;
   flex-wrap: wrap;
 }
 .sectionHead h2 {
   margin: 0;
-  font-size: var(--fs-xl);
+  font-size: var(--fs-md);
   font-weight: 600;
-}
-.titleRow {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
 }
 .meta {
   font-size: var(--fs-sm);
   color: var(--t3);
 }
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
-  gap: 12px;
-}
-.tools {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.sort {
-  height: 34px;
-  padding: 0 12px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--b);
-  background: var(--s1);
-  color: var(--t2);
-  font-size: var(--fs-sm2);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.sort:hover {
-  color: var(--t1);
-}
 .search {
+  align-self: flex-start;
   display: flex;
   align-items: center;
   gap: 8px;

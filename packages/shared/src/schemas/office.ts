@@ -36,6 +36,23 @@ export const OFFICE_AGENT: Record<OfficeStage, string> = {
   deployment: 'DevOps Engineer',
 };
 
+/** The agent's initials on its avatar. */
+export const OFFICE_AGENT_MONO: Record<OfficeStage, string> = {
+  idea: 'BA',
+  requirements: 'SA',
+  plan: 'AR',
+  design: 'UX',
+  development: 'DV',
+  testing: 'QA',
+  deployment: 'DO',
+};
+
+/** The name on the stage card (the plan sketch). */
+export const OFFICE_CARD_NAME: Record<OfficeStage, string> = {
+  ...OFFICE_STAGE_LABEL,
+  design: 'UI/UX design',
+};
+
 /**
  * locked: not open yet. active: the agent works on the user's jobs. waiting: sent to the client.
  * signed: signed off. update: signed off, then a big change flagged it (ADR-0052).
@@ -253,3 +270,29 @@ export const StageDocsSchema = z.object({
   technical: z.array(StageDocSchema),
 });
 export type StageDocs = z.infer<typeof StageDocsSchema>;
+
+/** The office on a project card (Projects page, V4 o5). */
+export const OfficeSummarySchema = z.object({
+  kind: OfficeKindSchema,
+  client: z.string().nullable(),
+  version: z.string(),
+  /** The stage being worked on, null when every stage is signed off. */
+  stage: OfficeStageSchema.nullable(),
+  /** Each stage's state, in order. */
+  stages: z.array(StageStateSchema),
+  live: z.boolean(),
+});
+export type OfficeSummary = z.infer<typeof OfficeSummarySchema>;
+
+export function officeSummary(office: OfficeFile): OfficeSummary {
+  const live = office.cycles.find((c) => c.liveAt) ?? null;
+  const cycle = office.cycles[office.cycles.length - 1]!;
+  return {
+    kind: office.kind,
+    client: office.client?.name ?? null,
+    version: cycle.version,
+    stage: currentStage(cycle),
+    stages: OFFICE_STAGES.map((s) => cycle.stages[s].state),
+    live: !!live,
+  };
+}

@@ -1,0 +1,98 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.55);
+}
+.dialog {
+  width: min(520px, 100%);
+  background: var(--s1);
+  border: 1px solid var(--bs);
+  border-radius: var(--r-2xl);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.head h3 {
+  margin: 0;
+  font-size: var(--fs-xl);
+}
+.hint {
+  margin: 4px 0 0;
+  color: var(--t2);
+  font-size: var(--fs-sm2);
+}
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.seg {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--r-md);
+  background: var(--s2);
+}
+.seg button {
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--t2);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+.seg button[aria-checked='true'] {
+  background: var(--s3);
+  color: var(--t1);
+}
+.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  color: var(--t2);
+  font-weight: 500;
+}
+.field input {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--bs);
+  border-radius: var(--r-md);
+  background: var(--s2);
+  color: var(--t1);
+  font-size: var(--fs-base);
+}
+.error {
+  margin: 0;
+  color: var(--danger-text);
+  font-size: var(--fs-sm);
+}
+.foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+@media (max-width: 560px) {
+  .two {
+    grid-template-columns: 1fr;
+  }
+}

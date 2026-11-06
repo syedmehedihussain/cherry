@@ -5,9 +5,14 @@ import { ProjectNameSchema } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
 import { useChatDraft } from '../../api/chat.ts';
 import { removeIdea } from '../../api/ideas.ts';
+import { createOffice } from '../../api/office.ts';
 import { queryClient, useConfig, useHealth } from '../../api/queries.ts';
 import { startProject } from '../../api/start.ts';
 import { FolderPicker } from '../../components/FolderPicker/FolderPicker.tsx';
+import {
+  OfficeKindFields,
+  type KindValue,
+} from '../../components/SetUpOffice/OfficeKindFields.tsx';
 import { Pill } from '../../components/Pill/Pill.tsx';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
 import { tildify } from '../../lib/paths.ts';
@@ -27,14 +32,15 @@ export function suggestName(idea: string): string {
     .slice(0, 40);
 }
 
-/** The first Plan message, left in the composer so the user sends it (ADR-0036). */
-export function planPrompt(idea: string): string {
-  return `This is a new project. Here is the idea:\n\n${idea.trim()}\n\nHelp me plan it.`;
+/** The first message to the Business Analyst, left in the composer so the user sends it. */
+export function ideaPrompt(idea: string): string {
+  return `This is a new project. Here is the idea:\n\n${idea.trim()}\n\nHelp me make the vision clear.`;
 }
 
 /**
- * Start project (ADR-0036): the idea, a folder name and where to create it. Start planning
- * makes the folder and opens the project on the Plan stage with the idea in the composer.
+ * New project (ADR-0036, V4 o5): client or personal, the idea, a folder name and where to
+ * create it. Create project makes the folder, starts the office with only Idea open, and opens
+ * the project with the idea in the Business Analyst's composer.
  */
 export function NewProject() {
   const [params] = useSearchParams();
@@ -54,6 +60,8 @@ export function NewProject() {
   const fromIdea = params.get('from');
   const [name, setName] = useState(params.get('name') ? suggestName(params.get('name')!) : '');
   const [nameTouched, setNameTouched] = useState(!!params.get('name'));
+  const [kind, setKind] = useState<KindValue>({ kind: 'client', client: '', contact: '' });
+  const kindOk = kind.kind === 'personal' || kind.client.trim().length > 0;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const shownName = nameTouched ? name : suggestName(idea);
@@ -64,7 +72,7 @@ export function NewProject() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!nameCheck.success || !idea.trim()) return;
+    if (!nameCheck.success || !idea.trim() || !kindOk) return;
     setBusy(true);
     setError(null);
     try {
@@ -73,10 +81,16 @@ export function NewProject() {
         idea: idea.trim(),
         ...(parent ? { parentDir: parent } : {}),
       });
+      await createOffice(
+        id,
+        kind.kind === 'personal'
+          ? { kind: 'personal' }
+          : { kind: 'client', client: { name: kind.client.trim(), contact: kind.contact.trim() } },
+      );
       void queryClient.invalidateQueries({ queryKey: ['projects'] });
       if (fromIdea) void removeIdea(fromIdea).catch(() => undefined);
-      setStage(id, 'plan');
-      setDraft(id, planPrompt(idea));
+      setStage(id, 'idea');
+      setDraft(id, ideaPrompt(idea));
       void navigate(`/p/${encodeURIComponent(id)}`, { replace: true });
     } catch (err) {
       setError(err instanceof ApiFailure ? err.message : 'Could not create the project.');
@@ -93,13 +107,14 @@ export function NewProject() {
       <main className={styles.centre}>
         <form className={styles.card} onSubmit={(e) => void submit(e)} aria-labelledby="new-title">
           <div className={styles.cardHead}>
-            <h1 id="new-title">What are we building?</h1>
+            <h1 id="new-title">New project</h1>
             <p className={styles.lead}>
-              A name and a paragraph is enough. The project opens in Plan, where you and Claude work
-              out the rest.
+              The project starts in Idea, with the Business Analyst. Nothing runs until you write to
+              it.
             </p>
           </div>
           <div className={styles.fields}>
+            <OfficeKindFields value={kind} onChange={setKind} />
             <label className={styles.field}>
               <span>Idea</span>
               <textarea
@@ -157,10 +172,10 @@ export function NewProject() {
             <button
               type="submit"
               className="btn btn-primary btn-md"
-              disabled={busy || !nameCheck.success || !idea.trim() || claudeMissing}
+              disabled={busy || !nameCheck.success || !idea.trim() || !kindOk || claudeMissing}
               title={claudeMissing ? 'Connect Claude Code first' : undefined}
             >
-              {busy ? 'Creating…' : 'Start planning'}
+              {busy ? 'Creating…' : 'Create project'}
               <ArrowRight size={14} aria-hidden="true" />
             </button>
           </div>

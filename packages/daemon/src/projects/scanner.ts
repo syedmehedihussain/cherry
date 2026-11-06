@@ -1,7 +1,10 @@
 import { existsSync, statSync } from 'node:fs';
 import path from 'node:path';
 import {
+  OfficeFileSchema,
+  officeSummary,
   ProjectJsonSchema,
+  type OfficeSummary,
   type ProjectCard,
   type ProjectJson,
   type StatusDoc,
@@ -36,6 +39,18 @@ export function readProjectFiles(dir: string): ProjectFiles {
     projectJsonError,
     status: statusMd === null ? null : parseStatusMd(statusMd),
   };
+}
+
+/** The office summary from `_project/office.json`; null when there is none or it is broken. */
+function readOffice(dir: string): OfficeSummary | null {
+  const file = path.join(dir, '_project', 'office.json');
+  if (!existsSync(file)) return null;
+  try {
+    const parsed = OfficeFileSchema.safeParse(readJsonFile(file));
+    return parsed.success ? officeSummary(parsed.data) : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Latest `updated` time in cctop's `_project/sessions.json`, if any. */
@@ -87,6 +102,7 @@ export async function buildCard(dir: string, listedId?: string): Promise<Project
     lastWorked,
     projectJsonError: files.projectJsonError,
     missing: false,
+    office: readOffice(dir),
   };
 }
 
@@ -105,6 +121,7 @@ function missingCard(id: string, dir: string): ProjectCard {
     lastWorked: null,
     projectJsonError: false,
     missing: true,
+    office: null,
   };
 }
 

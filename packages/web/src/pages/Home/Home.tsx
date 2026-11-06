@@ -1,48 +1,53 @@
-import { ArrowDown, Plus, Search } from 'lucide-react';
+import { Plus, Search, ShieldCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
+import type { ProjectCard } from '@cherry/shared';
 import { recheckHealth, useHealth, useProjects } from '../../api/queries.ts';
 import { ClaudeMissingBanner } from '../../components/Banner/Banner.tsx';
-import { Wordmark } from '../../components/Brand/Brand.tsx';
 import { Ideas } from '../../components/Ideas/Ideas.tsx';
 import { MagnetAvatar } from '../../components/MagnetAvatar/MagnetAvatar.tsx';
+import { OfficeTable } from '../../components/OfficeTable/OfficeTable.tsx';
 import { OpenFolderButton } from '../../components/OpenFolder/OpenFolder.tsx';
-import { ProjectCard, ProjectCardSkeleton } from '../../components/ProjectCard/ProjectCard.tsx';
-import { ProjectTable } from '../../components/ProjectTable/ProjectTable.tsx';
-import { PromptBox } from '../../components/PromptBox/PromptBox.tsx';
 import { Shutdown } from '../../components/Shutdown/Shutdown.tsx';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
 import { useNow } from '../../lib/useNow.ts';
-import { useUi } from '../../state/ui.ts';
 import styles from './Home.module.css';
 
-type Sort = 'last' | 'name';
+export function greeting(hour: number): string {
+  if (hour < 5) return 'Good evening';
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+}
 
+/**
+ * The Projects page (V4 o5): client projects and personal projects, each with its stage and a
+ * small track of the seven stages; folders without an office below, with Set up office.
+ */
 export function Home() {
   const projects = useProjects();
   const health = useHealth();
-  const navigate = useNavigate();
-  const openMagnet = useUi((s) => s.openMagnet);
   const now = useNow(60_000);
   const [query, setQuery] = useState('');
-  const [sort, setSort] = useState<Sort>('last');
   const [checking, setChecking] = useState(false);
-  const [idea, setIdea] = useState('');
 
   const cards = useMemo(() => projects.data?.cards ?? [], [projects.data]);
   const claudeMissing = health.data
     ? !(health.data.claude.found && health.data.claude.loggedIn)
     : false;
-  const recent = cards.filter((c) => !c.missing).slice(0, 4);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = q
-      ? cards.filter((c) =>
-          [c.name, c.summary, ...c.stack].some((s) => s.toLowerCase().includes(q)),
-        )
-      : cards;
-    return sort === 'name' ? [...list].sort((a, b) => a.name.localeCompare(b.name)) : list;
-  }, [cards, query, sort]);
+    if (!q) return cards;
+    return cards.filter((c) =>
+      [c.name, c.summary, c.office?.client ?? '', ...c.stack].some((s) =>
+        s.toLowerCase().includes(q),
+      ),
+    );
+  }, [cards, query]);
+  const group = (pred: (c: ProjectCard) => boolean) => filtered.filter(pred);
+  const client = group((c) => c.office?.kind === 'client');
+  const personal = group((c) => c.office?.kind === 'personal');
+  const none = group((c) => !c.office);
   const empty = projects.isSuccess && cards.length === 0;
 
   const checkAgain = async () => {
@@ -53,48 +58,40 @@ export function Home() {
       setChecking(false);
     }
   };
+  const newProject = (
+    <Link
+      to="/new"
+      className="btn btn-primary btn-lg"
+      aria-disabled={claudeMissing}
+      title={claudeMissing ? 'Connect Claude Code first' : undefined}
+      onClick={(e) => claudeMissing && e.preventDefault()}
+    >
+      <Plus size={15} strokeWidth={2.2} aria-hidden="true" />
+      New project
+    </Link>
+  );
 
   return (
     <div className={styles.page}>
-      <TopBar crumbs={[]} />
+      <TopBar crumbs={[{ label: 'Projects' }]} />
       {claudeMissing && (
         <ClaudeMissingBanner onCheckAgain={() => void checkAgain()} checking={checking} />
       )}
       <main className={styles.main}>
-        <section aria-label="Start" className={styles.start}>
+        <header className={styles.head}>
           <div className={styles.hello}>
-            <span className={styles.brand}>
-              <Wordmark height={44} centred />
-            </span>
-            <h1 className={styles.title}>What are we building?</h1>
+            <h1 className={styles.title}>{greeting(new Date(now).getHours())}</h1>
+            <p className={styles.lead}>
+              {cards.length
+                ? `${cards.length} project${cards.length === 1 ? '' : 's'}. Open one to see its stages and staff.`
+                : 'Start a project, or open a folder you already have.'}
+            </p>
           </div>
-          <PromptBox
-            disabled={claudeMissing}
-            calibratable={cards.filter((c) => c.state !== 'ready')}
-            onNewProject={(idea) => void navigate(`/new?idea=${encodeURIComponent(idea)}`)}
-            onAskMagnet={(text) => openMagnet(text)}
-            onCalibrate={(id) => void navigate(`/p/${encodeURIComponent(id)}/calibrate`)}
-            onIdeaChange={setIdea}
-          />
-          {!empty && (
-            <div className={styles.cta}>
-              <Link
-                to={idea ? `/new?idea=${encodeURIComponent(idea)}` : '/new'}
-                className="btn btn-primary btn-lg"
-                aria-disabled={claudeMissing}
-                title={claudeMissing ? 'Connect Claude Code first' : undefined}
-                onClick={(e) => claudeMissing && e.preventDefault()}
-              >
-                <Plus size={15} strokeWidth={2.2} aria-hidden="true" />
-                Start project
-              </Link>
-              <OpenFolderButton />
-              <span className={styles.hint}>
-                Give the idea and a name. The project opens in Plan.
-              </span>
-            </div>
-          )}
-        </section>
+          <div className={styles.cta}>
+            <OpenFolderButton />
+            {newProject}
+          </div>
+        </header>
 
         {empty ? (
           <section aria-label="Projects" className={styles.empty}>
@@ -104,80 +101,75 @@ export function Home() {
             <div className={styles.emptyText}>
               <h2>No projects yet</h2>
               <p>
-                Open a project folder from anywhere, like in VS Code, or start a new one. Only the
-                projects you open or create show here.
+                A new project starts in Idea, with the Business Analyst. Only the projects you open
+                or create show here.
               </p>
             </div>
-            <div className={styles.emptyActions}>
-              <Link
-                to={idea ? `/new?idea=${encodeURIComponent(idea)}` : '/new'}
-                className="btn btn-primary btn-lg"
-                aria-disabled={claudeMissing}
-                onClick={(e) => claudeMissing && e.preventDefault()}
-              >
-                <Plus size={15} strokeWidth={2.2} aria-hidden="true" />
-                Start project
-              </Link>
-              <OpenFolderButton />
-            </div>
           </section>
-        ) : null}
-        {empty && <Ideas now={now} disabled={claudeMissing} />}
-        {empty ? null : (
+        ) : (
           <>
-            <section aria-labelledby="recent" className={styles.section}>
-              <div className={styles.sectionHead}>
-                <h2 id="recent">Recent</h2>
-                <span className={styles.meta}>Last worked on</span>
-              </div>
-              <div className={styles.grid}>
-                {projects.isPending
-                  ? Array.from({ length: 4 }, (_, i) => <ProjectCardSkeleton key={i} />)
-                  : recent.map((c) => <ProjectCard key={c.id} card={c} now={now} />)}
-              </div>
-            </section>
-
-            <Ideas now={now} disabled={claudeMissing} />
-
-            <section aria-labelledby="all" className={styles.section}>
-              <div className={styles.sectionHead}>
-                <div className={styles.titleRow}>
-                  <h2 id="all">All projects</h2>
-                  <span className={styles.meta}>
-                    {cards.length} project{cards.length === 1 ? '' : 's'} in Cherry. Remove takes
-                    one off the list; the folder stays on disk.
-                  </span>
-                </div>
-                <div className={styles.tools}>
-                  <button
-                    type="button"
-                    className={styles.sort}
-                    onClick={() => setSort(sort === 'last' ? 'name' : 'last')}
-                    aria-label={`Sorted by ${sort === 'last' ? 'last worked' : 'name'}. Change sort.`}
-                  >
-                    {sort === 'last' ? 'Last worked' : 'Name'}
-                    <ArrowDown size={12} strokeWidth={2} aria-hidden="true" />
-                  </button>
-                  <label className={styles.search}>
-                    <Search size={14} strokeWidth={1.8} aria-hidden="true" />
-                    <span className="sr-only">Search projects</span>
-                    <input
-                      placeholder="Search projects"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                    />
-                  </label>
-                </div>
-              </div>
-              <ProjectTable cards={filtered} now={now} loading={projects.isPending} />
-              {projects.isSuccess && filtered.length === 0 && (
-                <p className={styles.noMatch}>No project matches “{query}”.</p>
-              )}
-            </section>
+            {cards.length > 0 && (
+              <label className={styles.search}>
+                <Search size={14} strokeWidth={1.8} aria-hidden="true" />
+                <span className="sr-only">Search projects</span>
+                <input
+                  placeholder="Search projects"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </label>
+            )}
+            {projects.isPending && <span className="shimmer" style={{ height: 120 }} />}
+            {client.length > 0 && (
+              <Section title="Client projects">
+                <OfficeTable cards={client} kind="client" now={now} />
+              </Section>
+            )}
+            {personal.length > 0 && (
+              <Section title="Personal projects" meta="Same stages; you sign off yourself.">
+                <OfficeTable cards={personal} kind="personal" now={now} />
+              </Section>
+            )}
+            {none.length > 0 && (
+              <Section
+                title="Not in the office yet"
+                meta="Set up the office to work through the stages. Your files stay as they are."
+              >
+                <OfficeTable cards={none} kind="none" now={now} />
+              </Section>
+            )}
+            {projects.isSuccess && query && filtered.length === 0 && (
+              <p className={styles.noMatch}>No project matches “{query}”.</p>
+            )}
           </>
         )}
+        <Ideas now={now} disabled={claudeMissing} />
+        <p className={styles.note}>
+          <ShieldCheck size={14} aria-hidden="true" />
+          Agents only work when you give them a job. Nothing runs in the background.
+        </p>
         <Shutdown />
       </main>
     </div>
+  );
+}
+
+function Section({
+  title,
+  meta,
+  children,
+}: {
+  title: string;
+  meta?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className={styles.section} aria-label={title}>
+      <div className={styles.sectionHead}>
+        <h2>{title}</h2>
+        {meta && <span className={styles.meta}>{meta}</span>}
+      </div>
+      {children}
+    </section>
   );
 }

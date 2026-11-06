@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { OfficeSummarySchema } from './office.ts';
 import { PhaseSchema } from './common.ts';
 
 export const ProjectStateSchema = z.enum(['ready', 'cctop', 'uncalibrated']);
@@ -66,6 +67,8 @@ export const ProjectCardSchema = z.object({
   projectJsonError: z.boolean(),
   /** The folder is gone (moved or deleted); Home offers Remove from Cherry (ADR-0032). */
   missing: z.boolean().default(false),
+  /** The V4 office (ADR-0054), null when the project has none. */
+  office: OfficeSummarySchema.nullable().default(null),
 });
 export type ProjectCard = z.infer<typeof ProjectCardSchema>;
 

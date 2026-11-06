@@ -58,6 +58,8 @@ export class OfficeService {
   constructor(
     private readonly config: ConfigStore,
     private readonly hub: EventHub,
+    /** Refreshes the project cards (the Projects page shows each office). */
+    private readonly onChange: () => void = () => undefined,
   ) {}
 
   private file(id: string): string {
@@ -98,6 +100,7 @@ export class OfficeService {
     office.updatedAt = new Date().toISOString();
     writeFileAtomic(file, `${JSON.stringify(office, null, 2)}\n`, 0o600);
     this.hub.publish(`project:${id}`, 'office.updated', { projectId: id, office });
+    this.onChange();
     return office;
   }
 

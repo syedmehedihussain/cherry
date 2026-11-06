@@ -46,6 +46,13 @@
   --brand-coral: #e07a5f;   /* the typing cursor */
   --brand-leaf: #2f5d3a;    /* branch cherry stems */
   --brand-ink: #1e1414;     /* dark brand card */
+  /* The office (V4): stage cards from the plan sketch. Same in every theme. */
+  --office-paper: #f0efed;  /* an open stage */
+  --office-ink: #c0280a;    /* its name on paper */
+  --office-text: #3a2a27;   /* small text on paper */
+  --office-warn: #8a5a00;   /* waiting / needs update on paper (AA) */
+  --office-red: #d92b26;    /* a signed-off stage (sketch #ff3333, darkened for AA) */
+  --office-on-red: #f6f3ef; /* text on it */
   --accent: #5b8def;
   --accent-text: #8db0f4;   /* accent used as text (passes 4.5:1) */
   --accent-text-strong: #b3cbf8; /* text on accent-tinted fills, link hover */

@@ -1,0 +1,118 @@
+.wrap {
+  border-top: 1px solid var(--b);
+  overflow-x: auto;
+}
+.table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.table th:nth-child(1) {
+  width: 36%;
+}
+.table th:nth-child(2) {
+  width: 17%;
+}
+.table th:nth-child(3) {
+  width: 19%;
+}
+.table th:nth-child(4) {
+  width: 11%;
+}
+.table th:nth-child(5) {
+  width: 10%;
+}
+.table th:nth-child(6) {
+  width: 250px;
+}
+.table th {
+  height: 36px;
+  padding: 0 10px;
+  text-align: left;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--t3);
+  border-bottom: 1px solid var(--b);
+}
+.table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--b-faint);
+  vertical-align: middle;
+}
+.table tbody tr:hover td {
+  background: var(--neutral-fill);
+}
+.project {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.name {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--t1);
+  text-decoration: none;
+}
+.name:hover {
+  text-decoration: underline;
+}
+.summary {
+  font-size: var(--fs-sm);
+  color: var(--t3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.muted {
+  color: var(--t2);
+  font-size: var(--fs-sm2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.actions {
+  text-align: right;
+  white-space: nowrap;
+}
+.live,
+.waiting {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: var(--h-pill-sm);
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.live {
+  background: var(--success-fill);
+  color: var(--success);
+}
+.waiting {
+  background: var(--warning-fill);
+  color: var(--warning);
+}
+.track {
+  display: inline-flex;
+  gap: 3px;
+}
+.track i {
+  width: 12px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--b);
+}
+.track i[data-state='signed'] {
+  background: var(--office-red);
+}
+.track i[data-state='active'],
+.track i[data-state='waiting'] {
+  background: var(--t1);
+}
+.track i[data-state='live'] {
+  background: var(--success);
+}
