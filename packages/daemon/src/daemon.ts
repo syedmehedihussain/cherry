@@ -118,7 +118,11 @@ export function createDaemon(opts: DaemonOptions): Daemon {
   const decisions = new DecisionBroker();
   const adrs = new AdrService(config, db, hub);
   const commits = new CommitService(config, db, hub, opts.runner ?? sdkRunner);
-  const office = new OfficeService(config, hub, () => void projects.rescan());
+  const office = new OfficeService(
+    config,
+    hub,
+    () => void projects.rescan().catch(() => undefined),
+  );
   const chat = new ChatService(
     config,
     db,

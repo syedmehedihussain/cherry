@@ -9,6 +9,7 @@ import { Workspace } from '../Workspace/Workspace.tsx';
 import { StagesTab } from './Office.tsx';
 import { PrintView } from './PrintView.tsx';
 import { StageRoom } from './StageRoom.tsx';
+import { VersionControl } from './VersionControl.tsx';
 import styles from './ProjectPage.module.css';
 
 /**
@@ -27,8 +28,9 @@ export function ProjectPage() {
   // /p/:id/print/:stage, the client documents to save as PDF (ADR-0058).
   const print = OfficeStageSchema.safeParse(/^print\/([a-z]+)$/.exec(splat)?.[1]);
   if (print.success) return <PrintPage id={id} stage={print.data} />;
-  // /p/:id/s/:stage, a stage room (o7).
-  const room = OfficeStageSchema.safeParse(/^s\/([a-z]+)$/.exec(params['*'] ?? '')?.[1]);
+  // /p/:id/s/:stage, a stage room (o7); /vc after it, its Version control tab (o11).
+  const roomMatch = /^s\/([a-z]+)(?:\/(vc))?$/.exec(splat);
+  const room = OfficeStageSchema.safeParse(roomMatch?.[1]);
   if (room.success)
     return (
       <div className={styles.page}>
@@ -36,6 +38,7 @@ export function ProjectPage() {
           projectId={id}
           stage={room.data}
           office={office.data}
+          view={roomMatch?.[2] === 'vc' ? 'vc' : 'work'}
           onSignOff={() => setSigning(true)}
         />
         {signing && (
@@ -48,15 +51,18 @@ export function ProjectPage() {
         )}
       </div>
     );
-  return <OfficeShell id={id} />;
+  return <OfficeShell id={id} tab={splat === 'vc' ? 'vc' : 'stages'} />;
 }
 
-function OfficeShell({ id }: { id: string }) {
+function OfficeShell({ id, tab }: { id: string; tab: 'stages' | 'vc' }) {
   const office = useOffice(id).data!;
   const card = useProjects().data?.cards.find((c) => c.id === id);
   const name = card?.name ?? id;
   const live = !!office.cycles.find((c) => c.liveAt) && office.cycles.length === 1;
-  const tabs: [string, string][] = [['', live ? 'Maintenance' : 'Stages']];
+  const tabs: [string, string][] = [
+    ['', live ? 'Maintenance' : 'Stages'],
+    ['/vc', 'Version control'],
+  ];
   return (
     <div className={styles.page}>
       <TopBar
@@ -76,8 +82,12 @@ function OfficeShell({ id }: { id: string }) {
           </nav>
         }
       />
-      <main className={styles.main}>
-        <StagesTab projectId={id} name={name} office={office} />
+      <main className={styles.main} data-tab={tab}>
+        {tab === 'vc' ? (
+          <VersionControl projectId={id} />
+        ) : (
+          <StagesTab projectId={id} name={name} office={office} />
+        )}
       </main>
     </div>
   );

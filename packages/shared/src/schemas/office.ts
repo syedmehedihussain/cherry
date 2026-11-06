@@ -296,3 +296,18 @@ export function officeSummary(office: OfficeFile): OfficeSummary {
     live: !!live,
   };
 }
+
+/** One commit in the Version control tab (o11). */
+export const HistoryCommitSchema = z.object({
+  hash: z.string(),
+  subject: z.string(),
+  author: z.string(),
+  at: z.number(),
+  /** Tags on this commit, e.g. v1.0.0. */
+  tags: z.array(z.string()),
+  files: z.array(z.string()),
+});
+export type HistoryCommit = z.infer<typeof HistoryCommitSchema>;
+
+/** GET /api/projects/:id/git/history?stage=: newest first. */
+export const HistorySchema = z.object({ commits: z.array(HistoryCommitSchema) });

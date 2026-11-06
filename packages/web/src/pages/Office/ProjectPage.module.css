@@ -6,7 +6,13 @@
 }
 .main {
   flex: 1;
+  min-height: 0;
   overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+.main[data-tab='vc'] {
+  overflow: hidden;
 }
 .loading {
   min-height: 100vh;

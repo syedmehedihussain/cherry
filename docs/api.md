@@ -180,6 +180,7 @@ calls a model (ADR-0055).
 | GET | `/api/projects/:id/office` | `{ office }`, or `{ office: null }` before the office is started |
 | POST | `/api/projects/:id/office` | `{ kind: 'client', client: { name, contact? } }` or `{ kind: 'personal' }`; Idea opens; 409 if it exists |
 | PATCH | `/api/projects/:id/office` | `{ client?, rate?, currency?, budgetTokens? }`; 400 for a client on a personal project |
+| GET | `/api/projects/:id/git/history?stage=` | `{ commits: [{ hash, subject, author, at, tags, files }] }`, newest 60; `stage` keeps one stage's paths (docs/<stage>/, or the code for Development) |
 | GET | `/api/projects/:id/office/docs?stage=` | `{ client, technical }`, each `[{ path, title, legacy }]`: Markdown in `docs/<stage>/client\|technical/` (one sub-folder deep), titles from the first `# ` heading; then V3 flat docs read where they are (`legacy: true`, ADR-0053) |
 | POST | `/api/projects/:id/office/stages/:stage/ready` | `{ ready }`: the agent says the stage is ready (or not) |
 | POST | `/api/projects/:id/office/stages/:stage/send` | sent to the client: `active` to `waiting`; client projects only; needs `ready` |

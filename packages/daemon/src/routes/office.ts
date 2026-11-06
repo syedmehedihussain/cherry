@@ -13,6 +13,7 @@ import {
 } from '@cherry/shared';
 import type { ConfigStore } from '../config.ts';
 import { stageDocs } from '../office/docs.ts';
+import { history } from '../office/history.ts';
 import type { OfficeService } from '../office/service.ts';
 import { projectDir } from '../projects/workspace.ts';
 
@@ -36,6 +37,13 @@ export function officeRoutes(office: OfficeService, config: ConfigStore) {
       const { id } = Id.parse(req.params);
       const { stage } = z.object({ stage: OfficeStageSchema }).parse(req.query);
       return stageDocs(projectDir(config.projectsDir(), id), stage);
+    });
+
+    // The Version control tab (o11): the project's commits, or one stage's.
+    app.get('/api/projects/:id/git/history', async (req) => {
+      const { id } = Id.parse(req.params);
+      const { stage } = z.object({ stage: OfficeStageSchema.optional() }).parse(req.query);
+      return { commits: await history(projectDir(config.projectsDir(), id), stage ?? null) };
     });
 
     app.post(`${base}/stages/:stage/ready`, async (req) => {

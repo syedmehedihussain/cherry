@@ -1,0 +1,149 @@
+.vc {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 360px 1fr;
+}
+.left {
+  border-right: 1px solid var(--b);
+  overflow: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.right {
+  overflow: auto;
+  padding: 18px 24px 40px;
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.head h2 {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--r-md);
+  background: var(--s2);
+}
+.seg button {
+  height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--t2);
+  font-size: var(--fs-sm);
+}
+.seg button[aria-checked='true'] {
+  background: var(--s3);
+  color: var(--t1);
+}
+.count {
+  margin-left: auto;
+  color: var(--t3);
+  font-size: var(--fs-xs);
+}
+.empty {
+  color: var(--t3);
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.commit {
+  position: relative;
+}
+.commit:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 22px;
+  bottom: -6px;
+  width: 1px;
+  background: var(--b);
+}
+.row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  gap: 10px;
+  align-items: start;
+  padding: 8px 4px 8px 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: var(--t3);
+}
+.row:hover .subject {
+  color: var(--accent-text-strong);
+}
+.dot {
+  width: 9px;
+  height: 9px;
+  margin: 5px 0 0 4px;
+  border-radius: 50%;
+  border: 2px solid var(--t3);
+  background: var(--bg);
+  position: relative;
+  z-index: 1;
+}
+.commit[data-head] .dot {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.subject {
+  color: var(--t1);
+  font-size: var(--fs-base);
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: var(--fs-xs);
+  color: var(--t3);
+}
+.tag {
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: var(--success-fill);
+  color: var(--success);
+}
+.files {
+  list-style: none;
+  margin: 0 0 6px 28px;
+  padding: 0;
+  font-family: var(--mono);
+  font-size: var(--fs-2xs);
+  color: var(--t2);
+}
+.files li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+@media (max-width: 900px) {
+  .vc {
+    grid-template-columns: 1fr;
+  }
+  .left {
+    border-right: 0;
+    border-bottom: 1px solid var(--b);
+  }
+}

@@ -127,6 +127,8 @@ export class ProjectService {
   }
 
   private save(cards: ProjectCard[]): void {
+    // The daemon may be closing: the cache is only a cache.
+    if (!this.db.open) return;
     const now = Date.now();
     const insert = this.db.prepare(
       'INSERT INTO projects (id, path, card_json, last_worked, scanned_at) VALUES (?, ?, ?, ?, ?)',

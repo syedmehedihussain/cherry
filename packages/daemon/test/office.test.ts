@@ -317,3 +317,54 @@ describe('staff agents in the stage chats (o3)', () => {
     expect(log.requests[0]!.extraTools?.map((t) => t.name)).not.toContain('stage_ready');
   });
 });
+
+describe('history for the Version control tab (o11)', () => {
+  let d: TestDaemon | null = null;
+  afterEach(async () => {
+    await d?.cleanup();
+    d = null;
+  });
+
+  it('lists commits with files and tags, and only one stage when asked', async () => {
+    const { execFileSync } = await import('node:child_process');
+    d = await testDaemon();
+    const dir = path.join(d.projectsDir, 'proj');
+    gitInit(dir);
+    const g = (...a: string[]) =>
+      execFileSync('git', ['-c', 'user.name=Meddy', '-c', 'user.email=m@m', ...a], {
+        cwd: dir,
+        env: { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null' },
+      });
+    mkdirSync(path.join(dir, 'docs/idea/client'), { recursive: true });
+    writeFileSync(path.join(dir, 'docs/idea/client/brief.md'), '# Brief\n');
+    g('add', '.');
+    g('commit', '-q', '-m', 'docs(idea): project brief');
+    mkdirSync(path.join(dir, 'src'), { recursive: true });
+    writeFileSync(path.join(dir, 'src/app.ts'), 'export {};\n');
+    g('add', '.');
+    g('commit', '-q', '-m', 'feat: the app');
+    g('tag', 'v1.0.0');
+    const cookie = await d.login();
+    const get = async (q: string) =>
+      (
+        await d!.app.inject({
+          method: 'GET',
+          url: `/api/projects/proj/git/history${q}`,
+          headers: { host: HOST, origin: ORIGIN, cookie },
+        })
+      ).json().commits;
+    const all = await get('');
+    expect(all.map((c: { subject: string }) => c.subject)).toEqual([
+      'feat: the app',
+      'docs(idea): project brief',
+      'init',
+    ]);
+    expect(all[0]).toMatchObject({ author: 'Meddy', tags: ['v1.0.0'], files: ['src/app.ts'] });
+    expect((await get('?stage=idea')).map((c: { subject: string }) => c.subject)).toEqual([
+      'docs(idea): project brief',
+    ]);
+    expect((await get('?stage=development')).map((c: { subject: string }) => c.subject)).toEqual([
+      'feat: the app',
+    ]);
+  });
+});

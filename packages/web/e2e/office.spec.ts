@@ -221,3 +221,36 @@ test('Development: the prototype gate, and client documents to save as PDF', asy
   await expect(page.getByRole('heading', { name: 'Progress' })).toBeVisible();
   await expect(page.locator('body')).toHaveAttribute('data-printed', 'yes');
 });
+
+// o11: Version control on the project page and in a stage room.
+test('Version control: changes, commit, and the history by stage', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByRole('radio', { name: 'Personal project' }).click();
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
+
+  const dir = path.join(E2E_PROJECTS, 'gym-app');
+  mkdirSync(path.join(dir, 'docs/idea/client'), { recursive: true });
+  writeFileSync(path.join(dir, 'docs/idea/client/brief.md'), '# Brief\n');
+
+  await page
+    .getByRole('navigation', { name: 'Project' })
+    .getByRole('link', { name: 'Version control' })
+    .click();
+  await expect(page).toHaveURL(/\/p\/gym-app\/vc$/);
+  const history = page.getByRole('region', { name: 'History' });
+  await expect(history).toBeVisible();
+
+  await page.goto('/p/gym-app/s/idea/vc');
+  await expect(page.getByRole('radio', { name: 'Idea' })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('region', { name: 'History' })).toContainText(
+    'No commits for Idea yet.',
+  );
+  await page.getByRole('radio', { name: 'All' }).click();
+  await expect(
+    page.getByRole('navigation', { name: 'Stage' }).getByRole('link', { name: 'Idea' }),
+  ).toBeVisible();
+});

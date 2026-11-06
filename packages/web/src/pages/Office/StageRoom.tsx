@@ -1,6 +1,6 @@
 import { ChevronLeft, CircleCheck, FileText, Printer } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, NavLink } from 'react-router';
 import {
   OFFICE_AGENT,
   OFFICE_AGENT_MONO,
@@ -21,6 +21,7 @@ import { DesignStage } from '../Workspace/design/DesignStage.tsx';
 import { DocReader } from '../Workspace/plan/PlanStage.tsx';
 import { DevGate } from './DevGate.tsx';
 import { BugsTab, QuestionsTab, UatTab } from './StageExtras.tsx';
+import { VersionControl } from './VersionControl.tsx';
 import styles from './StageRoom.module.css';
 
 const STATE_WORD = {
@@ -40,11 +41,14 @@ export function StageRoom({
   projectId,
   stage,
   office,
+  view = 'work',
   onSignOff,
 }: {
   projectId: string;
   stage: OfficeStage;
   office: OfficeFile;
+  /** The stage's own work, or its Version control tab (o11). */
+  view?: 'work' | 'vc';
   onSignOff(): void;
 }) {
   const now = useNow(30_000);
@@ -96,6 +100,23 @@ export function StageRoom({
         <span className={styles.pill} data-state={rec.state} data-ready={rec.ready || undefined}>
           {word}
         </span>
+        <nav className={styles.tabs} aria-label="Stage">
+          {(
+            [
+              ['', OFFICE_STAGE_LABEL[stage]],
+              ['/vc', 'Version control'],
+            ] as const
+          ).map(([path, label]) => (
+            <NavLink
+              key={label}
+              to={`/p/${encodeURIComponent(projectId)}/s/${stage}${path}`}
+              end
+              className={({ isActive }) => (isActive ? styles.tabOn : undefined)}
+            >
+              {label}
+            </NavLink>
+          ))}
+        </nav>
         <span className={styles.grow} />
         {rec.state === 'signed' || rec.state === 'carried' ? (
           <span className={styles.signed}>
@@ -121,6 +142,8 @@ export function StageRoom({
       </header>
       {rec.state === 'locked' ? (
         <p className={styles.locked}>This stage opens when the one before it is signed off.</p>
+      ) : view === 'vc' ? (
+        <VersionControl projectId={projectId} stage={stage} />
       ) : (
         body
       )}
