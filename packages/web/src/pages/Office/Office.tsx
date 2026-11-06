@@ -1,6 +1,6 @@
 import { Check, CircleCheck, Clock, FileDiff, History, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import {
   OFFICE_AGENT,
   OFFICE_AGENT_MONO,
@@ -31,7 +31,9 @@ export function StagesTab({
   const navigate = useNavigate();
   const [changes, setChanges] = useState(false);
   const cycle = office.cycles[office.cycles.length - 1]!;
-  const live = !!office.cycles.find((c) => c.liveAt);
+  // The Live card is the cycle being built: v2.0 goes live after its own Deployment (o20).
+  const live = !!cycle.liveAt;
+  const liveOld = office.cycles.find((c) => c.liveAt && c !== cycle);
   const cur = currentStage(cycle);
   const open = (s: OfficeStage) => void navigate(`/p/${encodeURIComponent(projectId)}/s/${s}`);
   const personal = office.kind === 'personal';
@@ -92,6 +94,11 @@ export function StagesTab({
       <header className={styles.head}>
         <h1 className={styles.name}>{name}</h1>
         {office.cycles.length > 1 && <span className="tag">v{cycle.version}</span>}
+        {liveOld && (
+          <Link to={`/p/${encodeURIComponent(projectId)}/maintenance`} className={styles.liveOld}>
+            v{liveOld.version} live, in maintenance
+          </Link>
+        )}
         <span className={styles.grow} />
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => setChanges(true)}>
           <FileDiff size={14} aria-hidden="true" />
@@ -135,7 +142,11 @@ export function StagesTab({
         <LiveCard
           live={live}
           label={
-            live ? `v${office.cycles.find((c) => c.liveAt)!.version} is live` : 'after Deployment'
+            live
+              ? `v${cycle.version} is live`
+              : office.cycles.length > 1
+                ? `v${cycle.version} after Deployment`
+                : 'after Deployment'
           }
           onOpen={() => void navigate(`/p/${encodeURIComponent(projectId)}`)}
         />

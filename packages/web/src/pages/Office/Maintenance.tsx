@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Bug, Globe, History, LayoutDashboard, LifeBuoy } from 'lucide-react';
+import { Bug, Globe, History, LayoutDashboard, LifeBuoy, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
@@ -11,7 +11,9 @@ import {
 } from '@cherry/shared';
 import { useChatDraft } from '../../api/chat.ts';
 import { api, ApiFailure } from '../../api/client.ts';
+import { startVersion } from '../../api/office.ts';
 import { queryClient } from '../../api/queries.ts';
+import dialog from '../../components/SetUpOffice/SetUpOffice.module.css';
 import styles from './Maintenance.module.css';
 
 const ROOMS: {
@@ -109,6 +111,7 @@ export function Maintenance({
         </Link>
       </header>
       <div className={styles.rooms}>
+        <NewVersion projectId={projectId} office={office} />
         {ROOMS.map((r) => {
           const count =
             r.id === 'support' ? requests.length : r.id === 'issues' ? bugs.length : null;
@@ -258,5 +261,100 @@ function AddIssue({ projectId, kind }: { projectId: string; kind: 'bug' | 'impro
       </button>
       {error && <span className={styles.error}>{error}</span>}
     </form>
+  );
+}
+
+/** Start the next version (o20): a new cycle from Requirements, next to the live one. */
+function NewVersion({ projectId, office }: { projectId: string; office: OfficeFile }) {
+  const navigate = useNavigate();
+  const last = office.cycles[office.cycles.length - 1]!;
+  const building = !last.liveAt;
+  const nextMajor = `${Number(last.version.split('.')[0]) + 1}.0`;
+  const [open, setOpen] = useState(false);
+  const [version, setVersion] = useState(nextMajor);
+  const [title, setTitle] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const start = async () => {
+    try {
+      await startVersion(projectId, version.trim(), title.trim());
+      setOpen(false);
+      void navigate(`/p/${encodeURIComponent(projectId)}/stages`);
+    } catch (e) {
+      setError(e instanceof ApiFailure ? e.message : 'Could not start the version.');
+    }
+  };
+  return (
+    <>
+      <button
+        type="button"
+        className={styles.room}
+        data-new
+        onClick={() =>
+          building ? void navigate(`/p/${encodeURIComponent(projectId)}/stages`) : setOpen(true)
+        }
+      >
+        <span className={styles.role}>Next cycle</span>
+        <span className={styles.name}>New version</span>
+        <span className={styles.state}>
+          {building ? `v${last.version} in progress` : `Start v${nextMajor}`}
+        </span>
+      </button>
+      {open && (
+        <div className={dialog.overlay} onClick={() => setOpen(false)}>
+          <form
+            role="dialog"
+            aria-modal="true"
+            aria-label="Start a new version"
+            className={dialog.dialog}
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (title.trim()) void start();
+            }}
+          >
+            <div className={dialog.head}>
+              <div>
+                <h3>Start a new version</h3>
+                <p className={dialog.hint}>
+                  A new cycle from Requirements to Deployment. v{last.version} stays live and in
+                  maintenance while you build it. The Idea carries over.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                aria-label="Close"
+                onClick={() => setOpen(false)}
+              >
+                <X size={14} aria-hidden="true" />
+              </button>
+            </div>
+            <div className={dialog.two}>
+              <label className={dialog.field}>
+                <span>Version</span>
+                <input value={version} onChange={(e) => setVersion(e.target.value)} />
+              </label>
+              <label className={dialog.field}>
+                <span>What it is about</span>
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Class booking and family plans"
+                />
+              </label>
+            </div>
+            {error && <p className={dialog.error}>{error}</p>}
+            <div className={dialog.foot}>
+              <button type="button" className="btn btn-ghost btn-md" onClick={() => setOpen(false)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary btn-md" disabled={!title.trim()}>
+                Start v{version}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </>
   );
 }

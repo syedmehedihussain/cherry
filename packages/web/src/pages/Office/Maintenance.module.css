@@ -33,7 +33,7 @@
 }
 .rooms {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 14px;
 }
 .room {
@@ -159,4 +159,13 @@
   .below {
     grid-template-columns: 1fr;
   }
+}
+
+.room[data-new] {
+  background: var(--office-red);
+  color: var(--office-on-red);
+  border-color: transparent;
+}
+.room[data-new] .state {
+  color: var(--office-on-red);
 }

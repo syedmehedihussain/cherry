@@ -162,3 +162,12 @@
   display: inline-grid;
   place-items: center;
 }
+
+.liveOld {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--success-fill);
+  color: var(--success);
+  font-size: var(--fs-xs);
+  text-decoration: none;
+}

@@ -571,3 +571,47 @@ test('Go Live: the moment, then the maintenance office', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Live, v1.0 is live' })).toBeVisible();
   await expect(page.getByRole('dialog', { name: 'The project is live' })).toHaveCount(0);
 });
+
+// o20: a new version runs its own cycle next to the live one.
+test('New version: Start v2.0 next to the live v1.0', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByRole('radio', { name: 'Personal project' }).click();
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
+  const file = path.join(E2E_PROJECTS, 'gym-app', '_project', 'office.json');
+  const office = JSON.parse(readFileSync(file, 'utf8'));
+  const signed = {
+    by: 'you',
+    date: '2026-11-06',
+    notes: '',
+    internal: true,
+    at: new Date().toISOString(),
+  };
+  for (const s of Object.keys(office.cycles[0].stages))
+    office.cycles[0].stages[s] = { state: 'signed', ready: true, sentAt: null, signOffs: [signed] };
+  office.cycles[0].devGate = 'approved';
+  office.cycles[0].liveAt = new Date().toISOString();
+  writeFileSync(file, JSON.stringify(office));
+
+  await page.goto('/p/gym-app');
+  await page.getByRole('button', { name: 'Open the maintenance office' }).click();
+  await page.getByRole('button', { name: /New version/ }).click();
+  const dialog = page.getByRole('dialog', { name: 'Start a new version' });
+  await expect(dialog.getByLabel('Version')).toHaveValue('2.0');
+  await dialog.getByLabel('What it is about').fill('Class booking');
+  await dialog.getByRole('button', { name: 'Start v2.0' }).click();
+
+  await expect(page).toHaveURL(/\/p\/gym-app\/stages$/);
+  await expect(page.getByRole('button', { name: 'Idea, from the last version' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Requirements, On-going' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Live, v2.0 after Deployment' })).toBeVisible();
+  await page.getByRole('link', { name: 'v1.0 live, in maintenance' }).click();
+  await expect(page).toHaveURL(/\/p\/gym-app\/maintenance$/);
+  await expect(page.getByRole('region', { name: 'Version history' })).toContainText(
+    'v2.0 Class booking',
+  );
+  await expect(page.getByRole('button', { name: /New version/ })).toContainText('v2.0 in progress');
+});

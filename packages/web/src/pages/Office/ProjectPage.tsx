@@ -84,7 +84,8 @@ export function ProjectPage() {
         splat === 'vc' ||
         splat === 'usage' ||
         splat === 'invoice' ||
-        splat === 'stages'
+        splat === 'stages' ||
+        splat === 'maintenance'
           ? splat
           : 'home'
       }
@@ -99,16 +100,20 @@ function OfficeShell({
 }: {
   id: string;
   /** `stages` is the cards even when Live; the bare page is Maintenance once Live (o19). */
-  tab: 'home' | 'stages' | 'meeting' | 'docs' | 'code' | 'vc' | 'usage' | 'invoice';
+  tab: 'home' | 'stages' | 'maintenance' | 'meeting' | 'docs' | 'code' | 'vc' | 'usage' | 'invoice';
   /** The open document (Docs) or the rest of the path (Code). */
   doc?: string | null;
 }) {
   const office = useOffice(id).data!;
   const card = useProjects().data?.cards.find((c) => c.id === id);
   const name = card?.name ?? id;
-  const live = !!office.cycles.find((c) => c.liveAt) && office.cycles.length === 1;
+  // Live: the last cycle went live, so the page is the maintenance office. While a new version
+  // is built (o20), the page shows its stages and Maintenance is its own tab.
+  const anyLive = !!office.cycles.find((c) => c.liveAt);
+  const live = !!office.cycles[office.cycles.length - 1]!.liveAt;
   const tabs: [string, string][] = [
     ['', live ? 'Maintenance' : 'Stages'],
+    ...(anyLive && !live ? ([['/maintenance', 'Maintenance']] as [string, string][]) : []),
     ['/meeting', 'Meeting'],
     ['/docs', 'Docs'],
     ['/code', 'Code'],
@@ -135,7 +140,13 @@ function OfficeShell({
           </nav>
         }
       />
-      {live && <LiveMoment projectId={id} name={name} version={office.cycles[0]!.version} />}
+      {live && (
+        <LiveMoment
+          projectId={id}
+          name={name}
+          version={office.cycles[office.cycles.length - 1]!.version}
+        />
+      )}
       <main className={styles.main} data-tab={tab}>
         {tab === 'meeting' ? (
           <Meeting projectId={id} name={name} office={office} />
@@ -149,7 +160,7 @@ function OfficeShell({
           <Usage projectId={id} office={office} />
         ) : tab === 'invoice' ? (
           <Invoice projectId={id} office={office} />
-        ) : tab === 'home' && live ? (
+        ) : (tab === 'home' && live) || tab === 'maintenance' ? (
           <Maintenance projectId={id} name={name} office={office} />
         ) : (
           <StagesTab projectId={id} name={name} office={office} />
