@@ -1,0 +1,132 @@
+.page {
+  flex: 1;
+  overflow: auto;
+  padding: 22px 24px 40px;
+  max-width: 1000px;
+  width: 100%;
+}
+.h {
+  margin: 0 0 4px;
+  font-size: var(--fs-xl);
+  font-weight: 600;
+}
+.sub {
+  margin: 0 0 18px;
+  color: var(--t2);
+}
+.sect {
+  margin-bottom: 26px;
+}
+.sect h3 {
+  margin: 0 0 10px;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+.bar {
+  display: grid;
+  grid-template-columns: 150px 1fr 180px;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: var(--fs-sm2);
+}
+.track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--s3);
+  overflow: hidden;
+}
+.track i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+}
+.track i[data-warn] {
+  background: var(--warning);
+}
+.value {
+  text-align: right;
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  color: var(--t2);
+}
+.budget {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-sm);
+}
+.budget input {
+  width: 70px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--bs);
+  border-radius: var(--r-md);
+  background: var(--s2);
+  color: var(--t1);
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.stat {
+  padding: 12px 14px;
+  border: 1px solid var(--b);
+  border-radius: var(--r-xl);
+  background: var(--s1);
+}
+.v {
+  font-family: var(--mono);
+  font-size: var(--fs-2xl);
+  font-weight: 600;
+}
+.l {
+  color: var(--t3);
+  font-size: var(--fs-xs);
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm2);
+}
+.table th {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--b);
+  color: var(--t3);
+  font-weight: 500;
+  font-size: var(--fs-xs);
+}
+.table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--b-faint);
+}
+.table tr[data-current] td {
+  background: var(--accent-fill-weak);
+}
+.table tfoot td {
+  border-top: 1px solid var(--bs);
+  border-bottom: 0;
+  font-weight: 600;
+}
+.num {
+  text-align: right !important;
+  font-family: var(--mono);
+}
+.dim {
+  color: var(--t3);
+}
+.error {
+  color: var(--danger-text);
+}
+@media (max-width: 760px) {
+  .bar {
+    grid-template-columns: 1fr;
+  }
+  .stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}

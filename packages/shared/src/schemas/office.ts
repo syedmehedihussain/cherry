@@ -311,3 +311,18 @@ export type HistoryCommit = z.infer<typeof HistoryCommitSchema>;
 
 /** GET /api/projects/:id/git/history?stage=: newest first. */
 export const HistorySchema = z.object({ commits: z.array(HistoryCommitSchema) });
+
+const UsageRowSchema = z.object({
+  tokens: z.number(),
+  costUsd: z.number(),
+  turns: z.number(),
+  ms: z.number(),
+});
+
+/** GET /api/projects/:id/usage (o12): every chat turn added up; cost is the API value. */
+export const ProjectUsageSchema = z.object({
+  total: UsageRowSchema,
+  stages: z.array(UsageRowSchema.extend({ stage: z.string() })),
+  models: z.array(UsageRowSchema.extend({ model: z.string() })),
+});
+export type ProjectUsage = z.infer<typeof ProjectUsageSchema>;

@@ -220,7 +220,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       browserTestRoutes(browserTests),
       adrRoutes(adrs),
       ideaRoutes(new IdeaStore(opts.home)),
-      officeRoutes(office, config),
+      officeRoutes(office, config, db),
       stageRoutes(opts.home, config),
       handoffRoutes(config, chat),
       issueRoutes(new IssueService(config, approvals, hub)),

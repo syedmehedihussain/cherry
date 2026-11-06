@@ -350,6 +350,13 @@ CREATE TABLE usage_days (
 Transcripts are stored as JSONL files (one event per line), not in SQLite, so they are easy to
 read and delete.
 
+### `turn_usage` (V4 o12, migration 010)
+
+One row per model a chat turn used: `at, project_id, stage, model, input_tokens` (fresh input,
+with cache writes), `output_tokens, cache_read_tokens, cost_usd` (the API value), `duration_ms`
+and `first_row` (1 on a turn's first row, which carries the turn's time). The Claude usage and
+Invoice tabs add it up per project.
+
 ## 8. Scan agents and reports (ADR-0012)
 
 Custom scan agent, `~/.cherry/agents/<id>.md` (the file name is the id):

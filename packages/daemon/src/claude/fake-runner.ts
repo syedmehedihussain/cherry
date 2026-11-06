@@ -28,6 +28,8 @@ export type Step =
     }
   /** Claude thinks for `ms` (default 0) and shows `think` (may be empty). */
   | { think: string; ms?: number }
+  /** The tokens and cost the turn reports per model (V4 o12). */
+  | { models: import('./runner.ts').ModelUse[] }
   /** Tokens in the context after the turn (default 12k of a 200k window). */
   | { context: number; window?: number };
 
@@ -61,6 +63,7 @@ export function fakeRunner(
     const started = Date.now();
     let used = 12_000;
     let window = 200_000;
+    let models: import('./runner.ts').ModelUse[] = [];
     const cp = req.checkpoints
       ? { id: `fake_cp_${n}`, files: new Map<string, string | null>() }
       : null;
@@ -105,6 +108,8 @@ export function fakeRunner(
           if (step.think) req.onEvent({ t: 'thinking', blockId, delta: step.think });
           if (step.ms) await new Promise((r) => setTimeout(r, step.ms));
           req.onEvent({ t: 'thinking_end', blockId });
+        } else if ('models' in step) {
+          models = step.models;
         } else if ('context' in step) {
           used = step.context;
           window = step.window ?? window;
@@ -200,6 +205,7 @@ export function fakeRunner(
         costUsd: 0,
         context: { used, window },
         chainEnd: `fake_end_${n}`,
+        models,
       });
     })();
     return {

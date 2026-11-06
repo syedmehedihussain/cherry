@@ -21,6 +21,7 @@ import { DesignStage } from '../Workspace/design/DesignStage.tsx';
 import { DocReader } from '../Workspace/plan/PlanStage.tsx';
 import { DevGate } from './DevGate.tsx';
 import { BugsTab, QuestionsTab, UatTab } from './StageExtras.tsx';
+import { Usage } from './Usage.tsx';
 import { VersionControl } from './VersionControl.tsx';
 import styles from './StageRoom.module.css';
 
@@ -48,7 +49,7 @@ export function StageRoom({
   stage: OfficeStage;
   office: OfficeFile;
   /** The stage's own work, or its Version control tab (o11). */
-  view?: 'work' | 'vc';
+  view?: 'work' | 'vc' | 'usage';
   onSignOff(): void;
 }) {
   const now = useNow(30_000);
@@ -105,6 +106,7 @@ export function StageRoom({
             [
               ['', OFFICE_STAGE_LABEL[stage]],
               ['/vc', 'Version control'],
+              ['/usage', 'Claude usage'],
             ] as const
           ).map(([path, label]) => (
             <NavLink
@@ -144,6 +146,8 @@ export function StageRoom({
         <p className={styles.locked}>This stage opens when the one before it is signed off.</p>
       ) : view === 'vc' ? (
         <VersionControl projectId={projectId} stage={stage} />
+      ) : view === 'usage' ? (
+        <Usage projectId={projectId} office={office} stage={stage} />
       ) : (
         body
       )}

@@ -254,3 +254,35 @@ test('Version control: changes, commit, and the history by stage', async ({ page
     page.getByRole('navigation', { name: 'Stage' }).getByRole('link', { name: 'Idea' }),
   ).toBeVisible();
 });
+
+// o12: Claude usage on the project page and in a stage room.
+test('Claude usage: the turns by stage and the project budget', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByRole('radio', { name: 'Personal project' }).click();
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await page.getByRole('button', { name: 'Idea, On-going' }).click();
+  const box = page.getByLabel('Message Claude');
+  await box.fill('A gym wants a members app');
+  await box.press('Enter');
+  await expect(page.getByText('The idea is clear. We can start Requirements.')).toBeVisible();
+
+  await page
+    .getByRole('navigation', { name: 'Stage' })
+    .getByRole('link', { name: 'Claude usage' })
+    .click();
+  await expect(page).toHaveURL(/\/s\/idea\/usage$/);
+  const byStage = page.getByRole('region', { name: 'By stage' });
+  await expect(byStage.getByRole('row', { name: /^Idea Business Analyst/ })).toContainText('1');
+  await expect(page.getByRole('region', { name: 'Business Analyst' })).toContainText('turns');
+
+  await page.goto('/p/gym-app/usage');
+  const limits = page.getByRole('region', { name: 'Limits' });
+  await expect(limits).toContainText('of 6.00M');
+  await limits.getByRole('button', { name: 'Change budget' }).click();
+  await limits.getByLabel(/Budget, millions of tokens/).fill('8');
+  await limits.getByRole('button', { name: 'Save' }).click();
+  await expect(limits).toContainText('of 8.00M');
+});

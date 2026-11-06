@@ -12,6 +12,8 @@ import {
   TimeInputSchema,
 } from '@cherry/shared';
 import type { ConfigStore } from '../config.ts';
+import type { Db } from '../db.ts';
+import { projectUsage } from '../usage.ts';
 import { stageDocs } from '../office/docs.ts';
 import { history } from '../office/history.ts';
 import type { OfficeService } from '../office/service.ts';
@@ -22,7 +24,7 @@ const StageParams = Id.extend({ stage: OfficeStageSchema });
 const ItemParams = Id.extend({ item: z.string().min(1).max(40) });
 
 /** The office of a project (V4, ADR-0052, ADR-0054). See docs/api.md, Office. */
-export function officeRoutes(office: OfficeService, config: ConfigStore) {
+export function officeRoutes(office: OfficeService, config: ConfigStore, db: Db) {
   return (app: FastifyInstance) => {
     const base = '/api/projects/:id/office';
     app.get(base, async (req) => ({ office: office.get(Id.parse(req.params).id) }));
@@ -37,6 +39,13 @@ export function officeRoutes(office: OfficeService, config: ConfigStore) {
       const { id } = Id.parse(req.params);
       const { stage } = z.object({ stage: OfficeStageSchema }).parse(req.query);
       return stageDocs(projectDir(config.projectsDir(), id), stage);
+    });
+
+    // The Claude usage tab (o12): the project's chat turns, by stage and by model.
+    app.get('/api/projects/:id/usage', async (req) => {
+      const { id } = Id.parse(req.params);
+      projectDir(config.projectsDir(), id);
+      return projectUsage(db, id);
     });
 
     // The Version control tab (o11): the project's commits, or one stage's.

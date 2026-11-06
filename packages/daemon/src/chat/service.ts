@@ -31,7 +31,7 @@ import type { DecisionBroker } from '../claude/decisions.ts';
 import { READ_TOOLS, type RunHandle, type Runner } from '../claude/runner.ts';
 import { Transcript } from '../claude/transcript.ts';
 import { projectDir } from '../projects/workspace.ts';
-import { recordUsage } from '../usage.ts';
+import { recordTurn, recordUsage } from '../usage.ts';
 import { stageGuard, stageProfile } from '../stages/profiles.ts';
 import { buildStagePlugin } from '../stages/skills.ts';
 import { CHECKLIST_TOOL, checklistTool, setPhase } from '../stages/checklist.ts';
@@ -371,6 +371,7 @@ export class ChatService {
         if (ev.t === 'result') {
           finished = true;
           recordUsage(this.db, Date.now(), ev.durationMs, false);
+          recordTurn(this.db, projectId, stage, ev.durationMs, ev.models ?? []);
           current.running = null;
           current.turnId = null;
           this.approvals.cancel(`chat:${current.conversationId}`, 'Turn ended');

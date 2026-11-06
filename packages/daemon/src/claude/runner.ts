@@ -43,7 +43,18 @@ export type RunnerEvent =
       context?: ContextUse | null;
       /** The last entry of the turn in Claude's session: where a rewind resumes (V2.1 w7.9). */
       chainEnd?: string | null;
+      /** Tokens and cost per model the turn used (V4 o12). */
+      models?: ModelUse[];
     };
+
+export interface ModelUse {
+  model: string;
+  /** Fresh input, including what was written to the cache. */
+  input: number;
+  output: number;
+  cacheRead: number;
+  costUsd: number;
+}
 
 export interface ContextUse {
   used: number;
@@ -511,6 +522,13 @@ export const sdkRunner: Runner = (req) => {
         costUsd: m.total_cost_usd ?? null,
         context: contextUse(used, m.modelUsage),
         chainEnd,
+        models: Object.entries(m.modelUsage ?? {}).map(([model, u]) => ({
+          model,
+          input: u.inputTokens + u.cacheCreationInputTokens,
+          output: u.outputTokens,
+          cacheRead: u.cacheReadInputTokens,
+          costUsd: u.costUSD,
+        })),
       });
     }
   };

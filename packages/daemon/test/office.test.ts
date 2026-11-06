@@ -368,3 +368,57 @@ describe('history for the Version control tab (o11)', () => {
     ]);
   });
 });
+
+describe('Claude usage per project (o12)', () => {
+  let d: TestDaemon | null = null;
+  afterEach(async () => {
+    await d?.cleanup();
+    d = null;
+  });
+
+  it('records each chat turn per model and adds it up by stage', async () => {
+    let n = 0;
+    d = await testDaemon({
+      runner: fakeRunner(() => [
+        {
+          models:
+            n++ === 0
+              ? [
+                  { model: 'claude-opus', input: 1000, output: 200, cacheRead: 5000, costUsd: 0.5 },
+                  { model: 'claude-haiku', input: 100, output: 20, cacheRead: 0, costUsd: 0.01 },
+                ]
+              : [{ model: 'claude-opus', input: 400, output: 100, cacheRead: 0, costUsd: 0.2 }],
+        },
+        { text: 'ok' },
+      ]),
+    });
+    gitInit(path.join(d.projectsDir, 'proj'));
+    const cookie = await d.login();
+    const api = (method: 'GET' | 'POST', url: string, payload?: object) =>
+      d!.app.inject({
+        method,
+        url,
+        headers: { host: HOST, origin: ORIGIN, cookie },
+        ...(payload ? { payload } : {}),
+      });
+    const idle = async (stage: string) => {
+      const start = Date.now();
+      while (d!.chat.state('proj', stage as never).running && Date.now() - start < 3000)
+        await new Promise((r) => setTimeout(r, 10));
+    };
+    await api('POST', '/api/projects/proj/chat', { text: 'a', stage: 'idea' });
+    await idle('idea');
+    await api('POST', '/api/projects/proj/chat', { text: 'b', stage: 'plan' });
+    await idle('plan');
+    const u = (await api('GET', '/api/projects/proj/usage')).json();
+    expect(u.total).toMatchObject({ tokens: 1820, costUsd: 0.71, turns: 2 });
+    expect(u.stages.find((s: { stage: string }) => s.stage === 'idea')).toMatchObject({
+      tokens: 1320,
+      turns: 1,
+    });
+    expect(u.models.map((m: { model: string }) => m.model)).toEqual([
+      'claude-opus',
+      'claude-haiku',
+    ]);
+  });
+});
