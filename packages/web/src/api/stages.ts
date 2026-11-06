@@ -2,9 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import {
   StageFocusSchema,
+  PHASES,
   WORKSPACE_STAGES,
   StageInfoSchema,
   stageProgress,
+  type Phase,
   type Stage,
   type StageInfo,
   type WorkspaceStage,
@@ -49,8 +51,9 @@ export function nextStage(stage: Stage): WorkspaceStage | null {
 export function useStageProgress(projectId: string, stage: Stage) {
   const tasks = useTasks(projectId).data;
   const readiness = useStageFocus(projectId, 'preparation').data?.readiness ?? [];
-  if (stage === 'issues') return null;
-  return stageProgress(tasks, stage, stage === 'preparation' ? readiness : []);
+  // Only the V3 phases keep a checklist in tasks.json.
+  if (!(PHASES as readonly string[]).includes(stage)) return null;
+  return stageProgress(tasks, stage as Phase, stage === 'preparation' ? readiness : []);
 }
 
 /** The handoff note to the next stage (V3 r12), written by Haiku or, failing that, by Cherry. */

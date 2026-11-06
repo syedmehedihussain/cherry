@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 import {
+  PHASES,
   STAGES,
   STAGE_LABEL,
   type ChatMode,
@@ -10,8 +11,14 @@ import {
   type RewindRequest,
   type RewindResult,
   type ChatState,
+  type OfficeFile,
+  type Phase,
   type Stage,
 } from '@cherry/shared';
+
+import type { OfficeService } from '../office/service.ts';
+import { isOfficeStage, officeBrief, stageReadyTool, staffOverride } from '../office/staff.ts';
+const isPhase = (s: Stage): s is Phase => (PHASES as readonly string[]).includes(s);
 import type { ConfigStore } from '../config.ts';
 import type { Db } from '../db.ts';
 import { AUTO_COMMIT_PROMPT, type CommitService } from '../projects/commits.ts';
@@ -55,7 +62,11 @@ export const CHROME_PROMPT =
   "- You can use the user's Chrome through the mcp__claude-in-chrome__ tools: open the app you built on localhost, click through it, read the console and take screenshots to check your work. It is the user's real browser, signed in to their accounts: work in a new tab, do not read or touch their other tabs, never submit payments, passwords or messages, and say what you will do before you do it. The tools run without asking, so take care.";
 
 /** The common rules, then the stage agent's persona (ADR-0034). */
-export function chatSystemPrompt(stage: Stage, mode: ChatMode = 'ask'): string {
+export function chatSystemPrompt(
+  stage: Stage,
+  mode: ChatMode = 'ask',
+  persona?: string | null,
+): string {
   const profile = stageProfile(stage);
   return [
     'You are working inside Cherry, a workspace that follows a strict engineering process: Plan, Design, Preparation, Development, Deployment and Issues, in a loop. Each stage has its own agent and its own chat; you are one of them, and the others hand work to you through the project files.',
@@ -80,7 +91,7 @@ export function chatSystemPrompt(stage: Stage, mode: ChatMode = 'ask'): string {
       ? '- You are in auto mode: edits and most commands run without asking. Pushing, publishing and deleting folders still ask. If the user denies one, ask what they want instead.'
       : '- Every edit and command is shown to the user for approval. If they deny one, ask what they want instead.',
     '',
-    profile.persona,
+    persona || profile.persona,
   ].join('\n');
 }
 
@@ -122,6 +133,7 @@ export class ChatService {
     private readonly home: string,
     private readonly adrs?: AdrService,
     private readonly commits?: CommitService,
+    private readonly office?: OfficeService,
   ) {}
 
   private transcriptFile(conversationId: string): string {
@@ -292,6 +304,15 @@ export class ChatService {
     current.mode = body.mode;
     current.conversation.addUser(`u_${turnId}`, body.text, body.attachments, magnet);
 
+    // The office (V4): the staff brief, the user's own persona file and stage_ready.
+    let officeFile: OfficeFile | null;
+    try {
+      officeFile = this.office && isOfficeStage(stage) ? this.office.get(projectId) : null;
+    } catch {
+      // A broken office.json: the chat still works, without the office brief.
+      officeFile = null;
+    }
+    const officeStage = officeFile && isOfficeStage(stage) ? stage : null;
     // Auto commit (ADR-0030): Claude commits through commit_changes, as the user.
     const autoCommit = !!this.commits?.autoCommit(projectId);
     // The stage's skills, as a skills-only plugin; the Skill tool runs without asking.
@@ -311,7 +332,12 @@ export class ChatService {
       planMode: body.mode === 'plan',
       chrome,
       appendSystemPrompt:
-        chatSystemPrompt(stage, body.mode) +
+        chatSystemPrompt(
+          stage,
+          body.mode,
+          officeStage ? staffOverride(this.home, officeStage) : null,
+        ) +
+        (officeStage && officeFile ? officeBrief(officeStage, officeFile) : '') +
         (autoCommit ? `\n${AUTO_COMMIT_PROMPT}` : '') +
         (chrome ? `\n${CHROME_PROMPT}` : ''),
       allowedTools: plugin ? [...READ_TOOLS, 'Skill'] : READ_TOOLS,
@@ -321,12 +347,15 @@ export class ChatService {
       extraTools: [
         ...(this.adrs?.tools(projectId, 'chat') ?? []),
         // The stage checklist behind the Overview bar (V2.1 w5); Issues counts issues instead.
-        ...(stage !== 'issues' ? [checklistTool(dir, stage)] : []),
+        ...(isPhase(stage) ? [checklistTool(dir, stage)] : []),
         // The Planner hands over with Approve plan (ADR-0041).
         ...(stage === 'plan'
           ? [proposePlanTool(dir, (item) => current.conversation.put({ ...item, turnId }))]
           : []),
         ...(autoCommit && this.commits ? [this.commits.tool(projectId)] : []),
+        ...(officeStage && this.office
+          ? [stageReadyTool(this.office, projectId, officeStage)]
+          : []),
       ],
       onPermission: (tool, input, id) => current.conversation.permission(tool, input, id),
       onDecision: (input) => current.conversation.decision(input),

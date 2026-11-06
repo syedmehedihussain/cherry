@@ -10,7 +10,8 @@ import { HOST, testDaemon, write, type TestDaemon } from './helpers.ts';
 describe('stage profiles', () => {
   it.each(STAGES)('loads the %s agent from its AGENT.md', (stage) => {
     const p = stageProfile(stage);
-    expect(p.name).toMatch(/^[A-Z][a-z]+$/);
+    // V3 agents have one-word names (Planner); V4 staff have job titles (QA Engineer).
+    expect(p.name).toMatch(/^[A-Z][A-Za-z]+( [A-Z][A-Za-z]+)?$/);
     expect(p.summary.length).toBeGreaterThan(20);
     expect(p.persona).toMatch(/^You are the \*\*/);
     expect(p.persona).not.toMatch(/^---/m);
@@ -100,7 +101,7 @@ describe('a chat per stage', () => {
     expect(log.requests[1]?.appendSystemPrompt).toContain('**Builder**');
     // Each resumes its own Claude session, never the other's.
     expect(log.requests[1]?.resume).toBeNull();
-    const bad = await api('GET', '/api/projects/core/chat?stage=testing');
+    const bad = await api('GET', '/api/projects/core/chat?stage=marketing');
     expect(bad.status).toBe(400);
   });
 
@@ -263,7 +264,9 @@ describe('bundled skills', () => {
     for (const stage of STAGES) {
       const dir = path.join(STAGES_DIR, stage, 'skills');
       const skills = existsSync(dir) ? readdirSync(dir) : [];
-      expect(skills.length, stage).toBeGreaterThan(0);
+      // The V4 stages (idea, requirements, testing) have no bundled skills yet.
+      if (!['idea', 'requirements', 'testing'].includes(stage))
+        expect(skills.length, stage).toBeGreaterThan(0);
       for (const name of skills) {
         count++;
         expect(existsSync(path.join(dir, name, 'SKILL.md')), name).toBe(true);

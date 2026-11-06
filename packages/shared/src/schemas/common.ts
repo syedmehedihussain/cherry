@@ -28,11 +28,21 @@ export const STAGES = [
   'development',
   'deployment',
   'issues',
+  // V4, the office (ADR-0052): the stages V3 did not have.
+  'idea',
+  'requirements',
+  'testing',
 ] as const;
 export const StageSchema = z.enum(STAGES);
 export type Stage = z.infer<typeof StageSchema>;
 
-export const STAGE_LABEL: Record<Stage, string> = { ...PHASE_LABEL, issues: 'Issues' };
+export const STAGE_LABEL: Record<Stage, string> = {
+  ...PHASE_LABEL,
+  issues: 'Issues',
+  idea: 'Idea',
+  requirements: 'Requirements',
+  testing: 'Testing',
+};
 
 /**
  * The four stages the V3 workspace shows (ADR-0045). Preparation and Issues stay in
@@ -44,7 +54,13 @@ export const isWorkspaceStage = (s: Stage): s is WorkspaceStage =>
   (WORKSPACE_STAGES as readonly Stage[]).includes(s);
 
 /** Stages whose agent writes docs and notes only (ADR-0034); their chat opens in Auto. */
-export const DOCS_ONLY_STAGES: ReadonlySet<Stage> = new Set(['plan', 'design', 'issues']);
+export const DOCS_ONLY_STAGES: ReadonlySet<Stage> = new Set([
+  'plan',
+  'design',
+  'issues',
+  'idea',
+  'requirements',
+]);
 
 /** A project's own slash command, from `.claude/commands/<name>.md` (V2.1 w7.1). */
 export const ProjectCommandSchema = z.object({ name: z.string(), description: z.string() });

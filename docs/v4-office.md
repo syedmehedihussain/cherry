@@ -102,8 +102,11 @@ Same stages (ADR-0057). The user signs off each stage himself; there is no clien
 
 ## Settings, Agents
 
-Each agent is a Markdown file `~/.cherry/agents/<name>.md` with its role, stage, model, tools
-and rules. Settings, Agents shows them and lets the user edit them.
+Each staff agent ships as `packages/daemon/stages/<stage>/AGENT.md`. The user's own version goes
+in `~/.cherry/staff/<agent>.md` (for example `business-analyst.md`) and replaces the bundled
+persona; `~/.cherry/agents/` stays for custom scan agents. Settings, Agents shows and edits them.
+When a project has an office, every stage chat also gets the office brief: the role, where the
+client and technical documents go, work only on the user's job, and the `stage_ready` tool.
 
 ## After deployment: Maintenance
 

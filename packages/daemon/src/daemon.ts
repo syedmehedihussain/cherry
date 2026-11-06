@@ -121,6 +121,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
   const decisions = new DecisionBroker();
   const adrs = new AdrService(config, db, hub);
   const commits = new CommitService(config, db, hub, opts.runner ?? sdkRunner);
+  const office = new OfficeService(config, hub);
   const chat = new ChatService(
     config,
     db,
@@ -131,6 +132,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
     opts.home,
     adrs,
     commits,
+    office,
   );
   const calibration = new CalibrationService(
     config,
@@ -227,7 +229,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       autopilotRoutes(autopilot),
       adrRoutes(adrs),
       ideaRoutes(new IdeaStore(opts.home)),
-      officeRoutes(new OfficeService(config, hub), config),
+      officeRoutes(office, config),
       stageRoutes(opts.home, config),
       handoffRoutes(config, opts.runner ?? sdkRunner, chat),
       issueRoutes(new IssueService(config, approvals, hub)),

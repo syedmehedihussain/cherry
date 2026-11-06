@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { fakeRunner, type FakeLog } from '../src/claude/fake-runner.ts';
 import { gitInit, HOST, ORIGIN, testDaemon, type TestDaemon } from './helpers.ts';
 
 describe('the office (V4, ADR-0052, ADR-0054)', () => {
@@ -240,5 +241,79 @@ describe('stage documents (ADR-0053)', () => {
     ]);
     expect((await get('idea')).json()).toEqual({ client: [], technical: [] });
     expect((await get('nope')).statusCode).toBe(400);
+  });
+});
+
+describe('staff agents in the stage chats (o3)', () => {
+  let d: TestDaemon | null = null;
+  afterEach(async () => {
+    await d?.cleanup();
+    d = null;
+  });
+
+  it('briefs the stage agent, uses the user staff file, and stage_ready marks the stage ready', async () => {
+    const log: FakeLog = { requests: [], permissions: [], decisions: [], calls: [] };
+    d = await testDaemon({
+      runner: fakeRunner(
+        [
+          { call: { name: 'stage_ready', input: {} } },
+          { text: 'The idea is clear. We can start Requirements.' },
+        ],
+        log,
+      ),
+    });
+    const dir = path.join(d.projectsDir, 'proj');
+    gitInit(dir);
+    mkdirSync(path.join(d.home, 'staff'), { recursive: true });
+    writeFileSync(
+      path.join(d.home, 'staff', 'business-analyst.md'),
+      '---\nname: Business Analyst\n---\nYou are my own analyst. Ask about payments first.\n',
+    );
+    const cookie = await d.login();
+    const api = (method: 'GET' | 'POST', url: string, payload?: object) =>
+      d!.app.inject({
+        method,
+        url,
+        headers: { host: HOST, origin: ORIGIN, cookie },
+        ...(payload ? { payload } : {}),
+      });
+
+    await api('POST', '/api/projects/proj/office', {
+      kind: 'client',
+      client: { name: 'Fitness Master Gym' },
+    });
+    await api('POST', '/api/projects/proj/chat', { text: 'A gym wants an app', stage: 'idea' });
+    const start = Date.now();
+    while (d.chat.state('proj', 'idea').running && Date.now() - start < 3000)
+      await new Promise((r) => setTimeout(r, 10));
+
+    const prompt = log.requests[0]!.appendSystemPrompt ?? '';
+    expect(prompt).toContain('You are the **Business Analyst**');
+    expect(prompt).toContain('for the client Fitness Master Gym');
+    expect(prompt).toContain('docs/idea/client/');
+    expect(prompt).toContain('You are my own analyst. Ask about payments first.');
+    expect(log.calls).toEqual([
+      { name: 'stage_ready', ok: true, text: expect.stringMatching(/Marked ready/) },
+    ]);
+    const office = (await api('GET', '/api/projects/proj/office')).json().office;
+    expect(office.cycles[0].stages.idea.ready).toBe(true);
+  });
+
+  it('a project without an office gets no brief and no stage_ready', async () => {
+    const log: FakeLog = { requests: [], permissions: [], decisions: [], calls: [] };
+    d = await testDaemon({ runner: fakeRunner([{ text: 'ok' }], log) });
+    gitInit(path.join(d.projectsDir, 'core'));
+    const cookie = await d.login();
+    await d.app.inject({
+      method: 'POST',
+      url: '/api/projects/core/chat',
+      headers: { host: HOST, origin: ORIGIN, cookie },
+      payload: { text: 'hi', stage: 'plan' },
+    });
+    const start = Date.now();
+    while (d.chat.state('core', 'plan').running && Date.now() - start < 3000)
+      await new Promise((r) => setTimeout(r, 10));
+    expect(log.requests[0]!.appendSystemPrompt).not.toContain('## The office');
+    expect(log.requests[0]!.extraTools?.map((t) => t.name)).not.toContain('stage_ready');
   });
 });

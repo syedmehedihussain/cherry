@@ -31,6 +31,7 @@ const SHOWN_CHERRY_TOOLS = new Set([
   'mcp__cherry__propose_decision',
   'mcp__cherry__decision_done',
   'mcp__cherry__commit_changes',
+  'mcp__cherry__stage_ready',
 ]);
 const READ_LIKE = new Set(['Read', 'Glob', 'Grep', 'LS', 'WebFetch', 'WebSearch']);
 
@@ -214,6 +215,8 @@ export class Conversation {
     if (tool === 'TodoWrite') return 'to-do list';
     if (tool === 'mcp__cherry__propose_decision') return s('title') || 'a decision';
     if (tool === 'mcp__cherry__commit_changes') return s('message').split('\n')[0] || 'a commit';
+    if (tool === 'mcp__cherry__stage_ready')
+      return input.ready === false ? 'stage not ready' : 'stage ready';
     if (tool === 'mcp__cherry__decision_done')
       return `ADR-${String(input.adr ?? '?').padStart(4, '0')}`;
     return tool;

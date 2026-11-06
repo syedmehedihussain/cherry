@@ -167,8 +167,9 @@ Core office
       daemon store and API, events; `docs/data-model.md` and `docs/api.md` updated.
 - [x] o2 Stage documents (ADR-0053): `docs/<stage>/client|technical/`, read V3 flat docs where
       they are (`GET .../office/docs`). The documents panel is built with the stage room (o7).
-- [ ] o3 Staff agents: one agent file per stage in `~/.cherry/agents/` (role, model, tools,
-      rules); the agent says when the stage is ready; no turn without the user.
+- [x] o3 Staff agents: Idea, Requirements and Testing join the stages with their AGENT.md; the
+      office brief and `stage_ready` in every stage chat of a project with an office; the
+      user's own persona in `~/.cherry/staff/<agent>.md`.
 - [ ] o4 Click only (ADR-0055): remove Autopilot (ADR-0046), the automatic handoff note and
       every other automatic model call.
 - [ ] o5 Projects page: Client projects and Personal projects; New project with the kind switch.
@@ -195,7 +196,8 @@ Project tabs
       status bar); secret files blocked.
 - [ ] o16 Meeting tab and Magnet as project manager (ADR-0056): reports from files, agenda,
       action items, questions to one agent or Magnet; Magnet on every project screen.
-- [ ] o17 Settings, Agents: each agent's role, model, tools and its Markdown file, editable.
+- [ ] o17 Settings, Agents: each agent's role, model, tools and its Markdown file
+      (`~/.cherry/staff/`), editable.
 
 Change control and after Live
 - [ ] o18 Change control: small change and change log; big change, impact note, approve or

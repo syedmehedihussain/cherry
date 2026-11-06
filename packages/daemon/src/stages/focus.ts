@@ -44,6 +44,10 @@ const STAGE_FILES: Record<Stage, string[]> = {
     '.github/workflows/',
   ],
   issues: ['docs/issues/', '_project/STATUS.md'],
+  // V4 (ADR-0053)
+  idea: ['docs/idea/client/', 'docs/idea/technical/'],
+  requirements: ['docs/requirements/client/', 'docs/requirements/technical/'],
+  testing: ['docs/testing/client/', 'docs/testing/technical/', 'docs/test-plan.md'],
 };
 
 const DOC_EXT = /\.(md|mdx|html|ya?ml|json|txt|css)$/i;
