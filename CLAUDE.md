@@ -19,7 +19,8 @@ CLAUDE.md, README.md
 docs/                 product, engineering and design docs (committed)
   adr/                one file per decision
   design/tokens.css   design tokens; the web package imports this file
-  design/screens/v3/  V3 artboards, source of truth for layout until V4 screens arrive
+  design/screens/v4/  the V4 prototype (office-prototype.html), source of truth for layout
+  design/screens/v3/  V3 artboards (stage layouts reused inside V4 rooms)
   design/prompts/     prompts that draft the V4 screens
 packages/             cli, daemon, web, shared (see Stack)
 _project/             personal state, git-excluded, never committed
@@ -64,15 +65,15 @@ Workspace packages import each other's TypeScript source directly (`exports` poi
 5. **Edits in the UI only through the built-in editor** (ADR-0021). The file viewer has **Edit**;
    Save writes one text file after an unchanged-on-disk check. Secret and binary files stay
    blocked. Claude's edits still need approval.
-6. **Match the design.** Screens are in `docs/design/screens/` (V4 screens from Claude Design). Use tokens, not raw hex.
+6. **Match the design.** V4: `docs/design/screens/v4/office-prototype.html` is the source of truth;
+   V3 artboards in `docs/design/screens/v3/`. Use tokens, not raw hex.
 7. **Nothing runs without the user** (ADR-0052). A stage agent starts only when the user gives
    it a job. No Autopilot, no background or scheduled runs. Auto mode still finishes a job.
 8. **Every real choice becomes an ADR** in `docs/adr/`. Use `docs/adr/template.md`.
 9. **Work milestone by milestone.** Finish and test one roadmap task before the next. Tick the
    box in `docs/roadmap.md` and update `_project/STATUS.md` when a task is done.
-10. **Token budget** (ADR-0022). Small jobs may run automatically, on Haiku, with small capped
-    prompts (e.g. tidying a note, drafting a `.gitignore`). Big jobs (reviews, scans, reports,
-    explanations) run only when the user clicks. Never use a bigger model for an automatic job.
+10. **Every model call starts from a click** (ADR-0055, amends ADR-0022). No automatic jobs, not
+    even small Haiku ones. Summary views are built from files and state, with no model call.
 11. Conventional commits (`feat:`, `fix:`, `docs:` …). Small commits, one roadmap task each.
 
 ## Ask before

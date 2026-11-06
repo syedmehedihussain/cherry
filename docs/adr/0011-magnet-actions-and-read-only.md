@@ -3,6 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-10-08
 - **Decided by:** Meddy (autonomous build, recorded for review)
+- **Amended by:** 0056 (Magnet is the project manager in V4)
 
 ## Context
 

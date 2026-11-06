@@ -34,6 +34,7 @@ tab, its session hook and its project-notes skill keep working on the same files
 ├── src/ ...                  committed  the code
 └── _project/                 ignored    via .git/info/exclude (cctop standard)
     ├── STATUS.md             where we left off, next steps (cctop format)
+    ├── office.json           V4 office state: stages, sign-offs, changes, costs, time (ADR-0054)
     ├── project.json          app metadata: phase, repo, stack, doc paths
     ├── tasks.json            the phase task graph (from Core's preset)
     ├── survey.json           every question asked and the answer chosen

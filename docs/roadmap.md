@@ -155,46 +155,60 @@ tested and deployed app from the cockpit, and no stage shows a panel the user di
 
 From the user's brief (2026-11-06): Cherry works like a software company that builds an app for
 a client. Seven gated stages, each with a staff agent; the client approves at every gate;
-nothing runs unless the user gives a job. The plan is in [`v4-office.md`](v4-office.md).
-No launch date; finish each task well.
+nothing runs unless the user gives a job. The plan is in [`v4-office.md`](v4-office.md); the
+design is `design/screens/v4/office-prototype.html`. No launch date; finish each task well.
 
 Design
-- [ ] o0 Screens from Claude Design (`design/prompts/v4-claude-design.md`): the user runs it
-      and brings back the screens, component sheet and handoff note into
-      `docs/design/screens/v4/`; review and approve.
+- [x] o0 Clickable prototype of every V4 screen, approved as the design (2026-11-06).
 
 Core office
-- [ ] o1 Project state (ADR): stage status, sign-offs, client approvals, internal only, version;
-      shared zod schemas, daemon store and API, events.
+- [ ] o1 Office state (ADR-0054): `_project/office.json` schema in shared zod (kind client or
+      personal, stages, sign-offs, approvals, change requests, versions, costs, time, budget),
+      daemon store and API, events; `docs/data-model.md` and `docs/api.md` updated.
 - [ ] o2 Stage documents (ADR-0053): `docs/<stage>/client|technical/`, read V3 flat docs where
-      they are; documents panel with Client / Technical tabs.
-- [ ] o3 Staff agents: one agent and prompt per stage (Business Analyst, System Analyst,
-      System Architect, UI/UX Designer, Development Team, QA Engineer, DevOps Engineer); the
-      agent says when the stage is ready; no turn without the user (Auto mode finishes a job).
-- [ ] o4 Remove Autopilot (ADR-0046) and anything that starts work without the user.
-- [ ] o5 Project home: seven stage windows with their states, project status, client and
-      version; no stage tabs.
-- [ ] o6 Stage room: chat with the stage agent, documents panel, Auto mode, Sign off, back to
-      the office; reuse the V3 Plan, Design, Development and Deployment layouts inside.
-- [ ] o7 Sign-off: client approval form or internal only, next stage unlocks.
-- [ ] o8 New stages: Idea (brief), Requirements (questions for the client, interview log, SRS,
-      feasibility), Testing (test plan, runs, bug list, UAT).
-- [ ] o9 Development inside gate: prototype, Send to client, approval before the full build.
-- [ ] o10 Client documents export (ADR: PDF, link or both).
+      they are; documents panel with Client (or Summary) / Technical tabs.
+- [ ] o3 Staff agents: one agent file per stage in `~/.cherry/agents/` (role, model, tools,
+      rules); the agent says when the stage is ready; no turn without the user.
+- [ ] o4 Click only (ADR-0055): remove Autopilot (ADR-0046), the automatic handoff note and
+      every other automatic model call.
+- [ ] o5 Projects page: Client projects and Personal projects; New project with the kind switch.
+- [ ] o6 Project page: name only, the tab bar, the Stages tab with the seven cards and Live.
+- [ ] o7 Stage room: chat with the stage agent, documents panel, Auto mode, Sign off, the
+      chat status line (model, context, 5-hour, week); V3 Design, Development and Deployment
+      layouts reused inside.
+- [ ] o8 Sign-off: client approval form, internal only, sent and waiting; personal sign-off
+      (ADR-0057); the next stage unlocks.
+- [ ] o9 New stages: Idea (brief), Requirements (questions for the client, interview log, SRS,
+      feasibility), Testing (test plan, runs, bugs, UAT).
+- [ ] o10 Development inside gate (prototype, send, approval) and the client documents export
+      (ADR: PDF, link or both).
 
-Change control
-- [ ] o11 Small change: edit and change-log line. Big change: change request, impact note,
-      approve or reject, needs-update flags cleared by a new sign-off.
+Project tabs
+- [ ] o11 Version control tab, on the project and in each stage: staged and changed files,
+      Write message on a click, commit as the user, history by agent and stage, push asks.
+- [ ] o12 Claude usage tab: limits, context, project token budget, tokens by stage, agent, model.
+- [ ] o13 Invoice tab: time by stage, costs, Claude share, total, client invoice; Costs for a
+      personal project.
+- [ ] o14 Docs tab: document vault (tree, search, read and edit, links, backlinks, outline,
+      graph), documents only.
+- [ ] o15 Code tab: VS Code-like editor on Monaco (explorer, tabs, search, terminal panel,
+      status bar); secret files blocked.
+- [ ] o16 Meeting tab and Magnet as project manager (ADR-0056): reports from files, agenda,
+      action items, questions to one agent or Magnet; Magnet on every project screen.
+- [ ] o17 Settings, Agents: each agent's role, model, tools and its Markdown file, editable.
 
-After Live
-- [ ] o12 Go Live and the Maintenance office: Support, QA, Issues, Bug fixing, Upgrades.
-- [ ] o13 New version: Start v2.0 runs a new cycle next to the live v1.
-- [ ] o14 Magnet's place in the office (answers and overview, never drives the agents).
-- [ ] o15 Clean-up, docs, e2e tests, and one real run (Fitness Master) from Idea to Live.
+Change control and after Live
+- [ ] o18 Change control: small change and change log; big change, impact note, approve or
+      reject, needs-update flags cleared by a new sign-off.
+- [ ] o19 Go Live and the Maintenance office: Support, QA, Issues, Bug fixing, Upgrades.
+- [ ] o20 New version: Start v2.0 runs a new cycle next to the live v1.
+- [ ] o21 Clean-up, docs, e2e tests, and one real run (Fitness Master) from Idea to Live.
 
 **Done when:** a new project starts with only Idea open, moves stage by stage with a client
-approval at each gate, each stage leaves client and technical documents, a big change flags the
-right stages, the app goes Live into Maintenance, and no agent ever ran without the user.
+approval at each gate (or the user's own sign-off for a personal project), each stage leaves
+client and technical documents, every tab of the prototype works on real data, a big change
+flags the right stages, the app goes Live into Maintenance, and no model call ever ran without
+a click.
 
 ## After the MVP: scan agents
 

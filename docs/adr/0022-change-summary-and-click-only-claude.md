@@ -3,6 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-10-11
 - **Decided by:** Meddy
+- **Amended by:** 0055 (every model call starts from a click, Haiku included)
 
 ## Context
 

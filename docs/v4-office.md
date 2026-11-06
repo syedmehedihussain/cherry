@@ -2,7 +2,7 @@
 
 Written 2026-11-06 from the user's brief. This page is the plan. The decision is
 [ADR-0052](adr/0052-the-office-gated-stages.md). Tasks go in [`roadmap.md`](roadmap.md) under
-**V4** once this page is accepted.
+**V4** (accepted 2026-11-06).
 
 ## Why
 
@@ -60,14 +60,50 @@ full build starts.
 The project home shows one status: `Idea` → `Requirements` → `Plan` → `Design` →
 `Development` → `Testing` → `Deployment` → **`Live`**.
 
-## The home screen
+## The project page
 
-- No stage tabs at the top. The project **home** shows the stages as windows (cards).
-- Each window shows its state: **locked**, **active**, **waiting for client**, **signed off**,
-  or **needs update** (after a big change).
-- Click a window to open that stage: its chat with the stage's agent, and its documents.
-- The look of the home page is drafted from `design/prompts/v4-office-prototype.md` and
-  `design/prompts/v4-claude-design.md`.
+The design is the clickable prototype `design/screens/v4/office-prototype.html` (open it in a
+browser; the **Demo** button jumps to any state). It is the source of truth for V4 screens.
+
+- The top shows only the project name. Tabs: **Stages** (Maintenance once Live), **Meeting**,
+  **Docs**, **Code**, **Version control**, **Claude usage**, **Invoice** (Costs for a personal
+  project).
+- **Stages:** the seven stages as square cards with the stage name, its agent and its state:
+  **locked**, **active**, **waiting for client**, **signed off**, or **needs update**. The eighth
+  card is **Live**. Click a card to open the stage room.
+- **Stage room:** the chat with the stage's agent and its documents (Client / Technical), Auto
+  mode, Sign off. Each room also has its own **Version control** and **Claude usage** tabs,
+  filtered to that stage.
+- **Meeting:** every agent with what it has done, what it is on and what it needs from the user;
+  an agenda, action items, and questions to one agent or to Magnet. Built from the files, so
+  opening it costs no tokens (ADR-0055).
+- **Docs:** an Obsidian-like vault of the project's documents only (no code): tree, search, read
+  and edit, links and backlinks, outline, graph.
+- **Code:** a VS Code-like editor (Monaco, ADR-0048): explorer, tabs, search, terminal panel,
+  status bar. Secret files stay blocked.
+- **Version control:** branch, staged and changed files, commit message (**Write message** on a
+  click), commit as the user, history with the agent and stage of each commit; push always asks.
+- **Claude usage:** the 5-hour and weekly limits, the context window, the project's token budget,
+  and tokens by stage, agent and model.
+- **Invoice:** time by stage, every cost (hosting, domain, store accounts, the Claude share of the
+  plan), the total, and the client invoice at the user's hourly rate.
+- Under every chat, a status line: Auto mode, model, context window, 5-hour and weekly usage.
+
+## Magnet, the project manager
+
+Magnet is on every project screen (ADR-0056). It answers about progress, costs, time and what
+is next, and runs the Meeting. It never gives a job to an agent.
+
+## Personal projects
+
+Same stages (ADR-0057). The user signs off each stage himself; there is no client, no
+"waiting for client" and no invoice, only Costs. The Projects page lists **Client projects** and
+**Personal projects**.
+
+## Settings, Agents
+
+Each agent is a Markdown file `~/.cherry/agents/<name>.md` with its role, stage, model, tools
+and rules. Settings, Agents shows them and lets the user edit them.
 
 ## After deployment: Maintenance
 
@@ -97,10 +133,12 @@ Requirements can change after a later stage has started.
      and its agent syncs it. The flag clears when the user signs that stage off again.
 - The agent suggests "small" or "big". The user decides.
 
+## Decided
+
+- State: `_project/office.json`, never committed (ADR-0054).
+- Every model call starts from a click, Haiku included (ADR-0055).
+- Stage documents: `docs/<stage>/client|technical/` (ADR-0053).
+
 ## Open questions
 
-- Where the client documents live and how they are shared with the client (export to PDF, a
-  shared link, or both).
-- How this fits `docs/project-standard.md` (the folder layout of a project's docs).
-- What happens to Magnet: the user's assistant in the office (answers questions, keeps the
-  overview), but it never drives the agents.
+- How client documents are shared with the client: export to PDF, a shared link, or both (o10).
