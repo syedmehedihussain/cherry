@@ -199,6 +199,14 @@ calls a model (ADR-0055).
 | POST | `/api/projects/:id/office/meeting-notes` | `{ text }` writes `docs/meetings/<date>.md` (`-2`, `-3` for more that day) |
 | POST | `/api/projects/:id/office/versions` | `{ version, title }`: a new cycle next to the live one; Idea carries over, Requirements opens; 409 if the last cycle is not live |
 
+## Staff (V4 o17)
+
+| Method | Path | Does |
+| --- | --- | --- |
+| GET | `/api/staff/:stage` | `{ stage, path, custom, content }`: the user's `~/.cherry/staff/<agent>.md`, or the bundled `AGENT.md` |
+| PUT | `/api/staff/:stage` | `{ content }` writes the user's own persona file |
+| DELETE | `/api/staff/:stage` | removes the user's file; the bundled persona is back |
+
 ## Start project
 
 | Method | Path | Does |

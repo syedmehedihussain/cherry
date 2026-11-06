@@ -1,18 +1,23 @@
 import { ArrowLeft, ArrowUpRight, Check, Code2, Globe, Mail } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
+import { z } from 'zod';
 import {
   MAGNET_FILES,
+  OFFICE_AGENT,
+  OFFICE_STAGES,
+  OFFICE_STAGE_LABEL,
   relativeTime,
   type AllowRule,
   type MagnetFileName,
+  type OfficeStage,
   type Usage,
-  isWorkspaceStage,
 } from '@cherry/shared';
 import { removeAllowRule, useAllowRules } from '../../api/chat.ts';
-import { ApiFailure } from '../../api/client.ts';
+import { api, ApiFailure } from '../../api/client.ts';
 import { patchConfig, saveMagnetFile, useMagnetInfo } from '../../api/magnet.ts';
-import { recheckHealth, useConfig, useHealth } from '../../api/queries.ts';
+import { queryClient, recheckHealth, useConfig, useHealth } from '../../api/queries.ts';
 import { Lockup } from '../../components/Brand/Brand.tsx';
 import { MagnetAvatar } from '../../components/MagnetAvatar/MagnetAvatar.tsx';
 import { Switch } from '../../components/Switch/Switch.tsx';
@@ -49,7 +54,7 @@ const GROUPS: { title: string | null; items: [string, string][] }[] = [
   {
     title: 'Assistant',
     items: [
-      ['agents', 'Stage agents'],
+      ['agents', 'Agents'],
       ['permissions', 'Permissions'],
       ['magnet', 'Magnet'],
     ],
@@ -403,45 +408,136 @@ function CheckAgain() {
   );
 }
 
-/** The four stage agents and their skills (ADR-0034, ADR-0045). */
+/**
+ * The staff (V4 o17, ADR-0052): one agent per office stage, its skills, and its persona. Saving
+ * writes your own file in ~/.cherry/staff/, which replaces the bundled one; Reset goes back.
+ */
 function AgentsSection() {
-  const stages = useStageInfo().data?.filter((s) => isWorkspaceStage(s.stage));
+  const info = useStageInfo().data;
   return (
     <section className={styles.section}>
-      <h1>Stage agents</h1>
+      <h1>Agents</h1>
       <p className={styles.lead}>
-        Each stage tab in a project has its own agent and chat. Skills that ship with Cherry are
-        marked bundled. To give an agent your own skill, put its folder (with a{' '}
-        <span className="mono">SKILL.md</span>) in{' '}
-        <span className="mono">~/.cherry/skills/&lt;stage&gt;/</span>; a skill with the same name
-        replaces the bundled one. Only the skill folder loads, never hooks or settings.
+        Your staff: one agent for each stage of the office. Each works only on the jobs you give it
+        in its stage room. Magnet, the project manager, is in the Magnet section. To give an agent
+        your own skill, put its folder (with a <span className="mono">SKILL.md</span>) in{' '}
+        <span className="mono">~/.cherry/skills/&lt;stage&gt;/</span>.
       </p>
-      {stages?.map((s) => (
-        <div key={s.stage} className={styles.agent}>
-          <div className={styles.agentHead}>
-            <strong>
-              {s.label}: the {s.name}
-            </strong>
-            {s.docsOnly && <span className={styles.agentNote}>docs only</span>}
-          </div>
-          <p>{s.summary}</p>
-          {s.skills.length ? (
-            <ul className={styles.agentSkills}>
-              {s.skills.map((k) => (
-                <li key={k.name} title={k.description}>
-                  <span className="mono">{k.name}</span>
-                  <span className={styles.agentNote}>{k.source}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className={styles.agentNote}>
-              No skills yet. Add one in <span className="mono">~/.cherry/skills/{s.stage}/</span>.
-            </p>
-          )}
-        </div>
-      ))}
+      {OFFICE_STAGES.map((stage) => {
+        const s = info?.find((x) => x.stage === stage);
+        return (
+          <section key={stage} className={styles.agent} aria-label={OFFICE_AGENT[stage]}>
+            <div className={styles.agentHead}>
+              <strong>
+                {OFFICE_AGENT[stage]}, {OFFICE_STAGE_LABEL[stage]}
+              </strong>
+              {s?.docsOnly && <span className={styles.agentNote}>documents only</span>}
+            </div>
+            {s?.summary && <p>{s.summary}</p>}
+            {s && s.skills.length > 0 && (
+              <ul className={styles.agentSkills}>
+                {s.skills.map((k) => (
+                  <li key={k.name} title={k.description}>
+                    <span className="mono">{k.name}</span>
+                    <span className={styles.agentNote}>{k.source}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <StaffFile stage={stage} />
+          </section>
+        );
+      })}
     </section>
+  );
+}
+
+const StaffSchema = z.object({
+  stage: z.string(),
+  path: z.string(),
+  custom: z.boolean(),
+  content: z.string(),
+});
+
+function StaffFile({ stage }: { stage: OfficeStage }) {
+  const file = useQuery({
+    queryKey: ['staff', stage],
+    queryFn: () => api('GET', `/api/staff/${stage}`, undefined, StaffSchema),
+  });
+  const [draft, setDraft] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const run = async (method: 'PUT' | 'DELETE') => {
+    try {
+      const r = await api(
+        method,
+        `/api/staff/${stage}`,
+        method === 'PUT' ? { content: draft } : undefined,
+        StaffSchema,
+      );
+      queryClient.setQueryData(['staff', stage], r);
+      setDraft(null);
+      setError(null);
+    } catch (e) {
+      setError(e instanceof ApiFailure ? e.message : 'Could not save the file.');
+    }
+  };
+  if (!file.data) return null;
+  return (
+    <div className={styles.staff}>
+      <div className={styles.staffHead}>
+        <span className="mono">{file.data.custom ? file.data.path : 'bundled persona'}</span>
+        {file.data.custom && <span className={styles.agentNote}>your file</span>}
+        <span className={styles.staffGrow} />
+        {draft === null ? (
+          <>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setDraft(file.data.content)}
+            >
+              Edit
+            </button>
+            {file.data.custom && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => void run('DELETE')}
+              >
+                Reset
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setDraft(null)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => void run('PUT')}
+            >
+              Save
+            </button>
+          </>
+        )}
+      </div>
+      {draft !== null ? (
+        <textarea
+          className={styles.staffText}
+          aria-label={`${OFFICE_AGENT[stage]} persona`}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          rows={16}
+        />
+      ) : (
+        <details>
+          <summary>Show the persona</summary>
+          <pre className={styles.staffText}>{file.data.content}</pre>
+        </details>
+      )}
+      {error && <p className={styles.agentNote}>{error}</p>}
+    </div>
   );
 }
 

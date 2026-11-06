@@ -526,3 +526,42 @@ describe('the meeting (o16)', () => {
     expect(readFileSync(path.join(dir, a.path), 'utf8')).toBe('# Meeting\n\nAll good.\n');
   });
 });
+
+describe('staff personas in Settings, Agents (o17)', () => {
+  let d: TestDaemon | null = null;
+  afterEach(async () => {
+    await d?.cleanup();
+    d = null;
+  });
+
+  it('shows the bundled persona, saves the user own file, and resets it', async () => {
+    d = await testDaemon();
+    const cookie = await d.login();
+    const api = (method: 'GET' | 'PUT' | 'DELETE', payload?: object) =>
+      d!.app.inject({
+        method,
+        url: '/api/staff/requirements',
+        headers: { host: HOST, origin: ORIGIN, cookie },
+        ...(payload ? { payload } : {}),
+      });
+    let r = (await api('GET')).json();
+    expect(r).toMatchObject({ path: '~/.cherry/staff/system-analyst.md', custom: false });
+    expect(r.content).toContain('You are the **System Analyst**');
+    r = (await api('PUT', { content: '---\nname: System Analyst\n---\nMine.\n' })).json();
+    expect(r).toMatchObject({ custom: true, content: '---\nname: System Analyst\n---\nMine.\n' });
+    expect(readFileSync(path.join(d.home, 'staff', 'system-analyst.md'), 'utf8')).toContain(
+      'Mine.',
+    );
+    r = (await api('DELETE')).json();
+    expect(r.custom).toBe(false);
+    expect(
+      (
+        await d.app.inject({
+          method: 'GET',
+          url: '/api/staff/marketing',
+          headers: { host: HOST, origin: ORIGIN, cookie },
+        })
+      ).statusCode,
+    ).toBe(400);
+  });
+});

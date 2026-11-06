@@ -197,7 +197,7 @@ Project tabs
       status bar); secret files blocked.
 - [x] o16 Meeting tab and Magnet as project manager (ADR-0056): reports from files, agenda,
       action items, questions to one agent or Magnet; Magnet on every project screen.
-- [ ] o17 Settings, Agents: each agent's role, model, tools and its Markdown file
+- [x] o17 Settings, Agents: each agent's role, model, tools and its Markdown file
       (`~/.cherry/staff/`), editable.
 
 Change control and after Live

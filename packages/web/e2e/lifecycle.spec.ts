@@ -31,13 +31,30 @@ test('stage tabs open each agent', async ({ page }) => {
   await expect(page.getByRole('contentinfo')).toContainText('Planner');
 });
 
-test('Settings lists the stage agents and their bundled skills', async ({ page }) => {
+test('Settings, Agents: the seven staff agents, their skills and their personas', async ({
+  page,
+}) => {
   await page.goto('/settings/agents');
-  await expect(page.getByRole('heading', { name: 'Stage agents' })).toBeVisible();
-  await expect(page.getByText('Deployment: the Shipper')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Agents' })).toBeVisible();
+  for (const name of [
+    'Business Analyst, Idea',
+    'System Analyst, Requirements',
+    'QA Engineer, Testing',
+    'DevOps Engineer, Deployment',
+  ])
+    await expect(page.getByText(name)).toBeVisible();
   await expect(page.getByText('release', { exact: true })).toBeVisible();
   await expect(page.getByText('tdd', { exact: true })).toBeVisible();
-  // V3 (ADR-0045): four stage agents; Preparation and Issues are gone.
   await expect(page.getByText(/^Preparation: the /)).toHaveCount(0);
-  await expect(page.getByText(/^Issues: the /)).toHaveCount(0);
+
+  // V4 o17: edit a persona into ~/.cherry/staff/, then reset it.
+  const qa = page.getByRole('region', { name: 'QA Engineer' });
+  await qa.getByRole('button', { name: 'Edit' }).click();
+  const text = qa.getByLabel('QA Engineer persona');
+  await expect(text).toHaveValue(/You are the \*\*QA Engineer\*\*/);
+  await text.fill('---\nname: QA Engineer\n---\nTest on a cheap Android phone first.\n');
+  await qa.getByRole('button', { name: 'Save' }).click();
+  await expect(qa.getByText('~/.cherry/staff/qa-engineer.md')).toBeVisible();
+  await qa.getByRole('button', { name: 'Reset' }).click();
+  await expect(qa.getByText('bundled persona')).toBeVisible();
 });
