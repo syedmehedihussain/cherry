@@ -179,6 +179,28 @@ The Issues tab is gone in V3 (ADR-0045); these routes and `docs/issues/` stay.
 | PATCH | `/api/ideas/:id` | `{ name, description? }` → `{ idea }` |
 | DELETE | `/api/ideas/:id` | removes the idea; Start project calls it once the project is created |
 
+## Office (V4, ADR-0052, ADR-0054)
+
+State of one project in `_project/office.json`. Every route returns `{ office }` (the whole file)
+and sends `office.updated`. Stage routes act on the last cycle (the version being built). No route
+calls a model (ADR-0055).
+
+| Method | Path | Does |
+| --- | --- | --- |
+| GET | `/api/projects/:id/office` | `{ office }`, or `{ office: null }` before the office is started |
+| POST | `/api/projects/:id/office` | `{ kind: 'client', client: { name, contact? } }` or `{ kind: 'personal' }`; Idea opens; 409 if it exists |
+| PATCH | `/api/projects/:id/office` | `{ client?, rate?, currency?, budgetTokens? }`; 400 for a client on a personal project |
+| POST | `/api/projects/:id/office/stages/:stage/ready` | `{ ready }`: the agent says the stage is ready (or not) |
+| POST | `/api/projects/:id/office/stages/:stage/send` | sent to the client: `active` to `waiting`; client projects only; needs `ready` |
+| POST | `/api/projects/:id/office/stages/:stage/sign-off` | `{ by?, date?, notes?, internal? }`; needs `ready`; `by` unless internal; personal signs as you; opens the next stage, or Live after Deployment; a flagged stage just clears its flag. Development needs the prototype approved |
+| POST | `/api/projects/:id/office/dev-gate` | `{ gate: build\|sent\|approved }`: build to sent to approved (sent back to build: client wants changes); personal goes build to approved |
+| POST | `/api/projects/:id/office/changes` | `{ kind: 'small', stage, text }` logs it; `{ kind: 'big', title, text, stages }` adds change request `CR-NNN` |
+| POST | `/api/projects/:id/office/changes/:cr/approve` | flags the named stages that are signed off as `update` (ready false) |
+| POST | `/api/projects/:id/office/changes/:cr/reject` | keeps it as rejected |
+| POST / DELETE | `/api/projects/:id/office/costs[/:costId]` | `{ item, vendor?, period?, amount, bill? }` (bill is false on a personal project) |
+| POST / DELETE | `/api/projects/:id/office/time[/:timeId]` | `{ stage?, hours, note?, date? }` manual time |
+| POST | `/api/projects/:id/office/versions` | `{ version, title }`: a new cycle next to the live one; Idea carries over, Requirements opens; 409 if the last cycle is not live |
+
 ## Start project
 
 | Method | Path | Does |
@@ -262,6 +284,7 @@ One socket at `/ws`. Every event: `{ type, at, ...payload }`. The client subscri
 | Event | Payload | Topic |
 | --- | --- | --- |
 | `projects.updated` | `{ cards: ProjectCard[] }` | projects |
+| `office.updated` | `{ projectId, office }` the project's office changed (V4) | project:id |
 | `health.updated` | health object | projects |
 | `chat.item` | `{ projectId, stage, conversationId, item: ChatItem }` (upsert by `item.id`: user message, text, tool row, decision, approval, turn end) | project:id |
 | `chat.rewound` | `{ projectId, stage, conversationId }`: a rewind cut the chat; reload it | project:id |

@@ -9,6 +9,7 @@ import type { RunState } from './run.ts';
 import type { BrowserTest, Checks } from './deploy.ts';
 import type { AutopilotState } from './autopilot.ts';
 import type { Stage } from './common.ts';
+import type { OfficeFile } from './office.ts';
 
 export type NoticeKind =
   | 'agent.done'
@@ -47,6 +48,8 @@ export type ClientMessage = z.infer<typeof ClientMessageSchema>;
  * more event types here.
  */
 export interface EventMap {
+  /** The office of a project changed (V4, ADR-0054). Topic `project:<id>`. */
+  'office.updated': { projectId: string; office: OfficeFile };
   'projects.updated': { cards: z.infer<typeof ProjectCardSchema>[] };
   'health.updated': z.infer<typeof HealthSchema>;
   /** Files changed on disk in a project (tree, git, open file may be stale). */

@@ -205,6 +205,63 @@ left as it is and the API returns an error.
 
 `name` is 1–80 characters, `description` up to 4000 (may be empty). Newest first.
 
+## 6c. `_project/office.json` (V4, ADR-0054)
+
+The office of one project: stages, sign-offs, changes, versions, costs and time. Personal state:
+never committed (`_project/` is in `.git/info/exclude`; Cherry adds the line when it writes the
+file). Mode 600; a file that does not parse is left as it is and the API returns `office_invalid`.
+Schema in `packages/shared/src/schemas/office.ts`.
+
+```json
+{
+  "schema": 1,
+  "kind": "client",
+  "client": { "name": "Fitness Master Gym", "contact": "Nusrat Jahan, operations" },
+  "rate": 25,
+  "currency": "USD",
+  "budgetTokens": 6000000,
+  "cycles": [
+    {
+      "version": "1.0",
+      "title": "",
+      "stages": {
+        "idea": {
+          "state": "signed",
+          "ready": true,
+          "sentAt": null,
+          "signOffs": [
+            { "by": "Nusrat Jahan", "date": "2026-10-28", "notes": "", "internal": false, "at": "2026-10-28T10:00:00.000Z" }
+          ]
+        },
+        "requirements": { "state": "active", "ready": false, "sentAt": null, "signOffs": [] },
+        "plan": { "state": "locked", "ready": false, "sentAt": null, "signOffs": [] }
+      },
+      "devGate": "build",
+      "startedAt": "2026-10-28T09:00:00.000Z",
+      "liveAt": null
+    }
+  ],
+  "changes": [
+    { "id": "CR-001", "title": "Family memberships", "text": "…", "status": "approved",
+      "stages": ["requirements", "plan", "design"], "createdAt": "…", "decidedAt": "…" }
+  ],
+  "changelog": [{ "at": "…", "stage": "requirements", "text": "Renamed package to membership plan." }],
+  "costs": [{ "id": "cost_1a2b3c4d", "item": "Domain", "vendor": "Namecheap", "period": "1 year",
+    "amount": 14.99, "bill": true, "addedAt": "…" }],
+  "time": [{ "id": "time_1a2b3c4d", "stage": "idea", "hours": 1.5, "note": "Client call", "date": "2026-11-06" }],
+  "createdAt": "…",
+  "updatedAt": "…"
+}
+```
+
+- `stages` has all seven: `idea`, `requirements`, `plan`, `design`, `development`, `testing`,
+  `deployment` (the example is cut short).
+- `state`: `locked`, `active`, `waiting` (sent to the client), `signed`, `update` (a big change
+  flagged it), `carried` (taken over from the version before).
+- `kind: personal`: `client` is null, every sign-off is `internal` by `you`, costs are never billed.
+- `cycles`: oldest first; the last is the version being built. `liveAt` is set when its
+  Deployment is signed off.
+
 ## 7. SQLite cache — `~/.cherry/cache.db`
 
 Rebuildable from disk (except `usage_days`). Managed with plain SQL migrations in

@@ -1,5 +1,7 @@
 import { IdeaStore } from './ideas/store.ts';
 import { ideaRoutes } from './routes/ideas.ts';
+import { officeRoutes } from './routes/office.ts';
+import { OfficeService } from './office/service.ts';
 import { handoffRoutes, stageRoutes } from './routes/stages.ts';
 import { issueRoutes } from './routes/issues.ts';
 import { IssueService } from './issues/service.ts';
@@ -225,6 +227,7 @@ export function createDaemon(opts: DaemonOptions): Daemon {
       autopilotRoutes(autopilot),
       adrRoutes(adrs),
       ideaRoutes(new IdeaStore(opts.home)),
+      officeRoutes(new OfficeService(config, hub)),
       stageRoutes(opts.home, config),
       handoffRoutes(config, opts.runner ?? sdkRunner, chat),
       issueRoutes(new IssueService(config, approvals, hub)),

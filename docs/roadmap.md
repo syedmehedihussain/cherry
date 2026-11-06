@@ -162,7 +162,7 @@ Design
 - [x] o0 Clickable prototype of every V4 screen, approved as the design (2026-11-06).
 
 Core office
-- [ ] o1 Office state (ADR-0054): `_project/office.json` schema in shared zod (kind client or
+- [x] o1 Office state (ADR-0054): `_project/office.json` schema in shared zod (kind client or
       personal, stages, sign-offs, approvals, change requests, versions, costs, time, budget),
       daemon store and API, events; `docs/data-model.md` and `docs/api.md` updated.
 - [ ] o2 Stage documents (ADR-0053): `docs/<stage>/client|technical/`, read V3 flat docs where
