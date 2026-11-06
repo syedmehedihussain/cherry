@@ -178,7 +178,7 @@ function DocsPanel({
  * The open document: rendered Markdown, Edit in the built-in editor (rule 5, ADR-0021), and
  * Ask about this for a selection.
  */
-function DocReader({
+export function DocReader({
   projectId,
   path,
   now,

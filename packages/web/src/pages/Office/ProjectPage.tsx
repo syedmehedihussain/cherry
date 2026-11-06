@@ -1,9 +1,11 @@
 import { NavLink, useParams } from 'react-router';
+import { OfficeStageSchema } from '@cherry/shared';
 import { useOffice, useLiveOffice } from '../../api/office.ts';
 import { useProjects } from '../../api/queries.ts';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
 import { Workspace } from '../Workspace/Workspace.tsx';
 import { StagesTab } from './Office.tsx';
+import { StageRoom } from './StageRoom.tsx';
 import styles from './ProjectPage.module.css';
 
 /**
@@ -11,11 +13,25 @@ import styles from './ProjectPage.module.css';
  * its views when it does not (set up the office from the Projects page).
  */
 export function ProjectPage() {
-  const id = useParams().id ?? '';
+  const params = useParams();
+  const id = params.id ?? '';
   const office = useOffice(id);
   useLiveOffice(id);
   if (office.isPending) return <div className={styles.loading} aria-busy="true" />;
   if (!office.data) return <Workspace />;
+  // /p/:id/s/:stage, a stage room (o7).
+  const room = OfficeStageSchema.safeParse(/^s\/([a-z]+)$/.exec(params['*'] ?? '')?.[1]);
+  if (room.success)
+    return (
+      <div className={styles.page}>
+        <StageRoom
+          projectId={id}
+          stage={room.data}
+          office={office.data}
+          onSignOff={() => undefined}
+        />
+      </div>
+    );
   return <OfficeShell id={id} />;
 }
 

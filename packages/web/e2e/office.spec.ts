@@ -46,3 +46,32 @@ test('a new client project opens on the project page with only Idea open', async
   await expect(client.getByRole('row', { name: /gym-app/ })).toContainText('Fitness Master Gym');
   await expect(client.getByRole('row', { name: /gym-app/ })).toContainText('Idea');
 });
+
+// V4 o7: a stage room is the agent's chat and the stage's documents.
+test('the Idea room: the Business Analyst writes the brief and says the stage is ready', async ({
+  page,
+}) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByRole('radio', { name: 'Personal project' }).click();
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await page.getByRole('button', { name: 'Idea, On-going' }).click();
+  await expect(page).toHaveURL(/\/p\/gym-app\/s\/idea$/);
+  await expect(page.getByText('Business Analyst', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sign off' })).toBeDisabled();
+  const docs = page.getByRole('complementary', { name: 'Documents' });
+  await expect(docs.getByRole('tab', { name: /Summary/ })).toBeVisible();
+  await expect(docs).toContainText('docs/idea/client/');
+
+  const box = page.getByLabel('Message Claude');
+  await box.fill('A gym wants a members app');
+  await box.press('Enter');
+  await expect(page.getByText('The idea is clear. We can start Requirements.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sign off' })).toBeEnabled();
+  await expect(docs.getByRole('button', { name: /Fitness Master: members app/ })).toBeVisible();
+  await expect(docs.getByRole('heading', { name: 'Fitness Master: members app' })).toBeVisible();
+  await page.getByRole('link', { name: 'Office' }).click();
+  await expect(page.getByRole('button', { name: 'Idea, ready to sign off' })).toBeVisible();
+});

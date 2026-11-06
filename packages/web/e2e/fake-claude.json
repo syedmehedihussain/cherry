@@ -1,5 +1,28 @@
 [
   {
+    "match": "A gym wants a members app",
+    "steps": [
+      {
+        "tool": {
+          "name": "Write",
+          "input": {
+            "file_path": "docs/idea/client/brief.md",
+            "content": "# Fitness Master: members app\n\nA phone app for gym members: membership, diet plan, workouts and progress.\n"
+          }
+        }
+      },
+      {
+        "call": {
+          "name": "stage_ready",
+          "input": {}
+        }
+      },
+      {
+        "text": "The idea is clear. We can start Requirements."
+      }
+    ]
+  },
+  {
     "match": "The job: \"Fly the test job\"",
     "steps": [
       {

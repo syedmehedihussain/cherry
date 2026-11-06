@@ -174,9 +174,10 @@ Core office
       Cherry with no model call; every other model call already starts from a user action.
 - [x] o5 Projects page: Client projects and Personal projects; New project with the kind switch.
 - [x] o6 Project page: name only, the tab bar, the Stages tab with the seven cards and Live.
-- [ ] o7 Stage room: chat with the stage agent, documents panel, Auto mode, Sign off, the
-      chat status line (model, context, 5-hour, week); V3 Design, Development and Deployment
-      layouts reused inside.
+- [x] o7 Stage room (`/p/:id/s/:stage`): chat with the stage agent, Client (or Summary) /
+      Technical documents with the reader, Sign off button, the chat status line (model,
+      context, 5-hour, week); Design and Deployment keep their V3 canvas and cockpit inside.
+      Development edits code in the Code tab (o15).
 - [ ] o8 Sign-off: client approval form, internal only, sent and waiting; personal sign-off
       (ADR-0057); the next stage unlocks.
 - [ ] o9 New stages: Idea (brief), Requirements (questions for the client, interview log, SRS,
