@@ -1,12 +1,13 @@
 import { NavLink, useParams } from 'react-router';
 import { useState } from 'react';
-import { OfficeStageSchema } from '@cherry/shared';
+import { OfficeStageSchema, type OfficeStage } from '@cherry/shared';
 import { SignOffDialog } from '../../components/SetUpOffice/SignOffDialog.tsx';
 import { useOffice, useLiveOffice } from '../../api/office.ts';
 import { useProjects } from '../../api/queries.ts';
 import { TopBar } from '../../components/TopBar/TopBar.tsx';
 import { Workspace } from '../Workspace/Workspace.tsx';
 import { StagesTab } from './Office.tsx';
+import { PrintView } from './PrintView.tsx';
 import { StageRoom } from './StageRoom.tsx';
 import styles from './ProjectPage.module.css';
 
@@ -22,6 +23,10 @@ export function ProjectPage() {
   const [signing, setSigning] = useState(false);
   if (office.isPending) return <div className={styles.loading} aria-busy="true" />;
   if (!office.data) return <Workspace />;
+  const splat = params['*'] ?? '';
+  // /p/:id/print/:stage, the client documents to save as PDF (ADR-0058).
+  const print = OfficeStageSchema.safeParse(/^print\/([a-z]+)$/.exec(splat)?.[1]);
+  if (print.success) return <PrintPage id={id} stage={print.data} />;
   // /p/:id/s/:stage, a stage room (o7).
   const room = OfficeStageSchema.safeParse(/^s\/([a-z]+)$/.exec(params['*'] ?? '')?.[1]);
   if (room.success)
@@ -76,4 +81,10 @@ function OfficeShell({ id }: { id: string }) {
       </main>
     </div>
   );
+}
+
+function PrintPage({ id, stage }: { id: string; stage: OfficeStage }) {
+  const office = useOffice(id).data!;
+  const name = useProjects().data?.cards.find((c) => c.id === id)?.name ?? id;
+  return <PrintView projectId={id} name={name} stage={stage} office={office} />;
 }

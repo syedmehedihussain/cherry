@@ -141,7 +141,8 @@ Requirements can change after a later stage has started.
 - State: `_project/office.json`, never committed (ADR-0054).
 - Every model call starts from a click, Haiku included (ADR-0055).
 - Stage documents: `docs/<stage>/client|technical/` (ADR-0053).
+- Client documents leave as a PDF made in the browser; a shared link later, if wanted (ADR-0058).
 
 ## Open questions
 
-- How client documents are shared with the client: export to PDF, a shared link, or both (o10).
+- A shared link for the client (would put documents on a host outside the machine).

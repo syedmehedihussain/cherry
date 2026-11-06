@@ -1,0 +1,51 @@
+.page {
+  min-height: 100vh;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 40px;
+  background: #ffffff;
+  color: #1b1b1d;
+  font-size: 14px;
+  line-height: 1.6;
+  /* Print is always light, whatever the theme. */
+  color-scheme: light;
+  --t1: #1b1b1d;
+  --t2: #3a3a40;
+  --t3: #6b6b73;
+  --b: #e2e2e6;
+  --s1: #f6f6f8;
+  --s2: #f0f0f3;
+  --code-bg: #f4f4f6;
+  --t-code: #1b1b1d;
+  --accent-text: #2f6fc4;
+}
+.head {
+  border-bottom: 2px solid #1b1b1d;
+  padding-bottom: 12px;
+  margin-bottom: 28px;
+}
+.head h1 {
+  margin: 0;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+}
+.head p {
+  margin: 4px 0 0;
+  color: #6b6b73;
+}
+.doc {
+  margin-bottom: 36px;
+  break-after: page;
+}
+.doc:last-child {
+  break-after: auto;
+}
+.none {
+  color: #6b6b73;
+}
+@media print {
+  .page {
+    padding: 0;
+    max-width: none;
+  }
+}

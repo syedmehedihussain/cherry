@@ -1,4 +1,4 @@
-import { ChevronLeft, CircleCheck, FileText } from 'lucide-react';
+import { ChevronLeft, CircleCheck, FileText, Printer } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import {
@@ -19,6 +19,7 @@ import { ChatTab } from '../Workspace/ChatTab.tsx';
 import { DeployStage } from '../Workspace/deploy/DeployStage.tsx';
 import { DesignStage } from '../Workspace/design/DesignStage.tsx';
 import { DocReader } from '../Workspace/plan/PlanStage.tsx';
+import { DevGate } from './DevGate.tsx';
 import { BugsTab, QuestionsTab, UatTab } from './StageExtras.tsx';
 import styles from './StageRoom.module.css';
 
@@ -70,6 +71,7 @@ export function StageRoom({
         <DocsPanel
           projectId={projectId}
           stage={stage}
+          office={office}
           personal={office.kind === 'personal'}
           open={doc}
           onOpen={setDoc}
@@ -130,6 +132,7 @@ export function StageRoom({
 function DocsPanel({
   projectId,
   stage,
+  office,
   personal,
   open,
   onOpen,
@@ -137,6 +140,7 @@ function DocsPanel({
 }: {
   projectId: string;
   stage: OfficeStage;
+  office: OfficeFile;
   personal: boolean;
   open: string | null;
   onOpen(path: string): void;
@@ -150,12 +154,13 @@ function DocsPanel({
   useEffect(() => {
     void refetch();
   }, [items, refetch]);
-  type Tab = 'client' | 'technical' | 'questions' | 'uat' | 'bugs';
-  const [tab, setTab] = useState<Tab>('client');
+  type Tab = 'gate' | 'client' | 'technical' | 'questions' | 'uat' | 'bugs';
+  const [tab, setTab] = useState<Tab>(stage === 'development' ? 'gate' : 'client');
   const isDocs = tab === 'client' || tab === 'technical';
   const list: StageDoc[] = isDocs ? (docs?.[tab] ?? []) : [];
   const shown = open ?? list[0]?.path ?? null;
   const tabs: [Tab, string, number | null][] = [
+    ...(stage === 'development' ? [['gate', 'Gate', null] as [Tab, string, null]] : []),
     ['client', personal ? 'Summary' : 'Client', docs?.client.length ?? 0],
     ['technical', 'Technical', docs?.technical.length ?? 0],
     ...(stage === 'requirements' ? [['questions', 'Questions', null] as [Tab, string, null]] : []),
@@ -180,7 +185,20 @@ function DocsPanel({
             {label} {n !== null && <span className={styles.n}>{n}</span>}
           </button>
         ))}
+        {tab === 'client' && (docs?.client.length ?? 0) > 0 && (
+          <a
+            className={`btn btn-ghost btn-sm ${styles.exportBtn}`}
+            href={`/p/${encodeURIComponent(projectId)}/print/${stage}`}
+            target="_blank"
+            rel="noreferrer"
+            title="A page to save as PDF for the client"
+          >
+            <Printer size={13} aria-hidden="true" />
+            Export PDF
+          </a>
+        )}
       </div>
+      {tab === 'gate' && <DevGate projectId={projectId} office={office} />}
       {tab === 'questions' && <QuestionsTab projectId={projectId} />}
       {tab === 'uat' && <UatTab projectId={projectId} />}
       {tab === 'bugs' && <BugsTab projectId={projectId} />}

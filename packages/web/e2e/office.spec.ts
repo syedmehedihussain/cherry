@@ -1,4 +1,4 @@
-import { readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { E2E_PROJECTS, loginCode } from './fixture.ts';
@@ -162,4 +162,62 @@ test('Requirements: questions for the client, answered and sent back', async ({ 
       'utf8',
     ),
   ).toContain('   Answer: Monthly and 3 months.');
+});
+
+// o10: Development waits for the prototype; client documents print to PDF.
+test('Development: the prototype gate, and client documents to save as PDF', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByLabel('Client', { exact: true }).fill('Fitness Master Gym');
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
+
+  // Jump to Development: the earlier stages signed off in the file.
+  const dir = path.join(E2E_PROJECTS, 'gym-app');
+  const file = path.join(dir, '_project', 'office.json');
+  const office = JSON.parse(readFileSync(file, 'utf8'));
+  const signed = {
+    by: 'you',
+    date: '2026-11-06',
+    notes: '',
+    internal: true,
+    at: new Date().toISOString(),
+  };
+  for (const s of ['idea', 'requirements', 'plan', 'design'])
+    office.cycles[0].stages[s] = { state: 'signed', ready: true, sentAt: null, signOffs: [signed] };
+  office.cycles[0].stages.development.state = 'active';
+  writeFileSync(file, JSON.stringify(office));
+  mkdirSync(path.join(dir, 'docs/development/client'), { recursive: true });
+  writeFileSync(
+    path.join(dir, 'docs/development/client/progress.md'),
+    '# Progress\n\nWeek 3: workouts are built.\n',
+  );
+
+  await page.goto('/p/gym-app/s/development');
+  const docs = page.getByRole('complementary', { name: 'Documents' });
+  const gate = docs.getByRole('list', { name: 'Prototype gate' });
+  await expect(gate).toContainText('Client approves the prototype');
+  await docs.getByRole('button', { name: 'Sent to client' }).click();
+  await expect(gate).toContainText('Waiting for the answer');
+  await docs.getByRole('button', { name: 'Client wants changes' }).click();
+  await docs.getByRole('button', { name: 'Sent to client' }).click();
+  await docs.getByRole('button', { name: 'Record approval' }).click();
+  await expect(gate).toContainText('Approved.');
+  await expect(docs.getByRole('button', { name: 'Give the next job' })).toBeVisible();
+
+  await docs.getByRole('tab', { name: /Client/ }).click();
+  await expect(docs.getByRole('link', { name: 'Export PDF' })).toHaveAttribute(
+    'href',
+    '/p/gym-app/print/development',
+  );
+  await page.addInitScript(() => {
+    window.print = () => document.body.setAttribute('data-printed', 'yes');
+  });
+  await page.goto('/p/gym-app/print/development');
+  await expect(page.getByRole('heading', { level: 1, name: 'gym-app' })).toBeVisible();
+  await expect(page.getByText('for Fitness Master Gym', { exact: false })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Progress' })).toBeVisible();
+  await expect(page.locator('body')).toHaveAttribute('data-printed', 'yes');
 });

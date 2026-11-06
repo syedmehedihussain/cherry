@@ -182,8 +182,8 @@ Core office
       (ADR-0057); the next stage unlocks.
 - [x] o9 New stages: Idea (brief), Requirements (questions for the client, interview log, SRS,
       feasibility), Testing (test plan, runs, bugs, UAT).
-- [ ] o10 Development inside gate (prototype, send, approval) and the client documents export
-      (ADR: PDF, link or both).
+- [x] o10 Development inside gate (prototype, send, approval; personal approves it) and the
+      client documents export as a PDF from a print page (ADR-0058).
 
 Project tabs
 - [ ] o11 Version control tab, on the project and in each stage: staged and changed files,

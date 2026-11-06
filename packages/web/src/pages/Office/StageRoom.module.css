@@ -103,12 +103,12 @@
 }
 .docsHead {
   display: flex;
+  align-items: center;
   gap: 2px;
   margin: 10px 12px;
-  padding: 2px;
-  border-radius: var(--r-md);
+}
+.docsHead [role='tab'] {
   background: var(--s2);
-  align-self: flex-start;
 }
 .docsHead button {
   height: 26px;
@@ -295,4 +295,67 @@
 .bugTitle {
   flex: 1;
   color: var(--t1);
+}
+.gate {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.gstep {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 10px;
+  padding-bottom: 18px;
+}
+.gstep:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 26px;
+  bottom: 2px;
+  width: 1px;
+  background: var(--b);
+}
+.gdot {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--b);
+  background: var(--s2);
+  color: var(--t3);
+}
+.gstep[data-state='done'] .gdot {
+  background: var(--success-fill);
+  color: var(--success);
+  border-color: transparent;
+}
+.gstep[data-state='now'] .gdot {
+  background: var(--accent-fill);
+  color: var(--accent-text);
+  border-color: var(--accent-border);
+}
+.gstep[data-state='wait'] .gdot {
+  background: var(--warning-fill);
+  color: var(--warning);
+  border-color: transparent;
+}
+.gtitle {
+  font-weight: 600;
+  line-height: 24px;
+}
+.gdetail {
+  color: var(--t2);
+  font-size: var(--fs-sm);
+}
+.gactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.exportBtn {
+  margin-left: auto;
 }
