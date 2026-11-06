@@ -10,6 +10,7 @@ import { StagesTab } from './Office.tsx';
 import { InvoicePrint, PrintView } from './PrintView.tsx';
 import { Invoice } from './Invoice.tsx';
 import { StageRoom } from './StageRoom.tsx';
+import { ChangeDialog } from './Changes.tsx';
 import { CodeTab } from './CodeTab.tsx';
 import { Meeting } from './Meeting.tsx';
 import { Usage } from './Usage.tsx';
@@ -27,6 +28,7 @@ export function ProjectPage() {
   const office = useOffice(id);
   useLiveOffice(id);
   const [signing, setSigning] = useState(false);
+  const [changing, setChanging] = useState(false);
   if (office.isPending) return <div className={styles.loading} aria-busy="true" />;
   if (!office.data) return <Workspace />;
   const splat = params['*'] ?? '';
@@ -46,7 +48,16 @@ export function ProjectPage() {
           office={office.data}
           view={(roomMatch?.[2] as 'vc' | 'usage' | undefined) ?? 'work'}
           onSignOff={() => setSigning(true)}
+          onChange={() => setChanging(true)}
         />
+        {changing && (
+          <ChangeDialog
+            projectId={id}
+            stage={room.data}
+            office={office.data}
+            onClose={() => setChanging(false)}
+          />
+        )}
         {signing && (
           <SignOffDialog
             projectId={id}

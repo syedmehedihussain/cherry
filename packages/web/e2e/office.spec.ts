@@ -462,3 +462,61 @@ test('Meeting: the staff, action items, notes, and asking an agent', async ({ pa
   await expect(page).toHaveURL(/\/p\/gym-app\/s\/idea$/);
   await expect(page.getByLabel('Message Claude')).toHaveValue(/Where are we on Idea\?/);
 });
+
+// o18: change control: a small change is logged; a big one flags the stages it touches.
+test('Change control: a small change, a change request, approve, needs update', async ({
+  page,
+}) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByRole('radio', { name: 'Personal project' }).click();
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
+  const file = path.join(E2E_PROJECTS, 'gym-app', '_project', 'office.json');
+  const office = JSON.parse(readFileSync(file, 'utf8'));
+  const signed = {
+    by: 'you',
+    date: '2026-11-06',
+    notes: '',
+    internal: true,
+    at: new Date().toISOString(),
+  };
+  for (const s of ['idea', 'requirements'])
+    office.cycles[0].stages[s] = { state: 'signed', ready: true, sentAt: null, signOffs: [signed] };
+  office.cycles[0].stages.plan.state = 'active';
+  writeFileSync(file, JSON.stringify(office));
+
+  await page.goto('/p/gym-app/s/requirements');
+  await page.getByRole('button', { name: 'Request change' }).click();
+  let dialog = page.getByRole('dialog', { name: 'Request a change' });
+  await dialog.getByLabel('What should change?').fill('Call it membership plan, not package.');
+  await dialog.getByRole('button', { name: 'Log the change' }).click();
+
+  await page.getByRole('button', { name: 'Request change' }).click();
+  dialog = page.getByRole('dialog', { name: 'Request a change' });
+  await dialog.getByRole('radio', { name: 'Big change' }).click();
+  await dialog.getByLabel('Title').fill('Family memberships');
+  await dialog.getByLabel('What should change?').fill('One account pays for up to 4 members.');
+  await expect(dialog.getByRole('checkbox', { name: 'Requirements' })).toBeChecked();
+  await dialog.getByRole('button', { name: 'Make change request' }).click();
+
+  await page.getByRole('link', { name: 'Office' }).click();
+  await page.getByRole('button', { name: /^Changes/ }).click();
+  const changes = page.getByRole('dialog', { name: 'Changes' });
+  await expect(changes).toContainText('Call it membership plan, not package.');
+  await changes
+    .getByRole('listitem', { name: 'CR-001 Family memberships' })
+    .getByRole('button', { name: 'Approve' })
+    .click();
+  await expect(changes).toContainText('approved');
+  await changes.getByRole('button', { name: 'Close' }).click();
+  await expect(page.getByRole('button', { name: 'Requirements, needs update' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Idea, complete' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Requirements, needs update' }).click();
+  await expect(page.getByRole('status')).toContainText('CR-001 Family memberships was approved');
+  await page.getByRole('button', { name: 'Ask to sync' }).click();
+  await expect(page.getByLabel('Message Claude')).toHaveValue(/Sync this stage with CR-001/);
+});

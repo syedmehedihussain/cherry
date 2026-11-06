@@ -1,4 +1,5 @@
-import { Check, CircleCheck, Clock, History, TriangleAlert } from 'lucide-react';
+import { Check, CircleCheck, Clock, FileDiff, History, TriangleAlert } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
   OFFICE_AGENT,
@@ -11,6 +12,7 @@ import {
   type OfficeStage,
 } from '@cherry/shared';
 import { LiveCard, StageCard } from '../../components/StageCard/StageCard.tsx';
+import { ChangesDialog } from './Changes.tsx';
 import styles from './Office.module.css';
 
 const fmtDate = (d: string) =>
@@ -27,6 +29,7 @@ export function StagesTab({
   office: OfficeFile;
 }) {
   const navigate = useNavigate();
+  const [changes, setChanges] = useState(false);
   const cycle = office.cycles[office.cycles.length - 1]!;
   const live = !!office.cycles.find((c) => c.liveAt);
   const cur = currentStage(cycle);
@@ -89,7 +92,20 @@ export function StagesTab({
       <header className={styles.head}>
         <h1 className={styles.name}>{name}</h1>
         {office.cycles.length > 1 && <span className="tag">v{cycle.version}</span>}
+        <span className={styles.grow} />
+        <button type="button" className="btn btn-secondary btn-sm" onClick={() => setChanges(true)}>
+          <FileDiff size={14} aria-hidden="true" />
+          Changes
+          {office.changes.filter((c) => c.status === 'proposed').length > 0 && (
+            <span className={styles.badge}>
+              {office.changes.filter((c) => c.status === 'proposed').length}
+            </span>
+          )}
+        </button>
       </header>
+      {changes && (
+        <ChangesDialog projectId={projectId} office={office} onClose={() => setChanges(false)} />
+      )}
       <ol className={styles.track} aria-label="Project status">
         {OFFICE_STAGES.map((s) => {
           const st = cycle.stages[s].state;

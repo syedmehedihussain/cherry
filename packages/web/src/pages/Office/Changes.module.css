@@ -1,0 +1,73 @@
+.stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--b);
+  border-radius: var(--r-lg);
+  font-size: var(--fs-sm);
+  color: var(--t1);
+}
+.stages legend {
+  padding: 0 4px;
+  color: var(--t2);
+  font-size: var(--fs-sm);
+}
+.stages label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.h {
+  margin: 4px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--t2);
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: var(--fs-sm2);
+}
+.list > li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--b-faint);
+}
+.list p {
+  margin: 4px 0 0;
+  color: var(--t2);
+}
+.cr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.status {
+  margin-left: auto;
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  background: var(--neutral-fill);
+  color: var(--t2);
+}
+.status[data-status='approved'] {
+  background: var(--success-fill);
+  color: var(--success);
+}
+.status[data-status='proposed'] {
+  background: var(--warning-fill);
+  color: var(--warning);
+}
+.dim {
+  color: var(--t3);
+  font-size: var(--fs-xs);
+}
+.actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}

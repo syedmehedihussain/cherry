@@ -9,7 +9,7 @@ import {
   type OfficeStage,
   type StageDoc,
 } from '@cherry/shared';
-import { useChat, useLiveChat } from '../../api/chat.ts';
+import { useChat, useChatDraft, useLiveChat } from '../../api/chat.ts';
 import { useStageDocs } from '../../api/office.ts';
 import { usePlanUsage } from '../../api/queries.ts';
 import { useLiveProject } from '../../api/workspace.ts';
@@ -45,6 +45,7 @@ export function StageRoom({
   office,
   view = 'work',
   onSignOff,
+  onChange,
 }: {
   projectId: string;
   stage: OfficeStage;
@@ -52,9 +53,12 @@ export function StageRoom({
   /** The stage's own work, or its Version control tab (o11). */
   view?: 'work' | 'vc' | 'usage';
   onSignOff(): void;
+  /** Request a change to a signed-off stage (o18). */
+  onChange(): void;
 }) {
   const now = useNow(30_000);
   const openMagnet = useUi((s) => s.openMagnet);
+  const setDraft = useChatDraft((s) => s.set);
   useLiveChat(projectId);
   useLiveProject(projectId);
   const cycle = office.cycles[office.cycles.length - 1]!;
@@ -131,6 +135,11 @@ export function StageRoom({
           <MessageCircle size={14} aria-hidden="true" />
           Magnet
         </button>
+        {(rec.state === 'signed' || rec.state === 'update') && (
+          <button type="button" className="btn btn-secondary btn-sm" onClick={onChange}>
+            Request change
+          </button>
+        )}
         {rec.state === 'signed' || rec.state === 'carried' ? (
           <span className={styles.signed}>
             <CircleCheck size={14} aria-hidden="true" />
@@ -153,6 +162,14 @@ export function StageRoom({
           </button>
         )}
       </header>
+      {rec.state === 'update' && (
+        <UpdateBanner
+          office={office}
+          stage={stage}
+          onSync={(text) => setDraft(projectId, text)}
+          ready={rec.ready}
+        />
+      )}
       {rec.state === 'locked' ? (
         <p className={styles.locked}>This stage opens when the one before it is signed off.</p>
       ) : view === 'vc' ? (
@@ -317,6 +334,48 @@ function StatusLine({
           week {bar(usage.week.usedPercent)}
           {pct(usage.week.usedPercent)}%
         </span>
+      )}
+    </div>
+  );
+}
+
+/** A stage flagged by an approved change request (o18): which one, and the job to sync it. */
+function UpdateBanner({
+  office,
+  stage,
+  ready,
+  onSync,
+}: {
+  office: OfficeFile;
+  stage: OfficeStage;
+  ready: boolean;
+  onSync(text: string): void;
+}) {
+  const cr = office.changes.find((c) => c.status === 'approved' && c.stages.includes(stage));
+  return (
+    <div className={styles.banner} role="status">
+      {ready ? (
+        <span>
+          The {OFFICE_AGENT[stage]} synced this stage. Sign it off again to clear the flag.
+        </span>
+      ) : (
+        <>
+          <span>
+            <b>Needs update.</b>{' '}
+            {cr ? `${cr.id} ${cr.title} was approved.` : 'A change was approved.'}
+          </span>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() =>
+              onSync(
+                `Sync this stage with ${cr ? `${cr.id} ${cr.title}: ${cr.text}` : 'the approved change'}. Update the documents, mark what changed, then say when it is ready.`,
+              )
+            }
+          >
+            Ask to sync
+          </button>
+        </>
       )}
     </div>
   );

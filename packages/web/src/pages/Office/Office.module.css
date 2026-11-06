@@ -146,3 +146,19 @@
     gap: 12px;
   }
 }
+
+.grow {
+  flex: 1;
+}
+.badge {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--warning);
+  color: var(--bg);
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-grid;
+  place-items: center;
+}

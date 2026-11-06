@@ -390,3 +390,20 @@
   border-radius: 2px;
   background: var(--t1);
 }
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--b);
+  background: var(--warning-fill);
+  color: var(--warning);
+  font-size: var(--fs-sm2);
+}
+.banner b {
+  font-weight: 600;
+}
+.banner :global(.btn) {
+  margin-left: auto;
+}
