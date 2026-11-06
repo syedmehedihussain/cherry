@@ -386,3 +386,41 @@ test('Docs: the tree, links and backlinks, search, graph and a new note', async 
     '# Call with Nusrat\n\n',
   );
 });
+
+// o15: the Code tab, like VS Code: the explorer, file tabs and terminals, no Claude tab.
+test('Code: open a file from the explorer, edit it in a tab, close it', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByRole('radio', { name: 'Personal project' }).click();
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
+  const dir = path.join(E2E_PROJECTS, 'gym-app');
+  mkdirSync(path.join(dir, 'src'), { recursive: true });
+  writeFileSync(path.join(dir, 'src/app.ts'), 'export const app = 1;\n');
+
+  await page
+    .getByRole('navigation', { name: 'Project' })
+    .getByRole('link', { name: 'Code' })
+    .click();
+  await expect(page).toHaveURL(/\/p\/gym-app\/code$/);
+  await expect(page.getByText('No file open.')).toBeVisible();
+  const tabs = page.getByRole('tablist', { name: 'Open tabs' });
+  await expect(tabs.getByRole('tab', { name: 'Claude' })).toHaveCount(0);
+
+  const files = page.getByRole('complementary', { name: 'Files' });
+  await files.getByRole('treeitem', { name: /src/ }).click();
+  await files.getByRole('treeitem', { name: /app\.ts/ }).click();
+  await expect(page).toHaveURL(/\/p\/gym-app\/code\/files\/src\/app\.ts$/);
+  await expect(tabs.getByRole('tab', { name: /app\.ts/ })).toHaveAttribute('aria-selected', 'true');
+  // Monaco loads with the first file tab; the first load can be slow.
+  await expect(page.getByRole('region', { name: 'Contents of src/app.ts' })).toContainText(
+    /app\s=\s1/,
+    { timeout: 20_000 },
+  );
+
+  await tabs.getByRole('button', { name: 'Close app.ts' }).click();
+  await expect(page).toHaveURL(/\/p\/gym-app\/code$/);
+  await expect(page.getByText('No file open.')).toBeVisible();
+});

@@ -12,6 +12,7 @@
   flex-direction: column;
 }
 .main[data-tab='docs'],
+.main[data-tab='code'],
 .main[data-tab='vc'] {
   overflow: hidden;
 }

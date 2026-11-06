@@ -193,7 +193,7 @@ Project tabs
       personal project.
 - [x] o14 Docs tab: document vault (tree, search, read and edit, links, backlinks, outline,
       graph), documents only.
-- [ ] o15 Code tab: VS Code-like editor on Monaco (explorer, tabs, search, terminal panel,
+- [x] o15 Code tab: VS Code-like editor on Monaco (explorer, tabs, search, terminal panel,
       status bar); secret files blocked.
 - [ ] o16 Meeting tab and Magnet as project manager (ADR-0056): reports from files, agenda,
       action items, questions to one agent or Magnet; Magnet on every project screen.

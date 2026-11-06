@@ -10,6 +10,7 @@ import { StagesTab } from './Office.tsx';
 import { InvoicePrint, PrintView } from './PrintView.tsx';
 import { Invoice } from './Invoice.tsx';
 import { StageRoom } from './StageRoom.tsx';
+import { CodeTab } from './CodeTab.tsx';
 import { Usage } from './Usage.tsx';
 import { Vault } from './Vault.tsx';
 import { VersionControl } from './VersionControl.tsx';
@@ -58,6 +59,9 @@ export function ProjectPage() {
   // /p/:id/docs[/<path>], the Docs tab with a document open (o14).
   const doc = /^docs(?:\/(.+))?$/.exec(splat);
   if (doc) return <OfficeShell id={id} tab="docs" doc={doc[1] ?? null} />;
+  // /p/:id/code[/files/<path>|/term/<id>], the Code tab (o15).
+  const code = /^code(?:\/(.+))?$/.exec(splat);
+  if (code) return <OfficeShell id={id} tab="code" doc={code[1] ?? ''} />;
   return (
     <OfficeShell
       id={id}
@@ -72,7 +76,8 @@ function OfficeShell({
   doc = null,
 }: {
   id: string;
-  tab: 'stages' | 'docs' | 'vc' | 'usage' | 'invoice';
+  tab: 'stages' | 'docs' | 'code' | 'vc' | 'usage' | 'invoice';
+  /** The open document (Docs) or the rest of the path (Code). */
   doc?: string | null;
 }) {
   const office = useOffice(id).data!;
@@ -82,6 +87,7 @@ function OfficeShell({
   const tabs: [string, string][] = [
     ['', live ? 'Maintenance' : 'Stages'],
     ['/docs', 'Docs'],
+    ['/code', 'Code'],
     ['/vc', 'Version control'],
     ['/usage', 'Claude usage'],
     ['/invoice', office.kind === 'personal' ? 'Costs' : 'Invoice'],
@@ -108,6 +114,8 @@ function OfficeShell({
       <main className={styles.main} data-tab={tab}>
         {tab === 'docs' ? (
           <Vault projectId={id} open={doc} />
+        ) : tab === 'code' ? (
+          <CodeTab projectId={id} rest={doc ?? ''} />
         ) : tab === 'vc' ? (
           <VersionControl projectId={id} />
         ) : tab === 'usage' ? (

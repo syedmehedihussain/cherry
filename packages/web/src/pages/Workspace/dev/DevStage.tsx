@@ -24,12 +24,15 @@ export function DevStage({
   now,
   active,
   onShow,
+  editorOnly = false,
 }: {
   projectId: string;
   now: number;
   active: ActiveTab;
   /** Shows a tab (changes the URL). */
   onShow(tab: ActiveTab): void;
+  /** The Code tab (V4 o15): files and terminals only, like VS Code; no Claude tab. */
+  editorOnly?: boolean;
 }) {
   const card = useProjectDetail(projectId).data?.card;
   const chat = useChat(projectId, 'development');
@@ -117,13 +120,15 @@ export function DevStage({
       <section className={styles.area} aria-label="Editor area">
         <div className={styles.bar}>
           <div className={styles.tabs} role="tablist" aria-label="Open tabs">
-            <Tab
-              active={activeKey === 'claude'}
-              label="Claude"
-              icon={<span className={styles.star} aria-hidden="true" />}
-              mark={chat.data?.running ? 'running' : undefined}
-              onSelect={() => onShow({ kind: 'claude' })}
-            />
+            {!editorOnly && (
+              <Tab
+                active={activeKey === 'claude'}
+                label="Claude"
+                icon={<span className={styles.star} aria-hidden="true" />}
+                mark={chat.data?.running ? 'running' : undefined}
+                onSelect={() => onShow({ kind: 'claude' })}
+              />
+            )}
             {tabs.map((t) => (
               <Tab
                 key={tabKey(t)}
@@ -149,27 +154,33 @@ export function DevStage({
             icon={<Plus size={15} aria-hidden="true" />}
             items={[
               ['New terminal', newTerminal],
-              ['Open a file…  Ctrl K', () => openPalette(true)],
+              ...(editorOnly
+                ? []
+                : ([['Open a file…  Ctrl K', () => openPalette(true)]] as [string, () => void][])),
             ]}
           />
           <Menu
             label="More"
             icon={<Ellipsis size={15} aria-hidden="true" />}
             items={[
-              [
-                'New chat',
-                () => {
-                  onShow({ kind: 'claude' });
-                  void newChat(projectId, 'development');
-                },
-              ],
-              [
-                'Chat history',
-                () => {
-                  onShow({ kind: 'claude' });
-                  useHistoryMenu.getState().set(true);
-                },
-              ],
+              ...(editorOnly
+                ? []
+                : ([
+                    [
+                      'New chat',
+                      () => {
+                        onShow({ kind: 'claude' });
+                        void newChat(projectId, 'development');
+                      },
+                    ],
+                    [
+                      'Chat history',
+                      () => {
+                        onShow({ kind: 'claude' });
+                        useHistoryMenu.getState().set(true);
+                      },
+                    ],
+                  ] as [string, () => void][])),
               [
                 'Close all tabs',
                 () => {
@@ -196,14 +207,26 @@ export function DevStage({
         )}
         <div className={styles.body}>
           {/* The chat stays mounted, so its scroll and draft survive a tab switch. */}
-          <div className={styles.pane} hidden={activeKey !== 'claude'}>
-            <ChatTab
-              projectId={projectId}
-              stage="development"
-              now={now}
-              onOpenFile={(path) => onShow({ kind: 'file', path })}
-            />
-          </div>
+          {editorOnly ? (
+            activeKey === 'claude' && (
+              <div className={styles.welcome}>
+                <p>No file open.</p>
+                <p>Open a file from the explorer.</p>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={newTerminal}>
+                  New terminal
+                </button>
+              </div>
+            )
+          ) : (
+            <div className={styles.pane} hidden={activeKey !== 'claude'}>
+              <ChatTab
+                projectId={projectId}
+                stage="development"
+                now={now}
+                onOpenFile={(path) => onShow({ kind: 'file', path })}
+              />
+            </div>
+          )}
           {/* Terminals stay mounted, so a tab switch keeps the shell's screen. */}
           {tabs.map(
             (t) =>
