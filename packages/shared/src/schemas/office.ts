@@ -349,7 +349,10 @@ export type HistoryCommit = z.infer<typeof HistoryCommitSchema>;
 export const HistorySchema = z.object({ commits: z.array(HistoryCommitSchema) });
 
 const UsageRowSchema = z.object({
+  /** Fresh input and output. */
   tokens: z.number(),
+  /** Input read again from the prompt cache (finding R2-4): most of a long session's work. */
+  cacheRead: z.number().default(0),
   costUsd: z.number(),
   turns: z.number(),
   ms: z.number(),

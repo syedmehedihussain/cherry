@@ -58,8 +58,9 @@ export function releaseTool(
       const r = parsed.data;
       const reply = await ask({
         topic: 'Release',
-        question: `Publish ${r.what}?`,
-        context: `${r.visibility === 'public' ? 'Public' : 'Private'} repository ${r.owner}/${r.repo}. Goes live at ${r.where}.`,
+        // A plain question whatever words the agent used for `what` (finding R2-8).
+        question: `Release to ${r.owner}/${r.repo} (${r.visibility})?`,
+        context: `${sentence(r.what)} Goes live at ${r.where}.`,
         options: [
           {
             id: 'publish',
@@ -92,3 +93,9 @@ export function releaseTool(
     },
   };
 }
+
+/** "push main" → "Push main." */
+const sentence = (s: string) => {
+  const t = s.trim().replace(/[.\s]+$/, '');
+  return `${t.charAt(0).toUpperCase()}${t.slice(1)}.`;
+};

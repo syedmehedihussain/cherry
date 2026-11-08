@@ -52,7 +52,16 @@ export function deployMessage(info: DeployInfo): string {
  * Deployment (V3 r10, artboard 04): the cockpit. Run and preview the app on the left; the
  * checks, the browser test (r11) and the deploy target on the right; Deploy asks once.
  */
-export function DeployStage({ projectId, now }: { projectId: string; now: number }) {
+export function DeployStage({
+  projectId,
+  now,
+  statusLine,
+}: {
+  projectId: string;
+  now: number;
+  /** V4 room: the ctx, 5h and week line under the DevOps Engineer's chat (finding R2-7). */
+  statusLine?: ReactNode;
+}) {
   const app = useRun(projectId).data;
   const checks = useChecks(projectId).data;
   useLiveChecks(projectId);
@@ -255,6 +264,7 @@ export function DeployStage({ projectId, now }: { projectId: string; now: number
         {side === 'shipper' ? (
           <div className={styles.chat}>
             <ChatTab projectId={projectId} stage="deployment" now={now} />
+            {statusLine}
           </div>
         ) : (
           <div className={styles.sideScroll}>

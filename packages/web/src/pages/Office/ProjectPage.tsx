@@ -32,7 +32,12 @@ export function ProjectPage() {
   // Open sign-off dialog, with what to do once it is saved.
   const [signing, setSigning] = useState<{ then?: () => void } | null>(null);
   const [changing, setChanging] = useState(false);
-  if (office.isPending) return <div className={styles.loading} aria-busy="true" />;
+  if (office.isPending)
+    return (
+      <div className={styles.loading} aria-busy="true">
+        <p>Loading the project…</p>
+      </div>
+    );
   if (!office.data) return <Workspace />;
   const splat = params['*'] ?? '';
   // /p/:id/print/:stage, the client documents to save as PDF (ADR-0058).

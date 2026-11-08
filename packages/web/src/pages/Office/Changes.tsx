@@ -52,6 +52,9 @@ export function ChangeDialog({
           ? { kind: 'small', stage, text: text.trim() }
           : { kind: 'big', title: title.trim(), text: text.trim(), stages },
       );
+      // The agent makes a small change: it waits in the room's box, not sent (finding R2-11).
+      if (kind === 'small')
+        setDraft(projectId, `Small change (logged in change control): ${text.trim()}`);
       onClose();
     } catch (e) {
       setError(e instanceof ApiFailure ? e.message : 'Could not save the change.');
@@ -109,7 +112,7 @@ export function ChangeDialog({
           </div>
           <p className={styles.hint}>
             {kind === 'small'
-              ? 'Wording, a label, a small field: one line in the change log. Ask the agent to make it.'
+              ? 'Wording, a label, a small field: one line in the change log. It then waits in the box as a job for the agent.'
               : 'A new feature, data model or architecture: a change request. Once approved, the stages it touches need an update.'}
           </p>
           {kind === 'big' && (

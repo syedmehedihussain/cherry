@@ -192,13 +192,22 @@ export function Usage({
                 <th>Stage</th>
                 <th>Agent</th>
                 <th className={styles.num}>Tokens</th>
+                <th
+                  className={styles.num}
+                  title="Input read again from the prompt cache: a long session re-reads its context on every reply"
+                >
+                  Cache reads
+                </th>
                 <th className={styles.num}>API value</th>
                 <th className={styles.num}>Turns</th>
                 <th className={styles.num} title="Claude working on this stage's turns">
                   Claude time
                 </th>
-                <th className={styles.num} title="From the sign-off before it to its own sign-off">
-                  Wall time
+                <th
+                  className={styles.num}
+                  title="From the sign-off before it to its own sign-off, nights and idle time included"
+                >
+                  Calendar time
                 </th>
               </tr>
             </thead>
@@ -210,6 +219,7 @@ export function Usage({
                     <td>{OFFICE_STAGE_LABEL[s]}</td>
                     <td className={styles.dim}>{OFFICE_AGENT[s]}</td>
                     <td className={styles.num}>{r ? fmtTokens(r.tokens) : '-'}</td>
+                    <td className={styles.num}>{r ? fmtTokens(r.cacheRead) : '-'}</td>
                     <td className={styles.num}>{r ? `$${r.costUsd.toFixed(2)}` : '-'}</td>
                     <td className={styles.num}>
                       {r ? r.turns : running[s] ? 0 : '-'}
@@ -231,6 +241,7 @@ export function Usage({
               <tr>
                 <td colSpan={2}>Total</td>
                 <td className={styles.num}>{fmtTokens(used)}</td>
+                <td className={styles.num}>{fmtTokens(usage?.total.cacheRead ?? 0)}</td>
                 <td className={styles.num}>${(usage?.total.costUsd ?? 0).toFixed(2)}</td>
                 <td className={styles.num}>{usage?.total.turns ?? 0}</td>
                 <td className={styles.num}>{fmtSpan(usage?.total.ms ?? 0)}</td>
@@ -248,7 +259,7 @@ export function Usage({
               bar(
                 shortModel(m.model),
                 used ? (m.tokens / used) * 100 : 0,
-                `${fmtTokens(m.tokens)}, $${m.costUsd.toFixed(2)}`,
+                `${fmtTokens(m.tokens)} + ${fmtTokens(m.cacheRead)} cached, $${m.costUsd.toFixed(2)}`,
               ),
             )}
           </section>

@@ -54,6 +54,7 @@ export function recordTurn(
 
 export interface UsageRow {
   tokens: number;
+  cacheRead: number;
   costUsd: number;
   turns: number;
   ms: number;
@@ -61,10 +62,11 @@ export interface UsageRow {
 
 /** A project's chat turns added up, overall, by stage and by model (the Claude usage tab). */
 export function projectUsage(db: Db, projectId: string) {
-  const sum = `SUM(input_tokens + output_tokens) AS tokens, SUM(cost_usd) AS costUsd,
+  const sum = `SUM(input_tokens + output_tokens) AS tokens, SUM(cache_read_tokens) AS cacheRead, SUM(cost_usd) AS costUsd,
     SUM(first_row) AS turns, SUM(duration_ms) AS ms`;
   const clean = (r: Partial<UsageRow> | undefined): UsageRow => ({
     tokens: r?.tokens ?? 0,
+    cacheRead: r?.cacheRead ?? 0,
     costUsd: Math.round((r?.costUsd ?? 0) * 100) / 100,
     turns: r?.turns ?? 0,
     ms: r?.ms ?? 0,

@@ -134,11 +134,8 @@ export function StagesTab({
           <StageCard
             key={s}
             name={OFFICE_CARD_NAME[s]}
-            agent={
-              office.models[s]
-                ? `${OFFICE_AGENT[s]} · ${MODELS.find((m) => m.id === office.models[s])?.label}`
-                : OFFICE_AGENT[s]
-            }
+            agent={OFFICE_AGENT[s]}
+            model={MODELS.find((m) => m.id === office.models[s])?.label}
             mono={OFFICE_AGENT_MONO[s]}
             state={cycle.stages[s].state}
             ready={cycle.stages[s].ready}

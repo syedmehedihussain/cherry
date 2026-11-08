@@ -235,7 +235,12 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
   const agentName = stageInfo(useStageInfo().data, stage)?.name;
   const office = useLoadedOffice(projectId);
   const paperDecisions = !!office && DOCS_ONLY_STAGES.has(stage);
-  const starter = office ? STARTER_JOB[stage as keyof typeof STARTER_JOB] : undefined;
+  // Only while the stage is open: a signed-off room has no first job left (finding R2-6).
+  const roomState = office
+    ? office.cycles[office.cycles.length - 1]!.stages[stage as keyof typeof STARTER_JOB]?.state
+    : undefined;
+  const starter =
+    roomState === 'active' ? STARTER_JOB[stage as keyof typeof STARTER_JOB] : undefined;
 
   useLayoutEffect(() => {
     const el = scroller.current;

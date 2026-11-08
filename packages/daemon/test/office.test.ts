@@ -754,15 +754,15 @@ describe('run report', () => {
     const md = await api('GET', '/api/projects/proj/report');
     expect(md.headers['content-disposition']).toBe('attachment; filename="proj-run-report.md"');
     expect(md.body).toMatch(
-      /^\| Idea \| Business Analyst \| 1 \| 1 \| 0 \| 0 \| 1000 \| \$0\.40 \| \d+ min \| \d+ min \| \d{4}-\d\d-\d\d \(internal\) \|$/m,
+      /^\| Idea \| Business Analyst \| 1 \| 1 \| 0 \| 0 \| 1000 \| 0 \| \$0\.40 \| \d+ min \| \d+ min \| \d{4}-\d\d-\d\d \(internal\) \|$/m,
     );
     expect(md.body).toContain('| claude-opus-5-5 | 1 | 1000 | $0.40 |');
     const csv = (await api('GET', '/api/projects/proj/report?format=csv')).body.split('\n');
     expect(csv[0]).toBe(
-      'stage,agent,prompts,turns,cards_answered,approvals_answered,tokens,api_value_usd,claude_min,wall_min,signed_off',
+      'stage,agent,prompts,turns,cards_answered,approvals_answered,tokens,cache_read_tokens,api_value_usd,claude_min,calendar_min,signed_off',
     );
     expect(csv[1]).toMatch(
-      /^idea,Business Analyst,1,1,0,0,1000,0\.40,\d+,\d+,\d{4}-\d\d-\d\d \(internal\)$/,
+      /^idea,Business Analyst,1,1,0,0,1000,0,0\.40,\d+,\d+,\d{4}-\d\d-\d\d \(internal\)$/,
     );
   });
 });

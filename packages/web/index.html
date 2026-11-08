@@ -12,7 +12,21 @@
     <title>Cherry</title>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Shown until the app mounts: a slow first load is not a blank page (finding R2-12). -->
+    <div id="root">
+      <p
+        style="
+          margin: 40vh 0 0;
+          text-align: center;
+          font:
+            13px system-ui,
+            sans-serif;
+          color: GrayText;
+        "
+      >
+        Loading Cherry…
+      </p>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -94,7 +94,14 @@ export function StageRoom({
         statusLine={<StatusLine projectId={projectId} stage={stage} now={now} />}
       />
     );
-  else if (stage === 'deployment') body = <DeployStage projectId={projectId} now={now} />;
+  else if (stage === 'deployment')
+    body = (
+      <DeployStage
+        projectId={projectId}
+        now={now}
+        statusLine={<StatusLine projectId={projectId} stage={stage} now={now} />}
+      />
+    );
   else
     body = (
       <div className={styles.split}>

@@ -40,8 +40,8 @@ describe('release card', () => {
     const approved = vi.fn();
     const r = await releaseTool(ask, approved).handler(args);
     expect(ask.mock.calls[0]![0]).toMatchObject({
-      question: 'Publish the course site?',
-      context: 'Public repository smh/iub-course. Goes live at https://smh.github.io/iub-course.',
+      question: 'Release to smh/iub-course (public)?',
+      context: 'The course site. Goes live at https://smh.github.io/iub-course.',
     });
     expect(approved).toHaveBeenCalledOnce();
     expect(r).toMatchObject({ ok: true, text: expect.stringMatching(/^Approved/) });

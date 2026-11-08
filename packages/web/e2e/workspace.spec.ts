@@ -70,7 +70,8 @@ test('edits and saves a file in the built-in editor', async ({ page }) => {
 test('previews a Markdown file, with the source one click away', async ({ page }) => {
   await page.goto('/p/torongo/files/README.md');
   const code = page.getByRole('region', { name: 'Contents of README.md' });
-  await expect(code).toContainText('# torongo');
+  // Monaco's first load on the dev server can take ~10 s on a busy machine.
+  await expect(code).toContainText('# torongo', { timeout: 20_000 });
   await code.getByRole('button', { name: 'Preview' }).click();
   await expect(code.getByRole('heading', { level: 1, name: 'torongo' })).toBeVisible();
   await code.getByRole('button', { name: 'Edit', exact: true }).click();

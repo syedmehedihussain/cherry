@@ -134,3 +134,10 @@
   flex: 1;
   background: var(--code-bg);
 }
+
+.loading {
+  margin: 0;
+  padding: 16px;
+  font-size: var(--fs-sm);
+  color: var(--t3);
+}

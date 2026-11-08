@@ -20,6 +20,13 @@
 .loading {
   min-height: 100vh;
   background: var(--bg);
+  display: grid;
+  place-items: center;
+}
+.loading p {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--t3);
 }
 .tabs {
   display: flex;

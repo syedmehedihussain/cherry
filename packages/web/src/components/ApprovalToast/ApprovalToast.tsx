@@ -1,6 +1,8 @@
 import { ShieldAlert } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router';
-import { answerApproval, useLiveApprovals, usePendingApprovals } from '../../api/chat.ts';
+import { STAGES, type Approval, type ChatState, type Stage } from '@cherry/shared';
+import { answerApproval, chatKey, useLiveApprovals, usePendingApprovals } from '../../api/chat.ts';
+import { queryClient } from '../../api/queries.ts';
 import styles from './ApprovalToast.module.css';
 
 /** Approvals that arrive while you look at something else (W-14). */
@@ -13,6 +15,9 @@ export function ApprovalToasts() {
     const chatPath = `/p/${encodeURIComponent(a.projectId)}`;
     // A push approval sits in the GitHub box, which every workspace tab shows.
     if (a.kind === 'push' && location.pathname.startsWith(chatPath)) return false;
+    // The card is already in the stage room in view (finding R2-5).
+    const room = roomOf(a);
+    if (room && location.pathname.replace(/\/$/, '') === `${chatPath}/s/${room}`) return false;
     return !(location.pathname === chatPath || location.pathname === `${chatPath}/`);
   });
   if (visible.length === 0) return null;
@@ -34,9 +39,10 @@ export function ApprovalToasts() {
               type="button"
               className="btn btn-primary btn-sm"
               onClick={() => {
+                const room = roomOf(a);
                 const target = a.source.startsWith('agent:')
                   ? `/p/${encodeURIComponent(a.projectId)}/agents?agent=${a.source.slice(6)}`
-                  : `/p/${encodeURIComponent(a.projectId)}`;
+                  : `/p/${encodeURIComponent(a.projectId)}${room ? `/s/${room}` : ''}`;
                 void navigate(target);
               }}
             >
@@ -54,4 +60,15 @@ export function ApprovalToasts() {
       ))}
     </div>
   );
+}
+
+/** The stage whose chat asked for this approval, from the chats already loaded. */
+function roomOf(a: Approval): Stage | null {
+  if (!a.source.startsWith('chat:')) return null;
+  const conversation = a.source.slice(5);
+  for (const stage of STAGES) {
+    const chat = queryClient.getQueryData<ChatState>(chatKey(a.projectId, stage));
+    if (chat?.conversationId === conversation) return stage;
+  }
+  return null;
 }

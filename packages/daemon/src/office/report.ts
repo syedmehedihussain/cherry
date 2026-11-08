@@ -19,6 +19,7 @@ export interface ReportRow {
   cards: number;
   approvals: number;
   tokens: number;
+  cacheRead: number;
   costUsd: number;
   claudeMs: number;
   wallMs: number | null;
@@ -61,6 +62,7 @@ export function reportRows(db: Db, projectId: string, office: OfficeFile, now = 
       cards: c?.cards ?? 0,
       approvals: c?.approvals ?? 0,
       tokens: u?.tokens ?? 0,
+      cacheRead: u?.cacheRead ?? 0,
       costUsd: u?.costUsd ?? 0,
       claudeMs: u?.ms ?? 0,
       wallMs: walls[stage] ?? null,
@@ -71,12 +73,14 @@ export function reportRows(db: Db, projectId: string, office: OfficeFile, now = 
 }
 
 const min = (ms: number) => Math.round(ms / 60_000);
-const sum = (rows: ReportRow[], k: 'prompts' | 'turns' | 'cards' | 'approvals' | 'tokens') =>
-  rows.reduce((a, r) => a + r[k], 0);
+const sum = (
+  rows: ReportRow[],
+  k: 'prompts' | 'turns' | 'cards' | 'approvals' | 'tokens' | 'cacheRead',
+) => rows.reduce((a, r) => a + r[k], 0);
 
 export function reportCsv(rows: ReportRow[]): string {
   const head =
-    'stage,agent,prompts,turns,cards_answered,approvals_answered,tokens,api_value_usd,claude_min,wall_min,signed_off';
+    'stage,agent,prompts,turns,cards_answered,approvals_answered,tokens,cache_read_tokens,api_value_usd,claude_min,calendar_min,signed_off';
   const cell = (v: string | number) =>
     /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
   return (
@@ -91,6 +95,7 @@ export function reportCsv(rows: ReportRow[]): string {
           r.cards,
           r.approvals,
           r.tokens,
+          r.cacheRead,
           r.costUsd.toFixed(2),
           min(r.claudeMs),
           r.wallMs === null ? '' : min(r.wallMs),
@@ -116,15 +121,15 @@ export function reportMarkdown(
     `# Run report: ${name}`,
     '',
     `Version ${version}, made by Cherry on ${localDay(now)} from the chat turns and office.json.`,
-    'The API value is what the same tokens would cost on the API.',
+    'The API value is what the same tokens would cost on the API. Calendar time runs from the sign-off before a stage to its own, nights and idle time included.',
     '',
-    '| Stage | Agent | Prompts | Turns | Cards answered | Approvals | Tokens | API value | Claude time | Wall time | Signed off |',
-    '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |',
+    '| Stage | Agent | Prompts | Turns | Cards answered | Approvals | Tokens | Cache reads | API value | Claude time | Calendar time | Signed off |',
+    '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |',
     ...rows.map(
       (r) =>
-        `| ${OFFICE_STAGE_LABEL[r.stage]} | ${r.agent} | ${r.prompts} | ${r.turns} | ${r.cards} | ${r.approvals} | ${r.tokens} | $${r.costUsd.toFixed(2)} | ${min(r.claudeMs)} min | ${r.wallMs === null ? '-' : `${min(r.wallMs)} min`} | ${r.signedOff || '-'} |`,
+        `| ${OFFICE_STAGE_LABEL[r.stage]} | ${r.agent} | ${r.prompts} | ${r.turns} | ${r.cards} | ${r.approvals} | ${r.tokens} | ${r.cacheRead} | $${r.costUsd.toFixed(2)} | ${min(r.claudeMs)} min | ${r.wallMs === null ? '-' : `${min(r.wallMs)} min`} | ${r.signedOff || '-'} |`,
     ),
-    `| **Total** | | ${sum(rows, 'prompts')} | ${sum(rows, 'turns')} | ${sum(rows, 'cards')} | ${sum(rows, 'approvals')} | ${sum(rows, 'tokens')} | $${cost.toFixed(2)} | ${min(claude)} min | ${min(wall)} min | |`,
+    `| **Total** | | ${sum(rows, 'prompts')} | ${sum(rows, 'turns')} | ${sum(rows, 'cards')} | ${sum(rows, 'approvals')} | ${sum(rows, 'tokens')} | ${sum(rows, 'cacheRead')} | $${cost.toFixed(2)} | ${min(claude)} min | ${min(wall)} min | |`,
     '',
     ...(models.length
       ? [

@@ -14,6 +14,8 @@ export interface StageCardProps {
   meta: string;
   /** How many things in this room wait for the user (finding #26). */
   waiting?: number;
+  /** The room's model when the project set one ("Sonnet"), as its own tag (finding R2-10). */
+  model?: string;
   onOpen(): void;
 }
 
@@ -35,6 +37,7 @@ export function StageCard({
   ready,
   meta,
   waiting = 0,
+  model,
   onOpen,
 }: StageCardProps) {
   const [shake, setShake] = useState(0);
@@ -66,6 +69,7 @@ export function StageCard({
       <span className={styles.top}>
         <span className={styles.av}>{mono}</span>
         <span className={styles.role}>{agent}</span>
+        {model && <span className={styles.model}>{model}</span>}
         {waiting > 0 && (
           <span className={styles.waiting} title={`${waiting} waiting on you`} aria-hidden="true">
             {waiting}

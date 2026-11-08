@@ -522,6 +522,10 @@ test('Change control: a small change, a change request, approve, needs update', 
   let dialog = page.getByRole('dialog', { name: 'Request a change' });
   await dialog.getByLabel('What should change?').fill('Call it membership plan, not package.');
   await dialog.getByRole('button', { name: 'Log the change' }).click();
+  // The small change waits in the box as the agent's job (finding R2-11).
+  await expect(page.getByLabel('Message Claude')).toHaveValue(
+    'Small change (logged in change control): Call it membership plan, not package.',
+  );
 
   await page.getByRole('button', { name: 'Request change' }).click();
   dialog = page.getByRole('dialog', { name: 'Request a change' });

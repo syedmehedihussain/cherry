@@ -347,7 +347,7 @@ export default function CodeEditor({
             theme={theme}
             onMount={onMount}
             onChange={(v) => markDirty(!!base.current && v !== base.current.text)}
-            loading={null}
+            loading={<EditorLoading />}
             options={{
               ariaLabel: `Edit ${path}`,
               readOnly,
@@ -375,7 +375,7 @@ export default function CodeEditor({
               modified={text}
               language={monacoLanguage(lang)}
               theme={theme}
-              loading={null}
+              loading={<EditorLoading />}
               keepCurrentOriginalModel
               keepCurrentModifiedModel
               onMount={(d) => {
@@ -414,4 +414,9 @@ export default function CodeEditor({
       </footer>
     </section>
   );
+}
+
+/** While Monaco loads (several seconds on a cold start): a word, not an empty pane. */
+function EditorLoading() {
+  return <p className={styles.loading}>Loading the editor…</p>;
 }
