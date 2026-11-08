@@ -124,11 +124,20 @@
 .card:hover .body {
   transform: translateY(-14px);
 }
+/* A locked card does not move; its "Opens when ..." is the tooltip (finding #13). */
+.card[aria-disabled]:hover .body {
+  transform: none;
+}
+.card[aria-disabled] .meta {
+  display: none;
+}
 .name {
   font-size: 15cqw;
   font-weight: 650;
   line-height: 1;
   letter-spacing: -0.04em;
+  /* The box ends at the baseline, so big and small titles share one (finding #5). */
+  text-box: trim-end alphabetic;
 }
 .name[data-long] {
   font-size: 11cqw;

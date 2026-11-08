@@ -48,6 +48,9 @@ describe('stage profiles', () => {
     for (const s of ['plan', 'design', 'issues'] as const) {
       expect(stageGuard(s, cwd)('Write', edit)).toMatch(/Development tab/);
       expect(stageGuard(s, cwd)('Edit', { file_path: 'docs/prd.md' })).toBeNull();
+      // Findings #25, #32: keeping .gitignore current is every stage's job.
+      expect(stageGuard(s, cwd)('Edit', { file_path: '/home/x/p/.gitignore' })).toBeNull();
+      expect(stageGuard(s, cwd)('Write', { file_path: 'src/.gitignore' })).toMatch(/Development/);
       expect(stageGuard(s, cwd)('Bash', { command: 'ls' })).toBeNull();
     }
     for (const s of ['preparation', 'development', 'deployment'] as const)

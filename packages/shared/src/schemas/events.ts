@@ -22,7 +22,9 @@ export type NoticeKind =
   | 'issue.sent'
   | 'issue.failed'
   | 'test.done'
-  | 'test.failed';
+  | 'test.failed'
+  | 'commit.done'
+  | 'commit.failed';
 
 /** A short message about work that ended; `link` is the web route that shows it. */
 export interface Notice {

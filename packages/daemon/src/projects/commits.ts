@@ -7,6 +7,7 @@ import type { EventHub } from '../events.ts';
 import { git } from '../git.ts';
 import { badRequest, conflict, HttpError } from '../http.ts';
 import { isSecretFile } from '../paths.ts';
+import { isDocsPath, REPO_FILES } from '../stages/profiles.ts';
 import { projectDir } from './workspace.ts';
 
 /** Diff text Haiku sees when it writes a message: per file and in all. */
@@ -189,6 +190,22 @@ export class CommitService {
       throw badRequest(`${secret.path} is a secret file. Unstage it; Cherry does not commit it.`);
     await this.needAuthor(dir);
     return this.gitCommit(projectId, dir, message, []);
+  }
+
+  /**
+   * The documents with uncommitted changes (docs/, design/, top-level .md, .gitignore and the other REPO_FILES), for the
+   * commit at sign-off (finding #36). Code and secrets are never in it. Empty outside git.
+   */
+  async changedDocs(projectId: string): Promise<string[]> {
+    const dir = this.dir(projectId);
+    const st = await git(dir, ['status', '--porcelain=v1', '-z', '--untracked-files=all']);
+    if (!st.ok) return [];
+    return parseStatus(st.stdout)
+      .map((e) => e.path)
+      .filter(
+        (f) =>
+          !isSecretFile(f) && !f.startsWith('_project/') && (REPO_FILES.has(f) || isDocsPath(f)),
+      );
   }
 
   /** Commits exactly these files, whatever else is staged (Claude's commit_changes). */

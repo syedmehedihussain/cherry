@@ -46,6 +46,7 @@ import {
 import { queryClient } from '../../api/queries.ts';
 import { searchFiles } from '../../api/workspace.ts';
 import { useLoadedOffice } from '../../api/office.ts';
+import { STARTER_JOB } from '../Office/starters.ts';
 import { stageInfo, useStageInfo } from '../../api/stages.ts';
 import {
   CcAnswered,
@@ -232,7 +233,9 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
   const turnStart = lastUser?.at;
   const turnSeed = lastUser?.id ?? 'turn';
   const agentName = stageInfo(useStageInfo().data, stage)?.name;
-  const paperDecisions = !!useLoadedOffice(projectId) && DOCS_ONLY_STAGES.has(stage);
+  const office = useLoadedOffice(projectId);
+  const paperDecisions = !!office && DOCS_ONLY_STAGES.has(stage);
+  const starter = office ? STARTER_JOB[stage as keyof typeof STARTER_JOB] : undefined;
 
   useLayoutEffect(() => {
     const el = scroller.current;
@@ -258,7 +261,12 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
     }
   };
 
-  const lastUserText = [...items].reverse().find((i) => i.kind === 'user')?.text;
+  // Retry after a failed turn (a limit, a lost connection): when the turn had already worked
+  // in its session, carry on from there instead of sending the whole job again (finding #46).
+  const retryText = useMemo(
+    () => retryMessage(items, state?.claudeSessionId ?? null),
+    [items, state?.claudeSessionId],
+  );
   // Rewind (V2.1 w7.9): the message whose rewind panel is open, and what the last rewind did.
   const [rewindAt, setRewindAt] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -293,6 +301,8 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
               stage={stage}
               mode={mode.mode}
               onSkill={(name) => setDraft(projectId, `/cherry-${stage}:${name} `)}
+              starter={starter}
+              onStarter={() => starter && setDraft(projectId, starter)}
             />
           )}
           {blocks.map((b) => (
@@ -361,8 +371,8 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
                   streamingId={state?.running && lastItem?.kind === 'text' ? lastItem.id : null}
                   onOpenFile={onOpenFile}
                   onRetry={
-                    lastUserText
-                      ? () => void send(lastUserText, mode.mode, model ?? state?.model ?? 'opus')
+                    retryText
+                      ? () => void send(retryText, mode.mode, model ?? state?.model ?? 'opus')
                       : undefined
                   }
                 />
@@ -474,11 +484,16 @@ function EmptyChat({
   stage,
   mode,
   onSkill,
+  starter,
+  onStarter,
 }: {
   stage: Stage;
   mode: ChatMode;
   /** Puts the skill's command in the composer (`/cherry-<stage>:<name> `). */
   onSkill(name: string): void;
+  /** The room's first job (V4 office); a click puts it in the box. */
+  starter?: string;
+  onStarter(): void;
 }) {
   const agent = stageInfo(useStageInfo().data, stage);
   return (
@@ -491,6 +506,14 @@ function EmptyChat({
         </p>
         <p className={styles.welcomeMode}>{MODE_NOTE[mode]}</p>
       </div>
+      {starter && (
+        <div className={styles.skillsWrap}>
+          <span className={styles.skillsLabel}>Start with</span>
+          <button type="button" className={styles.starter} onClick={onStarter}>
+            {starter}
+          </button>
+        </div>
+      )}
       {!!agent?.skills.length && (
         <div className={styles.skillsWrap}>
           <span className={styles.skillsLabel}>Skills</span>
@@ -695,6 +718,19 @@ function ClaudeBlock({
       {end && <ChangeSummary projectId={projectId} tools={tools} end={end} />}
     </div>
   );
+}
+
+/** What Retry sends when the failed turn had already done part of the job (#46). */
+export const CONTINUE_JOB =
+  'Continue where you stopped. Do not start again: check what is already done, then do the rest.';
+
+/** Retry's message: carry on in the session when the failed turn had done work, else resend. */
+export function retryMessage(items: ChatItem[], sessionId: string | null): string | undefined {
+  const at = items.findLastIndex((i) => i.kind === 'user');
+  const last = items[at];
+  if (!last || last.kind !== 'user') return undefined;
+  const worked = items.slice(at + 1).some((i) => i.kind !== 'turn-end');
+  return worked && sessionId ? CONTINUE_JOB : last.text;
 }
 
 /**

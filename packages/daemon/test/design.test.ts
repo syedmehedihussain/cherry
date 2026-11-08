@@ -1,7 +1,8 @@
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { listScreens } from '../src/design/screens.ts';
+import type { DesignScreen } from '@cherry/shared';
+import { byScreenNumber, listScreens } from '../src/design/screens.ts';
 import { HOST, ORIGIN, tempDir, testDaemon, write, type TestDaemon } from './helpers.ts';
 
 describe('design screens (V3 r7)', () => {
@@ -78,5 +79,29 @@ describe('design screens (V3 r7)', () => {
     } finally {
       await d.cleanup();
     }
+  });
+});
+
+// Finding #30: screens in the Designer's order, by the number in the name or title.
+describe('screen order', () => {
+  const screen = (name: string, title: string) =>
+    ({ path: '', name, title, html: '', mtime: 0 }) as DesignScreen;
+  it('sorts numbered screens by number, the rest by name after them', () => {
+    const list = [
+      screen('glossary', '4 · Glossary'),
+      screen('home', '1 · Home'),
+      screen('zeta', 'Zeta'),
+      screen('10-settings', 'Settings'),
+      screen('alpha', 'Alpha'),
+      screen('lesson', '3 · Lesson'),
+    ].sort(byScreenNumber);
+    expect(list.map((s) => s.name)).toEqual([
+      'home',
+      'lesson',
+      'glossary',
+      '10-settings',
+      'alpha',
+      'zeta',
+    ]);
   });
 });

@@ -1,9 +1,17 @@
-.page {
+.scroll {
   flex: 1;
+  min-height: 0;
   overflow: auto;
+}
+/* Centred in one page scroll (finding #16). */
+.page {
   padding: 22px 24px 40px;
-  max-width: 1000px;
-  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.live {
+  color: var(--accent-text);
+  font-size: var(--fs-xs);
 }
 .h {
   margin: 0 0 4px;

@@ -169,6 +169,21 @@
   box-shadow: var(--focus-ring);
 }
 
+.starter {
+  padding: 8px 12px;
+  border: 1px dashed var(--bs);
+  border-radius: var(--r-md);
+  background: none;
+  color: var(--t2);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.starter:hover {
+  border-color: var(--accent-border);
+  color: var(--t1);
+}
+
 /* A file the agent wrote: one line with Open. */
 .fileLine {
   display: inline-flex;

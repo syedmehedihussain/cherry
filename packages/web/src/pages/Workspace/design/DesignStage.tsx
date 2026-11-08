@@ -1,5 +1,5 @@
 import { Check, Download } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { sendChat, useChatDraft } from '../../../api/chat.ts';
 import { ApiFailure } from '../../../api/client.ts';
 import { useStages } from '../../../state/stage.ts';
@@ -8,6 +8,7 @@ import { useProjectDetail } from '../../../api/workspace.ts';
 import { BriefPanel } from './BriefPanel.tsx';
 import { ChatTab, readMode } from '../ChatTab.tsx';
 import { Canvas, type CanvasComment } from './Canvas.tsx';
+import { BUILD_FROM_HANDOFF } from '../../Office/starters.ts';
 import styles from './DesignStage.module.css';
 
 /** The comment as the UI/UX Designer reads it (its AGENT.md knows this form). */
@@ -20,15 +21,13 @@ export function commentMessage(c: CanvasComment & { note: string }): string {
  * Design (V3 r7, artboard 02): Claude Design in Cherry. The canvas in the centre shows the
  * screens the UI/UX Designer writes; the UI/UX Designer's chat is on the right.
  */
-/** What the Development Team is asked first, once the design is approved. */
-export const BUILD_FROM_HANDOFF =
-  'The design is approved. Read design/handoff/README.md, design/handoff/components.md and the screens in design/handoff/screens/, then the roadmap. Build the shared components first, then the first roadmap task, to match the screens. Use design/handoff/tokens.css.';
 
 export function DesignStage({
   projectId,
   now,
   onOpenFile,
   office = false,
+  statusLine,
 }: {
   projectId: string;
   now: number;
@@ -38,6 +37,8 @@ export function DesignStage({
    * handoff and opens Development (finding #35).
    */
   office?: boolean;
+  /** Under the chat: the room's ctx, 5h and week line (finding #30). */
+  statusLine?: ReactNode;
 }) {
   const data = useDesignScreens(projectId).data;
   const screens = useMemo(() => data ?? [], [data]);
@@ -156,6 +157,7 @@ export function DesignStage({
       )}
       <div className={styles.chat}>
         <ChatTab projectId={projectId} stage="design" now={now} onOpenFile={openFile} />
+        {statusLine}
       </div>
     </div>
   );

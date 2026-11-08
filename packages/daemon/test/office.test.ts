@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -89,6 +90,43 @@ describe('the office (V4, ADR-0052, ADR-0054)', () => {
       internal: true,
     });
     expect(stages(o).plan).toBe('active');
+  });
+
+  // Findings #36, #37: each sign-off is a commit of the documents and a line in STATUS.md.
+  it('commits the changed documents and notes the sign-off in STATUS.md', async () => {
+    await start();
+    const dir = path.join(d!.projectsDir, 'proj');
+    execFileSync('git', ['config', 'user.name', 'Test'], { cwd: dir });
+    execFileSync('git', ['config', 'user.email', 't@example.com'], { cwd: dir });
+    mkdirSync(path.join(dir, '_project'), { recursive: true });
+    writeFileSync(
+      path.join(dir, '_project', 'STATUS.md'),
+      '---\nname: proj\nupdated: 2026-01-01\n---\n\n## Where we left off\n\nStarted.\n',
+    );
+    mkdirSync(path.join(dir, 'docs', 'idea', 'client'), { recursive: true });
+    writeFileSync(path.join(dir, 'docs', 'idea', 'client', 'brief.md'), '# Brief\n');
+    mkdirSync(path.join(dir, 'src'), { recursive: true });
+    writeFileSync(path.join(dir, 'src', 'app.js'), 'code\n');
+    await ok('POST', '', { kind: 'client', client: { name: 'Gym' } });
+    await ok('POST', '/stages/idea/ready', { ready: true });
+    const res = await call('POST', '/stages/idea/sign-off', {
+      by: 'Nusrat',
+      date: '2026-11-09',
+      commit: true,
+    });
+    expect(res.statusCode, res.body).toBe(200);
+    expect(res.json().commit.message).toBe('docs: sign off Idea (v1.0)');
+    const files = execFileSync('git', ['show', '--name-only', '--format=', 'HEAD'], { cwd: dir })
+      .toString()
+      .trim()
+      .split('\n');
+    expect(files).toEqual(['docs/idea/client/brief.md']);
+    const status = readFileSync(path.join(dir, '_project', 'STATUS.md'), 'utf8');
+    expect(status).toMatch(/^updated: \d{4}-\d\d-\d\d$/m);
+    expect(status).not.toContain('updated: 2026-01-01');
+    expect(status).toMatch(
+      /## Where we left off\n\n\d{4}-\d\d-\d\d: Idea signed off \(approved by Nusrat\)\. Requirements is open\.\n\nStarted\./,
+    );
   });
 
   it('holds Development until the prototype is approved, and goes Live after Deployment', async () => {

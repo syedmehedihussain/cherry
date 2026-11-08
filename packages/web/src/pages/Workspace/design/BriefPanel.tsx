@@ -1,5 +1,5 @@
 import { ArrowUpRight, FileText, Image as ImageIcon, Layers, Link2, Plus, X } from 'lucide-react';
-import { useEffect, useRef, useState, type DragEvent, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import {
   BRIEF_COLOURS,
   BRIEF_FONTS,
@@ -20,6 +20,8 @@ import {
 } from '../../../api/design.ts';
 import { useProjects } from '../../../api/queries.ts';
 import { contrast, grade } from '../../../lib/contrast.ts';
+import { tokenColours } from '../../../lib/tokens.ts';
+import { useFile } from '../../../api/workspace.ts';
 import { readMode } from '../ChatTab.tsx';
 import styles from './BriefPanel.module.css';
 
@@ -57,6 +59,8 @@ export function BriefPanel({ projectId, idea }: { projectId: string; idea: strin
   const shown = draft ?? brief;
   const timer = useRef<number | null>(null);
 
+  const tokensCss = useFile(projectId, 'design/tokens.css').data?.content;
+  const fromTokens = useMemo(() => (tokensCss ? tokenColours(tokensCss) : {}), [tokensCss]);
   // Colours and fonts save half a second after the last change.
   const change = (next: Brief) => {
     setDraft(next);
@@ -89,7 +93,11 @@ export function BriefPanel({ projectId, idea }: { projectId: string; idea: strin
   };
 
   if (!shown) return <aside className={styles.panel} aria-label="Brief" />;
-  const c = shown.colours;
+  // A colour the brief does not set shows the one in design/tokens.css (finding #29).
+  const c = {
+    ...fromTokens,
+    ...Object.fromEntries(Object.entries(shown.colours).filter(([, v]) => v)),
+  };
   const ratio = c.text && c.surface ? contrast(c.text, c.surface) : null;
 
   return (
@@ -260,12 +268,21 @@ export function BriefPanel({ projectId, idea }: { projectId: string; idea: strin
                     aria-label={`${COLOUR_LABEL[k]} colour`}
                     value={c[k] ?? '#888888'}
                     onChange={(e) =>
-                      change({ ...shown, colours: { ...c, [k]: e.target.value.toUpperCase() } })
+                      change({
+                        ...shown,
+                        colours: { ...shown.colours, [k]: e.target.value.toUpperCase() },
+                      })
                     }
                   />
                 </span>
                 <span className={styles.swatchName}>{COLOUR_LABEL[k]}</span>
-                <span className={styles.hex}>{c[k]?.slice(1) ?? '—'}</span>
+                <span
+                  className={styles.hex}
+                  data-from-tokens={(!shown.colours[k] && !!c[k]) || undefined}
+                  title={!shown.colours[k] && c[k] ? 'From design/tokens.css' : undefined}
+                >
+                  {c[k]?.slice(1) ?? '—'}
+                </span>
               </label>
             ))}
           </div>
@@ -458,6 +475,36 @@ function FromProject({ projectId, onPick }: { projectId: string; onPick(id: stri
   );
 }
 
+/** Fonts most projects pick, offered first when they are on this computer (finding #28). */
+const COMMON_FONTS = [
+  'Inter',
+  'Roboto',
+  'Open Sans',
+  'Lato',
+  'Source Sans 3',
+  'Noto Sans',
+  'Noto Serif',
+  'IBM Plex Sans',
+  'IBM Plex Serif',
+  'IBM Plex Mono',
+  'Ubuntu',
+  'DejaVu Sans',
+  'DejaVu Serif',
+  'Liberation Sans',
+  'Liberation Serif',
+  'JetBrains Mono',
+  'Fira Sans',
+  'Fira Code',
+  'Cantarell',
+];
+
+/** What the font search offers: a short list when empty, else up to 30 matches. */
+export function fontChoices(all: string[], bundled: string[], query: string): string[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [...bundled, ...COMMON_FONTS.filter((f) => all.includes(f))];
+  return [...bundled, ...all].filter((f) => f.toLowerCase().includes(q)).slice(0, 30);
+}
+
 function FontRow({
   label,
   sample,
@@ -471,6 +518,10 @@ function FontRow({
 }) {
   const fonts = useFonts().data;
   const family = value?.family;
+  const [query, setQuery] = useState<string | null>(null);
+  const listId = useId();
+  const known = (f: string) => !!fonts && (fonts.families.includes(f) || fonts.bundled.includes(f));
+  const choices = fonts ? fontChoices(fonts.families, fonts.bundled, query ?? '') : [];
   return (
     <div className={styles.font}>
       <span
@@ -484,39 +535,26 @@ function FontRow({
         {sample}
       </span>
       <div className={styles.fontPick}>
-        <select
+        <input
           aria-label={`${label} font`}
           className={styles.select}
-          value={family ?? ''}
-          onChange={(e) =>
-            onChange(
-              e.target.value ? { family: e.target.value, weight: value?.weight ?? 400 } : null,
-            )
-          }
-        >
-          <option value="">{label}: not set</option>
-          {fonts && (
-            <>
-              <optgroup label="Cherry">
-                {fonts.bundled.map((f) => (
-                  <option key={f} value={f}>
-                    {f}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="This computer">
-                {fonts.families.map((f) => (
-                  <option key={f} value={f}>
-                    {f}
-                  </option>
-                ))}
-              </optgroup>
-            </>
-          )}
-          {family && !fonts?.families.includes(family) && !fonts?.bundled.includes(family) && (
-            <option value={family}>{family}</option>
-          )}
-        </select>
+          list={listId}
+          placeholder={`${label}: search fonts`}
+          value={query ?? family ?? ''}
+          onFocus={() => setQuery('')}
+          onChange={(e) => {
+            const v = e.target.value;
+            setQuery(v);
+            if (known(v)) onChange({ family: v, weight: value?.weight ?? 400 });
+            else if (!v && family) onChange(null);
+          }}
+          onBlur={() => setQuery(null)}
+        />
+        <datalist id={listId}>
+          {choices.map((f) => (
+            <option key={f} value={f} />
+          ))}
+        </datalist>
         <span className={styles.fontMeta}>
           {label}
           {value && (

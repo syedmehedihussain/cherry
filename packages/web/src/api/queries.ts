@@ -5,6 +5,7 @@ import {
   ConfigSchema,
   HealthSchema,
   PlanUsageSchema,
+  type PlanUsage,
   ProjectListSchema,
   type Health,
   type ProjectList,
@@ -62,10 +63,39 @@ export function recheckHealth(): Promise<Health> {
 }
 
 /** claude.ai plan limits (5-hour and weekly), refreshed every minute. */
+const LAST_USAGE = 'cherry.planUsage.last';
+const LAST_USAGE_MS = 6 * 3_600_000;
+
+/** The last reading that had the limits, if it is recent (finding #43). */
+function lastUsage(): PlanUsage | undefined {
+  try {
+    const v = PlanUsageSchema.safeParse(JSON.parse(localStorage.getItem(LAST_USAGE) ?? 'null'));
+    return v.success && Date.now() - v.data.fetchedAt < LAST_USAGE_MS ? v.data : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * The plan's 5-hour and weekly limits. A reload, or a reading that comes back without them,
+ * shows the last known one instead of nothing (finding #43).
+ */
 export function usePlanUsage() {
   return useQuery({
     queryKey: keys.planUsage,
-    queryFn: () => api('GET', '/api/claude/usage', undefined, PlanUsageSchema),
+    queryFn: async () => {
+      const now = await api('GET', '/api/claude/usage', undefined, PlanUsageSchema);
+      if (now.available && (now.fiveHour || now.week)) {
+        try {
+          localStorage.setItem(LAST_USAGE, JSON.stringify(now));
+        } catch {
+          // Private window: only this reading is kept.
+        }
+        return now;
+      }
+      return lastUsage() ?? now;
+    },
+    placeholderData: lastUsage,
     refetchInterval: 60_000,
   });
 }

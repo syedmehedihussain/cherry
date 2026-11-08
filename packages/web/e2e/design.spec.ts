@@ -91,7 +91,7 @@ test('Design: the brief keeps references, a link, colours and fonts', async ({ p
   await colours.getByLabel('Text colour').fill('#ffffff');
   await colours.getByLabel('Surface colour').fill('#000000');
   await expect(colours).toContainText('AAA 21');
-  await brief.getByLabel('Headings font').selectOption('Geist');
+  await brief.getByLabel('Headings font').fill('Geist');
 
   const file = path.join(design, 'brief.json');
   await expect.poll(() => existsSync(file) && readFileSync(file, 'utf8')).toContain('"Geist"');

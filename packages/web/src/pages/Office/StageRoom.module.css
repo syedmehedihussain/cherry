@@ -44,6 +44,9 @@
 }
 .pill {
   height: var(--h-pill-sm);
+  /* One slot for every state: "On-going" to "ready to sign off" moves nothing (finding #10). */
+  min-width: 128px;
+  justify-content: center;
   padding: 0 8px;
   border-radius: var(--r-pill);
   display: inline-flex;

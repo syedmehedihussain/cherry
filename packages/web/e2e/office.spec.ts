@@ -150,6 +150,11 @@ test('Requirements: questions for the client, answered and sent back', async ({ 
   await page.getByRole('dialog').getByRole('button', { name: 'Sign off' }).click();
   await page.getByRole('button', { name: 'Requirements, On-going' }).click();
 
+  // An empty room offers its first job; a click puts it in the box, nothing is sent (#15).
+  await page.getByRole('button', { name: /^Read the signed-off brief in docs\/idea\// }).click();
+  await expect(box).toHaveValue(/^Read the signed-off brief in docs\/idea\//);
+  await box.fill('');
+
   const docs = page.getByRole('complementary', { name: 'Documents' });
   await docs.getByRole('tab', { name: 'Questions' }).click();
   await docs.getByRole('button', { name: 'Ask for the questions' }).click();

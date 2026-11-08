@@ -39,6 +39,8 @@ export function SignOffDialog({
   const [date, setDate] = useState(() => localDay());
   const [notes, setNotes] = useState('');
   const [internal, setInternal] = useState(false);
+  // Each signed-off stage is a point in the project's history (finding #36).
+  const [commit, setCommit] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const next = OFFICE_STAGES[OFFICE_STAGES.indexOf(stage) + 1];
@@ -67,7 +69,12 @@ export function SignOffDialog({
   };
   const signOff = () =>
     run(
-      () => signOffStage(projectId, stage, personal ? { notes } : { by, date, notes, internal }),
+      () =>
+        signOffStage(
+          projectId,
+          stage,
+          personal ? { notes, commit } : { by, date, notes, internal, commit },
+        ),
       !onSigned,
     ).then((ok) => ok && onSigned?.());
 
@@ -153,6 +160,16 @@ export function SignOffDialog({
             </label>
           )}
         </div>
+        <label className={styles.check}>
+          <input type="checkbox" checked={commit} onChange={(e) => setCommit(e.target.checked)} />
+          <span>
+            Commit the stage documents
+            <small>
+              Cherry commits the changed files in docs/ and design/ with your git name. Code is
+              never in it.
+            </small>
+          </span>
+        </label>
         {error && <p className={styles.error}>{error}</p>}
         <div className={styles.foot}>
           {!personal && rec.state === 'active' && (

@@ -44,6 +44,45 @@ function remarkAdrLinks() {
   return (tree: MdNode) => walk(tree);
 }
 
+/** All the text of a node, for telling what a paragraph looks like. */
+const plain = (n: MdNode): string =>
+  n.type === 'text' || n.type === 'inlineCode'
+    ? (n.value ?? '')
+    : (n.children ?? []).map(plain).join('');
+
+/** "Client: Gym" or "**Version:** 1.0": a field line of a document header. */
+const FIELD = /^\s*(?:[-*]\s+)?\**[A-Z][\w ./()-]{0,40}:\**\s*\S/;
+
+/**
+ * A paragraph made only of field lines (a brief's Client / Site name / Version / Date) keeps
+ * its lines, instead of running them together (finding #11). Other paragraphs are left as
+ * Markdown has them.
+ */
+function remarkFieldLines() {
+  const walk = (node: MdNode) => {
+    if (!node.children) return;
+    if (node.type === 'paragraph') {
+      const lines = plain(node).split('\n');
+      if (lines.length < 2 || !lines.every((l) => FIELD.test(l))) return;
+      const out: MdNode[] = [];
+      for (const child of node.children) {
+        if (child.type !== 'text' || !child.value?.includes('\n')) {
+          out.push(child);
+          continue;
+        }
+        child.value.split('\n').forEach((part, i) => {
+          if (i > 0) out.push({ type: 'break' });
+          if (part) out.push({ type: 'text', value: part });
+        });
+      }
+      node.children = out;
+      return;
+    }
+    node.children.forEach(walk);
+  };
+  return (tree: MdNode) => walk(tree);
+}
+
 function dirname(p: string): string {
   const i = p.lastIndexOf('/');
   return i < 0 ? '' : p.slice(0, i);
@@ -116,7 +155,7 @@ export const Markdown = memo(function Markdown({
   return (
     <div className={styles.md} data-variant={variant}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkAdrLinks]}
+        remarkPlugins={[remarkGfm, remarkAdrLinks, remarkFieldLines]}
         components={components}
         urlTransform={(url) => (url.startsWith('adr:') ? url : defaultUrlTransform(url))}
       >

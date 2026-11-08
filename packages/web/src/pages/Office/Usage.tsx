@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   OFFICE_AGENT,
   OFFICE_STAGES,
@@ -9,7 +9,7 @@ import {
   type OfficeStage,
 } from '@cherry/shared';
 import { api, ApiFailure } from '../../api/client.ts';
-import { useChat } from '../../api/chat.ts';
+import { useChat, useLiveChat } from '../../api/chat.ts';
 import { officeSettings } from '../../api/office.ts';
 import { usePlanUsage } from '../../api/queries.ts';
 import { resetText } from '../../components/PlanUsage/PlanUsage.tsx';
@@ -23,6 +23,58 @@ export const fmtTokens = (n: number) =>
       ? `${Math.round(n / 1000)}k`
       : `${n}`;
 export const fmtHours = (ms: number) => `${(ms / 3_600_000).toFixed(1)}h`;
+
+/** "Opus 5.5" for claude-opus-5-5, "Haiku 4.5" for claude-haiku-4-5-20251001 (finding #16). */
+export function shortModel(id: string): string {
+  const name = (w: string) => w[0]!.toUpperCase() + w.slice(1);
+  const m = /^claude-(opus|sonnet|haiku|fable)-(\d+)(?:-(\d{1,2})(?!\d))?/.exec(id) ?? null;
+  if (m) return `${name(m[1]!)} ${m[2]}${m[3] ? `.${m[3]}` : ''}`;
+  const old = /^claude-(\d+)(?:-(\d))?-(opus|sonnet|haiku)/.exec(id);
+  if (old) return `${name(old[3]!)} ${old[1]}${old[2] ? `.${old[2]}` : ''}`;
+  return id;
+}
+
+/** "45 min", "2.3 h", "3 d": a stage's time. */
+export function fmtSpan(ms: number): string {
+  const min = ms / 60_000;
+  if (min < 60) return `${Math.max(0, Math.round(min))} min`;
+  const h = min / 60;
+  return h < 48 ? `${h.toFixed(1)} h` : `${Math.round(h / 24)} d`;
+}
+
+/**
+ * Wall time of each stage (finding #17): from the sign-off before it (or the version's start)
+ * to its own sign-off, or to now while it is open. Null for a stage not opened yet.
+ */
+export function wallTimes(office: OfficeFile, now: number): Partial<Record<OfficeStage, number>> {
+  const cycle = office.cycles[office.cycles.length - 1]!;
+  const out: Partial<Record<OfficeStage, number>> = {};
+  let from = Date.parse(cycle.startedAt);
+  for (const s of OFFICE_STAGES) {
+    const rec = cycle.stages[s];
+    if (rec.state === 'locked') break;
+    if (rec.state === 'carried') continue;
+    const signed = rec.signOffs.at(-1)?.at;
+    const to = rec.state === 'signed' && signed ? Date.parse(signed) : now;
+    out[s] = Math.max(0, to - from);
+    if (rec.state !== 'signed' || !signed) break;
+    from = Date.parse(signed);
+  }
+  return out;
+}
+
+/** The turn running now in each stage's chat, with when it started (finding #17). */
+function useRunning(projectId: string): Partial<Record<OfficeStage, number>> {
+  const out: Partial<Record<OfficeStage, number>> = {};
+  for (const s of OFFICE_STAGES) {
+    // A fixed list: the hooks run in the same order every time.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const chat = useChat(projectId, s).data;
+    const since = chat?.startedAt ?? chat?.items.findLast((i) => i.kind === 'user')?.at;
+    if (chat?.running && since) out[s] = since;
+  }
+  return out;
+}
 
 export const useProjectUsage = (projectId: string) =>
   useQuery({
@@ -50,8 +102,19 @@ export function Usage({
   office: OfficeFile;
   stage?: OfficeStage;
 }) {
-  const now = useNow(60_000);
-  const usage = useProjectUsage(projectId).data;
+  useLiveChat(projectId);
+  const running = useRunning(projectId);
+  const busy = Object.keys(running).length > 0;
+  const now = useNow(busy ? 5_000 : 60_000);
+  const usageQuery = useProjectUsage(projectId);
+  const usage = usageQuery.data;
+  // A turn ends: its tokens arrive with the next read.
+  const { refetch } = usageQuery;
+  const busyKey = Object.keys(running).sort().join();
+  useEffect(() => {
+    void refetch();
+  }, [busyKey, refetch]);
+  const walls = wallTimes(office, now);
   const plan = usePlanUsage().data;
   const chat = useChat(projectId, stage ?? 'idea').data;
   const end = stage ? chat?.items.findLast((i) => i.kind === 'turn-end') : undefined;
@@ -71,105 +134,128 @@ export function Usage({
     </div>
   );
   return (
-    <div className={styles.page}>
-      <h2 className={styles.h}>Claude usage{stage ? `, ${OFFICE_STAGE_LABEL[stage]}` : ''}</h2>
-      <p className={styles.sub}>
-        The cost is what the same tokens would cost on the API; your plan covers it. It keeps a
-        budget per project. Nothing runs unless you give a job.
-      </p>
-      <section className={styles.sect} aria-label="Limits">
-        <h3>Limits now</h3>
-        {plan?.available &&
-          plan.fiveHour &&
-          bar(
-            '5-hour window',
-            plan.fiveHour.usedPercent,
-            `${pct(plan.fiveHour.usedPercent)}%${plan.fiveHour.resetsAt !== null ? `, ${resetText(plan.fiveHour.resetsAt, now)}` : ''}`,
-            plan.fiveHour.usedPercent > 80,
-          )}
-        {plan?.available &&
-          plan.week &&
-          bar(
-            'This week',
-            plan.week.usedPercent,
-            `${pct(plan.week.usedPercent)}%`,
-            plan.week.usedPercent > 80,
-          )}
-        {ctx &&
-          ctx.window > 0 &&
-          bar(
-            'Context, this chat',
-            (ctx.used / ctx.window) * 100,
-            `${fmtTokens(ctx.used)} of ${fmtTokens(ctx.window)}`,
-            ctx.used / ctx.window > 0.75,
-          )}
-        {bar(
-          'Project budget',
-          (used / budget) * 100,
-          `${fmtTokens(used)} of ${fmtTokens(budget)}`,
-          used / budget > 0.8,
-        )}
-        <Budget projectId={projectId} budget={budget} />
-      </section>
-      {stage && (
-        <section className={styles.sect} aria-label={OFFICE_AGENT[stage]}>
-          <h3>{OFFICE_AGENT[stage]}</h3>
-          <div className={styles.stats}>
-            <Stat v={fmtTokens(mine?.tokens ?? 0)} l="tokens" />
-            <Stat v={`$${(mine?.costUsd ?? 0).toFixed(2)}`} l="API value" />
-            <Stat v={`${mine?.turns ?? 0}`} l="turns" />
-            <Stat v={fmtHours(mine?.ms ?? 0)} l="Claude working" />
-          </div>
-        </section>
-      )}
-      <section className={styles.sect} aria-label="By stage">
-        <h3>By stage</h3>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Stage</th>
-              <th>Agent</th>
-              <th className={styles.num}>Tokens</th>
-              <th className={styles.num}>API value</th>
-              <th className={styles.num}>Turns</th>
-            </tr>
-          </thead>
-          <tbody>
-            {OFFICE_STAGES.map((s) => {
-              const r = row(s);
-              return (
-                <tr key={s} data-current={s === stage || undefined}>
-                  <td>{OFFICE_STAGE_LABEL[s]}</td>
-                  <td className={styles.dim}>{OFFICE_AGENT[s]}</td>
-                  <td className={styles.num}>{r ? fmtTokens(r.tokens) : '-'}</td>
-                  <td className={styles.num}>{r ? `$${r.costUsd.toFixed(2)}` : '-'}</td>
-                  <td className={styles.num}>{r ? r.turns : '-'}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colSpan={2}>Total</td>
-              <td className={styles.num}>{fmtTokens(used)}</td>
-              <td className={styles.num}>${(usage?.total.costUsd ?? 0).toFixed(2)}</td>
-              <td className={styles.num}>{usage?.total.turns ?? 0}</td>
-            </tr>
-          </tfoot>
-        </table>
-      </section>
-      {usage && usage.models.length > 0 && (
-        <section className={styles.sect} aria-label="By model">
-          <h3>By model</h3>
-          {usage.models.map((m) =>
+    <div className={styles.scroll}>
+      <div className={styles.page}>
+        <h2 className={styles.h}>Claude usage{stage ? `, ${OFFICE_STAGE_LABEL[stage]}` : ''}</h2>
+        <p className={styles.sub}>
+          The cost is what the same tokens would cost on the API; your plan covers it. It keeps a
+          budget per project. Nothing runs unless you give a job.
+        </p>
+        <section className={styles.sect} aria-label="Limits">
+          <h3>Limits now</h3>
+          {plan?.available &&
+            plan.fiveHour &&
             bar(
-              m.model,
-              used ? (m.tokens / used) * 100 : 0,
-              `${fmtTokens(m.tokens)}, $${m.costUsd.toFixed(2)}`,
-            ),
+              '5-hour window',
+              plan.fiveHour.usedPercent,
+              `${pct(plan.fiveHour.usedPercent)}%${plan.fiveHour.resetsAt !== null ? `, ${resetText(plan.fiveHour.resetsAt, now)}` : ''}`,
+              plan.fiveHour.usedPercent > 80,
+            )}
+          {plan?.available &&
+            plan.week &&
+            bar(
+              'This week',
+              plan.week.usedPercent,
+              `${pct(plan.week.usedPercent)}%`,
+              plan.week.usedPercent > 80,
+            )}
+          {ctx &&
+            ctx.window > 0 &&
+            bar(
+              'Context, this chat',
+              (ctx.used / ctx.window) * 100,
+              `${fmtTokens(ctx.used)} of ${fmtTokens(ctx.window)}`,
+              ctx.used / ctx.window > 0.75,
+            )}
+          {bar(
+            'Project budget',
+            (used / budget) * 100,
+            `${fmtTokens(used)} of ${fmtTokens(budget)}`,
+            used / budget > 0.8,
           )}
+          <Budget projectId={projectId} budget={budget} />
         </section>
-      )}
+        {stage && (
+          <section className={styles.sect} aria-label={OFFICE_AGENT[stage]}>
+            <h3>{OFFICE_AGENT[stage]}</h3>
+            <div className={styles.stats}>
+              <Stat v={fmtTokens(mine?.tokens ?? 0)} l="tokens" />
+              <Stat v={`$${(mine?.costUsd ?? 0).toFixed(2)}`} l="API value" />
+              <Stat v={`${mine?.turns ?? 0}`} l="turns" />
+              <Stat v={fmtHours(mine?.ms ?? 0)} l="Claude working" />
+            </div>
+          </section>
+        )}
+        <section className={styles.sect} aria-label="By stage">
+          <h3>By stage</h3>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Stage</th>
+                <th>Agent</th>
+                <th className={styles.num}>Tokens</th>
+                <th className={styles.num}>API value</th>
+                <th className={styles.num}>Turns</th>
+                <th className={styles.num} title="Claude working on this stage's turns">
+                  Claude time
+                </th>
+                <th className={styles.num} title="From the sign-off before it to its own sign-off">
+                  Wall time
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {OFFICE_STAGES.map((s) => {
+                const r = row(s);
+                return (
+                  <tr key={s} data-current={s === stage || undefined}>
+                    <td>{OFFICE_STAGE_LABEL[s]}</td>
+                    <td className={styles.dim}>{OFFICE_AGENT[s]}</td>
+                    <td className={styles.num}>{r ? fmtTokens(r.tokens) : '-'}</td>
+                    <td className={styles.num}>{r ? `$${r.costUsd.toFixed(2)}` : '-'}</td>
+                    <td className={styles.num}>
+                      {r ? r.turns : running[s] ? 0 : '-'}
+                      {running[s] !== undefined && <span className={styles.live}> +1 running</span>}
+                    </td>
+                    <td className={styles.num}>
+                      {r || running[s] !== undefined
+                        ? fmtSpan((r?.ms ?? 0) + (running[s] !== undefined ? now - running[s] : 0))
+                        : '-'}
+                    </td>
+                    <td className={styles.num}>
+                      {walls[s] !== undefined ? fmtSpan(walls[s]) : '-'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={2}>Total</td>
+                <td className={styles.num}>{fmtTokens(used)}</td>
+                <td className={styles.num}>${(usage?.total.costUsd ?? 0).toFixed(2)}</td>
+                <td className={styles.num}>{usage?.total.turns ?? 0}</td>
+                <td className={styles.num}>{fmtSpan(usage?.total.ms ?? 0)}</td>
+                <td className={styles.num}>
+                  {fmtSpan(Object.values(walls).reduce((a, b) => a + b, 0))}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </section>
+        {usage && usage.models.length > 0 && (
+          <section className={styles.sect} aria-label="By model">
+            <h3>By model</h3>
+            {usage.models.map((m) =>
+              bar(
+                shortModel(m.model),
+                used ? (m.tokens / used) * 100 : 0,
+                `${fmtTokens(m.tokens)}, $${m.costUsd.toFixed(2)}`,
+              ),
+            )}
+          </section>
+        )}
+      </div>
     </div>
   );
 }

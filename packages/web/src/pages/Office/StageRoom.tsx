@@ -18,7 +18,8 @@ import { useNow } from '../../lib/useNow.ts';
 import { useUi } from '../../state/ui.ts';
 import { ChatTab } from '../Workspace/ChatTab.tsx';
 import { DeployStage } from '../Workspace/deploy/DeployStage.tsx';
-import { BUILD_FROM_HANDOFF, DesignStage } from '../Workspace/design/DesignStage.tsx';
+import { DesignStage } from '../Workspace/design/DesignStage.tsx';
+import { BUILD_FROM_HANDOFF } from './starters.ts';
 import { DocReader } from '../Workspace/plan/PlanStage.tsx';
 import { DevGate } from './DevGate.tsx';
 import { BugsTab, QuestionsTab, UatTab } from './StageExtras.tsx';
@@ -82,7 +83,15 @@ export function StageRoom({
 
   let body;
   if (stage === 'design')
-    body = <DesignStage projectId={projectId} now={now} onOpenFile={setDoc} office />;
+    body = (
+      <DesignStage
+        projectId={projectId}
+        now={now}
+        onOpenFile={setDoc}
+        office
+        statusLine={<StatusLine projectId={projectId} stage={stage} now={now} />}
+      />
+    );
   else if (stage === 'deployment') body = <DeployStage projectId={projectId} now={now} />;
   else
     body = (

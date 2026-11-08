@@ -57,6 +57,16 @@ export function isDocsPath(rel: string): boolean {
   return ['docs', 'design', '_project'].includes(parts[0]!);
 }
 
+/**
+ * Repo housekeeping at the top of the project that a docs-only stage may still write (findings
+ * #25, #32): keeping .gitignore current is part of every stage's job.
+ */
+export const REPO_FILES: ReadonlySet<string> = new Set([
+  '.gitignore',
+  '.gitattributes',
+  '.editorconfig',
+]);
+
 const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
 
 /**
@@ -77,7 +87,7 @@ export function stageGuard(
           ? input.notebook_path
           : '';
     const rel = path.relative(cwd, path.resolve(cwd, target));
-    if (isDocsPath(rel)) return null;
-    return `The ${profile.name} (${STAGE_LABEL[stage]} tab) only writes docs and notes: docs/, design/, _project/ and top-level .md files. ${rel} is code or config. Do not change it another way; tell the user this belongs in the Development tab.`;
+    if (isDocsPath(rel) || REPO_FILES.has(rel)) return null;
+    return `The ${profile.name} (${STAGE_LABEL[stage]} tab) only writes docs and notes: docs/, design/, _project/, top-level .md files and ${[...REPO_FILES].join(', ')}. ${rel} is code or config. Do not change it another way; tell the user this belongs in the Development tab.`;
   };
 }

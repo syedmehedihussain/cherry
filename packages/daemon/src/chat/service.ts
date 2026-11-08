@@ -385,7 +385,8 @@ export class ChatService {
                 ? `${stageProfile(stage).name} replied in ${projectId}`
                 : `${stageProfile(stage).name} stopped in ${projectId}`,
               body: ev.ok ? 'Your reply is ready.' : (ev.error ?? 'The turn ended with an error.'),
-              link: projectLink(projectId),
+              // The stage room in an office project: no toast while you look at it (#8).
+              link: projectLink(projectId, officeFile ? `/s/${stage}` : ''),
             });
           this.sendQueued(projectId, stage, ev.stopped);
         }

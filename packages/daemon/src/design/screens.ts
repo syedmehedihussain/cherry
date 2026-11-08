@@ -83,7 +83,6 @@ export function listScreens(root: string): DesignScreen[] {
   if (!existsSync(dir)) return [];
   return readdirSync(dir, { withFileTypes: true })
     .filter((e) => e.isFile() && /\.html?$/i.test(e.name))
-    .sort((a, b) => a.name.localeCompare(b.name))
     .flatMap((e) => {
       const abs = path.join(dir, e.name);
       const st = statSync(abs);
@@ -100,5 +99,22 @@ export function listScreens(root: string): DesignScreen[] {
           mtime: st.mtimeMs,
         },
       ];
-    });
+    })
+    .sort(byScreenNumber);
+}
+
+/** "01-home" or "1 · Home": the number the Designer gave the screen, else none. */
+const screenNumber = (s: DesignScreen) =>
+  Number(/^\s*(\d+)/.exec(s.name)?.[1] ?? /^\s*(\d+)/.exec(s.title)?.[1] ?? NaN);
+
+/** In the Designer's order (finding #30): numbered screens by number, then the rest by name. */
+export function byScreenNumber(a: DesignScreen, b: DesignScreen): number {
+  const x = screenNumber(a);
+  const y = screenNumber(b);
+  if (!Number.isNaN(x) || !Number.isNaN(y)) {
+    if (Number.isNaN(x)) return 1;
+    if (Number.isNaN(y)) return -1;
+    if (x !== y) return x - y;
+  }
+  return a.name.localeCompare(b.name);
 }

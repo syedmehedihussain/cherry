@@ -70,6 +70,11 @@ describe('Start project (ADR-0036)', () => {
 
   it('keeps the summary to one line of 120 characters', () => {
     expect(summaryOf('Two\nlines')).toBe('Two lines');
-    expect(summaryOf('x'.repeat(200))).toHaveLength(120);
+    expect(summaryOf('x'.repeat(200))).toBe(`${'x'.repeat(118)}…`);
+    // #37: the first sentence, not the idea cut with "...".
+    expect(
+      summaryOf('A course site for IUB. It has tracks, quizzes and a simulator for students.'),
+    ).toBe('A course site for IUB.');
+    expect(summaryOf(`A site ${'word '.repeat(40)}`)).toMatch(/^A site (word )+word…$/);
   });
 });

@@ -7,6 +7,8 @@ import {
   NewVersionSchema,
   OfficeCreateSchema,
   OfficeSettingsSchema,
+  OFFICE_STAGES,
+  OFFICE_STAGE_LABEL,
   OfficeStageSchema,
   SignOffInputSchema,
   TimeInputSchema,
@@ -20,14 +22,23 @@ import { meetingNotes, newNote, readVault } from '../office/vault.ts';
 import type { OfficeService } from '../office/service.ts';
 import { listScreens } from '../design/screens.ts';
 import { writeHandoff } from '../design/handoff.ts';
+import type { CommitService } from '../projects/commits.ts';
 import { projectDir } from '../projects/workspace.ts';
+import { noteInStatus } from '../office/status-note.ts';
+import { notify, projectLink, type EventHub } from '../events.ts';
 
 const Id = z.object({ id: z.string().min(1).max(200) });
 const StageParams = Id.extend({ stage: OfficeStageSchema });
 const ItemParams = Id.extend({ item: z.string().min(1).max(40) });
 
 /** The office of a project (V4, ADR-0052, ADR-0054). See docs/api.md, Office. */
-export function officeRoutes(office: OfficeService, config: ConfigStore, db: Db) {
+export function officeRoutes(
+  office: OfficeService,
+  config: ConfigStore,
+  db: Db,
+  commits: CommitService,
+  hub: EventHub,
+) {
   return (app: FastifyInstance) => {
     const base = '/api/projects/:id/office';
     app.get(base, async (req) => ({ office: office.get(Id.parse(req.params).id) }));
@@ -78,12 +89,54 @@ export function officeRoutes(office: OfficeService, config: ConfigStore, db: Db)
     });
     app.post(`${base}/stages/:stage/sign-off`, async (req) => {
       const { id, stage } = StageParams.parse(req.params);
-      const signed = office.signOff(id, stage, SignOffInputSchema.parse(req.body ?? {}));
+      const input = SignOffInputSchema.parse(req.body ?? {});
+      const signed = office.signOff(id, stage, input);
       // One gate in Design (finding #35): its sign-off writes the handoff for the Development
       // Team, as Approve design did in V3. A design with no screens hands over its docs only.
       const dir = projectDir(config.projectsDir(), id);
       const handoff = stage === 'design' && listScreens(dir).length ? writeHandoff(dir).files : [];
-      return { office: signed, handoff };
+      // Cherry, not a model, notes it in STATUS.md and commits the documents (#36, #37).
+      const cycle = signed.cycles[signed.cycles.length - 1]!;
+      const rec = cycle.stages[stage];
+      const by = rec.signOffs[rec.signOffs.length - 1]!;
+      const next = OFFICE_STAGES[OFFICE_STAGES.indexOf(stage) + 1];
+      const who = by.internal ? 'internal' : `approved by ${by.by}`;
+      noteInStatus(
+        dir,
+        `${OFFICE_STAGE_LABEL[stage]} signed off (${who}).${
+          stage === 'deployment'
+            ? ' The project is live.'
+            : next
+              ? ` ${OFFICE_STAGE_LABEL[next]} is open.`
+              : ''
+        }`,
+      );
+      let commit: { hash: string; message: string } | null = null;
+      let warning: string | null = null;
+      if (input.commit) {
+        try {
+          const files = await commits.changedDocs(id);
+          if (files.length)
+            commit = await commits.commitFiles(
+              id,
+              `docs: sign off ${OFFICE_STAGE_LABEL[stage]} (v${cycle.version})\n\n${by.internal ? 'Signed off internally' : `Approved by ${by.by}`} on ${by.date}.${by.notes ? `\n\n${by.notes}` : ''}`,
+              files,
+            );
+        } catch (e) {
+          warning = `Signed off, but not committed: ${e instanceof Error ? e.message : String(e)}`;
+        }
+        if (commit || warning)
+          notify(hub, {
+            projectId: id,
+            kind: commit ? 'commit.done' : 'commit.failed',
+            title: commit
+              ? `${OFFICE_STAGE_LABEL[stage]} signed off and committed (${commit.hash})`
+              : `${OFFICE_STAGE_LABEL[stage]} signed off, not committed`,
+            body: commit ? commit.message : warning!,
+            link: projectLink(id, '/vc'),
+          });
+      }
+      return { office: signed, handoff, commit, warning };
     });
     app.post(`${base}/dev-gate`, async (req) => {
       const { gate, ...approval } = DevGateInputSchema.parse(req.body);

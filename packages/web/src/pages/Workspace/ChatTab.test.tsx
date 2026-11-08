@@ -1,9 +1,9 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { Approval, DecisionCard as Card } from '@cherry/shared';
+import type { Approval, ChatItem, DecisionCard as Card } from '@cherry/shared';
 import { CcPrompt } from '../../components/ClaudeCode/ClaudeCode.tsx';
 import { DecisionCard } from '../../components/DecisionCard/DecisionCard.tsx';
-import { answerKey, readMode, storeMode } from './ChatTab.tsx';
+import { answerKey, CONTINUE_JOB, readMode, retryMessage, storeMode } from './ChatTab.tsx';
 
 const approval: Approval = {
   id: 'a1',
@@ -84,5 +84,22 @@ describe('readMode', () => {
     expect(readMode('p', 'requirements')).toBe('auto');
     expect(readMode('p', 'design')).toBe('ask');
     expect(readMode('other', 'development')).toBe('ask');
+  });
+});
+
+// Finding #46: Retry after a limit carries on instead of sending the whole job again.
+describe('retryMessage', () => {
+  const user = { kind: 'user', id: 'u', at: 1, text: 'Build the whole app' } as unknown as ChatItem;
+  const tool = { kind: 'tool', id: 't', at: 2 } as unknown as ChatItem;
+  const end = { kind: 'turn-end', id: 'e', at: 3, ok: false } as unknown as ChatItem;
+
+  it('continues in the session when the failed turn had done work', () => {
+    expect(retryMessage([user, tool, end], 'sess')).toBe(CONTINUE_JOB);
+  });
+
+  it('sends the message again when nothing happened, or there is no session', () => {
+    expect(retryMessage([user, end], 'sess')).toBe('Build the whole app');
+    expect(retryMessage([user, tool, end], null)).toBe('Build the whole app');
+    expect(retryMessage([], 'sess')).toBeUndefined();
   });
 });

@@ -217,6 +217,8 @@ export const SignOffInputSchema = z.object({
   date: IsoDate.optional(),
   notes: z.string().trim().max(4000).default(''),
   internal: z.boolean().default(false),
+  /** Commit the changed documents with the sign-off (finding #36). */
+  commit: z.boolean().default(false),
 });
 export type SignOffInput = z.input<typeof SignOffInputSchema>;
 

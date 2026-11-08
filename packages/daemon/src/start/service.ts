@@ -10,9 +10,14 @@ import type { ProjectService } from '../projects/service.ts';
 import { buildProjectJson, buildTasks, findSecret, today } from '../projects/standard.ts';
 
 /** The idea as one line for the summary fields (120 characters at most). */
+/** One line for STATUS.md: the idea's first sentence, else its start cut at a word (#37). */
 export function summaryOf(idea: string): string {
   const line = idea.replace(/\s+/g, ' ').trim();
-  return line.length > 120 ? `${line.slice(0, 117)}...` : line;
+  const first = /^(.{10,120}?[.!?])(\s|$)/.exec(line)?.[1];
+  if (first) return first;
+  if (line.length <= 120) return line;
+  const cut = line.slice(0, 118);
+  return `${cut.slice(0, cut.lastIndexOf(' ') > 60 ? cut.lastIndexOf(' ') : 118)}…`;
 }
 
 /** `_project/STATUS.md` for a project that has only an idea. */

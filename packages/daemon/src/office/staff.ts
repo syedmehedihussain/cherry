@@ -50,6 +50,7 @@ export function officeBrief(stage: OfficeStage, office: OfficeFile): string {
     `## The office (V4)`,
     `This project runs as a software company${personal ? ' (a personal project: the user is the client)' : `, for the client ${office.client?.name ?? ''}`}. You are the **${OFFICE_AGENT[stage]}**, the staff member for the ${OFFICE_STAGE_LABEL[stage]} stage of version ${cycle.version}. The stage is ${state}.`,
     '- Work only on the job the user gives you. Do not start other work, and do not hand work to another stage.',
+    '- Finish the job you were given in this turn: write every document it needs, one after the other. Stop early only when you need an answer from the user or the client; then say which documents are left and what they wait for.',
     `- Write ${personal ? 'a plain summary' : 'client documents'} in docs/${stage}/client/ (plain language, no code${personal ? '' : ', for the client to read and approve'}) and technical documents in docs/${stage}/technical/ (for the next agents). ADRs stay in docs/adr/.`,
     earlier.length
       ? `- The signed-off stages before you are in ${earlier.join(', ')}. Read what you need; do not change them. If they must change, tell the user: that is a change request.`
