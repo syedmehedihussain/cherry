@@ -873,5 +873,106 @@
         "output": "24 passed"
       }
     ]
+  },
+  {
+    "match": "^List the members app screens",
+    "steps": [
+      {
+        "tool": {
+          "name": "TaskCreate",
+          "input": {
+            "subject": "Read the brief",
+            "activeForm": "Reading the brief"
+          }
+        },
+        "output": "Task #1 created successfully: Read the brief"
+      },
+      {
+        "tool": {
+          "name": "TaskCreate",
+          "input": {
+            "subject": "List the screens",
+            "activeForm": "Listing the screens"
+          }
+        },
+        "output": "Task #2 created successfully: List the screens"
+      },
+      {
+        "tool": {
+          "name": "TaskCreate",
+          "input": {
+            "subject": "Write the summary",
+            "activeForm": "Writing the summary"
+          }
+        },
+        "output": "Task #3 created successfully: Write the summary"
+      },
+      {
+        "tool": {
+          "name": "TaskUpdate",
+          "input": {
+            "taskId": "1",
+            "status": "in_progress"
+          }
+        },
+        "output": "Updated task #1 status"
+      },
+      {
+        "tool": {
+          "name": "TaskUpdate",
+          "input": {
+            "taskId": "1",
+            "status": "completed"
+          }
+        },
+        "output": "Updated task #1 status"
+      },
+      {
+        "tool": {
+          "name": "TaskUpdate",
+          "input": {
+            "taskId": "2",
+            "status": "in_progress"
+          }
+        },
+        "output": "Updated task #2 status"
+      },
+      {
+        "wait": 2500
+      },
+      {
+        "tool": {
+          "name": "TaskUpdate",
+          "input": {
+            "taskId": "2",
+            "status": "completed"
+          }
+        },
+        "output": "Updated task #2 status"
+      },
+      {
+        "tool": {
+          "name": "TaskUpdate",
+          "input": {
+            "taskId": "3",
+            "status": "in_progress"
+          }
+        },
+        "output": "Updated task #3 status"
+      },
+      {
+        "tool": {
+          "name": "TaskUpdate",
+          "input": {
+            "taskId": "3",
+            "status": "completed"
+          }
+        },
+        "output": "Updated task #3 status"
+      },
+      {
+        "text": "Five screens: home, workouts, diet, progress, membership."
+      }
+    ]
   }
 ]

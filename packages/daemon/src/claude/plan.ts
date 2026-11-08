@@ -75,7 +75,9 @@ export class PlanTracker {
     if (!ok) return false;
     const id = /#(\d+)/.exec(output)?.[1] ?? /\b(\d+)\b/.exec(output)?.[1] ?? String(this.nextId);
     this.nextId = Math.max(this.nextId, Number(id) + 1);
-    this.items = [...this.items, { id, ...draft, status: 'pending' }];
+    // A new job after a finished list starts a fresh one, as the CLI clears a done list.
+    const finished = this.items.length > 0 && this.items.every((t) => t.status === 'completed');
+    this.items = [...(finished ? [] : this.items), { id, ...draft, status: 'pending' }];
     return true;
   }
 }

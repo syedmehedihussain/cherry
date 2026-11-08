@@ -184,6 +184,36 @@
   gap: 8px;
   color: var(--v3-spinner);
 }
+.tasks {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.task {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  color: var(--t2);
+}
+.taskMark {
+  color: var(--t3);
+}
+.task[data-status='in_progress'] {
+  color: var(--t1);
+  font-weight: 600;
+}
+.task[data-status='in_progress'] .taskMark {
+  color: var(--v3-spinner);
+}
+.task[data-status='completed'] .taskMark {
+  color: var(--success);
+}
+.task[data-status='completed'] .taskText {
+  color: var(--t3);
+  text-decoration: line-through;
+}
 .star {
   width: 10px;
   display: inline-block;

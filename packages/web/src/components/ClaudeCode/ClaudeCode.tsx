@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { isAllowedStatus, type Approval, type ApprovalFile } from '@cherry/shared';
+import { isAllowedStatus, type Approval, type ApprovalFile, type PlanItem } from '@cherry/shared';
 import { tildify } from '../../lib/paths.ts';
 import { cliCall, cliResult, elapsed, SPINNER_FRAMES, spinnerVerb, type ToolItem } from './cli.ts';
 import styles from './ClaudeCode.module.css';
@@ -173,6 +173,53 @@ export function CcSpinner({
       </span>
     </div>
   );
+}
+
+/**
+ * The agent's task list, as the CLI shows it under the spinner: a box per step, the current one
+ * bold, finished ones ticked and crossed off. While Claude works it is open; afterwards it is one
+ * line that opens on a click.
+ */
+export function CcTasks({ plan, running }: { plan: PlanItem[]; running: boolean }) {
+  const [open, setOpen] = useState(false);
+  if (!plan.length) return null;
+  const done = plan.filter((t) => t.status === 'completed').length;
+  const summary = `${done} of ${plan.length} done`;
+  const list = (
+    <ul className={styles.tasks} aria-label={`Tasks, ${summary}`}>
+      {plan.map((t) => (
+        <li key={t.id} className={styles.task} data-status={t.status}>
+          <span className={styles.taskMark} aria-hidden="true">
+            {t.status === 'completed' ? '✓' : t.status === 'in_progress' ? '■' : '□'}
+          </span>
+          <span className={styles.taskText}>{t.title}</span>
+          <span className="sr-only">
+            {t.status === 'completed' ? ', done' : t.status === 'in_progress' ? ', doing now' : ''}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+  if (running) return list;
+  return (
+    <div className={styles.foldWrap}>
+      <button
+        type="button"
+        className={styles.fold}
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        <span className={styles.foldText}>Tasks · {summary}</span>
+      </button>
+      {open && list}
+    </div>
+  );
+}
+
+/** The step in progress, in the CLI's words ("Running the tests"), for the spinner. */
+export function activeTask(plan: PlanItem[]): string | undefined {
+  const t = plan.find((p) => p.status === 'in_progress');
+  return t ? (t.activeForm ?? t.title) : undefined;
 }
 
 const PREVIEW = 12;

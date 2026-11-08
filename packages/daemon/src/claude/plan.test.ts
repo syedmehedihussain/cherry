@@ -28,6 +28,16 @@ describe('PlanTracker', () => {
     expect(t.plan).toMatchObject([{ id: '1', title: 'Two' }]);
   });
 
+  it('starts a fresh list when a new task comes after a finished one', () => {
+    const t = new PlanTracker();
+    t.start('a', 'TaskCreate', { subject: 'Old job' });
+    t.end('a', true, 'Task #1 created');
+    t.start('b', 'TaskUpdate', { taskId: '1', status: 'completed' });
+    t.start('c', 'TaskCreate', { subject: 'New job' });
+    t.end('c', true, 'Task #2 created');
+    expect(t.plan).toEqual([{ id: '2', title: 'New job', activeForm: null, status: 'pending' }]);
+  });
+
   it('replaces the list on TodoWrite', () => {
     const t = new PlanTracker();
     t.start('a', 'TodoWrite', {

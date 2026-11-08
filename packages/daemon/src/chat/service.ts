@@ -74,7 +74,7 @@ export function chatSystemPrompt(
     '- When there is a real choice to make, call the ask_decision tool. Do not pick for the user.',
     DECISIONS_PROMPT,
     '- Keep answers short and plain. Name the file, then the change.',
-    '- For work with more than one step, first record the steps with your task tool (TaskCreate), then do them one by one: mark a step in_progress when you start it and completed when it is done. The user follows this list live.',
+    '- For any job with two or more steps, list the steps with your task tool (TaskCreate) before you start, one short line each. Then work through them in order: mark a step in_progress when you start it and completed as soon as it is done, before the next one. The user sees this list in the chat and watches it get ticked off, so keep it current and do not skip it.',
     '- Keep .gitignore current: when you add something that makes build output, caches, dependencies, local env files or secrets, add it to .gitignore (create the file if it is missing).',
     "- Skills: follow a skill's steps, but where it differs from this project's conventions, the project wins: decisions go through propose_decision and the project's ADR template, issues are files in docs/issues/, specs go in docs/specs/, plans in docs/roadmap.md. When a skill wants the OS temp folder or a place outside the project, use _project/tmp/ instead (for the brainstorming visual companion pass --project-dir _project/tmp). When a skill hands off to a skill you do not have, stop there and say which Cherry tab continues the work.",
     ...(stage !== 'issues'

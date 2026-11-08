@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Approval } from '@cherry/shared';
-import { CcPrompt } from './ClaudeCode.tsx';
+import { activeTask, CcPrompt, CcTasks } from './ClaudeCode.tsx';
 
 const approval = (over: Partial<Approval> = {}): Approval => ({
   id: 'a1',
@@ -71,5 +71,38 @@ describe('CcPrompt', () => {
     );
     expect(screen.getByText('Serious command')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /session/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('CcTasks', () => {
+  const plan = [
+    { id: '1', title: 'Read the SRS', activeForm: 'Reading the SRS', status: 'completed' as const },
+    {
+      id: '2',
+      title: 'Write the test plan',
+      activeForm: 'Writing',
+      status: 'in_progress' as const,
+    },
+    { id: '3', title: 'Run the tests', activeForm: null, status: 'pending' as const },
+  ];
+
+  it('ticks off done steps and marks the current one while Claude works', () => {
+    render(<CcTasks plan={plan} running />);
+    const list = screen.getByRole('list', { name: 'Tasks, 1 of 3 done' });
+    const rows = within(list).getAllByRole('listitem');
+    expect(rows.map((r) => r.getAttribute('data-status'))).toEqual([
+      'completed',
+      'in_progress',
+      'pending',
+    ]);
+    expect(rows.map((r) => r.textContent?.[0])).toEqual(['✓', '■', '□']);
+    expect(activeTask(plan)).toBe('Writing');
+  });
+
+  it('folds into one line after the turn, and opens on a click', () => {
+    render(<CcTasks plan={plan} running={false} />);
+    expect(screen.queryByRole('list')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Tasks · 1 of 3 done' }));
+    expect(screen.getByRole('list', { name: 'Tasks, 1 of 3 done' })).toBeVisible();
   });
 });
