@@ -8,9 +8,9 @@ test.afterEach(() => {
     rmSync(path.join(E2E_PROJECTS, p), { recursive: true, force: true });
 });
 
-// V2.1 w5: the Planner ticks its checklist while you talk; the Overview bar and the stage tab
+// V2.1 w5: the System Architect ticks its checklist while you talk; the Overview bar and the stage tab
 // follow; at 100% Move to Design opens the next stage.
-test('the Plan bar fills as the Planner works, then Move to Design', async ({ page }) => {
+test('the Plan bar fills as the System Architect works, then Move to Design', async ({ page }) => {
   await page.goto(`/#login=${await loginCode()}`);
   await startV3Project(page, 'kite-log', 'A kite log for windy days');
 
@@ -48,12 +48,14 @@ test('the Plan bar fills as the Planner works, then Move to Design', async ({ pa
   await expect(aside.getByRole('region', { name: 'Design progress' })).toContainText('5 left');
 });
 
-// ADR-0041: plan the next piece in Plan, Approve plan, and the Builder starts in Development.
-test('Approve plan opens Development and the Builder starts on the tasks', async ({ page }) => {
+// ADR-0041: plan the next piece in Plan, Approve plan, and the Development Team starts in Development.
+test('Approve plan opens Development and the Development Team starts on the tasks', async ({
+  page,
+}) => {
   await page.goto(`/#login=${await loginCode()}`);
   await startV3Project(page, 'orbit-log', 'An orbit log');
 
-  // Plan opens in Auto: the Planner writes its spec without an approval card.
+  // Plan opens in Auto: the System Architect writes its spec without an approval card.
   const composer = page.getByPlaceholder(/^Reply to/);
   await composer.fill('Plan offline mode');
   await page.getByRole('button', { name: 'Send' }).click();

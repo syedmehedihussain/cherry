@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { localDay } from '@cherry/shared';
 import { fakeRunner, type FakeLog } from '../src/claude/fake-runner.ts';
 import { gitInit, HOST, ORIGIN, testDaemon, type TestDaemon } from './helpers.ts';
 
@@ -97,13 +98,36 @@ describe('the office (V4, ADR-0052, ADR-0054)', () => {
       await ok('POST', `/stages/${s}/ready`, { ready: true });
       await ok('POST', `/stages/${s}/sign-off`, { internal: true });
     }
-    await ok('POST', '/stages/development/ready', { ready: true });
+    // Before the approval, "ready" in Development is the prototype (finding #41).
+    let dev = await ok('POST', '/stages/development/ready', { ready: true });
+    expect(dev.cycles[0]).toMatchObject({ prototypeReady: true });
+    expect(dev.cycles[0].stages.development.ready).toBe(false);
     expect(await err('POST', '/stages/development/sign-off', { internal: true }, 409)).toMatch(
-      /prototype/,
+      /not said Development is ready/,
     );
     expect(await err('POST', '/dev-gate', { gate: 'approved' }, 409)).toMatch(/build to approved/);
     await ok('POST', '/dev-gate', { gate: 'sent' });
-    await ok('POST', '/dev-gate', { gate: 'approved' });
+    // Client wants changes: the next prototype must be made ready again.
+    dev = await ok('POST', '/dev-gate', { gate: 'build' });
+    expect(dev.cycles[0].prototypeReady).toBe(false);
+    await ok('POST', '/dev-gate', { gate: 'sent' });
+    // The client's approval needs a name, like a sign-off, and is logged (#42).
+    expect(await err('POST', '/dev-gate', { gate: 'approved' }, 400)).toMatch(/Who approved/);
+    dev = await ok('POST', '/dev-gate', {
+      gate: 'approved',
+      by: 'Nusrat',
+      date: '2026-11-08',
+      notes: 'Liked it',
+    });
+    expect(dev.changelog[0]).toMatchObject({
+      stage: 'development',
+      text: 'Prototype approved by Nusrat on 2026-11-08: Liked it',
+    });
+    expect(await err('POST', '/stages/development/sign-off', { internal: true }, 409)).toMatch(
+      /not said Development is ready/,
+    );
+    dev = await ok('POST', '/stages/development/ready', { ready: true });
+    expect(dev.cycles[0].stages.development.ready).toBe(true);
     for (const s of ['development', 'testing', 'deployment']) {
       if (s !== 'development') await ok('POST', `/stages/${s}/ready`, { ready: true });
       await ok('POST', `/stages/${s}/sign-off`, { internal: true });
@@ -522,7 +546,7 @@ describe('the meeting (o16)', () => {
     o = (await api('DELETE', `/actions/${o.actions[0].id}`)).json().office;
     expect(o.actions).toHaveLength(1);
 
-    const day = new Date().toISOString().slice(0, 10);
+    const day = localDay();
     const a = (await api('POST', '/meeting-notes', { text: '# Meeting\n\nAll good.' })).json();
     const b = (await api('POST', '/meeting-notes', { text: '# Meeting 2' })).json();
     expect(a.path).toBe(`docs/meetings/${day}.md`);

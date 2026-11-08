@@ -10,7 +10,7 @@ import {
   type OfficeFile,
   type Stage,
 } from '@cherry/shared';
-import { useOffice } from '../../api/office.ts';
+import { useLoadedOffice } from '../../api/office.ts';
 import { nextStage, useStageProgress } from '../../api/stages.ts';
 import { useUi } from '../../state/ui.ts';
 import { useMoveStage } from './stageMoves.ts';
@@ -23,7 +23,7 @@ const dismissKey = (projectId: string, stage: Stage) => `cherry.nextChip.${proje
  * at any time. "Not now" hides it until the checklist changes.
  */
 export function NextStageChip({ projectId, stage }: { projectId: string; stage: Stage }) {
-  const office = useOffice(projectId).data;
+  const office = useLoadedOffice(projectId);
   if (office) return <SignOffChip office={office} stage={stage} />;
   return <V3NextChip projectId={projectId} stage={stage} />;
 }

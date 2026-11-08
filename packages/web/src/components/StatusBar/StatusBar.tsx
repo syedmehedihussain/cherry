@@ -7,7 +7,7 @@ import styles from './StatusBar.module.css';
 
 interface StatusBarProps {
   git: GitSummary | null | undefined;
-  /** The stage agent's name ("Planner"). */
+  /** The stage agent's name ("System Architect"). */
   agent: string | undefined;
   model: string | undefined;
   /** Context used after the last reply (V2.1 w7.3). */

@@ -166,8 +166,8 @@ function DocsPanel({
         <DocReader key={shown} projectId={projectId} path={shown} now={now} extra={unknown} />
       ) : (
         <p className={styles.empty}>
-          Nothing written yet. Tell the Planner what you want to build; each document shows here
-          when it is written.
+          Nothing written yet. Tell the System Architect what you want to build; each document shows
+          here when it is written.
         </p>
       )}
     </aside>

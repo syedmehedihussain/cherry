@@ -208,8 +208,16 @@ test('Development: the prototype gate, and client documents to save as PDF', asy
   await expect(gate).toContainText('Waiting for the answer');
   await docs.getByRole('button', { name: 'Client wants changes' }).click();
   await docs.getByRole('button', { name: 'Sent to client' }).click();
+  // The same who, date and notes as a sign-off (finding #42).
   await docs.getByRole('button', { name: 'Record approval' }).click();
+  const approval = page.getByRole('dialog', { name: 'Record the prototype approval' });
+  await expect(approval.getByLabel('Approved by')).toHaveValue('Fitness Master Gym');
+  await approval.getByLabel('Notes').fill('Liked the workouts screen.');
+  await approval.getByRole('button', { name: 'Record approval' }).click();
   await expect(gate).toContainText('Approved.');
+  expect(JSON.parse(readFileSync(file, 'utf8')).changelog[0].text).toMatch(
+    /^Prototype approved by Fitness Master Gym on \d{4}-\d{2}-\d{2}: Liked the workouts screen\.$/,
+  );
   await expect(docs.getByRole('button', { name: 'Give the next job' })).toBeVisible();
 
   await docs.getByRole('tab', { name: /Client/ }).click();
@@ -625,8 +633,9 @@ test('New version: Start v2.0 next to the live v1.0', async ({ page }) => {
   await expect(page.getByRole('button', { name: /New version/ })).toContainText('v2.0 in progress');
 });
 
-// Finding #34: Approve design took the Builder's first message to the Designer's box.
-test('Approve design: sign off, then the Builder message waits in Development', async ({
+// Findings #34, #35: one gate in Design. Sign off writes the handoff, then Development opens
+// with the Development Team's first message; the Designer's box never gets it.
+test('Design sign-off writes the handoff and opens Development with the first message', async ({
   page,
 }) => {
   await page.goto(`/#login=${await loginCode()}`);
@@ -657,19 +666,47 @@ test('Approve design: sign off, then the Builder message waits in Development', 
 
   await page.goto('/p/gym-app-30/s/design');
   const canvas = page.getByRole('region', { name: 'Design canvas' });
-  await canvas.getByRole('button', { name: 'Approve design' }).click();
-  await page
-    .getByRole('dialog', { name: 'Approve design' })
-    .getByRole('button', { name: 'Approve and sign off' })
-    .click();
+  await expect(canvas.getByRole('link', { name: 'Export' })).toBeVisible();
+  await expect(canvas.getByRole('button', { name: 'Approve design' })).toHaveCount(0);
 
-  // Development is still locked: Sign off comes first, and the Designer's box stays empty.
+  await page.getByRole('button', { name: 'Sign off' }).click();
   const dialog = page.getByRole('dialog', { name: 'Sign off Design' });
-  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText('design/handoff/');
   await expect(page.getByLabel('Message Claude')).toHaveValue('');
   await dialog.getByRole('button', { name: 'Sign off' }).click();
 
   await expect(page).toHaveURL(/\/p\/gym-app-30\/s\/development$/);
   await expect(page.getByLabel('Message Claude')).toHaveValue(/^The design is approved\./);
   expect(existsSync(path.join(dir, 'design', 'handoff', 'README.md'))).toBe(true);
+});
+
+// The agent's task list in the room's chat, ticked off as it works, like the CLI.
+test('the stage agent lists its steps and ticks them off in the chat', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByRole('radio', { name: 'Personal project' }).click();
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app-32');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await page.getByRole('button', { name: 'Idea, On-going' }).click();
+  const box = page.getByLabel('Message Claude');
+  await box.fill('List the members app screens');
+  await box.press('Enter');
+
+  const tasks = page.getByRole('list', { name: 'Tasks, 1 of 3 done' });
+  await expect(tasks).toBeVisible();
+  await expect(tasks.getByRole('listitem')).toHaveText([
+    /^✓Read the brief/,
+    /^■List the screens/,
+    /^□Write the summary/,
+  ]);
+  await expect(page.getByRole('status', { name: 'Claude is working' })).toContainText(
+    'Listing the screens',
+  );
+
+  // Done: one line that opens the finished list.
+  await page.getByRole('button', { name: 'Tasks · 3 of 3 done' }).click();
+  await expect(
+    page.getByRole('list', { name: 'Tasks, 3 of 3 done' }).getByRole('listitem'),
+  ).toHaveCount(3);
 });

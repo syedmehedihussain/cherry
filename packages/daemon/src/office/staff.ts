@@ -55,6 +55,11 @@ export function officeBrief(stage: OfficeStage, office: OfficeFile): string {
       ? `- The signed-off stages before you are in ${earlier.join(', ')}. Read what you need; do not change them. If they must change, tell the user: that is a change request.`
       : '- You are the first stage.',
     `- When the stage's work is complete and the user agrees, say it in one line (for example "${OFFICE_STAGE_LABEL[stage]} is ready. We can start the next stage.") and call ${STAGE_READY_TOOL}. The user signs the stage off${personal ? '' : ' after the client approves it'}.`,
+    ...(stage === 'development' && cycle.devGate !== 'approved'
+      ? [
+          `- First build the prototype (project setup and a clickable prototype with sample data). When it is ready to try, say so and call ${STAGE_READY_TOOL}: before the ${personal ? 'user' : 'client'} approves the prototype, that marks the prototype ready, not the stage. After the approval, build the rest and call ${STAGE_READY_TOOL} again when the app is complete.`,
+        ]
+      : []),
     ...(state === 'update'
       ? [
           '- This stage needs an update for an approved change request. Read it in _project/office.json (changes), update your documents, then call stage_ready.',
@@ -76,10 +81,16 @@ export function stageReadyTool(
     handler: async (args) => {
       const ready = (args as { ready?: boolean }).ready !== false;
       try {
-        office.setReady(projectId, stage, ready);
+        const o = office.setReady(projectId, stage, ready);
+        const prototype =
+          stage === 'development' && o.cycles[o.cycles.length - 1]!.devGate !== 'approved';
         return {
           ok: true,
-          text: ready ? 'Marked ready. The user can sign it off now.' : 'Taken back.',
+          text: !ready
+            ? 'Taken back.'
+            : prototype
+              ? 'Marked the prototype ready. The user shows it to the client; the full build starts after the approval.'
+              : 'Marked ready. The user can sign it off now.',
         };
       } catch (e) {
         return { ok: false, text: e instanceof Error ? e.message : String(e) };

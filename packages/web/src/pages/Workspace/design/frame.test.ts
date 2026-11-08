@@ -18,7 +18,7 @@ describe('canvas frames', () => {
 });
 
 import { commentMessage } from './DesignStage.tsx';
-describe('comments for the Designer', () => {
+describe('comments for the UI/UX Designer', () => {
   it('names the file and the element', () => {
     const screen = { path: 'design/screens/a.html', name: 'a', title: 'A', html: '', mtime: 0 };
     expect(commentMessage({ screen, selector: 'p.big', text: '12', note: 'Bigger.' })).toBe(

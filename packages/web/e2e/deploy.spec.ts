@@ -15,7 +15,7 @@ test.beforeEach(async ({ page }) => {
     );
 });
 
-// V3 r10: the cockpit runs the checks on a click; a failure goes to the Builder.
+// V3 r10: the cockpit runs the checks on a click; a failure goes to the Development Team.
 test('Deployment: checks run, a failure goes to Development', async ({ page }) => {
   await page.goto('/p/cctop');
   const stages = page.getByRole('navigation', { name: 'Lifecycle stages' });
@@ -40,8 +40,8 @@ test('Deployment: checks run, a failure goes to Development', async ({ page }) =
   await expect(page.getByText(/^The lint check fails in the Deployment cockpit/)).toBeVisible();
 });
 
-// V3 r10: Deploy asks once with what, where and the version, then the Shipper works.
-test('Deployment: Deploy asks once, then hands it to the Shipper', async ({ page }) => {
+// V3 r10: Deploy asks once with what, where and the version, then the DevOps Engineer works.
+test('Deployment: Deploy asks once, then hands it to the DevOps Engineer', async ({ page }) => {
   await page.goto('/p/cctop');
   await page
     .getByRole('navigation', { name: 'Lifecycle stages' })
@@ -59,7 +59,10 @@ test('Deployment: Deploy asks once, then hands it to the Shipper', async ({ page
 
   await page.getByRole('button', { name: 'Deploy', exact: true }).click();
   await dialog.getByRole('button', { name: 'Deploy' }).click();
-  await expect(page.getByRole('tab', { name: /Shipper/ })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: /DevOps Engineer/ })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
   await expect(
     page.getByText(/^Deploy the current commit to A tag and a GitHub release/),
   ).toBeVisible();

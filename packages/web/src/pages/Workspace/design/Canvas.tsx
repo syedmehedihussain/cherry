@@ -47,7 +47,7 @@ export function Canvas({
   screens: DesignScreen[];
   focus: string | null;
   onFocus(path: string | null): void;
-  /** Sends a comment on an element to the Designer. */
+  /** Sends a comment on an element to the UI/UX Designer. */
   onComment(c: CanvasComment & { note: string }): Promise<void>;
   /** Top right: Export, Approve design (r9). */
   actions?: ReactNode;
@@ -337,7 +337,7 @@ export function Canvas({
 
       {screens.length === 0 && (
         <p className={styles.empty}>
-          No screens yet. Ask the Designer to draw the first one; every file in{' '}
+          No screens yet. Ask the UI/UX Designer to draw the first one; every file in{' '}
           <code>design/screens/</code> shows here.
         </p>
       )}
@@ -367,7 +367,7 @@ export function Canvas({
             </button>
           </div>
           <textarea
-            aria-label="Comment for the Designer"
+            aria-label="Comment for the UI/UX Designer"
             placeholder="What should change here?"
             autoFocus
             rows={3}

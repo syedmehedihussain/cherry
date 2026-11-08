@@ -18,7 +18,7 @@ import { useNow } from '../../lib/useNow.ts';
 import { useUi } from '../../state/ui.ts';
 import { ChatTab } from '../Workspace/ChatTab.tsx';
 import { DeployStage } from '../Workspace/deploy/DeployStage.tsx';
-import { DesignStage } from '../Workspace/design/DesignStage.tsx';
+import { BUILD_FROM_HANDOFF, DesignStage } from '../Workspace/design/DesignStage.tsx';
 import { DocReader } from '../Workspace/plan/PlanStage.tsx';
 import { DevGate } from './DevGate.tsx';
 import { BugsTab, QuestionsTab, UatTab } from './StageExtras.tsx';
@@ -70,27 +70,19 @@ export function StageRoom({
     (rec.state === 'active' || rec.state === 'waiting' || rec.state === 'update') && rec.ready;
   const word = rec.state === 'active' && rec.ready ? 'ready to sign off' : STATE_WORD[rec.state];
 
-  // Approve design: the Builder's first message waits in the Development room, never in the
-  // Designer's box. Development opens only after Design is signed off.
-  const devLocked = cycle.stages.development.state === 'locked';
-  const toDevelopment = (message: string) => {
-    setDraft(projectId, message);
-    void navigate(`/p/${encodeURIComponent(projectId)}/s/development`);
-  };
+  // Design's sign-off writes the handoff (finding #35): the Development Team's first message
+  // then waits in the Development room, never in the Designer's box (#34).
+  const afterSignOff =
+    stage === 'design' && rec.state !== 'update'
+      ? () => {
+          setDraft(projectId, BUILD_FROM_HANDOFF);
+          void navigate(`/p/${encodeURIComponent(projectId)}/s/development`);
+        }
+      : undefined;
 
   let body;
   if (stage === 'design')
-    body = (
-      <DesignStage
-        projectId={projectId}
-        now={now}
-        onOpenFile={setDoc}
-        signOffFirst={devLocked}
-        onApproved={(message) =>
-          devLocked ? onSignOff(() => toDevelopment(message)) : toDevelopment(message)
-        }
-      />
-    );
+    body = <DesignStage projectId={projectId} now={now} onOpenFile={setDoc} office />;
   else if (stage === 'deployment') body = <DeployStage projectId={projectId} now={now} />;
   else
     body = (
@@ -171,7 +163,7 @@ export function StageRoom({
             className="btn btn-primary btn-sm"
             disabled={!canSign}
             title={canSign ? undefined : `The ${OFFICE_AGENT[stage]} says when the stage is ready`}
-            onClick={() => onSignOff()}
+            onClick={() => onSignOff(afterSignOff)}
           >
             <CircleCheck size={14} aria-hidden="true" />
             {rec.state === 'waiting'

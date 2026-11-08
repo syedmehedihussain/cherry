@@ -237,6 +237,7 @@ Schema in `packages/shared/src/schemas/office.ts`.
         "plan": { "state": "locked", "ready": false, "sentAt": null, "signOffs": [] }
       },
       "devGate": "build",
+      "prototypeReady": false,
       "startedAt": "2026-10-28T09:00:00.000Z",
       "liveAt": null
     }
@@ -260,6 +261,10 @@ Schema in `packages/shared/src/schemas/office.ts`.
 - `state`: `locked`, `active`, `waiting` (sent to the client), `signed`, `update` (a big change
   flagged it), `carried` (taken over from the version before).
 - `kind: personal`: `client` is null, every sign-off is `internal` by `you`, costs are never billed.
+- `devGate`: Development's inside gate, `build` to `sent` to `approved`. `prototypeReady` (optional,
+  default false) is set when the Development Team calls `stage_ready` before the approval: it
+  marks the prototype, not the stage. Back to `build` (client wants changes) clears it. The
+  client's prototype approval is logged in `changelog`.
 - `cycles`: oldest first; the last is the version being built. `liveAt` is set when its
   Deployment is signed off.
 

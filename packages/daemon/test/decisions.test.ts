@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { readTasks } from '../src/projects/tasks.ts';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Adr, ServerEvent } from '@cherry/shared';
@@ -173,6 +174,26 @@ describe('decisions API', () => {
       state: 'done',
       doneAt: expect.stringMatching(/^\d{4}-\d\d-\d\d$/),
     });
+  });
+
+  // Finding #21: in a docs stage room an ADR is a decision on paper.
+  it('Approve on paper: Accepted with no Done line and no task', async () => {
+    await propose();
+    const r = await api('POST', '/api/projects/core/decisions/1/approve', { apply: 'paper' });
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({
+      decision: { state: 'done', status: 'Accepted' },
+      warning: null,
+    });
+    const file = readFileSync(path.join(adrDir(), '0001-move-storage-to-sqlite.md'), 'utf8');
+    expect(file).toContain('- **Status:** Accepted\n');
+    expect(file).not.toContain('**Done:**');
+    const project = path.join(d.projectsDir, 'core');
+    expect(
+      readTasks(project)
+        .tasks.map((t) => t.title)
+        .join(),
+    ).not.toContain('ADR-0001');
   });
 
   it('Approve and apply in chat: sends the change to the chat; decision_done closes it', async () => {

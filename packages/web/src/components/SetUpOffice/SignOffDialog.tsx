@@ -45,9 +45,11 @@ export function SignOffDialog({
   const again = rec.state === 'update';
   const lead = again
     ? 'The needs-update flag clears.'
-    : next
-      ? `${OFFICE_STAGE_LABEL[next]} opens next.`
-      : 'The project goes Live.';
+    : stage === 'design'
+      ? 'Cherry writes the handoff for the Development Team into design/handoff/, and Development opens with a first message for it.'
+      : next
+        ? `${OFFICE_STAGE_LABEL[next]} opens next.`
+        : 'The project goes Live.';
 
   const run = async (fn: () => Promise<unknown>, back: boolean) => {
     setBusy(true);

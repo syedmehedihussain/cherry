@@ -49,7 +49,7 @@ function notesFor(screens: DesignScreen[], brief: Brief, hasTokens: boolean, at:
     '# Design handoff',
     '',
     `Approved ${localDay(at)} in Cherry. Written by Approve design; do not edit by hand.`,
-    "The Designer's own notes, if any, are in `design/handoff/notes.md`.",
+    "The UI/UX Designer's own notes, if any, are in `design/handoff/notes.md`.",
     '',
     '## Screens',
     '',
@@ -61,7 +61,7 @@ function notesFor(screens: DesignScreen[], brief: Brief, hasTokens: boolean, at:
     '',
     hasTokens
       ? '- `tokens.css`: the colours, type and spacing as CSS variables. Use these names in the app.'
-      : '- No `design/tokens.css` yet. Ask the Designer for one before you build.',
+      : '- No `design/tokens.css` yet. Ask the UI/UX Designer for one before you build.',
     ...(colours.length
       ? [
           '',
@@ -83,7 +83,7 @@ function notesFor(screens: DesignScreen[], brief: Brief, hasTokens: boolean, at:
     '',
     'See `components.md`: the classes the screens share, a first list of components to build.',
     '',
-    '## For the Builder',
+    '## For the Development Team',
     '',
     '1. Read the plan first: `docs/prd.md`, `docs/roadmap.md`, `docs/test-plan.md`.',
     '2. Build each screen to match its file here. Use `tokens.css`; do not copy colours by hand.',
@@ -95,7 +95,7 @@ function notesFor(screens: DesignScreen[], brief: Brief, hasTokens: boolean, at:
 
 /**
  * Approve design (r9): writes design/handoff/ with standalone screens, tokens.css, a component
- * list and notes for the Builder. The Designer's own notes.md is never replaced.
+ * list and notes for the Development Team. The UI/UX Designer's own notes.md is never replaced.
  */
 export function writeHandoff(dir: string, at = new Date()): { files: string[] } {
   const screens = listScreens(dir);

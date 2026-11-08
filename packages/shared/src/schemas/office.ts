@@ -101,6 +101,8 @@ export const CycleSchema = z.object({
   title: z.string(),
   stages: z.record(OfficeStageSchema, StageRecordSchema),
   devGate: DevGateSchema,
+  /** The Development Team said the first prototype is ready (finding #41); false again on changes. */
+  prototypeReady: z.boolean().default(false),
   startedAt: z.string(),
   liveAt: z.string().nullable(),
 });
@@ -217,6 +219,15 @@ export const SignOffInputSchema = z.object({
   internal: z.boolean().default(false),
 });
 export type SignOffInput = z.input<typeof SignOffInputSchema>;
+
+/** POST .../dev-gate: the gate, and who approved the prototype (a client project, #42). */
+export const DevGateInputSchema = z.object({
+  gate: DevGateSchema,
+  by: z.string().trim().max(120).default(''),
+  date: IsoDate.optional(),
+  notes: z.string().trim().max(4000).default(''),
+});
+export type DevGateApproval = Pick<z.output<typeof DevGateInputSchema>, 'by' | 'date' | 'notes'>;
 
 /** POST .../changes: a small change is logged; a big one becomes a change request. */
 export const ChangeInputSchema = z.discriminatedUnion('kind', [

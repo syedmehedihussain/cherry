@@ -185,10 +185,10 @@ calls a model (ADR-0055).
 | GET | `/api/projects/:id/usage` | `{ total, stages: [{ stage, ... }], models: [{ model, ... }] }`, each `{ tokens, costUsd, turns, ms }`: every chat turn of the project from `turn_usage`; `costUsd` is the API value |
 | GET | `/api/projects/:id/git/history?stage=` | `{ commits: [{ hash, subject, author, at, tags, files }] }`, newest 60; `stage` keeps one stage's paths (docs/<stage>/, or the code for Development) |
 | GET | `/api/projects/:id/office/docs?stage=` | `{ client, technical }`, each `[{ path, title, legacy }]`: Markdown in `docs/<stage>/client\|technical/` (one sub-folder deep), titles from the first `# ` heading; then V3 flat docs read where they are (`legacy: true`, ADR-0053) |
-| POST | `/api/projects/:id/office/stages/:stage/ready` | `{ ready }`: the agent says the stage is ready (or not) |
+| POST | `/api/projects/:id/office/stages/:stage/ready` | `{ ready }`: the agent says the stage is ready (or not). In Development before the prototype is approved it sets `prototypeReady` instead |
 | POST | `/api/projects/:id/office/stages/:stage/send` | sent to the client: `active` to `waiting`; client projects only; needs `ready` |
-| POST | `/api/projects/:id/office/stages/:stage/sign-off` | `{ by?, date?, notes?, internal? }`; needs `ready`; `by` unless internal; personal signs as you; opens the next stage, or Live after Deployment; a flagged stage just clears its flag. Development needs the prototype approved |
-| POST | `/api/projects/:id/office/dev-gate` | `{ gate: build\|sent\|approved }`: build to sent to approved (sent back to build: client wants changes); personal goes build to approved |
+| POST | `/api/projects/:id/office/stages/:stage/sign-off` | `{ by?, date?, notes?, internal? }`; needs `ready`; `by` unless internal; personal signs as you; opens the next stage, or Live after Deployment; a flagged stage just clears its flag. Development needs the prototype approved. Design writes `design/handoff/` when it has screens; the reply has `handoff` (the files written, else `[]`) |
+| POST | `/api/projects/:id/office/dev-gate` | `{ gate: build\|sent\|approved, by?, date?, notes? }`: build to sent to approved (sent back to build: client wants changes, clears `prototypeReady`); personal goes build to approved. A client approval needs `by` and is logged in `changelog` |
 | POST | `/api/projects/:id/office/changes` | `{ kind: 'small', stage, text }` logs it; `{ kind: 'big', title, text, stages }` adds change request `CR-NNN` |
 | POST | `/api/projects/:id/office/changes/:cr/approve` | flags the named stages that are signed off as `update` (ready false) |
 | POST | `/api/projects/:id/office/changes/:cr/reject` | keeps it as rejected |
@@ -246,7 +246,7 @@ says otherwise), addressed by its number. The file holds the state; see
 | Method | Path | Does |
 | --- | --- | --- |
 | GET | `/api/projects/:id/decisions` | `{ dir, decisions: Adr[] }`, newest number first; `state` is pending, approved, done or rejected; `applying` names the chat turn or agent making an approved change |
-| POST | `/api/projects/:id/decisions/:n/approve` | `{ apply: none\|chat\|agent }` → Status Accepted, `Done: not yet`. `none` adds the task "Apply ADR-NNNN: title" to tasks.json; chat or agent also starts the change (chat waits for the running turn to end). Returns `{ decision, warning }`; `warning` says why the change was not started (ADR-0029) |
+| POST | `/api/projects/:id/decisions/:n/approve` | `{ apply: none\|chat\|agent\|paper }` → Status Accepted, `Done: not yet`; `paper` (a docs stage room of the office) writes no Done line and adds no task. `none` adds the task "Apply ADR-NNNN: title" to tasks.json; chat or agent also starts the change (chat waits for the running turn to end). Returns `{ decision, warning }`; `warning` says why the change was not started (ADR-0029) |
 | POST | `/api/projects/:id/decisions/:n/apply` | `{ apply: chat\|agent }` → starts an approved change again |
 | POST | `/api/projects/:id/decisions/:n/reject` | `{ reason? }` → Status Rejected, `Rejected because: …`; the file stays |
 | POST | `/api/projects/:id/decisions/:n/done` | approved → `Done: YYYY-MM-DD`; its "Apply ADR-NNNN:" task is ticked. Ticking that task (PATCH tasks) also marks the decision done |

@@ -15,20 +15,20 @@ test('stage tabs open each agent', async ({ page }) => {
   await expect(stages.getByRole('button', { name: 'Issues' })).toHaveCount(0);
   await expect(stages.getByRole('button', { name: 'Preparation' })).toHaveCount(0);
   for (const [stage, agent] of [
-    ['Design', 'Designer'],
-    ['Deployment', 'Shipper'],
-    ['Plan', 'Planner'],
+    ['Design', 'UI/UX Designer'],
+    ['Deployment', 'DevOps Engineer'],
+    ['Plan', 'System Architect'],
   ]) {
     await stages.getByRole('button', { name: stage }).click();
-    // Deployment is the cockpit; its agent's chat is the Shipper tab (V3 r10).
-    if (stage === 'Deployment') await page.getByRole('tab', { name: 'Shipper' }).click();
+    // Deployment is the cockpit; its agent's chat is the DevOps Engineer tab (V3 r10).
+    if (stage === 'Deployment') await page.getByRole('tab', { name: 'DevOps Engineer' }).click();
     await expect(page.getByRole('heading', { name: `${stage}: the ${agent}` })).toBeVisible();
     await expect(stages.getByRole('button', { name: stage })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
   }
-  await expect(page.getByRole('contentinfo')).toContainText('Planner');
+  await expect(page.getByRole('contentinfo')).toContainText('System Architect');
 });
 
 test('Settings, Agents: the seven staff agents, their skills and their personas', async ({

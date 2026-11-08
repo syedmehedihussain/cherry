@@ -31,6 +31,19 @@ export const useOffice = (projectId: string) =>
       api('GET', base(projectId), undefined, OfficeResponseSchema).then((r) => r.office),
   });
 
+/**
+ * The office the project page already loaded, without fetching it again. Parts inside the page
+ * (the chat, its hints) use this: a second fetch of a failed office (a project not in Cherry)
+ * put the page back into loading, unmounted them and looped.
+ */
+export const useLoadedOffice = (projectId: string) =>
+  useQuery({
+    queryKey: officeKey(projectId),
+    queryFn: () =>
+      api('GET', base(projectId), undefined, OfficeResponseSchema).then((r) => r.office),
+    enabled: false,
+  }).data;
+
 export const useStageDocs = (projectId: string, stage: OfficeStage) =>
   useQuery({
     queryKey: ['office-docs', projectId, stage],
@@ -85,7 +98,11 @@ export const sendStage = (id: string, stage: OfficeStage) =>
   change(id, 'POST', `/stages/${stage}/send`);
 export const signOffStage = (id: string, stage: OfficeStage, input: SignOffInput) =>
   change(id, 'POST', `/stages/${stage}/sign-off`, input);
-export const setDevGate = (id: string, gate: DevGate) => change(id, 'POST', '/dev-gate', { gate });
+export const setDevGate = (
+  id: string,
+  gate: DevGate,
+  approval?: { by: string; date: string; notes: string },
+) => change(id, 'POST', '/dev-gate', { gate, ...approval });
 export const addChange = (id: string, input: ChangeInput) => change(id, 'POST', '/changes', input);
 export const decideChange = (id: string, cr: string, approve: boolean) =>
   change(id, 'POST', `/changes/${encodeURIComponent(cr)}/${approve ? 'approve' : 'reject'}`);

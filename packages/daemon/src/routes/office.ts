@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   ChangeInputSchema,
   CostInputSchema,
-  DevGateSchema,
+  DevGateInputSchema,
   NewVersionSchema,
   OfficeCreateSchema,
   OfficeSettingsSchema,
@@ -18,6 +18,8 @@ import { stageDocs } from '../office/docs.ts';
 import { history } from '../office/history.ts';
 import { meetingNotes, newNote, readVault } from '../office/vault.ts';
 import type { OfficeService } from '../office/service.ts';
+import { listScreens } from '../design/screens.ts';
+import { writeHandoff } from '../design/handoff.ts';
 import { projectDir } from '../projects/workspace.ts';
 
 const Id = z.object({ id: z.string().min(1).max(200) });
@@ -76,11 +78,16 @@ export function officeRoutes(office: OfficeService, config: ConfigStore, db: Db)
     });
     app.post(`${base}/stages/:stage/sign-off`, async (req) => {
       const { id, stage } = StageParams.parse(req.params);
-      return { office: office.signOff(id, stage, SignOffInputSchema.parse(req.body ?? {})) };
+      const signed = office.signOff(id, stage, SignOffInputSchema.parse(req.body ?? {}));
+      // One gate in Design (finding #35): its sign-off writes the handoff for the Development
+      // Team, as Approve design did in V3. A design with no screens hands over its docs only.
+      const dir = projectDir(config.projectsDir(), id);
+      const handoff = stage === 'design' && listScreens(dir).length ? writeHandoff(dir).files : [];
+      return { office: signed, handoff };
     });
     app.post(`${base}/dev-gate`, async (req) => {
-      const { gate } = z.object({ gate: DevGateSchema }).parse(req.body);
-      return { office: office.devGate(Id.parse(req.params).id, gate) };
+      const { gate, ...approval } = DevGateInputSchema.parse(req.body);
+      return { office: office.devGate(Id.parse(req.params).id, gate, approval) };
     });
 
     app.post(`${base}/changes`, async (req) => ({

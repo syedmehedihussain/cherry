@@ -46,7 +46,7 @@ const isImage = (p: string) => /\.(png|jpe?g|gif|webp|svg|avif)$/i.test(p);
 const fileName = (p: string) => p.split('/').pop() ?? p;
 
 /**
- * The Brief (V3 r8, artboard 02): what the Designer works from. References, a design system,
+ * The Brief (V3 r8, artboard 02): what the UI/UX Designer works from. References, a design system,
  * components, images, colours and fonts, kept in design/brief.json and design/.
  */
 export function BriefPanel({ projectId, idea }: { projectId: string; idea: string }) {
@@ -302,7 +302,7 @@ export function BriefPanel({ projectId, idea }: { projectId: string; idea: strin
             ).finally(() => window.setTimeout(() => setTold(false), 3000));
           }}
         >
-          {told ? 'Sent to the Designer' : 'Tell the Designer'}
+          {told ? 'Sent to the UI/UX Designer' : 'Tell the UI/UX Designer'}
         </button>
       </footer>
     </aside>

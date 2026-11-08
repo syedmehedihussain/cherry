@@ -62,7 +62,11 @@ export const AdrProposalSchema = z.object({
 export type AdrProposal = z.infer<typeof AdrProposalSchema>;
 
 /** Approve: record only, or also make the change in the chat or with a background agent. */
-export const AdrApplyModeSchema = z.enum(['none', 'chat', 'agent']);
+/**
+ * none: accepted, waits as a task; chat/agent: accepted and the change is started; paper: a
+ * decision on paper in a docs stage room (finding #21), accepted with no Done line and no task.
+ */
+export const AdrApplyModeSchema = z.enum(['none', 'chat', 'agent', 'paper']);
 export type AdrApplyMode = z.infer<typeof AdrApplyModeSchema>;
 export const AdrApproveSchema = z.object({ apply: AdrApplyModeSchema.default('none') });
 export const AdrApplySchema = z.object({ apply: z.enum(['chat', 'agent']) });

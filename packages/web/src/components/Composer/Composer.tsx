@@ -92,7 +92,7 @@ interface ComposerProps {
   onCompact?(): void;
   /** Messages sent in this chat, oldest first: ↑ and ↓ step through them (V2.1 w7.8). */
   history?: string[];
-  /** "Reply to the Builder". */
+  /** "Reply to the Development Team". */
   placeholder?: string;
   /**
    * While paused with an empty box: a number, Enter or Esc for the card above. Returns true when

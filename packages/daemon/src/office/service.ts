@@ -11,6 +11,7 @@ import {
   type CostInput,
   type Cycle,
   type DevGate,
+  type DevGateApproval,
   type OfficeCreate,
   type OfficeFile,
   type OfficeStage,
@@ -46,6 +47,7 @@ function newCycle(version: string, title: string, first: OfficeStage): Cycle {
     title,
     stages,
     devGate: 'build',
+    prototypeReady: false,
     startedAt: new Date().toISOString(),
     liveAt: null,
   };
@@ -161,7 +163,10 @@ export class OfficeService {
       const r = c.stages[stage];
       if (!['active', 'waiting', 'update'].includes(r.state))
         throw conflict(`${label(stage)} is not open.`);
-      r.ready = ready;
+      // Before the prototype is approved, Development's "ready" is the prototype (#41); the
+      // stage itself is ready only after the full build.
+      if (stage === 'development' && c.devGate !== 'approved') c.prototypeReady = ready;
+      else r.ready = ready;
     });
   }
 
@@ -211,7 +216,7 @@ export class OfficeService {
   }
 
   /** Development's inside gate: build, sent to the client, approved. */
-  devGate(id: string, gate: DevGate): OfficeFile {
+  devGate(id: string, gate: DevGate, approval?: DevGateApproval): OfficeFile {
     return this.change(id, (o, c) => {
       const r = c.stages.development;
       if (!['active', 'waiting'].includes(r.state)) throw conflict('Development is not open.');
@@ -225,6 +230,18 @@ export class OfficeService {
       if (gate === 'sent' && o.kind === 'personal')
         throw badRequest('A personal project has no client.');
       c.devGate = gate;
+      // Client wants changes: the next prototype has to be made ready again.
+      if (gate === 'build') c.prototypeReady = false;
+      // The client's approval, as for a stage sign-off (#42): who, when, notes, in the log.
+      if (gate === 'approved' && o.kind === 'client') {
+        if (!approval?.by) throw badRequest('Who approved it?');
+        const notes = approval.notes.trim();
+        o.changelog.unshift({
+          at: new Date().toISOString(),
+          stage: 'development',
+          text: `Prototype approved by ${approval.by} on ${approval.date ?? today()}${notes ? `: ${notes}` : '.'}`,
+        });
+      }
     });
   }
 

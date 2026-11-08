@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { STAGES, type ChatState } from '@cherry/shared';
+import { OFFICE_AGENT, OfficeStageSchema, STAGES, type ChatState } from '@cherry/shared';
 import { chatSystemPrompt } from '../src/chat/service.ts';
 import { fakeRunner, type FakeLog, type Step } from '../src/claude/fake-runner.ts';
 import { isDocsPath, stageGuard, stageProfile } from '../src/stages/profiles.ts';
@@ -10,8 +10,10 @@ import { HOST, testDaemon, write, type TestDaemon } from './helpers.ts';
 describe('stage profiles', () => {
   it.each(STAGES)('loads the %s agent from its AGENT.md', (stage) => {
     const p = stageProfile(stage);
-    // V3 agents have one-word names (Planner); V4 staff have job titles (QA Engineer).
-    expect(p.name).toMatch(/^[A-Z][A-Za-z]+( [A-Z][A-Za-z]+)?$/);
+    // One name per role (finding #22): an office stage's agent is called by its job title.
+    const office = OfficeStageSchema.safeParse(stage);
+    if (office.success) expect(p.name).toBe(OFFICE_AGENT[office.data]);
+    else expect(p.name).toMatch(/^[A-Z][A-Za-z]+$/);
     expect(p.summary.length).toBeGreaterThan(20);
     expect(p.persona).toMatch(/^You are the \*\*/);
     expect(p.persona).not.toMatch(/^---/m);
@@ -19,9 +21,9 @@ describe('stage profiles', () => {
 
   it('puts the persona in the system prompt, with no phase line', () => {
     const prompt = chatSystemPrompt('plan');
-    expect(prompt).toContain('You are the **Planner**');
+    expect(prompt).toContain('You are the **System Architect**');
     expect(prompt).not.toMatch(/Current phase|phase is unknown/);
-    expect(chatSystemPrompt('development')).toContain('You are the **Builder**');
+    expect(chatSystemPrompt('development')).toContain('You are the **Development Team**');
   });
 
   it.each([
@@ -97,8 +99,8 @@ describe('a chat per stage', () => {
     expect(plan.conversationId).not.toBe(dev.conversationId);
     expect(plan.items.find((i) => i.kind === 'user')).toMatchObject({ text: 'plan it' });
     expect(dev.items.find((i) => i.kind === 'user')).toMatchObject({ text: 'build it' });
-    expect(log.requests[0]?.appendSystemPrompt).toContain('**Planner**');
-    expect(log.requests[1]?.appendSystemPrompt).toContain('**Builder**');
+    expect(log.requests[0]?.appendSystemPrompt).toContain('**System Architect**');
+    expect(log.requests[1]?.appendSystemPrompt).toContain('**Development Team**');
     // Each resumes its own Claude session, never the other's.
     expect(log.requests[1]?.resume).toBeNull();
     const bad = await api('GET', '/api/projects/core/chat?stage=marketing');
@@ -114,7 +116,7 @@ describe('a chat per stage', () => {
     await idle();
     expect(d.approvals.list()).toHaveLength(0);
     expect(log.permissions[0]).toMatchObject({ tool: 'Write', allowed: false });
-    expect(log.permissions[0]?.message).toMatch(/Planner .* only writes docs/);
+    expect(log.permissions[0]?.message).toMatch(/System Architect .* only writes docs/);
   });
 
   it('New conversation only replaces that stage', async () => {

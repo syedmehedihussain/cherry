@@ -36,13 +36,13 @@ import styles from './DeployStage.module.css';
 
 const PHONE = { w: 375, h: 812 };
 
-/** What the Builder gets from Fix in Development: the check, its command and its output. */
+/** What the Development Team gets from Fix in Development: the check, its command and its output. */
 export function fixMessage(c: Check): string {
   const tail = c.output.split('\n').slice(-60).join('\n');
   return `The ${c.label.toLowerCase()} check fails in the Deployment cockpit. Command: \`${c.command}\`. Find the cause, fix it, and run the command again until it passes.\n\nOutput (end):\n\`\`\`\n${tail}\n\`\`\``;
 }
 
-/** What the Shipper gets from Deploy: what, where, and the limits. */
+/** What the DevOps Engineer gets from Deploy: what, where, and the limits. */
 export function deployMessage(info: DeployInfo): string {
   const version = info.version ? `version ${info.version}` : 'the current commit';
   return `Deploy ${version} to ${info.target.label}${info.repo ? ` (${info.repo})` : ''}. Use your deploy skill for this target. Check first that the checks pass and the CHANGELOG has this version. Ask before each push or publish. When it is done, say the address and the tag in two lines.`;
@@ -109,7 +109,7 @@ export function DeployStage({ projectId, now }: { projectId: string; now: number
       await sendChat(projectId, 'development', fixMessage(c), readMode(projectId, 'development'));
       setStage(projectId, 'development');
     } catch (e) {
-      setError(e instanceof ApiFailure ? e.message : 'Could not send it to the Builder.');
+      setError(e instanceof ApiFailure ? e.message : 'Could not send it to the Development Team.');
     }
   };
 
@@ -248,7 +248,7 @@ export function DeployStage({ projectId, now }: { projectId: string; now: number
             aria-selected={side === 'shipper'}
             onClick={() => setSide('shipper')}
           >
-            Shipper
+            DevOps Engineer
             {shipping && <span className={styles.live} aria-label="working" />}
           </button>
         </div>
@@ -523,7 +523,7 @@ function DeployConfirm({
             {info.repo ? ` · ${info.repo}` : ''}
           </dd>
           <dt>How</dt>
-          <dd>The Shipper does it in the Deployment chat, with its deploy skill.</dd>
+          <dd>The DevOps Engineer does it in the Deployment chat, with its deploy skill.</dd>
         </dl>
         {(failed > 0 || info.changes > 0) && (
           <p className={styles.warn}>

@@ -60,7 +60,7 @@ the empty chat, or type `/cherry-<stage>:<name>`.
 | find-skills | Installs skills globally for Claude Code with `-g -y`; Cherry's agents load only their stage folders. Add skills in `~/.cherry/skills/<stage>/`. |
 | skill-creator | Its scripts run nested `claude -p` sessions outside Cherry's approvals. Cherry's own `write-a-skill` covers writing skills. |
 | write-a-skill (mattpocock) | No longer in the upstream repository; Cherry ships its own. |
-| executing-plans, subagent-driven-development | Depend on Superpowers' worktree, subagent and review scripts; the Builder executes plans in Development. |
+| executing-plans, subagent-driven-development | Depend on Superpowers' worktree, subagent and review scripts; the Development Team executes plans in Development. |
 | design-taste-frontend | Optional; overlaps frontend-design, 2.4 MB with browser and image-API scripts. |
 | webapp-testing | Optional; overlaps agent-browser. |
 | vercel-deploy | Copies were flagged critical: the script uploads the project to an outside endpoint. Use the official Vercel CLI. |

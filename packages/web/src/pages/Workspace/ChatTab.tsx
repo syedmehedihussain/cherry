@@ -45,12 +45,15 @@ import {
 } from '../../api/chat.ts';
 import { queryClient } from '../../api/queries.ts';
 import { searchFiles } from '../../api/workspace.ts';
+import { useLoadedOffice } from '../../api/office.ts';
 import { stageInfo, useStageInfo } from '../../api/stages.ts';
 import {
   CcAnswered,
   CcFold,
   CcPrompt,
   CcSpinner,
+  CcTasks,
+  activeTask,
   CcText,
   CcThinking,
   CcTool,
@@ -154,16 +157,22 @@ function toolRuns(items: ToolItem[]): (ToolItem | ToolItem[])[] {
 
 const modeKey = (projectId: string, stage: Stage) => `cherry.chatMode.${projectId}.${stage}`;
 
+/** The mode last picked in any room of the project (findings #38, #50). */
+const lastModeKey = (projectId: string) => `cherry.chatMode.${projectId}.last`;
+
 /**
- * The chat mode is remembered per project and stage. Nothing stored: docs-only stages (Plan,
- * Design, Issues) open in Auto, since their agent can only write docs (ADR-0041); the others
- * use the project's older single setting, or Ask.
+ * The chat mode is remembered per project and stage. A room with nothing stored takes the mode
+ * the user last picked in any room of the project, so a code room is Auto only when the user
+ * chose Auto. Nothing picked yet: docs-only stages (Plan, Design, Issues) open in Auto, since
+ * their agent can only write docs (ADR-0041); the others use the project's older single
+ * setting, or Ask.
  */
 export function readMode(projectId: string, stage: Stage): ChatMode {
   const fallback: ChatMode = DOCS_ONLY_STAGES.has(stage) ? 'auto' : 'ask';
   try {
     const stored =
       localStorage.getItem(modeKey(projectId, stage)) ??
+      localStorage.getItem(lastModeKey(projectId)) ??
       (DOCS_ONLY_STAGES.has(stage) ? null : localStorage.getItem(`cherry.chatMode.${projectId}`));
     return ChatModeSchema.catch(fallback).parse(stored ?? fallback);
   } catch {
@@ -174,6 +183,7 @@ export function readMode(projectId: string, stage: Stage): ChatMode {
 export function storeMode(projectId: string, stage: Stage, mode: ChatMode): void {
   try {
     localStorage.setItem(modeKey(projectId, stage), mode);
+    localStorage.setItem(lastModeKey(projectId), mode);
   } catch {
     // Private window: the mode just isn't remembered.
   }
@@ -222,6 +232,7 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
   const turnStart = lastUser?.at;
   const turnSeed = lastUser?.id ?? 'turn';
   const agentName = stageInfo(useStageInfo().data, stage)?.name;
+  const paperDecisions = !!useLoadedOffice(projectId) && DOCS_ONLY_STAGES.has(stage);
 
   useLayoutEffect(() => {
     const el = scroller.current;
@@ -345,6 +356,7 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
                   projectId={projectId}
                   block={b}
                   now={now}
+                  paperDecisions={paperDecisions}
                   running={!!state?.running}
                   streamingId={state?.running && lastItem?.kind === 'text' ? lastItem.id : null}
                   onOpenFile={onOpenFile}
@@ -371,7 +383,15 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
               <NextStageChip projectId={projectId} stage={stage} />
             </>
           )}
-          {state?.running && !paused && <CcSpinner since={turnStart ?? now} seed={turnSeed} />}
+          {state?.running && !paused && (
+            <CcSpinner
+              since={turnStart ?? now}
+              seed={turnSeed}
+              verb={activeTask(state.plan ?? [])}
+            />
+          )}
+          {/* The agent's task list, ticked off as it works, like the CLI. */}
+          <CcTasks plan={state?.plan ?? []} running={!!state?.running} />
         </div>
       </div>
       <div className={styles.composer}>
@@ -501,9 +521,12 @@ function ClaudeBlock({
   streamingId,
   onRetry,
   onOpenFile,
+  paperDecisions = false,
 }: {
   projectId: string;
   block: Extract<Block, { t: 'claude' }>;
+  /** ADRs proposed here are decisions on paper (a docs stage room of the office, #21). */
+  paperDecisions?: boolean;
   now: number;
   running: boolean;
   streamingId: string | null;
@@ -601,7 +624,7 @@ function ClaudeBlock({
                 {/* A big choice Claude proposed: approve it right here (ADR-0029). */}
                 {proposals(p.items).map((n) => (
                   <div key={n} className={styles.card}>
-                    <DecisionInChat projectId={projectId} number={n} />
+                    <DecisionInChat projectId={projectId} number={n} paper={paperDecisions} />
                   </div>
                 ))}
               </Fragment>

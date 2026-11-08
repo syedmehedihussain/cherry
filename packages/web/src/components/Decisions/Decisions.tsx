@@ -1,8 +1,8 @@
-import { Check, ChevronDown, ChevronRight, Scale, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, MessageCircle, Scale, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import type { Adr, AdrApplyMode } from '@cherry/shared';
-import { useChat } from '../../api/chat.ts';
+import { useChat, useChatDraft } from '../../api/chat.ts';
 import { useAgents } from '../../api/agents.ts';
 import { ApiFailure } from '../../api/client.ts';
 import {
@@ -113,13 +113,45 @@ export function Decisions({ projectId }: { projectId: string }) {
 const docLink = (projectId: string, d: Adr) => `/p/${encodeURIComponent(projectId)}/docs/${d.file}`;
 
 /** The same decision card inside the chat, under Claude's "Proposed decision" row. */
-export function DecisionInChat({ projectId, number }: { projectId: string; number: number }) {
+export function DecisionInChat({
+  projectId,
+  number,
+  paper = false,
+}: {
+  projectId: string;
+  number: number;
+  /**
+   * A docs stage room of the office (finding #21): the decision is accepted on paper, so the
+   * card offers Approve, Reject and Discuss, with no apply or done step.
+   */
+  paper?: boolean;
+}) {
   const adr = useDecisions(projectId).data?.decisions.find((d) => d.number === number);
+  const setDraft = useChatDraft((s) => s.set);
   if (!adr) return null;
-  return <DecisionItem projectId={projectId} adr={adr} />;
+  return (
+    <DecisionItem
+      projectId={projectId}
+      adr={adr}
+      onDiscuss={
+        paper
+          ? () => setDraft(projectId, `About ADR-${nnnn(adr.number)} (${adr.title}): `)
+          : undefined
+      }
+    />
+  );
 }
 
-function DecisionItem({ projectId, adr }: { projectId: string; adr: Adr }) {
+function DecisionItem({
+  projectId,
+  adr,
+  onDiscuss,
+}: {
+  projectId: string;
+  adr: Adr;
+  /** Set in a docs stage room: Approve, Reject, Discuss only. */
+  onDiscuss?: () => void;
+}) {
   const [menu, setMenu] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
@@ -237,7 +269,31 @@ function DecisionItem({ projectId, adr }: { projectId: string; adr: Adr }) {
         </form>
       ) : (
         <div className={styles.actions}>
-          {adr.state === 'pending' ? (
+          {adr.state === 'pending' && onDiscuss ? (
+            <>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                disabled={busy}
+                onClick={() =>
+                  void run(() => approveDecision(projectId, adr.number, { apply: 'paper' }))
+                }
+              >
+                <Check size={13} aria-hidden="true" />
+                Approve
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={busy}
+                title="Talk it through with the agent first: puts the ADR in the message box"
+                onClick={onDiscuss}
+              >
+                <MessageCircle size={13} aria-hidden="true" />
+                Discuss
+              </button>
+            </>
+          ) : adr.state === 'pending' ? (
             <div className={styles.menuWrap}>
               <button
                 type="button"

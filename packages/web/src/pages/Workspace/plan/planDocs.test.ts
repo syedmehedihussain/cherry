@@ -28,7 +28,7 @@ describe('plan documents', () => {
     expect(more.map((m) => m.path)).toEqual(['docs/specs/offline.md']);
   });
 
-  it('marks a document the Planner is writing now', () => {
+  it('marks a document the System Architect is writing now', () => {
     const items = [
       {
         kind: 'tool',

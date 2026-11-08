@@ -138,8 +138,13 @@ export class AdrService {
   ): Promise<{ decision: Adr; warning: string | null }> {
     const adr = this.get(projectId, number);
     if (adr.state !== 'pending') throw conflict(`ADR ${nnnn(number)} is not pending.`);
-    this.edit(projectId, number, { Status: 'Accepted', Done: 'not yet' });
+    // On paper: the documents carry it, nothing waits to be done.
+    this.edit(projectId, number, {
+      Status: 'Accepted',
+      Done: apply === 'paper' ? null : 'not yet',
+    });
     this.changed(projectId);
+    if (apply === 'paper') return { decision: this.get(projectId, number), warning: null };
     if (apply === 'none') {
       // Approved for later: it waits in the task list until someone does it.
       const { project } = this.where(projectId);

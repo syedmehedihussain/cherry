@@ -8,7 +8,7 @@ test.afterEach(() =>
 );
 
 // V3 r3: Plan is a chat that writes documents; the Documents panel ticks and reads them.
-test('Plan: the Planner writes a document, the panel ticks it, Ask about this and Edit', async ({
+test('Plan: the System Architect writes a document, the panel ticks it, Ask about this and Edit', async ({
   page,
 }) => {
   await page.goto(`/#login=${await loginCode()}`);
@@ -30,7 +30,7 @@ test('Plan: the Planner writes a document, the panel ticks it, Ask about this an
   await expect(panel).toContainText('1 of 9');
   await expect(panel.getByRole('button', { name: /PRD/ })).toBeEnabled();
 
-  // The file the Planner wrote is one line with Open in the chat.
+  // The file the System Architect wrote is one line with Open in the chat.
   await page.getByRole('button', { name: 'Open docs/prd.md' }).click();
   const reader = panel.getByRole('region', { name: 'Document docs/prd.md' });
   await expect(reader.getByRole('heading', { name: 'Kite log — PRD' })).toBeVisible();
