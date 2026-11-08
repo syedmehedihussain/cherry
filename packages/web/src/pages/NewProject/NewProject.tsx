@@ -139,6 +139,16 @@ export function NewProject() {
                   }}
                   placeholder="review-qr"
                   spellCheck={false}
+                  // The name comes from the idea until the user types one: select it on focus,
+                  // so typing replaces it instead of adding to it (#3). Mouse up would put the
+                  // caret back, so select again there.
+                  onFocus={(e) => {
+                    if (!nameTouched) e.currentTarget.select();
+                  }}
+                  onMouseUp={(e) => {
+                    const el = e.currentTarget;
+                    if (!nameTouched && el.selectionStart === el.selectionEnd) el.select();
+                  }}
                   aria-invalid={shownName.length > 0 && !nameCheck.success}
                 />
               </div>

@@ -386,8 +386,9 @@ describe('Claude usage per project (o12)', () => {
           models:
             n++ === 0
               ? [
-                  { model: 'claude-opus', input: 1000, output: 200, cacheRead: 5000, costUsd: 0.5 },
+                  // A Haiku helper call first, as in the real run (finding #18).
                   { model: 'claude-haiku', input: 100, output: 20, cacheRead: 0, costUsd: 0.01 },
+                  { model: 'claude-opus', input: 1000, output: 200, cacheRead: 5000, costUsd: 0.5 },
                 ]
               : [{ model: 'claude-opus', input: 400, output: 100, cacheRead: 0, costUsd: 0.2 }],
         },
@@ -422,6 +423,9 @@ describe('Claude usage per project (o12)', () => {
       'claude-opus',
       'claude-haiku',
     ]);
+    // Turns and time belong to the main model, not to the helper listed first.
+    expect(u.models.find((m: { model: string }) => m.model === 'claude-opus').turns).toBe(2);
+    expect(u.models.find((m: { model: string }) => m.model === 'claude-haiku').turns).toBe(0);
   });
 });
 

@@ -102,8 +102,11 @@ export function CcFold({
         aria-expanded={open}
         onClick={() => setOpen(!open)}
       >
-        <span className={styles.foldText}>{summary}</span>
-        {!!failed && <span className={styles.foldFailed}> · {failed} failed</span>}
+        {/* One grid cell: a third child would wrap into the 18px arrow column (#45). */}
+        <span className={styles.foldText}>
+          {summary}
+          {!!failed && <span className={styles.foldFailed}> · {failed} failed</span>}
+        </span>
       </button>
       {open && <div className={styles.foldBody}>{children}</div>}
     </div>
@@ -296,6 +299,7 @@ export function CcPrompt({
       aria-label={approval.title}
       tabIndex={-1}
       data-approval={approval.id}
+      data-answer-keys
       onKeyDown={(e) => {
         if (denying || e.target !== e.currentTarget) return;
         const n = Number(e.key);

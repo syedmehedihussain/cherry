@@ -29,6 +29,27 @@ describe('issue files', () => {
     });
     expect(parseIssue('docs/issues/notes.md', 'x', 1)).toBeNull();
   });
+
+  // Finding #51: the QA Engineer wrote bold bullet lines, not front matter.
+  it('reads Status and Severity lines when there is no front matter', () => {
+    const file = (status: string, severity: string) =>
+      parseIssue(
+        'docs/issues/0002-x.md',
+        `# 0002: Simulator response overflows the card\n\n- **Severity:** ${severity} (content cut off)\n- **Status:** ${status}\n\n## Steps\n`,
+        1,
+      )!;
+    expect(file('Fixed (Testing run 1)', 'Medium')).toMatchObject({
+      title: 'Simulator response overflows the card',
+      status: 'done',
+      severity: 'annoying',
+      type: 'bug',
+    });
+    expect(file('Open (needs the client)', 'Low')).toMatchObject({
+      status: 'open',
+      severity: 'cosmetic',
+    });
+    expect(file('Closed', 'Critical').severity).toBe('blocks');
+  });
 });
 
 describe('issues API', () => {

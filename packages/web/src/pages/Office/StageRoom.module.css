@@ -296,6 +296,9 @@
   flex: 1;
   color: var(--t1);
 }
+.bugs li[data-done] .bugTitle {
+  color: var(--t3);
+}
 .gate {
   list-style: none;
   margin: 0;

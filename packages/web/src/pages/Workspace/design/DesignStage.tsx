@@ -28,10 +28,19 @@ export function DesignStage({
   projectId,
   now,
   onOpenFile,
+  onApproved,
+  signOffFirst = false,
 }: {
   projectId: string;
   now: number;
   onOpenFile(path: string): void;
+  /**
+   * V4 stage room: the room takes the Builder's first message to Development itself (after the
+   * sign-off when Development is still locked). Without it, the V3 workspace switches stage.
+   */
+  onApproved?(builderMessage: string): void;
+  /** V4: Development is still locked, so Sign off comes between Approve and Development. */
+  signOffFirst?: boolean;
 }) {
   const data = useDesignScreens(projectId).data;
   const screens = useMemo(() => data ?? [], [data]);
@@ -48,8 +57,11 @@ export function DesignStage({
     try {
       await approveDesign(projectId);
       setConfirm(false);
-      setDraft(projectId, BUILD_FROM_HANDOFF);
-      setStage(projectId, 'development');
+      if (onApproved) onApproved(BUILD_FROM_HANDOFF);
+      else {
+        setDraft(projectId, BUILD_FROM_HANDOFF);
+        setStage(projectId, 'development');
+      }
     } catch (e) {
       setError(e instanceof ApiFailure ? e.message : 'Could not write the handoff.');
     } finally {
@@ -115,7 +127,12 @@ export function DesignStage({
                 (notes for the Builder)
               </li>
             </ul>
-            <p>Then Development opens with a first message for the Builder. Nothing is sent yet.</p>
+            <p>
+              {signOffFirst
+                ? 'Then sign off the design: Development opens with a first message for the Builder.'
+                : 'Then Development opens with a first message for the Builder.'}{' '}
+              Nothing is sent yet.
+            </p>
             {error && (
               <p className={styles.error} role="alert">
                 {error}
@@ -137,7 +154,7 @@ export function DesignStage({
                 autoFocus
                 onClick={() => void approve()}
               >
-                Approve and open Development
+                {signOffFirst ? 'Approve and sign off' : 'Approve and open Development'}
               </button>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { gitChip, relativeTime } from './format.ts';
+import { gitChip, localDay, relativeTime } from './format.ts';
 
 const now = Date.parse('2026-10-08T12:00:00Z');
 const ago = (ms: number) => relativeTime(now - ms, now);
@@ -34,5 +34,13 @@ describe('gitChip', () => {
   });
   it('is clean when nothing is pending', () => {
     expect(gitChip(base)).toEqual({ label: 'clean', tone: 'clean' });
+  });
+});
+
+describe('localDay', () => {
+  it('uses the local calendar day, not the UTC one', () => {
+    // 00:45 local on 8 November: UTC may still be 7 November (UTC+6), the local day is the 8th.
+    expect(localDay(new Date(2026, 10, 8, 0, 45))).toBe('2026-11-08');
+    expect(localDay(new Date(2026, 0, 3, 23, 59))).toBe('2026-01-03');
   });
 });

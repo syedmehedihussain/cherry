@@ -31,8 +31,10 @@ export function recordTurn(
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const at = Date.now();
+  // The turn's time and count go on the main model: the one that read the most. A Haiku helper
+  // call often comes first in modelUsage and took all the turns before (finding #18).
   const rows = models.length
-    ? models
+    ? [...models].sort((a, b) => b.input + b.cacheRead - (a.input + a.cacheRead))
     : [{ model: 'unknown', input: 0, output: 0, cacheRead: 0, costUsd: 0 }];
   rows.forEach((m, i) =>
     insert.run(

@@ -142,6 +142,9 @@ export const NO_TELEMETRY_ENV: Record<string, string> = {
   DO_NOT_TRACK: '1',
   SUPERPOWERS_DISABLE_TELEMETRY: '1',
   HYPERFRAMES_NO_TELEMETRY: '1',
+  // The user's claude.ai connectors (Gmail, Notion, ...) are not Cherry's tools: they add tokens
+  // to every turn and "needs auth" notes to replies (finding #9).
+  ENABLE_CLAUDEAI_MCP_SERVERS: 'false',
 };
 
 /** Refuses tools that would read a secret file (docs/security.md → Files never read). */
@@ -345,6 +348,9 @@ export const sdkRunner: Runner = (req) => {
           }
         : {}),
       ...(server ? { mcpServers: { cherry: server } } : {}),
+      // Only the cherry MCP server, not the user's own MCP config. Kept off with Chrome: the
+      // built-in Claude in Chrome tools must still load (ADR-0037).
+      ...(req.chrome ? {} : { strictMcpConfig: true }),
       // No settings files: their allow rules would bypass Cherry's approvals (ADR-0004).
       settingSources: [],
       // Claude in Chrome only when the caller asks; every Chrome tool still asks (ADR-0037).
@@ -400,6 +406,25 @@ export const sdkRunner: Runner = (req) => {
   // Tokens in the context after the last main-agent message, like the CLI's /context.
   let used: number | null = null;
   let sentResult = false;
+  /** Tokens per assistant message, for a turn that ends with no result (crash, lost stream). */
+  const seen = new Map<string, Omit<ModelUse, 'costUsd'>>();
+  const seenModels = (): ModelUse[] => {
+    const by = new Map<string, ModelUse>();
+    for (const u of seen.values()) {
+      const m = by.get(u.model) ?? {
+        model: u.model,
+        input: 0,
+        output: 0,
+        cacheRead: 0,
+        costUsd: 0,
+      };
+      m.input += u.input;
+      m.output += u.output;
+      m.cacheRead += u.cacheRead;
+      by.set(u.model, m);
+    }
+    return [...by.values()];
+  };
   let stopped = false;
   const started = Date.now();
 
@@ -471,6 +496,14 @@ export const sdkRunner: Runner = (req) => {
             });
     } else if (m.type === 'assistant') {
       const u = m.message.usage;
+      // One message comes once per content block with the same usage: keep the last by id.
+      if (u && m.message.id)
+        seen.set(m.message.id, {
+          model: m.message.model,
+          input: u.input_tokens + (u.cache_creation_input_tokens ?? 0),
+          output: u.output_tokens,
+          cacheRead: u.cache_read_input_tokens ?? 0,
+        });
       if (u)
         used =
           u.input_tokens +
@@ -546,6 +579,7 @@ export const sdkRunner: Runner = (req) => {
           error: stopped ? null : (e as Error).message,
           durationMs: Date.now() - started,
           costUsd: null,
+          models: seenModels(),
         });
       }
     }
@@ -557,6 +591,7 @@ export const sdkRunner: Runner = (req) => {
         error: null,
         durationMs: Date.now() - started,
         costUsd: null,
+        models: seenModels(),
       });
   })();
 

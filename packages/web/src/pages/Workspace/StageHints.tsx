@@ -1,6 +1,16 @@
 import { ArrowRight, CircleCheck, LifeBuoy } from 'lucide-react';
 import { useState } from 'react';
-import { STAGE_LABEL, isWorkspaceStage, type ChatItem, type Stage } from '@cherry/shared';
+import {
+  OFFICE_STAGES,
+  OFFICE_STAGE_LABEL,
+  OfficeStageSchema,
+  STAGE_LABEL,
+  isWorkspaceStage,
+  type ChatItem,
+  type OfficeFile,
+  type Stage,
+} from '@cherry/shared';
+import { useOffice } from '../../api/office.ts';
 import { nextStage, useStageProgress } from '../../api/stages.ts';
 import { useUi } from '../../state/ui.ts';
 import { useMoveStage } from './stageMoves.ts';
@@ -13,6 +23,37 @@ const dismissKey = (projectId: string, stage: Stage) => `cherry.nextChip.${proje
  * at any time. "Not now" hides it until the checklist changes.
  */
 export function NextStageChip({ projectId, stage }: { projectId: string; stage: Stage }) {
+  const office = useOffice(projectId).data;
+  if (office) return <SignOffChip office={office} stage={stage} />;
+  return <V3NextChip projectId={projectId} stage={stage} />;
+}
+
+/**
+ * A V4 room (ADR-0052): the stages are gated, so the next one opens only after Sign off. Names
+ * the next office stage, never the V3 order, and only once the agent says the stage is ready.
+ */
+function SignOffChip({ office, stage }: { office: OfficeFile; stage: Stage }) {
+  const s = OfficeStageSchema.safeParse(stage);
+  if (!s.success) return null;
+  const rec = office.cycles[office.cycles.length - 1]!.stages[s.data];
+  if (!rec.ready || (rec.state !== 'active' && rec.state !== 'update')) return null;
+  const next = OFFICE_STAGES[OFFICE_STAGES.indexOf(s.data) + 1];
+  return (
+    <div className={styles.next} role="status">
+      <CircleCheck size={15} className={styles.nextIcon} aria-hidden="true" />
+      <span>
+        <b>{OFFICE_STAGE_LABEL[s.data]} is ready.</b>{' '}
+        {rec.state === 'update'
+          ? 'Sign it off again to clear the flag.'
+          : next
+            ? `Sign it off to open ${OFFICE_STAGE_LABEL[next]}.`
+            : 'Sign it off to go Live.'}
+      </span>
+    </div>
+  );
+}
+
+function V3NextChip({ projectId, stage }: { projectId: string; stage: Stage }) {
   const progress = useStageProgress(projectId, stage);
   const { move, moving } = useMoveStage(projectId);
   const next = nextStage(stage);

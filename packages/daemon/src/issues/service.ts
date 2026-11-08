@@ -57,17 +57,54 @@ function render(fields: Omit<Issue, 'number' | 'file' | 'updatedAt'>): string {
   ].join('\n');
 }
 
+/**
+ * A file an agent wrote without front matter (finding #51): `- **Status:** Fixed (run 1)` lines,
+ * read as the nearest Cherry value from the first word.
+ */
+function bulletField(body: string, name: string): string {
+  const m = new RegExp(`^\\s*[-*]\\s*\\*\\*${name}:?\\*\\*:?\\s*([A-Za-z']+)`, 'im').exec(body);
+  return m ? m[1]!.toLowerCase() : '';
+}
+const STATUS_WORDS: Record<string, Issue['status']> = {
+  new: 'open',
+  todo: 'open',
+  reopened: 'open',
+  scheduled: 'planned',
+  in: 'planned',
+  fixed: 'done',
+  closed: 'done',
+  resolved: 'done',
+  verified: 'done',
+  "won't": 'done',
+  wontfix: 'done',
+};
+const SEVERITY_WORDS: Record<string, Issue['severity']> = {
+  blocker: 'blocks',
+  blocking: 'blocks',
+  critical: 'blocks',
+  high: 'blocks',
+  major: 'annoying',
+  medium: 'annoying',
+  low: 'cosmetic',
+  minor: 'cosmetic',
+  trivial: 'cosmetic',
+};
+
 export function parseIssue(file: string, text: string, updatedAt: number): Issue | null {
   const m = FILE.exec(path.basename(file));
   if (!m) return null;
   const { fields, body } = frontMatter(text);
+  const status = clean(fields.status) || bulletField(body, 'Status');
+  const type = clean(fields.type) || bulletField(body, 'Type');
+  const severity = clean(fields.severity) || bulletField(body, 'Severity');
+  const heading = /^#\s+(?:\d+[:.]?\s+)?(.+)$/m.exec(body)?.[1]?.trim();
   return {
     number: Number(m[1]),
     file,
-    title: clean(fields.title) || path.basename(file, '.md'),
-    status: IssueStatusSchema.catch('open').parse(clean(fields.status)),
-    type: IssueTypeSchema.catch('bug').parse(clean(fields.type)),
-    severity: IssueSeveritySchema.catch('annoying').parse(clean(fields.severity)),
+    title: clean(fields.title) || heading || path.basename(file, '.md'),
+    status: IssueStatusSchema.catch('open').parse(STATUS_WORDS[status] ?? status),
+    type: IssueTypeSchema.catch('bug').parse(type),
+    severity: IssueSeveritySchema.catch('annoying').parse(SEVERITY_WORDS[severity] ?? severity),
     cycle: clean(fields.cycle) || null,
     github: clean(fields.github) || null,
     body: body.trim(),

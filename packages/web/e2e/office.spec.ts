@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { E2E_PROJECTS, loginCode } from './fixture.ts';
@@ -458,7 +458,8 @@ test('Meeting: the staff, action items, notes, and asking an agent', async ({ pa
   await expect(page.getByRole('region', { name: 'Agenda' })).toContainText('1 open action item');
 
   await page.getByRole('button', { name: 'Save notes' }).click();
-  const day = new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   await expect(page.getByText(`docs/meetings/${day}.md`)).toBeVisible();
   const notes = readFileSync(
     path.join(E2E_PROJECTS, 'gym-app-22', `docs/meetings/${day}.md`),
@@ -622,4 +623,53 @@ test('New version: Start v2.0 next to the live v1.0', async ({ page }) => {
     'v2.0 Class booking',
   );
   await expect(page.getByRole('button', { name: /New version/ })).toContainText('v2.0 in progress');
+});
+
+// Finding #34: Approve design took the Builder's first message to the Designer's box.
+test('Approve design: sign off, then the Builder message waits in Development', async ({
+  page,
+}) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByLabel('Client', { exact: true }).fill('Fitness Master Gym');
+  await page.getByLabel('Client contact').fill('Nusrat Jahan');
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app-30');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await expect(page.getByRole('button', { name: 'Idea, On-going' })).toBeVisible();
+
+  const dir = path.join(E2E_PROJECTS, 'gym-app-30');
+  const file = path.join(dir, '_project', 'office.json');
+  const office = JSON.parse(readFileSync(file, 'utf8'));
+  const signed = {
+    by: 'you',
+    date: '2026-11-06',
+    notes: '',
+    internal: true,
+    at: new Date().toISOString(),
+  };
+  for (const s of ['idea', 'requirements', 'plan'])
+    office.cycles[0].stages[s] = { state: 'signed', ready: true, sentAt: null, signOffs: [signed] };
+  office.cycles[0].stages.design = { state: 'active', ready: true, sentAt: null, signOffs: [] };
+  writeFileSync(file, JSON.stringify(office));
+  mkdirSync(path.join(dir, 'design', 'screens'), { recursive: true });
+  writeFileSync(path.join(dir, 'design', 'screens', 'home.html'), '<title>Home</title><h1>Hi</h1>');
+
+  await page.goto('/p/gym-app-30/s/design');
+  const canvas = page.getByRole('region', { name: 'Design canvas' });
+  await canvas.getByRole('button', { name: 'Approve design' }).click();
+  await page
+    .getByRole('dialog', { name: 'Approve design' })
+    .getByRole('button', { name: 'Approve and sign off' })
+    .click();
+
+  // Development is still locked: Sign off comes first, and the Designer's box stays empty.
+  const dialog = page.getByRole('dialog', { name: 'Sign off Design' });
+  await expect(dialog).toBeVisible();
+  await expect(page.getByLabel('Message Claude')).toHaveValue('');
+  await dialog.getByRole('button', { name: 'Sign off' }).click();
+
+  await expect(page).toHaveURL(/\/p\/gym-app-30\/s\/development$/);
+  await expect(page.getByLabel('Message Claude')).toHaveValue(/^The design is approved\./);
+  expect(existsSync(path.join(dir, 'design', 'handoff', 'README.md'))).toBe(true);
 });

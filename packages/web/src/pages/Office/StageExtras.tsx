@@ -186,20 +186,27 @@ export function BugsTab({ projectId }: { projectId: string }) {
         IssueListSchema,
       ),
   });
-  const open = (issues.data?.issues ?? []).filter((i) => i.type === 'bug' && i.status !== 'done');
+  // Open and planned first, then the fixed ones, each with its state from the file (#51).
+  const bugs = (issues.data?.issues ?? [])
+    .filter((i) => i.type === 'bug')
+    .sort(
+      (a, b) => Number(a.status === 'done') - Number(b.status === 'done') || a.number - b.number,
+    );
+  const open = bugs.filter((i) => i.status !== 'done').length;
   if (issues.isPending) return null;
-  if (!open.length)
+  if (!bugs.length)
     return (
       <p className={styles.empty}>
-        No open bugs. The QA Engineer writes one issue per bug in docs/issues/.
+        No bugs yet. The QA Engineer writes one issue per bug in docs/issues/.
       </p>
     );
   return (
-    <ul className={styles.bugs}>
-      {open.map((i) => (
-        <li key={i.file}>
+    <ul className={styles.bugs} aria-label={`${open} open of ${bugs.length} bugs`}>
+      {bugs.map((i) => (
+        <li key={i.file} data-done={i.status === 'done' || undefined}>
           <span className="mono">#{i.number}</span>
           <span className={styles.bugTitle}>{i.title}</span>
+          <span className="tag">{i.status === 'done' ? 'fixed' : i.status}</span>
           <span className="tag">{i.severity}</span>
         </li>
       ))}

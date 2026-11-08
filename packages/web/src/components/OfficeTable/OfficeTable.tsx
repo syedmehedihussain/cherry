@@ -65,7 +65,10 @@ export function OfficeTable({
                 <Status card={c} />
               </td>
               <td>{c.office ? <Track stages={c.office.stages} live={c.office.live} /> : null}</td>
-              <td className={styles.muted}>
+              <td
+                className={`${styles.muted} ${styles.updated}`}
+                title={c.lastWorked ? new Date(c.lastWorked).toLocaleString() : undefined}
+              >
                 {c.lastWorked ? relativeTime(c.lastWorked, now) : ''}
               </td>
               <td className={styles.actions}>
@@ -111,17 +114,30 @@ function Status({ card }: { card: ProjectCard }) {
   );
 }
 
-/** Seven small bars, one per stage: red signed off, white the current one; green when Live. */
+/**
+ * Seven small bars, one per stage: red signed off, white the current one. Live with every stage
+ * signed off: all seven green, so the bar agrees with the Live status (#2). Live while a new
+ * version is built: that version's stages, then one green bar for the live one.
+ */
 export function Track({ stages, live }: { stages: string[]; live: boolean }) {
+  const signed = stages.filter((s) => s === 'signed' || s === 'carried').length;
+  const allLive = live && signed === stages.length;
   return (
     <span
       className={styles.track}
-      aria-label={`${stages.filter((s) => s === 'signed' || s === 'carried').length} of 7 stages signed off${live ? ', live' : ''}`}
+      aria-label={
+        allLive
+          ? 'All 7 stages signed off, live'
+          : `${signed} of 7 stages signed off${live ? ', live' : ''}`
+      }
     >
       {stages.map((s, i) => (
-        <i key={i} data-state={s === 'carried' ? 'signed' : s === 'update' ? 'signed' : s} />
+        <i
+          key={i}
+          data-state={allLive ? 'live' : s === 'carried' || s === 'update' ? 'signed' : s}
+        />
       ))}
-      {live && <i data-state="live" />}
+      {live && !allLive && <i data-state="live" />}
     </span>
   );
 }

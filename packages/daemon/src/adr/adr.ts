@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import type { Adr, AdrProposal, AdrState } from '@cherry/shared';
+import { localDay, type Adr, type AdrProposal, type AdrState } from '@cherry/shared';
 import { readTextOrNull, writeFileAtomic } from '../fsutil.ts';
 
 /** ADR files are `NNNN-kebab-title.md` (project-standard.md → ADR format). */
@@ -94,7 +94,7 @@ export function slugOf(title: string): string {
   );
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localDay();
 
 export function proposalText(number: number, p: AdrProposal, proposedBy: string): string {
   const nnnn = String(number).padStart(4, '0');

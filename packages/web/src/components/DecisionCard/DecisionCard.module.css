@@ -124,6 +124,19 @@
   display: inline-flex;
   align-items: center;
 }
+.num {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-2xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--t2);
+  border: 1px solid color-mix(in srgb, var(--tint) 18%, transparent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 .optDetail {
   font-size: var(--fs-base);
   color: var(--t2);

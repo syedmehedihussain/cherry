@@ -397,6 +397,7 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
           onMode={changeMode}
           draft={draft}
           onDraftUsed={() => setDraft(projectId, '')}
+          onAnswerKey={(key) => answerKey(scroller.current, key)}
           onSend={send}
           onStop={() => void stopChat(projectId, stage)}
           onUpload={(file) => uploadAttachment(projectId, file)}
@@ -671,6 +672,20 @@ function ClaudeBlock({
       {end && <ChangeSummary projectId={projectId} tools={tools} end={end} />}
     </div>
   );
+}
+
+/**
+ * Gives a key from the composer to the first card that waits for an answer (an approval or a
+ * decision). True when the card used it; then the card has focus for the next key.
+ */
+export function answerKey(root: HTMLElement | null, key: string): boolean {
+  const card = root?.querySelector<HTMLElement>('[data-answer-keys]');
+  if (!card) return false;
+  const ev = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+  if (card.dispatchEvent(ev)) return false;
+  // A decision moved focus to the option it picked; an approval keeps it for Enter.
+  if (!card.contains(document.activeElement)) card.focus();
+  return true;
 }
 
 /** A file the agent wrote: one line with Open (V3, artboard 01). */

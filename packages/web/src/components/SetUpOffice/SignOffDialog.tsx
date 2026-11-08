@@ -4,14 +4,13 @@ import { useNavigate } from 'react-router';
 import {
   OFFICE_STAGES,
   OFFICE_STAGE_LABEL,
+  localDay,
   type OfficeFile,
   type OfficeStage,
 } from '@cherry/shared';
 import { ApiFailure } from '../../api/client.ts';
 import { sendStage, signOffStage, useStageDocs } from '../../api/office.ts';
 import styles from './SetUpOffice.module.css';
-
-const today = () => new Date().toISOString().slice(0, 10);
 
 /**
  * Sign off a stage (V4 o8): the client's approval (who, date, notes), or internal only; or mark it
@@ -22,11 +21,14 @@ export function SignOffDialog({
   stage,
   office,
   onClose,
+  onSigned,
 }: {
   projectId: string;
   stage: OfficeStage;
   office: OfficeFile;
   onClose(): void;
+  /** Runs after the sign-off is saved, in place of going back to the office. */
+  onSigned?(): void;
 }) {
   const navigate = useNavigate();
   const cycle = office.cycles[office.cycles.length - 1]!;
@@ -34,7 +36,7 @@ export function SignOffDialog({
   const personal = office.kind === 'personal';
   const docs = useStageDocs(projectId, stage).data?.client ?? [];
   const [by, setBy] = useState(office.client?.contact || office.client?.name || '');
-  const [date, setDate] = useState(today());
+  const [date, setDate] = useState(() => localDay());
   const [notes, setNotes] = useState('');
   const [internal, setInternal] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -54,16 +56,18 @@ export function SignOffDialog({
       await fn();
       onClose();
       if (back) void navigate(`/p/${encodeURIComponent(projectId)}`);
+      return true;
     } catch (e) {
       setError(e instanceof ApiFailure ? e.message : 'Could not save the sign-off.');
       setBusy(false);
+      return false;
     }
   };
   const signOff = () =>
     run(
       () => signOffStage(projectId, stage, personal ? { notes } : { by, date, notes, internal }),
-      true,
-    );
+      !onSigned,
+    ).then((ok) => ok && onSigned?.());
 
   return (
     <div className={styles.overlay} onClick={onClose}>

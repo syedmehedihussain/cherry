@@ -1,6 +1,6 @@
 import { ChevronLeft, CircleCheck, FileText, MessageCircle, Printer } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, NavLink } from 'react-router';
+import { Link, NavLink, useNavigate } from 'react-router';
 import {
   OFFICE_AGENT,
   OFFICE_AGENT_MONO,
@@ -52,13 +52,15 @@ export function StageRoom({
   office: OfficeFile;
   /** The stage's own work, or its Version control tab (o11). */
   view?: 'work' | 'vc' | 'usage';
-  onSignOff(): void;
+  /** `then` runs once the sign-off is saved (Approve design takes the room to Development). */
+  onSignOff(then?: () => void): void;
   /** Request a change to a signed-off stage (o18). */
   onChange(): void;
 }) {
   const now = useNow(30_000);
   const openMagnet = useUi((s) => s.openMagnet);
   const setDraft = useChatDraft((s) => s.set);
+  const navigate = useNavigate();
   useLiveChat(projectId);
   useLiveProject(projectId);
   const cycle = office.cycles[office.cycles.length - 1]!;
@@ -68,9 +70,27 @@ export function StageRoom({
     (rec.state === 'active' || rec.state === 'waiting' || rec.state === 'update') && rec.ready;
   const word = rec.state === 'active' && rec.ready ? 'ready to sign off' : STATE_WORD[rec.state];
 
+  // Approve design: the Builder's first message waits in the Development room, never in the
+  // Designer's box. Development opens only after Design is signed off.
+  const devLocked = cycle.stages.development.state === 'locked';
+  const toDevelopment = (message: string) => {
+    setDraft(projectId, message);
+    void navigate(`/p/${encodeURIComponent(projectId)}/s/development`);
+  };
+
   let body;
   if (stage === 'design')
-    body = <DesignStage projectId={projectId} now={now} onOpenFile={setDoc} />;
+    body = (
+      <DesignStage
+        projectId={projectId}
+        now={now}
+        onOpenFile={setDoc}
+        signOffFirst={devLocked}
+        onApproved={(message) =>
+          devLocked ? onSignOff(() => toDevelopment(message)) : toDevelopment(message)
+        }
+      />
+    );
   else if (stage === 'deployment') body = <DeployStage projectId={projectId} now={now} />;
   else
     body = (
@@ -151,7 +171,7 @@ export function StageRoom({
             className="btn btn-primary btn-sm"
             disabled={!canSign}
             title={canSign ? undefined : `The ${OFFICE_AGENT[stage]} says when the stage is ready`}
-            onClick={onSignOff}
+            onClick={() => onSignOff()}
           >
             <CircleCheck size={14} aria-hidden="true" />
             {rec.state === 'waiting'

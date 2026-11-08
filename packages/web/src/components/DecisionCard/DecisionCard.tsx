@@ -85,7 +85,14 @@ export function DecisionCard({
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     const i = card.options.findIndex((o) => o.id === picked);
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    const n = Number(e.key);
+    if ((e.target as HTMLElement).tagName !== 'INPUT' && n >= 1 && n <= card.options.length) {
+      // 1-9 picks that option (the badge on it); Enter then confirms, like the CLI.
+      e.preventDefault();
+      setPicked(card.options[n - 1]!.id);
+      setCustom('');
+      optionRefs.current[n - 1]?.focus();
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
       const next =
         (i + (e.key === 'ArrowDown' ? 1 : -1) + card.options.length) % card.options.length;
@@ -127,6 +134,7 @@ export function DecisionCard({
         role="radiogroup"
         aria-labelledby={titleId}
         onKeyDown={onKeyDown}
+        data-answer-keys
       >
         {card.options.map((o, i) => (
           <button
@@ -147,6 +155,11 @@ export function DecisionCard({
             <span className={styles.radio} aria-hidden="true" />
             <span className={styles.optText}>
               <span className={styles.optTitle}>
+                {i < 9 && (
+                  <span className={styles.num} aria-hidden="true">
+                    {i + 1}
+                  </span>
+                )}
                 {o.title}
                 {o.recommended && <span className={styles.rec}>Recommended</span>}
               </span>

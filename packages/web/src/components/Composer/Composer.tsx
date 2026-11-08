@@ -94,6 +94,11 @@ interface ComposerProps {
   history?: string[];
   /** "Reply to the Builder". */
   placeholder?: string;
+  /**
+   * While paused with an empty box: a number, Enter or Esc for the card above. Returns true when
+   * the card took the key, so it is not typed or sent.
+   */
+  onAnswerKey?(key: string): boolean;
 }
 
 /** From this share of the window the meter turns amber and offers Compact, like the CLI. */
@@ -121,6 +126,7 @@ export function Composer({
   onCompact,
   history = [],
   placeholder,
+  onAnswerKey,
 }: ComposerProps) {
   const [text, setText] = useState('');
   const [shortcuts, setShortcuts] = useState(false);
@@ -314,6 +320,21 @@ export function Composer({
     });
   };
   const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // The placeholder says "press a number": the card above answers, not the box (#14, #39).
+    if (
+      paused &&
+      text === '' &&
+      onAnswerKey &&
+      (/^[1-9]$/.test(e.key) || e.key === 'Enter' || e.key === 'Escape') &&
+      !e.shiftKey &&
+      !e.ctrlKey &&
+      !e.metaKey &&
+      !e.altKey &&
+      onAnswerKey(e.key)
+    ) {
+      e.preventDefault();
+      return;
+    }
     // Shift+Tab cycles the mode, like the CLI.
     if (e.key === 'Tab' && e.shiftKey && listLength === 0) {
       e.preventDefault();

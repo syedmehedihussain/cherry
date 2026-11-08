@@ -9,7 +9,7 @@
   table-layout: fixed;
 }
 .table th:nth-child(1) {
-  width: 36%;
+  width: 34%;
 }
 .table th:nth-child(2) {
   width: 17%;
@@ -18,10 +18,10 @@
   width: 19%;
 }
 .table th:nth-child(4) {
-  width: 11%;
+  width: 120px;
 }
 .table th:nth-child(5) {
-  width: 10%;
+  width: 112px;
 }
 .table th:nth-child(6) {
   width: 250px;
@@ -96,12 +96,18 @@
   background: var(--warning-fill);
   color: var(--warning);
 }
+.updated {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .track {
   display: inline-flex;
   gap: 3px;
+  vertical-align: middle;
 }
 .track i {
-  width: 12px;
+  width: 9px;
   height: 4px;
   border-radius: 2px;
   background: var(--b);

@@ -1,5 +1,11 @@
 import type { GitSummary, ProjectState } from './schemas/project.ts';
 
+/** The local calendar day as YYYY-MM-DD. Not toISOString, which gives the UTC day. */
+export function localDay(d: Date = new Date()): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
 /** "just now", "25 min ago", "2 h ago", "Yesterday", "3 days ago", "2 weeks ago", "1 month ago". */
 export function relativeTime(then: number, now: number = Date.now()): string {
   const s = Math.max(0, Math.round((now - then) / 1000));

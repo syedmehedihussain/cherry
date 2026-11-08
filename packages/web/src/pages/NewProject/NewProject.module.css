@@ -83,6 +83,10 @@
   font: inherit;
   outline: none;
 }
+/* One ring, on the box: the global focus outline stays off the inner input (#4). */
+.nameRow input:focus-visible {
+  outline: none;
+}
 .nameRow:focus-within,
 .field textarea:focus {
   border-color: var(--accent-border);

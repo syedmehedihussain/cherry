@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { appendFileSync, existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import {
+  localDay,
   type ActionItem,
   OFFICE_STAGES,
   OFFICE_STAGE_LABEL,
@@ -27,7 +28,7 @@ import { projectDir } from '../projects/workspace.ts';
 const DEFAULT_RATE = 25;
 const DEFAULT_BUDGET = 6_000_000;
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localDay();
 const label = (s: OfficeStage) => OFFICE_STAGE_LABEL[s];
 const newId = (prefix: string) => `${prefix}_${randomBytes(4).toString('hex')}`;
 

@@ -29,7 +29,8 @@ export function ProjectPage() {
   const id = params.id ?? '';
   const office = useOffice(id);
   useLiveOffice(id);
-  const [signing, setSigning] = useState(false);
+  // Open sign-off dialog, with what to do once it is saved.
+  const [signing, setSigning] = useState<{ then?: () => void } | null>(null);
   const [changing, setChanging] = useState(false);
   if (office.isPending) return <div className={styles.loading} aria-busy="true" />;
   if (!office.data) return <Workspace />;
@@ -49,7 +50,7 @@ export function ProjectPage() {
           stage={room.data}
           office={office.data}
           view={(roomMatch?.[2] as 'vc' | 'usage' | undefined) ?? 'work'}
-          onSignOff={() => setSigning(true)}
+          onSignOff={(then) => setSigning({ then })}
           onChange={() => setChanging(true)}
         />
         {changing && (
@@ -65,7 +66,8 @@ export function ProjectPage() {
             projectId={id}
             stage={room.data}
             office={office.data}
-            onClose={() => setSigning(false)}
+            onClose={() => setSigning(null)}
+            onSigned={signing.then}
           />
         )}
       </div>

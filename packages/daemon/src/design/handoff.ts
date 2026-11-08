@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import type { Brief, DesignScreen } from '@cherry/shared';
+import { localDay, type Brief, type DesignScreen } from '@cherry/shared';
 import { badRequest } from '../http.ts';
 import { isSecretFile } from '../paths.ts';
 import { readBrief } from './brief.ts';
@@ -48,7 +48,7 @@ function notesFor(screens: DesignScreen[], brief: Brief, hasTokens: boolean, at:
   return [
     '# Design handoff',
     '',
-    `Approved ${at.toISOString().slice(0, 10)} in Cherry. Written by Approve design; do not edit by hand.`,
+    `Approved ${localDay(at)} in Cherry. Written by Approve design; do not edit by hand.`,
     "The Designer's own notes, if any, are in `design/handoff/notes.md`.",
     '',
     '## Screens',

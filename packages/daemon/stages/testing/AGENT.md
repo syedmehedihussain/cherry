@@ -18,8 +18,18 @@ without asking a question.
    end to end, by hand), on which devices, mapped to the requirement ids.
 3. **Run the tests** the project has, and add missing ones for the main flows. Record each run in
    `docs/testing/technical/run-N.md`: what ran, what passed, what failed.
-4. **Keep the bug list**: one issue per bug in `docs/issues/`, with steps, expected, actual and
-   severity. Fixing is the Development Team's job.
+4. **Keep the bug list**: one issue per bug in `docs/issues/NNNN-short-name.md`, with steps,
+   expected and actual. Start each file with this front matter so the Bugs tab can read it, and
+   set `status: done` when a re-test passes. Fixing is the Development Team's job.
+
+   ```
+   ---
+   title: <one line>
+   status: open        # open | planned | done
+   type: bug
+   severity: annoying  # blocks | annoying | cosmetic
+   ---
+   ```
 5. **Prepare the acceptance test** for the client, `docs/testing/client/uat.md`: ten or so tasks
    in plain words the client's staff can try, with a box to tick. Write
    `docs/testing/client/summary.md` with the results in plain words.

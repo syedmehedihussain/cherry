@@ -8,7 +8,7 @@ import {
   appendFileSync,
 } from 'node:fs';
 import path from 'node:path';
-import { MAX_UPLOAD_BYTES, type UploadedFile } from '@cherry/shared';
+import { localDay, MAX_UPLOAD_BYTES, type UploadedFile } from '@cherry/shared';
 import { badRequest, notFound } from '../http.ts';
 import { resolveInside } from '../paths.ts';
 
@@ -62,7 +62,7 @@ export function saveUpload(dir: string, name: string, data: Buffer): UploadedFil
   // Refuses an uploads folder that is really a symlink to somewhere else.
   resolveInside(dir, UPLOADS_DIR);
   ensureIgnored(dir);
-  const stored = `${new Date().toISOString().slice(0, 10)}-${randomBytes(3).toString('hex')}-${safeName(name)}`;
+  const stored = `${localDay()}-${randomBytes(3).toString('hex')}-${safeName(name)}`;
   writeFileSync(path.join(uploads, stored), data, { flag: 'wx' });
   return { id: stored, name: path.basename(name).slice(0, 200), size: data.length };
 }
