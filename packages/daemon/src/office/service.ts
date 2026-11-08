@@ -16,6 +16,7 @@ import {
   type OfficeFile,
   type OfficeStage,
   type SignOffInput,
+  type StageModel,
   type StageRecord,
   type TimeInput,
 } from '@cherry/shared';
@@ -134,6 +135,7 @@ export class OfficeService {
       costs: [],
       time: [],
       actions: [],
+      models: {},
       createdAt: now,
       updatedAt: now,
     };
@@ -144,6 +146,7 @@ export class OfficeService {
     id: string,
     patch: Partial<Pick<OfficeFile, 'rate' | 'currency' | 'budgetTokens'>> & {
       client?: { name: string; contact: string };
+      models?: Partial<Record<OfficeStage, StageModel | null>>;
     },
   ): OfficeFile {
     return this.change(id, (o) => {
@@ -154,6 +157,13 @@ export class OfficeService {
       if (patch.rate !== undefined) o.rate = patch.rate;
       if (patch.currency !== undefined) o.currency = patch.currency;
       if (patch.budgetTokens !== undefined) o.budgetTokens = patch.budgetTokens;
+      for (const [stage, model] of Object.entries(patch.models ?? {}) as [
+        OfficeStage,
+        StageModel | null,
+      ][]) {
+        if (model) o.models[stage] = model;
+        else delete o.models[stage];
+      }
     });
   }
 

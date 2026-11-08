@@ -974,5 +974,17 @@
         "text": "Five screens: home, workouts, diet, progress, membership."
       }
     ]
+  },
+  {
+    "match": "^Read every lesson again",
+    "steps": [
+      {
+        "context": 140000,
+        "window": 200000
+      },
+      {
+        "text": "Read them all."
+      }
+    ]
   }
 ]

@@ -1,4 +1,5 @@
 import type { GitSummary, ProjectState } from './schemas/project.ts';
+import { OFFICE_STAGES, type OfficeFile, type OfficeStage } from './schemas/office.ts';
 
 /** The local calendar day as YYYY-MM-DD. Not toISOString, which gives the UTC day. */
 export function localDay(d: Date = new Date()): string {
@@ -63,4 +64,28 @@ export function fileTag(name: string): string | null {
     markdown: 'MD',
   };
   return map[ext] ?? ext.slice(0, 4).toUpperCase();
+}
+
+/**
+ * Wall time of each stage (finding #17): from the sign-off before it (or the version's start)
+ * to its own sign-off, or to now while it is open. Null for a stage not opened yet.
+ */
+export function stageWallTimes(
+  office: OfficeFile,
+  now: number,
+): Partial<Record<OfficeStage, number>> {
+  const cycle = office.cycles[office.cycles.length - 1]!;
+  const out: Partial<Record<OfficeStage, number>> = {};
+  let from = Date.parse(cycle.startedAt);
+  for (const s of OFFICE_STAGES) {
+    const rec = cycle.stages[s];
+    if (rec.state === 'locked') break;
+    if (rec.state === 'carried') continue;
+    const signed = rec.signOffs.at(-1)?.at;
+    const to = rec.state === 'signed' && signed ? Date.parse(signed) : now;
+    out[s] = Math.max(0, to - from);
+    if (rec.state !== 'signed' || !signed) break;
+    from = Date.parse(signed);
+  }
+  return out;
 }

@@ -1,4 +1,14 @@
-import { Check, CircleCheck, Clock, FileDiff, History, TriangleAlert } from 'lucide-react';
+import {
+  Check,
+  CircleCheck,
+  Clock,
+  Compass,
+  FileDiff,
+  History,
+  Scale,
+  ShieldAlert,
+  TriangleAlert,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
@@ -7,10 +17,13 @@ import {
   OFFICE_CARD_NAME,
   OFFICE_STAGES,
   OFFICE_STAGE_LABEL,
+  MODELS,
   currentStage,
   type OfficeFile,
   type OfficeStage,
+  type WaitingItem,
 } from '@cherry/shared';
+import { useWaiting } from '../../api/office.ts';
 import { LiveCard, StageCard } from '../../components/StageCard/StageCard.tsx';
 import { ChangesDialog } from './Changes.tsx';
 import styles from './Office.module.css';
@@ -50,40 +63,30 @@ export function StagesTab({
         : 'In progress';
   };
 
-  const waiting: React.ReactNode[] = [];
-  for (const s of OFFICE_STAGES) {
-    const r = cycle.stages[s];
-    if (r.state === 'active' && r.ready)
-      waiting.push(
-        <Row key={s} icon={<CircleCheck size={15} className={styles.acc} aria-hidden="true" />}>
-          <b>{OFFICE_AGENT[s]}</b> says {OFFICE_STAGE_LABEL[s]} is ready.{' '}
-          {personal ? 'Review it and sign off.' : 'Show it to the client and sign off.'}
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => open(s)}>
-            Open
-          </button>
-        </Row>,
-      );
-    if (r.state === 'waiting')
-      waiting.push(
-        <Row key={s} icon={<Clock size={15} className={styles.warn} aria-hidden="true" />}>
-          <b>{OFFICE_STAGE_LABEL[s]}</b> was sent to{' '}
-          {office.client?.contact || office.client?.name || 'the client'}. Record the approval when
-          it comes.
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => open(s)}>
-            Open
-          </button>
-        </Row>,
-      );
-    if (r.state === 'update')
-      waiting.push(
-        <Row key={s} icon={<TriangleAlert size={15} className={styles.warn} aria-hidden="true" />}>
-          <b>{OFFICE_STAGE_LABEL[s]}</b> needs an update for an approved change.
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => open(s)}>
-            Open
-          </button>
-        </Row>,
-      );
-  }
+  // One list of what waits for you (finding #26): stage gates, approvals, decision cards and
+  // ADRs, from the daemon, each with its room.
+  const waitingItems = useWaiting(projectId).data ?? [];
+  const perStage = (s: OfficeStage) => waitingItems.filter((w) => w.stage === s).length;
+  const ICON: Record<WaitingItem['kind'], React.ReactNode> = {
+    'sign-off': <CircleCheck size={15} className={styles.acc} aria-hidden="true" />,
+    client: <Clock size={15} className={styles.warn} aria-hidden="true" />,
+    update: <TriangleAlert size={15} className={styles.warn} aria-hidden="true" />,
+    approval: <ShieldAlert size={15} className={styles.warn} aria-hidden="true" />,
+    decision: <Compass size={15} className={styles.acc} aria-hidden="true" />,
+    adr: <Scale size={15} className={styles.acc} aria-hidden="true" />,
+  };
+  const waiting = waitingItems.map((w, i) => (
+    <Row key={`${w.kind}-${w.stage}-${i}`} icon={ICON[w.kind]}>
+      {w.stage && <b>{OFFICE_STAGE_LABEL[w.stage]}: </b>}
+      {w.title}
+      {w.kind === 'client' && ` (${office.client?.contact || office.client?.name || 'the client'})`}
+      {w.stage && (
+        <button type="button" className="btn btn-secondary btn-sm" onClick={() => open(w.stage!)}>
+          Open
+        </button>
+      )}
+    </Row>
+  ));
 
   const recent = OFFICE_STAGES.flatMap((s) => cycle.stages[s].signOffs.map((so) => ({ s, so })))
     .sort((a, b) => b.so.at.localeCompare(a.so.at))
@@ -131,11 +134,16 @@ export function StagesTab({
           <StageCard
             key={s}
             name={OFFICE_CARD_NAME[s]}
-            agent={OFFICE_AGENT[s]}
+            agent={
+              office.models[s]
+                ? `${OFFICE_AGENT[s]} · ${MODELS.find((m) => m.id === office.models[s])?.label}`
+                : OFFICE_AGENT[s]
+            }
             mono={OFFICE_AGENT_MONO[s]}
             state={cycle.stages[s].state}
             ready={cycle.stages[s].ready}
             meta={meta(s, i)}
+            waiting={perStage(s)}
             onOpen={() => open(s)}
           />
         ))}

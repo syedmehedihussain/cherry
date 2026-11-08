@@ -5,6 +5,7 @@ import {
   OfficeFileSchema,
   OfficeResponseSchema,
   StageDocsSchema,
+  WaitingListSchema,
   type ChangeInput,
   type CostInput,
   type DevGate,
@@ -12,6 +13,7 @@ import {
   type OfficeFile,
   type OfficeStage,
   type SignOffInput,
+  type StageModel,
   type TimeInput,
 } from '@cherry/shared';
 import { api } from './client.ts';
@@ -90,6 +92,7 @@ export const officeSettings = (
     rate: number;
     currency: string;
     budgetTokens: number;
+    models: Partial<Record<OfficeStage, StageModel | null>>;
   }>,
 ) => change(id, 'PATCH', '', patch);
 export const setStageReady = (id: string, stage: OfficeStage, ready: boolean) =>
@@ -122,3 +125,20 @@ export const removeAction = (id: string, actionId: string) =>
   change(id, 'DELETE', `/actions/${encodeURIComponent(actionId)}`);
 export const startVersion = (id: string, version: string, title: string) =>
   change(id, 'POST', '/versions', { version, title });
+
+/**
+ * Everything that waits for the user in a project (finding #26): stage gates, approvals,
+ * decision cards and ADRs, each with its room. Read again every few seconds while shown.
+ */
+export const useWaiting = (projectId: string) =>
+  useQuery({
+    queryKey: ['waiting', projectId],
+    queryFn: () =>
+      api(
+        'GET',
+        `/api/projects/${encodeURIComponent(projectId)}/waiting`,
+        undefined,
+        WaitingListSchema,
+      ).then((r) => r.items),
+    refetchInterval: 4_000,
+  });

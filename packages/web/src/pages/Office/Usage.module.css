@@ -138,3 +138,18 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+.headRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.exports {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  color: var(--t3);
+}

@@ -163,6 +163,10 @@ export const OfficeKindSchema = z.enum(['client', 'personal']);
 export type OfficeKind = z.infer<typeof OfficeKindSchema>;
 
 /** `_project/office.json`. */
+/** The models a stage can start with (the composer's list). */
+export const StageModelSchema = z.enum(['sonnet', 'opus', 'haiku']);
+export type StageModel = z.infer<typeof StageModelSchema>;
+
 export const OfficeFileSchema = z.object({
   schema: z.literal(1),
   kind: OfficeKindSchema,
@@ -181,6 +185,11 @@ export const OfficeFileSchema = z.object({
   time: z.array(TimeEntrySchema),
   /** Meeting action items (o16); older files have none. */
   actions: z.array(ActionItemSchema).default([]),
+  /**
+   * The model each stage's room starts with (V4 section 4); a stage not in it uses Cherry's
+   * default. Older files have none.
+   */
+  models: z.partialRecord(OfficeStageSchema, StageModelSchema).default({}),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -208,6 +217,8 @@ export const OfficeSettingsSchema = z
     rate: z.number().nonnegative().max(100000),
     currency: z.string().trim().min(1).max(8),
     budgetTokens: z.number().int().positive().max(1e10),
+    /** Per stage: a model, or null for Cherry's default. */
+    models: z.partialRecord(OfficeStageSchema, StageModelSchema.nullable()),
   })
   .partial();
 
@@ -368,3 +379,17 @@ export type VaultDoc = z.infer<typeof VaultDocSchema>;
 
 /** GET /api/projects/:id/office/vault. */
 export const VaultSchema = z.object({ docs: z.array(VaultDocSchema), truncated: z.boolean() });
+
+/**
+ * Something that waits for the user (finding #26): a stage to sign off, a client answer to
+ * record, a stage to update, an approval, an open decision card or an ADR to approve. `stage`
+ * is the room it belongs to, null when it is not in a room (a background agent's approval).
+ */
+export const WaitingItemSchema = z.object({
+  kind: z.enum(['sign-off', 'client', 'update', 'approval', 'decision', 'adr']),
+  stage: OfficeStageSchema.nullable(),
+  title: z.string(),
+  at: z.number().nullable(),
+});
+export type WaitingItem = z.infer<typeof WaitingItemSchema>;
+export const WaitingListSchema = z.object({ items: z.array(WaitingItemSchema) });

@@ -8,10 +8,12 @@ import {
   type OfficeFile,
   type OfficeStage,
   type StageDoc,
+  type StageModel,
+  MODELS,
 } from '@cherry/shared';
 import { useChat, useChatDraft, useLiveChat } from '../../api/chat.ts';
-import { useStageDocs } from '../../api/office.ts';
-import { usePlanUsage } from '../../api/queries.ts';
+import { officeSettings, useStageDocs } from '../../api/office.ts';
+import { useConfig, usePlanUsage } from '../../api/queries.ts';
 import { useLiveProject } from '../../api/workspace.ts';
 import { resetText } from '../../components/PlanUsage/PlanUsage.tsx';
 import { useNow } from '../../lib/useNow.ts';
@@ -147,6 +149,24 @@ export function StageRoom({
           ))}
         </nav>
         <span className={styles.grow} />
+        <label className={styles.model} title="The model this room starts with">
+          <span>Model</span>
+          <select
+            value={office.models[stage] ?? ''}
+            onChange={(e) =>
+              void officeSettings(projectId, {
+                models: { [stage]: (e.target.value || null) as StageModel | null },
+              })
+            }
+          >
+            <option value="">Default</option>
+            {MODELS.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <button
           type="button"
           className="btn btn-ghost btn-sm"
@@ -332,9 +352,15 @@ function StatusLine({
       <i style={{ width: `${pct(v)}%` }} data-high={v > 75 || undefined} />
     </span>
   );
+  const chrome = !!useConfig().data?.claude.chrome;
   return (
     <div className={styles.status} aria-label="Status line">
       <span>{chat?.model ?? 'opus'}</span>
+      {chrome && (
+        <span title="Claude in Chrome is on: the agent may open your Chrome (Settings)">
+          Chrome on
+        </span>
+      )}
       {ctx && (
         <span title="Context window of this chat">
           ctx {bar((ctx.used / ctx.window) * 100)}

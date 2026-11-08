@@ -115,6 +115,23 @@
   margin-left: auto;
   flex: none;
 }
+.waiting {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--r-pill);
+  background: var(--office-warn);
+  color: var(--office-on-red);
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.waiting + .icon {
+  margin-left: 0;
+}
 .body {
   margin-top: auto;
   display: flex;

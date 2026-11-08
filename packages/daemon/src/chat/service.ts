@@ -30,6 +30,7 @@ import { Conversation } from '../claude/conversation.ts';
 import type { DecisionBroker } from '../claude/decisions.ts';
 import { READ_TOOLS, type RunHandle, type Runner } from '../claude/runner.ts';
 import { Transcript } from '../claude/transcript.ts';
+import { releaseGuard, releaseTool } from '../office/release.ts';
 import { projectDir } from '../projects/workspace.ts';
 import { recordTurn, recordUsage } from '../usage.ts';
 import { stageGuard, stageProfile } from '../stages/profiles.ts';
@@ -234,6 +235,16 @@ export class ChatService {
     ).n;
   }
 
+  /** The model the project set for this stage's room (office.json `models`), if any. */
+  private stageModel(projectId: string, stage: Stage): string | undefined {
+    if (!this.office || !isOfficeStage(stage)) return undefined;
+    try {
+      return this.office.get(projectId)?.models[stage];
+    } catch {
+      return undefined;
+    }
+  }
+
   state(projectId: string, stage: Stage = 'development'): ChatState {
     projectDir(this.config.projectsDir(), projectId);
     const live = this.current(projectId, stage);
@@ -243,7 +254,8 @@ export class ChatService {
       claudeSessionId: live?.claudeSessionId ?? null,
       running: !!live?.running,
       turnId: live?.turnId ?? null,
-      model: live?.model ?? this.config.get().claude.defaultModel,
+      model:
+        this.stageModel(projectId, stage) ?? live?.model ?? this.config.get().claude.defaultModel,
       startedAt: live?.startedAt ?? null,
       turns: sessionNumber,
       touched: live ? [...live.conversation.touched] : [],
@@ -270,7 +282,11 @@ export class ChatService {
     if (live?.running)
       throw conflict('Claude is still working on the last message. Stop it first or wait.');
     for (const a of body.attachments) uploadPath(dir, a);
-    const model = body.model ?? live?.model ?? this.config.get().claude.defaultModel;
+    const model =
+      body.model ??
+      this.stageModel(projectId, stage) ??
+      live?.model ??
+      this.config.get().claude.defaultModel;
     if (!live) {
       const conversationId = randomUUID();
       const now = Date.now();
@@ -299,6 +315,9 @@ export class ChatService {
     current.mode = body.mode;
     current.conversation.addUser(`u_${turnId}`, body.text, body.attachments);
 
+    // The release card's go-ahead holds for this turn only (ADR-0060).
+    let releaseApproved = false;
+    const guardRelease = releaseGuard(() => releaseApproved);
     // The office (V4): the staff brief, the user's own persona file and stage_ready.
     let officeFile: OfficeFile | null;
     try {
@@ -337,7 +356,10 @@ export class ChatService {
         (chrome ? `\n${CHROME_PROMPT}` : ''),
       allowedTools: plugin ? [...READ_TOOLS, 'Skill'] : READ_TOOLS,
       ...(plugin ? { plugins: [plugin] } : {}),
-      guard: stageGuard(stage, dir),
+      guard:
+        officeStage === 'deployment'
+          ? (tool, input) => stageGuard(stage, dir)(tool, input) ?? guardRelease(tool, input)
+          : stageGuard(stage, dir),
       decisions: true,
       extraTools: [
         ...(this.adrs?.tools(projectId, 'chat') ?? []),
@@ -348,6 +370,17 @@ export class ChatService {
           ? [proposePlanTool(dir, (item) => current.conversation.put({ ...item, turnId }))]
           : []),
         ...(autoCommit && this.commits ? [this.commits.tool(projectId)] : []),
+        // Nothing leaves the computer from Deployment without the release card (ADR-0060).
+        ...(officeStage === 'deployment'
+          ? [
+              releaseTool(
+                (card) => current.conversation.decision(card),
+                () => {
+                  releaseApproved = true;
+                },
+              ),
+            ]
+          : []),
         ...(officeStage && this.office
           ? [stageReadyTool(this.office, projectId, officeStage)]
           : []),

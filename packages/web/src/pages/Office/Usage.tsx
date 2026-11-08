@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
+import { Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
+  stageWallTimes as wallTimes,
   OFFICE_AGENT,
   OFFICE_STAGES,
   OFFICE_STAGE_LABEL,
@@ -40,27 +42,6 @@ export function fmtSpan(ms: number): string {
   if (min < 60) return `${Math.max(0, Math.round(min))} min`;
   const h = min / 60;
   return h < 48 ? `${h.toFixed(1)} h` : `${Math.round(h / 24)} d`;
-}
-
-/**
- * Wall time of each stage (finding #17): from the sign-off before it (or the version's start)
- * to its own sign-off, or to now while it is open. Null for a stage not opened yet.
- */
-export function wallTimes(office: OfficeFile, now: number): Partial<Record<OfficeStage, number>> {
-  const cycle = office.cycles[office.cycles.length - 1]!;
-  const out: Partial<Record<OfficeStage, number>> = {};
-  let from = Date.parse(cycle.startedAt);
-  for (const s of OFFICE_STAGES) {
-    const rec = cycle.stages[s];
-    if (rec.state === 'locked') break;
-    if (rec.state === 'carried') continue;
-    const signed = rec.signOffs.at(-1)?.at;
-    const to = rec.state === 'signed' && signed ? Date.parse(signed) : now;
-    out[s] = Math.max(0, to - from);
-    if (rec.state !== 'signed' || !signed) break;
-    from = Date.parse(signed);
-  }
-  return out;
 }
 
 /** The turn running now in each stage's chat, with when it started (finding #17). */
@@ -136,7 +117,24 @@ export function Usage({
   return (
     <div className={styles.scroll}>
       <div className={styles.page}>
-        <h2 className={styles.h}>Claude usage{stage ? `, ${OFFICE_STAGE_LABEL[stage]}` : ''}</h2>
+        <div className={styles.headRow}>
+          <h2 className={styles.h}>Claude usage{stage ? `, ${OFFICE_STAGE_LABEL[stage]}` : ''}</h2>
+          {/* The run in numbers, to compare with plain Claude Code (V4 section 4). */}
+          <span className={styles.exports}>
+            Run report
+            {(['md', 'csv'] as const).map((f) => (
+              <a
+                key={f}
+                className="btn btn-ghost btn-sm"
+                href={`/api/projects/${encodeURIComponent(projectId)}/report?format=${f}`}
+                download
+              >
+                <Download size={13} aria-hidden="true" />
+                {f === 'md' ? 'Markdown' : 'CSV'}
+              </a>
+            ))}
+          </span>
+        </div>
         <p className={styles.sub}>
           The cost is what the same tokens would cost on the API; your plan covers it. It keeps a
           budget per project. Nothing runs unless you give a job.

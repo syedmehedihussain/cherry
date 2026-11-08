@@ -79,6 +79,13 @@ test('the Idea room: the Business Analyst writes the brief and says the stage is
   await expect(docs.getByRole('heading', { name: 'Fitness Master: members app' })).toBeVisible();
   await page.getByRole('link', { name: 'Office' }).click();
   await expect(page.getByRole('button', { name: 'Idea, ready to sign off' })).toBeVisible();
+  // One list of what waits (finding #26), and a count on the room's card.
+  await expect(page.getByRole('region', { name: 'Waiting on you' })).toContainText(
+    'Idea: Idea is ready to sign off',
+  );
+  await expect(
+    page.getByRole('button', { name: 'Idea, ready to sign off, 1 waiting on you' }),
+  ).toBeVisible();
 
   // o8: a personal project signs off itself; Requirements opens.
   await page.getByRole('button', { name: 'Idea, ready to sign off' }).click();
@@ -714,4 +721,50 @@ test('the stage agent lists its steps and ticks them off in the chat', async ({ 
   await expect(
     page.getByRole('list', { name: 'Tasks, 3 of 3 done' }).getByRole('listitem'),
   ).toHaveCount(3);
+});
+
+// Findings #40, #49: a big chat offers a smaller way on; a nearly spent 5-hour window holds a job.
+test('cost guard: fresh session for a big chat, a go-ahead when the 5-hour window is high', async ({
+  page,
+}) => {
+  let five = 20;
+  await page.route('**/api/claude/usage', (route) =>
+    route.fulfill({
+      json: {
+        available: true,
+        plan: 'max',
+        fiveHour: { usedPercent: five, resetsAt: null },
+        week: { usedPercent: 40, resetsAt: null },
+        fetchedAt: Date.now(),
+      },
+    }),
+  );
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByRole('radio', { name: 'Personal project' }).click();
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app-34');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await page.getByRole('button', { name: 'Idea, On-going' }).click();
+  const box = page.getByLabel('Message Claude');
+  await box.fill('Read every lesson again');
+  await box.press('Enter');
+
+  const big = page.getByRole('status').filter({ hasText: 'This chat holds 140k tokens.' });
+  await expect(big).toBeVisible();
+  await big.getByRole('button', { name: 'Fresh session' }).click();
+  await expect(box).toHaveValue(
+    /^Fresh session, to keep the context small\. The last chat was about: "Read every lesson again"\./,
+  );
+  await expect(big).toHaveCount(0);
+
+  // The window is nearly spent: the job waits; Cancel puts it back in the box.
+  five = 86;
+  await page.reload();
+  await box.fill('Build the whole site');
+  await box.press('Enter');
+  const held = page.getByRole('alert').filter({ hasText: 'The 5-hour window is at 86%.' });
+  await expect(held).toBeVisible();
+  await held.getByRole('button', { name: 'Cancel' }).click();
+  await expect(box).toHaveValue('Build the whole site');
 });

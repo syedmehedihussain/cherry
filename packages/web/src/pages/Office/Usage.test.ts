@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { OfficeFile } from '@cherry/shared';
-import { fmtSpan, shortModel, wallTimes } from './Usage.tsx';
+import { stageWallTimes as wallTimes } from '@cherry/shared';
+import { fmtSpan, shortModel } from './Usage.tsx';
 
 describe('Claude usage tab', () => {
   // Finding #16: short model names, one line each.

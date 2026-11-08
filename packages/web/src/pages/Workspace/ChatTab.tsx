@@ -1,4 +1,4 @@
-import { FileText, History, RotateCcw, Undo2 } from 'lucide-react';
+import { FileText, History, RotateCcw, TriangleAlert, Undo2 } from 'lucide-react';
 import { create } from 'zustand';
 import {
   Fragment,
@@ -43,7 +43,7 @@ import {
   useChatHistory,
   useProjectCommands,
 } from '../../api/chat.ts';
-import { queryClient } from '../../api/queries.ts';
+import { queryClient, useConfig, usePlanUsage } from '../../api/queries.ts';
 import { searchFiles } from '../../api/workspace.ts';
 import { useLoadedOffice } from '../../api/office.ts';
 import { STARTER_JOB } from '../Office/starters.ts';
@@ -62,7 +62,7 @@ import {
 } from '../../components/ClaudeCode/ClaudeCode.tsx';
 import { elapsed } from '../../components/ClaudeCode/cli.ts';
 import { ChangeSummary } from '../../components/ChangeSummary/ChangeSummary.tsx';
-import { Composer, type SlashCommand } from '../../components/Composer/Composer.tsx';
+import { COMPACT_AT, Composer, type SlashCommand } from '../../components/Composer/Composer.tsx';
 import { DecisionCard } from '../../components/DecisionCard/DecisionCard.tsx';
 import { DecisionInChat } from '../../components/Decisions/Decisions.tsx';
 import { Markdown } from '../../components/Markdown/Markdown.tsx';
@@ -263,6 +263,42 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
 
   // Retry after a failed turn (a limit, a lost connection): when the turn had already worked
   // in its session, carry on from there instead of sending the whole job again (finding #46).
+  // Cost guard (findings #40, #49): a nearly spent 5-hour window holds a new job until the user
+  // says go; a big chat offers a smaller way on before the next reply re-reads it all.
+  const planUsage = usePlanUsage().data;
+  const fiveHour = planUsage?.available ? planUsage.fiveHour?.usedPercent : undefined;
+  const [held, setHeld] = useState<{
+    text: string;
+    mode: ChatMode;
+    model: string;
+    attachments: string[];
+  } | null>(null);
+  const [goAheadAt, setGoAheadAt] = useState(0);
+  const [bigChatOk, setBigChatOk] = useState<string | null>(null);
+  const guardedSend = async (
+    text: string,
+    chatMode: ChatMode,
+    m: string,
+    attachments: string[] = [],
+  ) => {
+    if (
+      fiveHour !== undefined &&
+      fiveHour > HIGH_FIVE_HOUR &&
+      !text.startsWith('/') &&
+      clock() - goAheadAt > GO_AHEAD_MS
+    ) {
+      setHeld({ text, mode: chatMode, model: m, attachments });
+      return true;
+    }
+    return send(text, chatMode, m, attachments);
+  };
+  const sendHeld = (m: string) => {
+    if (!held) return;
+    setGoAheadAt(clock());
+    setHeld(null);
+    void send(held.text, held.mode, m, held.attachments);
+  };
+
   const retryText = useMemo(
     () => retryMessage(items, state?.claudeSessionId ?? null),
     [items, state?.claudeSessionId],
@@ -418,6 +454,82 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
             </button>
           </p>
         )}
+        {held && (
+          <div className={styles.next} role="alert">
+            <TriangleAlert size={15} className={styles.stuckIcon} aria-hidden="true" />
+            <span>
+              <b>The 5-hour window is at {Math.round(fiveHour ?? 0)}%.</b> A long job may stop at
+              the limit{held.model !== 'sonnet' ? '; Sonnet uses less of it' : ''}.
+            </span>
+            <button type="button" className={styles.nextGo} onClick={() => sendHeld(held.model)}>
+              Send anyway
+            </button>
+            {held.model !== 'sonnet' && (
+              <button
+                type="button"
+                className={styles.nextGo}
+                onClick={() => {
+                  setModel('sonnet');
+                  sendHeld('sonnet');
+                }}
+              >
+                Send with Sonnet
+              </button>
+            )}
+            <button
+              type="button"
+              className={styles.nextLater}
+              onClick={() => {
+                setDraft(projectId, held.text);
+                setHeld(null);
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+        {context &&
+          context.window > 0 &&
+          context.used / context.window >= BIG_CHAT &&
+          !state?.running &&
+          bigChatOk !== state?.conversationId && (
+            <div className={styles.next} role="status">
+              <TriangleAlert size={15} className={styles.stuckIcon} aria-hidden="true" />
+              <span>
+                <b>This chat holds {Math.round(context.used / 1000)}k tokens.</b> Every reply reads
+                them again, so even a short question uses about that much of your 5-hour window.
+              </span>
+              {/* From COMPACT_AT the context meter offers Compact itself. */}
+              {context.used / context.window < COMPACT_AT && (
+                <button
+                  type="button"
+                  className={styles.nextGo}
+                  onClick={() => void send('/compact', mode.mode, model ?? state?.model ?? 'opus')}
+                >
+                  Compact
+                </button>
+              )}
+              <button
+                type="button"
+                className={styles.nextGo}
+                title="A new chat with a short note on where this one stopped; nothing is sent yet"
+                onClick={() =>
+                  void newChat(projectId, stage).then(() =>
+                    setDraft(projectId, freshSessionNote(stage, sentTexts.at(-1))),
+                  )
+                }
+              >
+                Fresh session
+              </button>
+              <button
+                type="button"
+                className={styles.nextLater}
+                onClick={() => setBigChatOk(state?.conversationId ?? null)}
+              >
+                Keep going
+              </button>
+            </div>
+          )}
         <Composer
           running={!!state?.running}
           paused={paused}
@@ -428,7 +540,7 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
           draft={draft}
           onDraftUsed={() => setDraft(projectId, '')}
           onAnswerKey={(key) => answerKey(scroller.current, key)}
-          onSend={send}
+          onSend={guardedSend}
           onStop={() => void stopChat(projectId, stage)}
           onUpload={(file) => uploadAttachment(projectId, file)}
           onDiscard={(file) => void discardAttachment(projectId, file).catch(() => undefined)}
@@ -496,6 +608,8 @@ function EmptyChat({
   onStarter(): void;
 }) {
   const agent = stageInfo(useStageInfo().data, stage);
+  // Agents may use the user's real browser (finding #33): say so where the work starts.
+  const chrome = !!useConfig().data?.claude.chrome;
   return (
     <div className={styles.empty}>
       <div className={styles.welcome}>
@@ -505,6 +619,12 @@ function EmptyChat({
           {agent?.docsOnly && 'It writes docs and notes only, never code. '}
         </p>
         <p className={styles.welcomeMode}>{MODE_NOTE[mode]}</p>
+        {chrome && (
+          <p className={styles.welcomeMode}>
+            Claude in Chrome is on: this agent may open your Chrome in a new tab to check its work.
+            Turn it off in Settings.
+          </p>
+        )}
       </div>
       {starter && (
         <div className={styles.skillsWrap}>
@@ -718,6 +838,23 @@ function ClaudeBlock({
       {end && <ChangeSummary projectId={projectId} tools={tools} end={end} />}
     </div>
   );
+}
+
+/** From this share of the context window the chat offers Compact or a fresh session (#49). */
+const BIG_CHAT = 0.5;
+/** Above this share of the 5-hour window a new job waits for the user's go-ahead (#40). */
+const HIGH_FIVE_HOUR = 80;
+/** The time when a handler runs (never during render). */
+const clock = () => Date.now();
+/** One go-ahead covers the next half hour. */
+const GO_AHEAD_MS = 30 * 60_000;
+
+/** The first message of a fresh session, written by Cherry with no model call (ADR-0055). */
+export function freshSessionNote(stage: Stage, last: string | undefined): string {
+  const about = last
+    ? ` The last chat was about: "${last.replace(/\s+/g, ' ').slice(0, 300)}".`
+    : '';
+  return `Fresh session, to keep the context small.${about} Read _project/STATUS.md and the documents in docs/${stage}/ to see what is done, then carry on with what is left.`;
 }
 
 /** What Retry sends when the failed turn had already done part of the job (#46). */

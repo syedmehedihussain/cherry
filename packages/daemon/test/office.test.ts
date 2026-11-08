@@ -631,3 +631,188 @@ describe('staff personas in Settings, Agents (o17)', () => {
     ).toBe(400);
   });
 });
+
+// Finding #26: one list of everything that waits for the user, each in its room.
+describe('waiting on you', () => {
+  let d: TestDaemon | null = null;
+  afterEach(async () => {
+    await d?.cleanup();
+    d = null;
+  });
+
+  it('lists the stage gate and the ADR the room proposed', async () => {
+    d = await testDaemon({
+      runner: fakeRunner(() => [
+        {
+          call: {
+            name: 'propose_decision',
+            input: {
+              title: 'Static site on GitHub Pages',
+              context: 'The course site has no backend.',
+              proposal: 'Host it on GitHub Pages.',
+            },
+          },
+        },
+        { call: { name: 'stage_ready', input: {} } },
+        { text: 'Ready.' },
+      ]),
+    });
+    gitInit(path.join(d.projectsDir, 'proj'));
+    const cookie = await d.login();
+    const api = (method: 'GET' | 'POST', url: string, payload?: object) =>
+      d!.app.inject({
+        method,
+        url,
+        headers: { host: HOST, origin: ORIGIN, cookie },
+        ...(payload ? { payload } : {}),
+      });
+    await api('POST', '/api/projects/proj/office', { kind: 'personal' });
+    await api('POST', '/api/projects/proj/chat', { text: 'go', stage: 'idea', mode: 'auto' });
+    const start = Date.now();
+    while (d.chat.state('proj', 'idea').running && Date.now() - start < 3000)
+      await new Promise((r) => setTimeout(r, 10));
+    const res = await api('GET', '/api/projects/proj/waiting');
+    expect(res.statusCode, res.body).toBe(200);
+    expect(res.json().items).toEqual([
+      { kind: 'sign-off', stage: 'idea', title: 'Idea is ready to sign off', at: null },
+      { kind: 'adr', stage: 'idea', title: 'ADR-0001 Static site on GitHub Pages', at: null },
+    ]);
+  });
+});
+
+// Section 4: each stage's room can start with its own model.
+describe('model per stage', () => {
+  let d: TestDaemon | null = null;
+  afterEach(async () => {
+    await d?.cleanup();
+    d = null;
+  });
+
+  it('keeps the model in office.json and runs the room with it', async () => {
+    const log: FakeLog = { requests: [], permissions: [], decisions: [], calls: [] };
+    d = await testDaemon({ runner: fakeRunner(() => [{ text: 'ok' }], log) });
+    gitInit(path.join(d.projectsDir, 'proj'));
+    const cookie = await d.login();
+    const api = (method: 'GET' | 'POST' | 'PATCH', url: string, payload?: object) =>
+      d!.app.inject({
+        method,
+        url,
+        headers: { host: HOST, origin: ORIGIN, cookie },
+        ...(payload ? { payload } : {}),
+      });
+    await api('POST', '/api/projects/proj/office', { kind: 'personal' });
+    let res = await api('PATCH', '/api/projects/proj/office', { models: { idea: 'opus' } });
+    expect(res.json().office.models).toEqual({ idea: 'opus' });
+    expect((await api('GET', '/api/projects/proj/chat?stage=idea')).json().model).toBe('opus');
+    await api('POST', '/api/projects/proj/chat', { text: 'go', stage: 'idea' });
+    const start = Date.now();
+    while (d.chat.state('proj', 'idea').running && Date.now() - start < 3000)
+      await new Promise((r) => setTimeout(r, 10));
+    expect(log.requests[0]?.model).toBe('opus');
+    res = await api('PATCH', '/api/projects/proj/office', { models: { idea: null } });
+    expect(res.json().office.models).toEqual({});
+  });
+});
+
+// Section 4: the run in numbers, as Markdown or CSV, with no model call.
+describe('run report', () => {
+  let d: TestDaemon | null = null;
+  afterEach(async () => {
+    await d?.cleanup();
+    d = null;
+  });
+
+  it('adds up prompts, turns, tokens and sign-offs per stage', async () => {
+    d = await testDaemon({
+      runner: fakeRunner(() => [
+        {
+          models: [
+            { model: 'claude-opus-5-5', input: 900, output: 100, cacheRead: 0, costUsd: 0.4 },
+          ],
+        },
+        { call: { name: 'stage_ready', input: {} } },
+        { text: 'ok' },
+      ]),
+    });
+    gitInit(path.join(d.projectsDir, 'proj'));
+    const cookie = await d.login();
+    const api = (method: 'GET' | 'POST', url: string, payload?: object) =>
+      d!.app.inject({
+        method,
+        url,
+        headers: { host: HOST, origin: ORIGIN, cookie },
+        ...(payload ? { payload } : {}),
+      });
+    expect((await api('GET', '/api/projects/proj/report')).statusCode).toBe(404);
+    await api('POST', '/api/projects/proj/office', { kind: 'personal' });
+    await api('POST', '/api/projects/proj/chat', { text: 'write the brief', stage: 'idea' });
+    const start = Date.now();
+    while (d.chat.state('proj', 'idea').running && Date.now() - start < 3000)
+      await new Promise((r) => setTimeout(r, 10));
+    await api('POST', '/api/projects/proj/office/stages/idea/sign-off', {});
+
+    const md = await api('GET', '/api/projects/proj/report');
+    expect(md.headers['content-disposition']).toBe('attachment; filename="proj-run-report.md"');
+    expect(md.body).toMatch(
+      /^\| Idea \| Business Analyst \| 1 \| 1 \| 0 \| 0 \| 1000 \| \$0\.40 \| \d+ min \| \d+ min \| \d{4}-\d\d-\d\d \(internal\) \|$/m,
+    );
+    expect(md.body).toContain('| claude-opus-5-5 | 1 | 1000 | $0.40 |');
+    const csv = (await api('GET', '/api/projects/proj/report?format=csv')).body.split('\n');
+    expect(csv[0]).toBe(
+      'stage,agent,prompts,turns,cards_answered,approvals_answered,tokens,api_value_usd,claude_min,wall_min,signed_off',
+    );
+    expect(csv[1]).toMatch(
+      /^idea,Business Analyst,1,1,0,0,1000,0\.40,\d+,\d+,\d{4}-\d\d-\d\d \(internal\)$/,
+    );
+  });
+});
+
+// V4 section 4, ADR-0060: in Deployment, publishing waits for the release card.
+describe('release guard', () => {
+  let d: TestDaemon | null = null;
+  afterEach(async () => {
+    await d?.cleanup();
+    d = null;
+  });
+
+  it('refuses git push in the Deployment room until the card is approved', async () => {
+    const log: FakeLog = { requests: [], permissions: [], decisions: [], calls: [] };
+    d = await testDaemon({
+      runner: fakeRunner(
+        () => [
+          { tool: { name: 'Bash', input: { command: 'git push -u origin main' } } },
+          { text: 'Waiting for the release card.' },
+        ],
+        log,
+      ),
+    });
+    const dir = path.join(d.projectsDir, 'proj');
+    gitInit(dir);
+    const cookie = await d.login();
+    const api = (method: 'GET' | 'POST', url: string, payload?: object) =>
+      d!.app.inject({
+        method,
+        url,
+        headers: { host: HOST, origin: ORIGIN, cookie },
+        ...(payload ? { payload } : {}),
+      });
+    await api('POST', '/api/projects/proj/office', { kind: 'personal' });
+    const file = path.join(dir, '_project', 'office.json');
+    const o = JSON.parse(readFileSync(file, 'utf8'));
+    for (const s of ['idea', 'requirements', 'plan', 'design', 'development', 'testing'])
+      o.cycles[0].stages[s] = { state: 'signed', ready: true, sentAt: null, signOffs: [] };
+    o.cycles[0].stages.deployment = { state: 'active', ready: false, sentAt: null, signOffs: [] };
+    writeFileSync(file, JSON.stringify(o));
+    await api('POST', '/api/projects/proj/chat', {
+      text: 'ship it',
+      stage: 'deployment',
+      mode: 'auto',
+    });
+    const start = Date.now();
+    while (d.chat.state('proj', 'deployment').running && Date.now() - start < 3000)
+      await new Promise((r) => setTimeout(r, 10));
+    expect(log.permissions[0]).toMatchObject({ tool: 'Bash', allowed: false });
+    expect(log.permissions[0]?.message).toMatch(/confirm_release/);
+    expect(log.requests[0]?.extraTools?.map((t) => t.name)).toContain('confirm_release');
+  });
+});

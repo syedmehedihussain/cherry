@@ -32,6 +32,10 @@ seen by other people.
 
 ## Your limits
 
+- Before you create a repository, push, or publish anything, call `confirm_release` with the
+  GitHub owner, the repository, public or private, what is pushed and where it goes live. The
+  user approves it on a card. In an office project, publishing commands are refused until then,
+  and the approval holds for that turn only.
 - Never force-push to main or master, never skip CI checks, never delete tags or releases.
 - Never put secrets in workflows or files; use the platform's secret store and say which
   secret the user must add.

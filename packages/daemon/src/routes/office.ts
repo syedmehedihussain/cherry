@@ -25,6 +25,9 @@ import { writeHandoff } from '../design/handoff.ts';
 import type { CommitService } from '../projects/commits.ts';
 import { projectDir } from '../projects/workspace.ts';
 import { noteInStatus } from '../office/status-note.ts';
+import { waitingOnYou } from '../office/waiting.ts';
+import { reportCsv, reportMarkdown, reportRows } from '../office/report.ts';
+import { notFound } from '../http.ts';
 import { notify, projectLink, type EventHub } from '../events.ts';
 
 const Id = z.object({ id: z.string().min(1).max(200) });
@@ -138,6 +141,21 @@ export function officeRoutes(
       }
       return { office: signed, handoff, commit, warning };
     });
+    // A run in numbers, to compare with plain Claude Code (V4 section 4). No model call.
+    app.get('/api/projects/:id/report', async (req, reply) => {
+      const { id } = Id.parse(req.params);
+      const { format } = z.object({ format: z.enum(['md', 'csv']).default('md') }).parse(req.query);
+      const o = office.get(id);
+      if (!o) throw notFound('This project has no office.');
+      const report = reportRows(db, id, o);
+      return reply
+        .header(
+          'content-type',
+          format === 'csv' ? 'text/csv; charset=utf-8' : 'text/markdown; charset=utf-8',
+        )
+        .header('content-disposition', `attachment; filename="${id}-run-report.${format}"`)
+        .send(format === 'csv' ? reportCsv(report.rows) : reportMarkdown(id, report));
+    });
     app.post(`${base}/dev-gate`, async (req) => {
       const { gate, ...approval } = DevGateInputSchema.parse(req.body);
       return { office: office.devGate(Id.parse(req.params).id, gate, approval) };
@@ -198,5 +216,14 @@ export function officeRoutes(
       const { version, title } = NewVersionSchema.parse(req.body);
       return { office: office.startVersion(Id.parse(req.params).id, version, title) };
     });
+  };
+}
+
+/** GET /api/projects/:id/waiting: everything that waits for the user, in one list (#26). */
+export function waitingRoutes(deps: Parameters<typeof waitingOnYou>[1]) {
+  return (app: FastifyInstance) => {
+    app.get('/api/projects/:id/waiting', async (req) => ({
+      items: waitingOnYou(Id.parse(req.params).id, deps),
+    }));
   };
 }

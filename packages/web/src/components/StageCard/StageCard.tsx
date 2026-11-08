@@ -12,6 +12,8 @@ export interface StageCardProps {
   ready: boolean;
   /** Small line under the name on hover: documents, sign-off date, or why it is locked. */
   meta: string;
+  /** How many things in this room wait for the user (finding #26). */
+  waiting?: number;
   onOpen(): void;
 }
 
@@ -25,7 +27,16 @@ const WORD: Record<StageState, string> = {
 };
 
 /** A stage on the project page (V4, the plan sketch): paper while open, red when signed off. */
-export function StageCard({ name, agent, mono, state, ready, meta, onOpen }: StageCardProps) {
+export function StageCard({
+  name,
+  agent,
+  mono,
+  state,
+  ready,
+  meta,
+  waiting = 0,
+  onOpen,
+}: StageCardProps) {
   const [shake, setShake] = useState(0);
   const locked = state === 'locked';
   const word = state === 'active' && ready ? 'ready to sign off' : WORD[state];
@@ -46,7 +57,7 @@ export function StageCard({ name, agent, mono, state, ready, meta, onOpen }: Sta
       data-state={state === 'carried' ? 'signed' : state}
       data-ready={state === 'active' && ready ? 'true' : undefined}
       data-shake={shake || undefined}
-      aria-label={`${name}, ${word}`}
+      aria-label={`${name}, ${word}${waiting ? `, ${waiting} waiting on you` : ''}`}
       aria-disabled={locked || undefined}
       title={locked ? meta : undefined}
       onClick={() => (locked ? setShake((n) => n + 1) : onOpen())}
@@ -55,6 +66,11 @@ export function StageCard({ name, agent, mono, state, ready, meta, onOpen }: Sta
       <span className={styles.top}>
         <span className={styles.av}>{mono}</span>
         <span className={styles.role}>{agent}</span>
+        {waiting > 0 && (
+          <span className={styles.waiting} title={`${waiting} waiting on you`} aria-hidden="true">
+            {waiting}
+          </span>
+        )}
         {Icon && <Icon size={14} className={styles.icon} aria-hidden="true" />}
       </span>
       <span className={styles.body}>

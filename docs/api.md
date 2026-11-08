@@ -179,7 +179,7 @@ calls a model (ADR-0055).
 | --- | --- | --- |
 | GET | `/api/projects/:id/office` | `{ office }`, or `{ office: null }` before the office is started |
 | POST | `/api/projects/:id/office` | `{ kind: 'client', client: { name, contact? } }` or `{ kind: 'personal' }`; Idea opens; 409 if it exists |
-| PATCH | `/api/projects/:id/office` | `{ client?, rate?, currency?, budgetTokens? }`; 400 for a client on a personal project |
+| PATCH | `/api/projects/:id/office` | `{ client?, rate?, currency?, budgetTokens?, models? }` (`models`: per stage a model, or null for the default); 400 for a client on a personal project |
 | GET | `/api/projects/:id/office/vault` | `{ docs: [{ path, title, headings, links, words, mtime, text }], truncated }`: every Markdown document outside code, build folders and `_project/` (500 at most); `links` from Markdown links and `[[wiki links]]` |
 | POST | `/api/projects/:id/office/notes` | `{ name }` makes `docs/notes/<name>.md`; 409 if it exists |
 | GET | `/api/projects/:id/usage` | `{ total, stages: [{ stage, ... }], models: [{ model, ... }] }`, each `{ tokens, costUsd, turns, ms }`: every chat turn of the project from `turn_usage`; `costUsd` is the API value |
@@ -189,6 +189,8 @@ calls a model (ADR-0055).
 | POST | `/api/projects/:id/office/stages/:stage/send` | sent to the client: `active` to `waiting`; client projects only; needs `ready` |
 | POST | `/api/projects/:id/office/stages/:stage/sign-off` | `{ by?, date?, notes?, internal?, commit? }`; Cherry adds a line to `_project/STATUS.md` (no model call); `commit` commits the changed files in docs/, design/, top-level .md and .gitignore (never code or secrets), reply `commit` and `warning`, and a `commit.done`/`commit.failed` notice; needs `ready`; `by` unless internal; personal signs as you; opens the next stage, or Live after Deployment; a flagged stage just clears its flag. Development needs the prototype approved. Design writes `design/handoff/` when it has screens; the reply has `handoff` (the files written, else `[]`) |
 | POST | `/api/projects/:id/office/dev-gate` | `{ gate: build\|sent\|approved, by?, date?, notes? }`: build to sent to approved (sent back to build: client wants changes, clears `prototypeReady`); personal goes build to approved. A client approval needs `by` and is logged in `changelog` |
+| GET | `/api/projects/:id/waiting` | `{ items: [{ kind: sign-off\|client\|update\|approval\|decision\|adr, stage, title, at }] }`: everything that waits for the user, each with its room (`stage`, null for a background agent's approval or an ADR from outside a room) |
+| GET | `/api/projects/:id/report?format=md\|csv` | The run in numbers per stage (prompts, turns, cards and approvals answered, tokens, API value, Claude time, wall time, sign-off), from turn_usage, the transcripts and office.json, as a download; 404 without an office |
 | POST | `/api/projects/:id/office/changes` | `{ kind: 'small', stage, text }` logs it; `{ kind: 'big', title, text, stages }` adds change request `CR-NNN` |
 | POST | `/api/projects/:id/office/changes/:cr/approve` | flags the named stages that are signed off as `update` (ready false) |
 | POST | `/api/projects/:id/office/changes/:cr/reject` | keeps it as rejected |

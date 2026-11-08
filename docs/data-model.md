@@ -251,6 +251,7 @@ Schema in `packages/shared/src/schemas/office.ts`.
     "amount": 14.99, "bill": true, "addedAt": "…" }],
   "time": [{ "id": "time_1a2b3c4d", "stage": "idea", "hours": 1.5, "note": "Client call", "date": "2026-11-06" }],
   "actions": [{ "id": "act_1a2b3c4d", "text": "Ask for the bKash keys", "owner": "you", "done": false, "at": "…" }],
+  "models": { "plan": "opus", "development": "sonnet" },
   "createdAt": "…",
   "updatedAt": "…"
 }
@@ -260,6 +261,8 @@ Schema in `packages/shared/src/schemas/office.ts`.
   `deployment` (the example is cut short).
 - `state`: `locked`, `active`, `waiting` (sent to the client), `signed`, `update` (a big change
   flagged it), `carried` (taken over from the version before).
+- `models` (optional, default `{}`): the model each stage's room starts with (`sonnet`, `opus`,
+  `haiku`); a stage not in it uses Cherry's default model.
 - `kind: personal`: `client` is null, every sign-off is `internal` by `you`, costs are never billed.
 - `devGate`: Development's inside gate, `build` to `sent` to `approved`. `prototypeReady` (optional,
   default false) is set when the Development Team calls `stage_ready` before the approval: it
