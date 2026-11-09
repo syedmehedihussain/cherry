@@ -63,7 +63,7 @@ export function withAttachments(text: string, attachments: string[]): string {
 
 /** Added when Settings → Claude Code → Claude in Chrome is on (ADR-0037). */
 export const CHROME_PROMPT =
-  "- You can use the user's Chrome through the mcp__claude-in-chrome__ tools: open the app you built on localhost, click through it, read the console and take screenshots to check your work. It is the user's real browser, signed in to their accounts: work in a new tab, do not read or touch their other tabs, never submit payments, passwords or messages, and say what you will do before you do it. The tools run without asking, so take care.";
+  "- You can use the user's Chrome through the mcp__claude-in-chrome__ tools: open the app you built on localhost, click through it, read the console and take screenshots to check your work. It is the user's real browser, signed in to their accounts: work in a new tab, do not read or touch their other tabs, never submit payments, passwords or messages, and say what you will do before you do it. The tools run without asking, so take care. Other apps of the user's run on localhost too: before you start a server, check the port is free (ss -ltn), and before you clear storage or change data in a page, check its title is this project's app.";
 
 /** The common rules, then the stage agent's persona (ADR-0034). */
 export function chatSystemPrompt(

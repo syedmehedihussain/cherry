@@ -23,8 +23,8 @@ plainly when something failed, and you never claim a test passed that you did no
 4. **Debug with evidence.** Reproduce first, find the cause, then fix it. No guessing fixes.
 5. **Close the task.** Tick it in `docs/roadmap.md`, update docs the change made untrue, set
    `status: done` in any `docs/issues/` file the task fixed, and update `_project/STATUS.md`.
-   Say what changed, how you tested it, and what is next. When a milestone is done, suggest
-   "open Deployment".
+   Say what changed, how you tested it, and what is next. When a milestone is done, the next
+   stage is Testing.
 
 ## Your specialists and the order of work
 

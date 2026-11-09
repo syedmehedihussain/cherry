@@ -222,6 +222,32 @@ export function preToolGuard(
   );
 }
 
+/**
+ * A subagent asked to run in the background: Cherry's turn ends at the result, which cuts the
+ * subagent off before it reports (demo run, ADR-0061). Run it in the foreground instead.
+ */
+export function foregroundSubagent(
+  tool: string,
+  input: Record<string, unknown>,
+): Record<string, unknown> | null {
+  return (tool === 'Agent' || tool === 'Task') && input.run_in_background === true
+    ? { ...input, run_in_background: false }
+    : null;
+}
+
+/** A message Claude Code adds when a background task ends, before the user's own prompt. */
+export function isTaskNotification(content: unknown): boolean {
+  const text =
+    typeof content === 'string'
+      ? content
+      : Array.isArray(content)
+        ? content
+            .map((b: { type?: string; text?: string }) => (b.type === 'text' ? b.text : ''))
+            .join('')
+        : '';
+  return text.trimStart().startsWith('<task-notification>');
+}
+
 /** File checkpoints in SDK sessions (V2.1 w7.9). */
 const CHECKPOINT_ENV = { CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING: '1' };
 
@@ -379,6 +405,15 @@ export const sdkRunner: Runner = (req) => {
                 if (hookInput.hook_event_name !== 'PreToolUse') return {};
                 const input = (hookInput.tool_input ?? {}) as Record<string, unknown>;
                 const reason = preToolGuard(req, hookInput.tool_name, input);
+                const foreground = reason ? null : foregroundSubagent(hookInput.tool_name, input);
+                if (foreground)
+                  return {
+                    hookSpecificOutput: {
+                      hookEventName: 'PreToolUse',
+                      permissionDecision: 'allow',
+                      updatedInput: foreground,
+                    },
+                  };
                 return reason
                   ? {
                       hookSpecificOutput: {
@@ -405,6 +440,8 @@ export const sdkRunner: Runner = (req) => {
 
   let messageId = '';
   let checkpoint = false;
+  // A background task's notice came before this turn's prompt (see the result below).
+  let notified = false;
   // The last entry of the turn in the session (assistant or user message), for rewind.
   let chainEnd: string | null = null;
   // Content block indexes of the current message that are thinking blocks.
@@ -437,12 +474,15 @@ export const sdkRunner: Runner = (req) => {
   const handle = (m: SDKMessage) => {
     if ((m.type === 'assistant' || m.type === 'user') && !m.parent_tool_use_id && m.uuid)
       chainEnd = m.uuid;
+    if (m.type === 'user' && !m.parent_tool_use_id && isTaskNotification(m.message.content))
+      notified = true;
     if (
       req.checkpoints &&
       !checkpoint &&
       m.type === 'user' &&
       !m.parent_tool_use_id &&
       m.uuid &&
+      !isTaskNotification(m.message.content) &&
       (typeof m.message.content === 'string' ||
         (Array.isArray(m.message.content) &&
           !m.message.content.some((b) => b.type === 'tool_result')))
@@ -543,6 +583,9 @@ export const sdkRunner: Runner = (req) => {
         }
       }
     } else if (m.type === 'result') {
+      // On resume Claude may first answer a notice about an earlier background task; that
+      // result is not this turn's end (demo run, ADR-0061). Replays show when the prompt starts.
+      if (req.checkpoints && notified && !checkpoint) return;
       sentResult = true;
       const ok = m.subtype === 'success' && !m.is_error;
       const error = ok

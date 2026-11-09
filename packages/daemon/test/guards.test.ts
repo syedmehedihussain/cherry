@@ -1,7 +1,12 @@
 import { mkdirSync, symlinkSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { pathGuard, preToolGuard } from '../src/claude/runner.ts';
+import {
+  foregroundSubagent,
+  isTaskNotification,
+  pathGuard,
+  preToolGuard,
+} from '../src/claude/runner.ts';
 import { isSecretFile } from '../src/paths.ts';
 import { tempDir, write } from './helpers.ts';
 
@@ -54,4 +59,22 @@ describe('secret files', () => {
       expect(isSecretFile(f)).toBe(true);
     },
   );
+});
+
+// Demo run (ADR-0061): a background specialist was cut off when the turn ended.
+describe('foregroundSubagent', () => {
+  it('runs a background subagent in the foreground, and leaves the rest alone', () => {
+    expect(
+      foregroundSubagent('Agent', { subagent_type: 'a11y-architect', run_in_background: true }),
+    ).toEqual({ subagent_type: 'a11y-architect', run_in_background: false });
+    expect(foregroundSubagent('Agent', { subagent_type: 'planner' })).toBeNull();
+    expect(foregroundSubagent('Bash', { command: 'pnpm dev', run_in_background: true })).toBeNull();
+  });
+
+  it("tells a background task's notice from the user's prompt", () => {
+    expect(isTaskNotification('<task-notification>\n<task-id>a1</task-id>')).toBe(true);
+    expect(isTaskNotification([{ type: 'text', text: '<task-notification>…' }])).toBe(true);
+    expect(isTaskNotification('Run the check again')).toBe(false);
+    expect(isTaskNotification([{ type: 'tool_result', content: 'x' }])).toBe(false);
+  });
 });
