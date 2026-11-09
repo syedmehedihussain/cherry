@@ -38,7 +38,10 @@ export function gitInit(dir: string): void {
     });
   mkdirSync(dir, { recursive: true });
   run('init', '-q', '-b', 'main');
-  run('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--allow-empty', '-m', 'init');
+  // The daemon's own git calls (an agent merge) need an identity; CI has no global one.
+  run('config', 'user.name', 't');
+  run('config', 'user.email', 't@t');
+  run('commit', '-q', '--allow-empty', '-m', 'init');
 }
 
 /** Project ids the tests use, listed in each test daemon's config.json. */
