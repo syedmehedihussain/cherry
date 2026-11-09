@@ -40,23 +40,17 @@ await ctx.addInitScript(() => {
 });
 const page = await ctx.newPage();
 const pause = (ms: number) => page.waitForTimeout(ms);
+// Quick moves: the pointer travels in 12 steps.
 async function to(l: Locator) {
   await l.scrollIntoViewIfNeeded();
   const b = (await l.boundingBox())!;
-  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 25 });
-  await pause(250);
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 12 });
+  await pause(150);
 }
 async function click(l: Locator) {
   await to(l);
   await page.mouse.down();
   await page.mouse.up();
-}
-/** Scrolls whatever is under the pointer, in small steps. */
-async function scroll(dy: number, steps = 12) {
-  for (let i = 0; i < steps; i++) {
-    await page.mouse.wheel(0, dy / steps);
-    await pause(45);
-  }
 }
 const tab = (name: string) =>
   page
@@ -67,60 +61,57 @@ const tab = (name: string) =>
 // Projects: client and personal work, each with its stage.
 await page.goto(`${BASE}/#login=${code}`);
 await expect(page.getByRole('heading', { name: /Good (morning|afternoon|evening)/ })).toBeVisible();
+await expect(page.getByRole('link', { name: 'clinic-booking', exact: true }).first()).toBeVisible();
 await page.mouse.move(720, 450);
-await pause(2200);
+await pause(1200);
 await click(page.getByRole('link', { name: 'clinic-booking', exact: true }).first());
 
 // A client project: Design waits for the client's approval.
 await expect(page.getByRole('heading', { name: 'clinic-booking' })).toBeVisible();
-await pause(1200);
+await pause(500);
 await to(page.getByText('waiting for client').first());
-await pause(1500);
-await to(page.getByText('Waiting on you').first());
-await pause(1800);
+await pause(1100);
 
 // The Plan room: the architect's decision card (an ADR).
 await page.goto(`${BASE}/p/water-demo/s/plan`);
-await pause(1500);
-await to(page.getByText('Store history as a date-to-count map').first());
-await pause(2500);
+await pause(700);
+await to(page.getByRole('button', { name: 'Approve' }).first());
+await pause(1300);
 
-// The Design room: the screens on a canvas, then its crew.
+// The Design room: the screens on a canvas, then the accessibility check in its crew.
 await page.goto(`${BASE}/p/water-demo/s/design`);
-await pause(2200);
-await page.mouse.move(1460 / 2, 500, { steps: 25 });
-await pause(1200);
+await expect(tab('Crew')).toBeVisible();
+await pause(700);
+await pause(1100);
 await click(tab('Crew'));
-await pause(2600);
+await pause(1500);
 
-// Development: the chat in the Claude Code look, and the prototype gate.
+// Development: the prototype gate.
 await page.goto(`${BASE}/p/water-demo/s/development`);
-await pause(1500);
-await page.mouse.move(400, 450, { steps: 20 });
-await scroll(-900);
-await pause(1500);
+await expect(tab('Gate')).toBeVisible();
+await pause(400);
 await click(tab('Gate'));
-await pause(2000);
+await pause(1300);
 
-// Testing: the summary for the client and the required security check.
+// Testing: the summary for the client.
 await page.goto(`${BASE}/p/water-demo/s/testing`);
-await pause(2200);
-await click(tab('Crew'));
-await pause(2400);
+await expect(page.getByRole('heading', { name: /Testing summary/ }).first()).toBeVisible();
+await pause(1400);
 
-// The code, the usage per stage, the invoice.
-await page.goto(`${BASE}/p/water-demo/code/files/app.js`);
-await pause(2000);
-await click(page.getByRole('link', { name: 'Claude usage', exact: true }));
-await pause(2600);
+// Claude usage per stage, then the invoice.
+await page.goto(`${BASE}/p/water-demo/usage`);
+await expect(page.getByText('By stage').first()).toBeVisible();
+await pause(1400);
 await page.goto(`${BASE}/p/clinic-booking/invoice`);
-await pause(2600);
+await expect(page.getByText('Northwind Physio').first()).toBeVisible();
+await pause(1300);
 
 // Live: the maintenance office after Deployment.
 await page.goto(`${BASE}/p/water-demo`);
-await pause(1200);
+await expect(page.getByText('New version').first()).toBeVisible();
+await pause(400);
 await to(page.getByText('New version').first());
-await pause(2400);
+await pause(1300);
 
 const video = page.video()!;
 await ctx.close();

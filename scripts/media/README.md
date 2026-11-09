@@ -17,10 +17,8 @@ S=$W node --import tsx scripts/media/office-video.mts    # → $W/video/*.webm
 ```
 
 `office-capture.mts` takes `name=path` pairs, or `name=path#Tab` to click a tab first. Crop and
-convert with ffmpeg into `site/assets/v4/` (webp, about 1600 px wide). `office-promo.py` cuts
-the hero video from those screenshots: title cards, eased zooms and quick crossfades, about
-25 s (`python3 scripts/media/office-promo.py $W/shots site/assets/v4/office-demo.mp4`).
-`office-video.mts` records a plain walkthrough instead. `og.html` is the social card
+convert with ffmpeg into `site/assets/v4/` (webp, about 1600 px wide). `office-video.mts` records the hero walkthrough (trim the first 1.6 s, speed 1.2x, H.264 CRF 30)
+and a GIF of it goes to `docs/images/v4/office-demo.gif`. `og.html` is the social card
 (`site/assets/og.png`, 1200x630, rendered with headless Chromium).
 
 ## V3 (old)

@@ -24,8 +24,7 @@
 </p>
 
 <p align="center">
-  <a href="https://syedmehedihussain.github.io/cherry/"><img src="site/assets/v4/office-board.webp" width="900" alt="A client project in Cherry: three stages signed off by the client, Design waiting for approval" /></a><br />
-  <sub><a href="https://syedmehedihussain.github.io/cherry/">Watch the 25-second video on the website</a></sub>
+  <img src="docs/images/v4/office-demo.gif" width="900" alt="Cherry walkthrough: projects, a client stage waiting for approval, an ADR in Plan, the Design canvas and its accessibility check, the prototype gate, testing, usage, the invoice and the maintenance office" />
 </p>
 
 Cherry is a local workspace that runs your projects with [Claude Code](https://claude.com/claude-code)
