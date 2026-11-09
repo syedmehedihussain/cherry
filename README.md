@@ -27,10 +27,11 @@
   <img src="docs/images/cherry-demo.gif" width="900" alt="Cherry: Claude adds a theme toggle, each edit waits for approval, then the app runs on localhost" />
 </p>
 
-Cherry is a local workspace that drives [Claude Code](https://claude.com/claude-code) the way
-a senior engineer works: **plan, decide, document, then build.** It runs on your own computer
-at `127.0.0.1`, works on the project folders you open in it, and every edit and command waits for
-your approval.
+Cherry is a local workspace that runs your projects with [Claude Code](https://claude.com/claude-code)
+the way a small software company works: **seven stages from Idea to Deployment, a staff agent in
+each, and a crew of specialists that checks the work.** A stage opens only when you sign off the
+one before it. Cherry runs on your own computer at `127.0.0.1`, works on the project folders you
+open in it, and nothing runs until you give a job.
 
 It is not a code editor and not a vibe-coding tool. You read code and docs here, you make the
 decisions here, and Claude does the typing, only after you say yes.
@@ -59,8 +60,8 @@ decisions here, and Claude does the typing, only after you say yes.
     </td>
     <td width="50%" valign="top">
       <img src="docs/images/survey.png" alt="A decision card with a recommended option" /><br />
-      <b>Plan before code.</b> Give the idea and a name; the project opens in Plan, where the
-      Planner asks one question at a time and writes the PRD, the roadmap and ADRs.
+      <b>Plan before code.</b> Idea, Requirements and Plan come first. Each agent asks one
+      question at a time on a card, with a recommended option, and every real choice becomes an ADR.
     </td>
   </tr>
   <tr>
@@ -78,8 +79,8 @@ decisions here, and Claude does the typing, only after you say yes.
   <tr>
     <td width="50%" valign="top">
       <img src="docs/images/scan-report.png" alt="A security review report" /><br />
-      <b>Scan agents.</b> Security review, test runner, code health and dependency audit:
-      read-only, one click, a report you read in the centre.
+      <b>A crew in every room.</b> Specialists check the work: accessibility in Design, a code
+      review in Development, a security review in Testing. A stage is not ready until they ran.
     </td>
     <td width="50%" valign="top">
       <img src="docs/images/magnet.png" alt="Magnet answering what is stuck this week" /><br />
@@ -95,6 +96,8 @@ decisions here, and Claude does the typing, only after you say yes.
 | --- | --- |
 | **Projects** | Client projects and personal projects, each with its stage and a small track of the seven stages. **New project** picks client or personal. **Open folder…** adds a folder from anywhere; **Set up office** brings an existing project into the stages. |
 | **The office** | Seven stages in order, each with a staff agent: Idea (Business Analyst), Requirements (System Analyst), Plan (System Architect), Design (UI/UX Designer), Development (Development Team), Testing (QA Engineer), Deployment (DevOps Engineer). A stage opens when the one before it is signed off, with the client's approval or yours on a personal project. Nothing runs until you give a job. |
+| **The crew** | Every room has its own skills and specialist agents, shown in a **Crew** tab. After each message Cherry names the skills and specialists that fit the job (plain word matching, no model call). Design, Development and Testing have required checks: `stage_ready` refuses until the specialist ran, so every release gets an accessibility, code and security check. |
+| **Scan agents** | Security review, test runner, code health and dependency audit: read-only, one click, a report you read in the centre. |
 | **Stage rooms** | The agent's chat in the Claude Code look, its client and technical documents, Sign off, and Request change. Requirements has the questions for the client, Development the prototype gate, Testing the acceptance test and bugs. Client documents export as a PDF. |
 | **Project tabs** | **Meeting** (every agent's work, an agenda, action items), **Docs** (a vault of the documents with links, backlinks and a graph), **Code** (an editor like VS Code), **Version control**, **Claude usage** (limits and the project's token budget) and **Invoice** (time, costs and the invoice at your rate). |
 | **Live and maintenance** | Signing off Deployment makes the project Live: support requests, bugs, QA, fixes and upgrades, and **New version** starts v2.0 next to the live v1.0. **Magnet** is the project manager you ask about progress and costs. |
@@ -122,12 +125,17 @@ decisions here, and Claude does the typing, only after you say yes.
 
 ## How it works
 
-1. **Plan.** Describe the idea and pick a folder name. The project opens in the Plan stage,
-   where the Planner asks short questions, each with a recommended option and its trade-off.
-2. **Decide.** Every real choice becomes an ADR.
-3. **Document.** `CLAUDE.md`, the PRD, architecture, data model and `STATUS.md` are written
-   before any code, with your approval.
-4. **Build.** Chat, agents and scans do the work. You approve, run it, and commit in small steps.
+1. **Idea and Requirements.** Describe the idea. The Business Analyst and the System Analyst
+   ask short questions, each with a recommended option, and write the brief and the SRS.
+2. **Plan and Design.** The System Architect writes the architecture, data model and roadmap;
+   every real choice becomes an ADR. The Designer draws the screens and an accessibility
+   specialist checks them.
+3. **Development and Testing.** The Development Team builds a prototype for your approval, then
+   the rest, test first, with a code review. QA tests it and a security review runs.
+4. **Deployment and Live.** The DevOps Engineer releases it. **New version** starts the next
+   cycle next to the live one.
+
+You sign off each stage (or your client does). Nothing starts without a job from you.
 
 Under the hood, the `cherry` command starts a small daemon (Fastify, SQLite cache) on
 `127.0.0.1:4317`. It drives your local `claude` CLI through the Claude Agent SDK and serves a
@@ -190,10 +198,12 @@ Details: [`docs/security.md`](docs/security.md). To report a vulnerability, see
 
 ## Token use
 
-Cherry is built to be easy on your plan. Small automatic jobs (tidying a note, drafting a
-`.gitignore`) run on Haiku with capped prompts. Big jobs (reviews, scans,
-reports, explanations) run only when you click. Change summaries and the Run button cost no
-tokens at all. See [ADR-0022](docs/adr/0022-change-summary-and-click-only-claude.md).
+Cherry is built to be easy on your plan. **Every model call starts from your click**: there is
+no autopilot, no background run and no automatic Haiku job
+([ADR-0055](docs/adr/0055-every-model-call-starts-from-a-click.md)). Change summaries, job hints,
+handoff notes and the Run button cost no tokens at all. Each project has a token budget, and the
+Claude usage tab shows tokens and API value per stage. In a real run, a small feature (a history
+and a week chart for a tiny web app) took all seven stages on Sonnet for about 1.5M tokens.
 
 ## Claude Code skill
 

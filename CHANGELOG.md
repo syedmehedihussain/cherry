@@ -23,6 +23,14 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 - **Every model call starts from a click** (ADR-0055): Autopilot is removed, and the handoff
   note between V3 stages no longer uses Haiku.
 - Settings, Agents shows each staff persona; your own file in `~/.cherry/staff/` replaces it.
+- **A crew in every room** (ADR-0061): ECC specialist agents and skills bundled per stage, and a
+  fresh session when a chat reaches half the context window.
+- **The crew works on its own** (ADR-0062): required checks (`requires:` in AGENT.md) make
+  `stage_ready` wait for an accessibility check in Design, a code review in Development and a
+  security review in Testing; a job hint after each message names the skills and specialists
+  that fit (word matching, no model call); a Crew tab in every room. Tuned after a real run:
+  Cherry's tools are always loaded, checks run before the agent's last check, hints need two
+  shared words.
 
 ### V3: four stages, each its own kind of place (ADR-0045)
 
