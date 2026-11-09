@@ -21,7 +21,16 @@ convert with ffmpeg into `site/assets/v4/` (webp, about 1600 px wide). `office-v
 and a GIF of it goes to `docs/images/v4/office-demo.gif`. `og.html` is the social card
 (`site/assets/og.png`, 1200x630, rendered with headless Chromium).
 
+## README screenshots
+
+`docs/images/*.webp` are full-window `office-capture.mts` shots (2x), scaled to 1600 px:
+
+```bash
+ffmpeg -i $W/shots/<name>.png -vf scale=1600:-1:flags=lanczos -c:v libwebp -quality 88 docs/images/<name>.webp
+```
+
 ## V3 (old)
 
-`setup-demo.sh`, `capture.mts`, `video.mts` and `fake-claude.json` made the V3 images in
-`docs/images/` with a scripted Claude. They follow the V3 screens and are kept for reference.
+`setup-demo.sh`, `capture.mts`, `video.mts` and `fake-claude.json` made the V3 screenshots with a
+scripted Claude. Those images are removed; the scripts follow the V3 screens and are kept for
+reference.

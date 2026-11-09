@@ -66,36 +66,36 @@ decisions here, and Claude does the typing, only after you say yes.
 <table>
   <tr>
     <td width="50%" valign="top">
-      <img src="site/assets/v4/office-board.webp" alt="A client project: three stages signed off by the client, Design waiting for approval" /><br />
+      <img src="docs/images/office.webp" alt="A client project: three stages signed off by the client, Design waiting for approval" /><br />
       <b>Seven stages, signed off.</b> Idea to Deployment, a staff agent in each. A stage opens
       when the one before it is signed off, by your client or by you.
     </td>
     <td width="50%" valign="top">
-      <img src="site/assets/v4/room-plan.webp" alt="The Plan room with an ADR card: Approve, Discuss, Reject" /><br />
+      <img src="docs/images/plan.webp" alt="The Plan room with an ADR card: Approve, Discuss, Reject" /><br />
       <b>Plan before code.</b> Each agent asks one question at a time on a card, with a
       recommended option, and every real choice becomes an ADR you approve.
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <img src="site/assets/v4/room-design.webp" alt="The Design room: the brief, the screen on a canvas and the chat" /><br />
+      <img src="docs/images/design.webp" alt="The Design room: the brief, the screen on a canvas and the chat" /><br />
       <b>Screens before code.</b> Real HTML screens on a canvas, phone and desktop, light and
       dark. Sign-off writes the handoff for Development.
     </td>
     <td width="50%" valign="top">
-      <img src="site/assets/v4/crew-design.webp" alt="The Design room's Crew tab with a11y-architect checked" /><br />
+      <img src="docs/images/crew.webp" alt="The Design room's Crew tab with a11y-architect checked" /><br />
       <b>A crew in every room.</b> Specialists check the work: accessibility in Design, a code
       review in Development, a security review in Testing. A stage is not ready until they ran.
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <img src="site/assets/v4/room-test.webp" alt="The Testing room: the QA report and the testing summary for the client" /><br />
+      <img src="docs/images/testing.webp" alt="The Testing room: the QA report and the testing summary for the client" /><br />
       <b>Tested before release.</b> QA runs the plan in the browser, logs bugs as issues and
       writes a plain summary with an acceptance list. Client documents export as a PDF.
     </td>
     <td width="50%" valign="top">
-      <img src="site/assets/v4/invoice.webp" alt="The invoice for a client: hours, costs and the total" /><br />
+      <img src="docs/images/invoice.webp" alt="The invoice for a client: hours, costs and the total" /><br />
       <b>Run it like a business.</b> Claude usage per stage, a token budget, time and costs,
       and the invoice at your rate.
     </td>
@@ -127,11 +127,15 @@ decisions here, and Claude does the typing, only after you say yes.
 
 | Projects | Requirements |
 | --- | --- |
-| <img src="site/assets/v4/home.webp" alt="Projects" /> | <img src="site/assets/v4/room-requirements.webp" alt="The Requirements room" /> |
-| **Code** | **Docs vault** |
-| <img src="site/assets/v4/code.webp" alt="The Code tab" /> | <img src="site/assets/v4/docs.webp" alt="The Docs vault" /> |
-| **Claude usage** | **Maintenance office** |
-| <img src="site/assets/v4/usage.webp" alt="Claude usage per stage" /> | <img src="site/assets/v4/maintenance.webp" alt="The maintenance office" /> |
+| <img src="docs/images/home.webp" alt="Projects: client and personal, each with its stage" /> | <img src="docs/images/requirements.webp" alt="The Requirements room with the user stories" /> |
+| **Development: the prototype gate** | **Code** |
+| <img src="docs/images/development.webp" alt="The Development room with the prototype gate" /> | <img src="docs/images/code.webp" alt="The Code tab with a file Claude changed" /> |
+| **Docs vault** | **Claude usage** |
+| <img src="docs/images/docs.webp" alt="The Docs vault with the architecture document" /> | <img src="docs/images/usage.webp" alt="Claude usage per stage and per model" /> |
+| **Meeting** | **Version control** |
+| <img src="docs/images/meeting.webp" alt="The Meeting tab with every agent's work" /> | <img src="docs/images/version-control.webp" alt="A commit for each sign-off and a tag for each release" /> |
+| **Maintenance office** | **Client document as PDF** |
+| <img src="docs/images/maintenance.webp" alt="The maintenance office after release" /> | <img src="docs/images/client-pdf.webp" alt="The requirements as a printable client document" /> |
 
 </details>
 
