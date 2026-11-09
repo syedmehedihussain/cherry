@@ -13,7 +13,9 @@ import { useNavigate } from 'react-router';
 import {
   ChatModeSchema,
   DOCS_ONLY_STAGES,
+  FRESH_SESSION_AT,
   chromeTool,
+  freshSessionNote,
   relativeTime,
   type ChatItem,
   type ChatMode,
@@ -256,7 +258,17 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
     setError(null);
     stick.current = true;
     try {
-      await sendChat(projectId, stage, text, chatMode, m, attachments, effort ?? undefined);
+      await sendChat(
+        projectId,
+        stage,
+        text,
+        chatMode,
+        m,
+        attachments,
+        effort ?? undefined,
+        // Keep going: no automatic fresh session in this chat (ADR-0061).
+        !!state?.conversationId && bigChatOk === state.conversationId,
+      );
       if (!state?.conversationId)
         await queryClient.invalidateQueries({ queryKey: chatKey(projectId, stage) });
       return true;
@@ -495,14 +507,15 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
         )}
         {context &&
           context.window > 0 &&
-          context.used / context.window >= BIG_CHAT &&
+          context.used / context.window >= FRESH_SESSION_AT &&
           !state?.running &&
           bigChatOk !== state?.conversationId && (
             <div className={styles.next} role="status">
               <TriangleAlert size={15} className={styles.stuckIcon} aria-hidden="true" />
               <span>
-                <b>This chat holds {Math.round(context.used / 1000)}k tokens.</b> Every reply reads
-                them again, so even a short question uses about that much of your 5-hour window.
+                <b>This chat holds {Math.round(context.used / 1000)}k tokens.</b> Your next message
+                starts a fresh session with a short note on where this one stopped, so it does not
+                read them all again.
               </span>
               {/* From COMPACT_AT the context meter offers Compact itself. */}
               {context.used / context.window < COMPACT_AT && (
@@ -517,7 +530,7 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
               <button
                 type="button"
                 className={styles.nextGo}
-                title="A new chat with a short note on where this one stopped; nothing is sent yet"
+                title="A new chat with the note in the box; nothing is sent yet"
                 onClick={() =>
                   void newChat(projectId, stage).then(() =>
                     setDraft(projectId, freshSessionNote(stage, sentTexts.at(-1))),
@@ -529,9 +542,10 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
               <button
                 type="button"
                 className={styles.nextLater}
+                title="Stay in this session; every reply reads the whole chat again"
                 onClick={() => setBigChatOk(state?.conversationId ?? null)}
               >
-                Keep going
+                Keep this session
               </button>
             </div>
           )}
@@ -845,22 +859,12 @@ function ClaudeBlock({
   );
 }
 
-/** From this share of the context window the chat offers Compact or a fresh session (#49). */
-const BIG_CHAT = 0.5;
 /** Above this share of the 5-hour window a new job waits for the user's go-ahead (#40). */
 const HIGH_FIVE_HOUR = 80;
 /** The time when a handler runs (never during render). */
 const clock = () => Date.now();
 /** One go-ahead covers the next half hour. */
 const GO_AHEAD_MS = 30 * 60_000;
-
-/** The first message of a fresh session, written by Cherry with no model call (ADR-0055). */
-export function freshSessionNote(stage: Stage, last: string | undefined): string {
-  const about = last
-    ? ` The last chat was about: "${last.replace(/\s+/g, ' ').slice(0, 300)}".`
-    : '';
-  return `Fresh session, to keep the context small.${about} Read _project/STATUS.md and the documents in docs/${stage}/ to see what is done, then carry on with what is left.`;
-}
 
 /** What Retry sends when the failed turn had already done part of the job (#46). */
 export const CONTINUE_JOB =

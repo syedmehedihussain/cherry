@@ -23,6 +23,7 @@ import { STAGES_DIR } from '../stages/profiles.ts';
 import { readiness, stageFiles } from '../stages/focus.ts';
 import { stageProfile } from '../stages/profiles.ts';
 import { stageSkills } from '../stages/skills.ts';
+import { stageSpecialists } from '../stages/specialists.ts';
 
 /** The stage agents and their skills (ADR-0034). */
 export function stageRoutes(home: string, config: ConfigStore) {
@@ -37,6 +38,11 @@ export function stageRoutes(home: string, config: ConfigStore) {
           summary: p.summary,
           docsOnly: p.docsOnly,
           skills: stageSkills(home, stage),
+          specialists: stageSpecialists(stage).map(({ name, description, model }) => ({
+            name,
+            description,
+            ...(model ? { model } : {}),
+          })),
         };
       }),
     }));

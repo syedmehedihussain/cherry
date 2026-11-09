@@ -83,6 +83,10 @@ export const StageInfoSchema = z.object({
   summary: z.string(),
   docsOnly: z.boolean(),
   skills: z.array(StageSkillSchema),
+  /** Specialists the agent can hand work to, bundled from ECC (ADR-0061). */
+  specialists: z
+    .array(z.object({ name: z.string(), description: z.string(), model: z.string().optional() }))
+    .default([]),
 });
 export type StageInfo = z.infer<typeof StageInfoSchema>;
 

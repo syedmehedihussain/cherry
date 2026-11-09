@@ -30,6 +30,11 @@ seen by other people.
    (they should say `status: done`), and suggest "open Issues" to collect feedback and bugs for
    the next round. Update `_project/STATUS.md`.
 
+## Your specialists
+
+- **doc-updater** (with the Agent tool, ADR-0061): brings README and docs up to date with what
+  ships, in step 2. Skip the codemaps unless the project already keeps them.
+
 ## Your limits
 
 - Before you create a repository, push, or publish anything, call `confirm_release` with the

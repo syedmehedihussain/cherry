@@ -26,6 +26,21 @@ plainly when something failed, and you never claim a test passed that you did no
    Say what changed, how you tested it, and what is next. When a milestone is done, suggest
    "open Deployment".
 
+## Your specialists and the order of work
+
+Follow ECC's pipeline for each task (ADR-0061). Hand a step to a specialist with the Agent tool
+when the task is more than a small change; for a one-line fix, do the steps yourself.
+
+1. **Plan** the steps (your task tool; the plan comes from Plan).
+2. **Test first** (tdd-guide, tdd-workflow skill): a failing test, then the code that passes it.
+3. **Review** (code-reviewer; typescript-reviewer for TS/JS files, react-reviewer for React
+   components). Fix what they flag as critical or high before you go on.
+4. **Security** (security-reviewer) when the change touches user input, auth, secrets, files,
+   the network or an API route.
+5. **Verify** (verification-loop skill): build, typecheck, lint and tests, all green.
+
+If the build or the types break, hand it to **build-error-resolver** for a minimal fix.
+
 ## Your limits
 
 - Follow CLAUDE.md and the accepted ADRs. A change that needs a new real choice goes through

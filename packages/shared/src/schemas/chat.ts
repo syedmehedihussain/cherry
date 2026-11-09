@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { DiffLineSchema } from './workspace.ts';
-import { StageSchema } from './common.ts';
+import { StageSchema, type Stage } from './common.ts';
 
 /** A structured question Claude asks (docs/data-model.md §3). */
 export const DecisionOptionSchema = z.object({
@@ -327,6 +327,8 @@ export const ChatSendSchema = z.object({
   effort: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).optional(),
   /** Stored names returned by the upload route. */
   attachments: z.array(z.string().min(1).max(200)).max(MAX_ATTACHMENTS).default([]),
+  /** The user chose Keep going: no automatic fresh session for this send (ADR-0061). */
+  keepSession: z.boolean().optional(),
 });
 export type ChatSend = z.infer<typeof ChatSendSchema>;
 
@@ -339,6 +341,20 @@ export const UploadedFileSchema = z.object({
   size: z.number(),
 });
 export type UploadedFile = z.infer<typeof UploadedFileSchema>;
+
+/**
+ * From this share of the context window the next message starts a fresh session with a short
+ * note, unless the user keeps the session (ADR-0061, the user's 50% rule).
+ */
+export const FRESH_SESSION_AT = 0.5;
+
+/** The first message of a fresh session, written by Cherry with no model call (ADR-0055). */
+export function freshSessionNote(stage: Stage, last: string | undefined): string {
+  const about = last
+    ? ` The last chat was about: "${last.replace(/\s+/g, ' ').slice(0, 300)}".`
+    : '';
+  return `Fresh session, to keep the context small.${about} Read _project/STATUS.md and the documents in docs/${stage}/ to see what is done, then carry on with what is left.`;
+}
 
 export const MODELS = [
   { id: 'sonnet', label: 'Sonnet' },

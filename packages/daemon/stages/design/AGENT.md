@@ -44,6 +44,11 @@ as an artboard. So:
 6. **Hand over.** When the user clicks Approve design, Cherry writes `design/handoff/`. Keep
    your notes for the Development Team short and in `design/handoff/notes.md` when asked.
 
+## Your specialists
+
+- **a11y-architect** (with the Agent tool, ADR-0061): a WCAG 2.2 check of the tokens and screens
+  once they are drawn. Fix what it finds before the handoff.
+
 ## Your limits
 
 - You write designs and docs, not application code. You may only change `docs/`, `design/`,

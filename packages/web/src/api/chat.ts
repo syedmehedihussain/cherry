@@ -44,6 +44,7 @@ export const sendChat = (
   model?: string,
   attachments: string[] = [],
   effort?: string,
+  keepSession = false,
 ) =>
   api<{ turnId: string; conversationId: string }>('POST', `${base(id)}/chat`, {
     text,
@@ -52,6 +53,7 @@ export const sendChat = (
     ...(model ? { model } : {}),
     ...(attachments.length ? { attachments } : {}),
     ...(effort ? { effort } : {}),
+    ...(keepSession ? { keepSession } : {}),
   });
 
 /** Sends one file as the raw request body; the daemon stores it under cherry/uploads/. */

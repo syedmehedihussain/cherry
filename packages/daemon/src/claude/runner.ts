@@ -98,6 +98,11 @@ export interface RunRequest {
   additionalDirectories?: string[];
   /** Local plugin folders to load; Cherry only builds skills-only ones (ADR-0034). */
   plugins?: string[];
+  /** Subagents the session may hand work to (ECC specialists, ADR-0061). */
+  agents?: Record<
+    string,
+    { description: string; prompt: string; tools?: string[]; model?: string }
+  >;
   /** Offer the ask_decision tool. */
   decisions: boolean;
   /** More in-process tools (calibration's note_found / propose_files). */
@@ -347,6 +352,7 @@ export const sdkRunner: Runner = (req) => {
             })),
           }
         : {}),
+      ...(req.agents && Object.keys(req.agents).length ? { agents: req.agents } : {}),
       ...(server ? { mcpServers: { cherry: server } } : {}),
       // Only the cherry MCP server, not the user's own MCP config. Kept off with Chrome: the
       // built-in Claude in Chrome tools must still load (ADR-0037).

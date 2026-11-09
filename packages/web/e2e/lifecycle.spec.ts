@@ -46,6 +46,17 @@ test('Settings, Agents: the seven staff agents, their skills and their personas'
   await expect(page.getByText('release', { exact: true })).toBeVisible();
   await expect(page.getByText('tdd', { exact: true })).toBeVisible();
   await expect(page.getByText(/^Preparation: the /)).toHaveCount(0);
+  // ADR-0061: the ECC specialists and their models.
+  const dev = page
+    .getByRole('region', { name: 'Development Team' })
+    .getByRole('list', { name: 'Specialists' });
+  await expect(dev.getByText('code-reviewer', { exact: true })).toBeVisible();
+  await expect(
+    page
+      .getByRole('region', { name: 'System Architect' })
+      .getByRole('listitem')
+      .filter({ hasText: 'planner' }),
+  ).toContainText('opus');
 
   // V4 o17: edit a persona into ~/.cherry/staff/, then reset it.
   const qa = page.getByRole('region', { name: 'QA Engineer' });

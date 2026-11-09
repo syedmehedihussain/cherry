@@ -421,7 +421,8 @@ function AgentsSection() {
         Your staff: one agent for each stage of the office. Each works only on the jobs you give it
         in its stage room. Magnet, the project manager, is in the Magnet section. To give an agent
         your own skill, put its folder (with a <span className="mono">SKILL.md</span>) in{' '}
-        <span className="mono">~/.cherry/skills/&lt;stage&gt;/</span>.
+        <span className="mono">~/.cherry/skills/&lt;stage&gt;/</span>. Specialists are bundled from
+        ECC; each runs on its own model and follows the room&rsquo;s rules.
       </p>
       {OFFICE_STAGES.map((stage) => {
         const s = info?.find((x) => x.stage === stage);
@@ -443,6 +444,19 @@ function AgentsSection() {
                   </li>
                 ))}
               </ul>
+            )}
+            {s && s.specialists.length > 0 && (
+              <>
+                <p className={styles.agentNote}>Specialists it can hand work to</p>
+                <ul className={styles.agentSkills} aria-label="Specialists">
+                  {s.specialists.map((k) => (
+                    <li key={k.name} title={k.description}>
+                      <span className="mono">{k.name}</span>
+                      {k.model && <span className={styles.agentNote}>{k.model}</span>}
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
             <StaffFile stage={stage} />
           </section>

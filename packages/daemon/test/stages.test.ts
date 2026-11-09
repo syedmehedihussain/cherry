@@ -104,6 +104,9 @@ describe('a chat per stage', () => {
     expect(dev.items.find((i) => i.kind === 'user')).toMatchObject({ text: 'build it' });
     expect(log.requests[0]?.appendSystemPrompt).toContain('**System Architect**');
     expect(log.requests[1]?.appendSystemPrompt).toContain('**Development Team**');
+    // ADR-0061: the room's specialists go with the turn; Plan has its own.
+    expect(Object.keys(log.requests[1]?.agents ?? {})).toContain('code-reviewer');
+    expect(log.requests[0]?.agents?.planner?.model).toBe('opus');
     // Each resumes its own Claude session, never the other's.
     expect(log.requests[1]?.resume).toBeNull();
     const bad = await api('GET', '/api/projects/core/chat?stage=marketing');

@@ -2,8 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 import {
+  FRESH_SESSION_AT,
   PHASES,
   STAGES,
+  freshSessionNote,
   STAGE_LABEL,
   type ChatMode,
   type ChatSend,
@@ -31,6 +33,7 @@ import type { DecisionBroker } from '../claude/decisions.ts';
 import { READ_TOOLS, type RunHandle, type Runner } from '../claude/runner.ts';
 import { Transcript } from '../claude/transcript.ts';
 import { releaseGuard, releaseTool } from '../office/release.ts';
+import { stageSpecialists } from '../stages/specialists.ts';
 import { projectDir } from '../projects/workspace.ts';
 import { recordTurn, recordUsage } from '../usage.ts';
 import { stageGuard, stageProfile } from '../stages/profiles.ts';
@@ -284,6 +287,20 @@ export class ChatService {
     if (live?.running)
       throw conflict('Claude is still working on the last message. Stop it first or wait.');
     for (const a of body.attachments) uploadPath(dir, a);
+    // Over half the context window: this message starts a fresh session with a short note
+    // instead of reading the whole chat again (ADR-0061). Not after a rewind, not for /compact.
+    let fresh: string | null = null;
+    if (live && !live.resumeAt && !body.keepSession && !/^\/(compact|context)\b/.test(body.text)) {
+      const items = live.conversation.list();
+      const end = items.findLast((i) => i.kind === 'turn-end');
+      const ctx = end?.kind === 'turn-end' ? end.context : undefined;
+      if (ctx && ctx.window > 0 && ctx.used / ctx.window >= FRESH_SESSION_AT) {
+        const last = items.findLast((i) => i.kind === 'user' && !!i.text.trim());
+        fresh = freshSessionNote(stage, last?.kind === 'user' ? last.text : undefined);
+        this.endConversation(projectId, stage, live);
+        live = null;
+      }
+    }
     const model =
       body.model ??
       this.stageModel(projectId, stage) ??
@@ -339,7 +356,9 @@ export class ChatService {
     const handle = this.runner({
       cwd: dir,
       // The user's message stays as typed; a project command is expanded for Claude.
-      prompt: withAttachments(withMentions(dir, expandCommand(dir, body.text)), body.attachments),
+      prompt:
+        (fresh ? `${fresh}\n\n` : '') +
+        withAttachments(withMentions(dir, expandCommand(dir, body.text)), body.attachments),
       resume: current.claudeSessionId,
       ...(current.resumeAt ? { resumeAt: current.resumeAt } : {}),
       checkpoints: true,
@@ -363,6 +382,8 @@ export class ChatService {
           ? (tool, input) => stageGuard(stage, dir)(tool, input) ?? guardRelease(tool, input)
           : stageGuard(stage, dir),
       decisions: true,
+      // The stage's specialists (ECC agents) as subagents (ADR-0061).
+      agents: Object.fromEntries(stageSpecialists(stage).map(({ name, ...a }) => [name, a])),
       extraTools: [
         ...(this.adrs?.tools(projectId, 'chat') ?? []),
         // The stage checklist behind the Overview bar (V2.1 w5); Issues counts issues instead.
@@ -650,13 +671,18 @@ export class ChatService {
     const live = this.current(projectId, stage);
     if (live) {
       await this.stop(projectId, stage);
-      this.db
-        .prepare('UPDATE sessions SET ended_at = ? WHERE id = ?')
-        .run(Date.now(), live.conversationId);
-      this.approvals.clearSession(`chat:${live.conversationId}`);
-      this.live.delete(key(projectId, stage));
+      this.endConversation(projectId, stage, live);
     }
     this.publishState(projectId, stage, null);
+  }
+
+  /** Ends a chat that is not running; it stays in History. */
+  private endConversation(projectId: string, stage: Stage, live: Live): void {
+    this.db
+      .prepare('UPDATE sessions SET ended_at = ? WHERE id = ?')
+      .run(Date.now(), live.conversationId);
+    this.approvals.clearSession(`chat:${live.conversationId}`);
+    this.live.delete(key(projectId, stage));
   }
 
   /** The project's folder (throws 404 for a project not in Cherry's list). */

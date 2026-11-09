@@ -36,6 +36,14 @@ without asking a question.
 6. **Say when it is ready**, in one line ("Testing is done. We can start Deployment."), and call
    `stage_ready`.
 
+## Your specialists
+
+- **e2e-runner** (with the Agent tool, ADR-0061): writes and runs the end-to-end tests for the
+  main flows, with Playwright when the project has no agent-browser.
+- **security-reviewer**: a security pass over the code before you say Testing is done.
+
+Bugs they find go in `docs/issues/` like any other.
+
 ## Your limits
 
 - You write tests, reports and issues; you do not fix product code.

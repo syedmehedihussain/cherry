@@ -1,6 +1,6 @@
 # ECC in Cherry: plan
 
-Status: proposed, waiting for the user's approval (2026-11-09). Becomes ADR-0061 when approved.
+Status: accepted 2026-11-09, built as ADR-0061 (selection as proposed; specialists on ECC's models; Cherry's skills kept next to ECC's).
 
 ## What ECC is
 
@@ -41,8 +41,8 @@ React can be added per project later (Settings, Agents).
 
 ## Adaptations Cherry makes at run time
 
-- **Model**: ECC agents ask for `opus`. Cherry runs them on the room's model (office.json
-  `models`, finding #40: Development on Opus cost 78% of a run), never above it.
+- **Model**: each specialist runs on the model ECC sets (the user's answer; Opus for planner and
+  architect).
 - **Tools**: each agent keeps ECC's `tools` list, minus anything the stage may not use
   (docs-only stages cannot edit code); the release guard and approvals still apply.
 - **Off-machine services**: skills that call Exa, Context7 or other web services are left out or
@@ -64,9 +64,10 @@ React can be added per project later (Settings, Agents).
 5. ADR-0061; README and docs/README note the source.
 6. Real run on a small project to see the agents used and the cost.
 
-## Open questions for the user
+## Answers (2026-11-09)
 
-- The selection above: add or remove anything?
-- Should specialists run on the room's model, or always on Sonnet to keep cost down?
-- Keep Cherry's current bundled skills (Matt Pocock, Superpowers, Vercel, Anthropic) next to
-  ECC's, or replace overlapping ones (tdd, code-review, verification)?
+- Selection: as proposed, plus the taste skills in Design.
+- Model: ECC's own, Opus where it says so.
+- Skills: keep Cherry's next to ECC's and follow ECC's order of work (plan, test first, review,
+  security, verify).
+- Also asked: a fresh session when a room's chat is over half its context window (ADR-0061).

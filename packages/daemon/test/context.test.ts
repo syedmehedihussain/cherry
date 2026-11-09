@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { contextUse } from '../src/claude/runner.ts';
-import { fakeRunner } from '../src/claude/fake-runner.ts';
+import { fakeRunner, type FakeLog } from '../src/claude/fake-runner.ts';
 import path from 'node:path';
 import { HOST, testDaemon, write } from './helpers.ts';
 
@@ -62,6 +62,45 @@ describe('context meter', () => {
         kind: 'turn-end',
         context: { used: 30_000, window: 200_000 },
       });
+    } finally {
+      d.cleanup();
+    }
+  });
+
+  // ADR-0061: over half the window, the next message starts a fresh session with a note.
+  it('starts a fresh session past half the window, unless the user keeps it', async () => {
+    const log: FakeLog = { requests: [], permissions: [], decisions: [] };
+    const d = await testDaemon({
+      runner: fakeRunner(() => [{ context: 120_000 }, { text: 'ok' }], log),
+    });
+    try {
+      const cookie = await d.login();
+      write(path.join(d.projectsDir, 'core', 'README.md'), '# core\n');
+      const send = async (payload: Record<string, unknown>) => {
+        const res = await d.app.inject({
+          method: 'POST',
+          url: '/api/projects/core/chat',
+          headers: { host: HOST, cookie },
+          payload,
+        });
+        const start = Date.now();
+        while (d.chat.state('core').running && Date.now() - start < 3000)
+          await new Promise((r) => setTimeout(r, 10));
+        return res.json().conversationId as string;
+      };
+      const first = await send({ text: 'Read every lesson' });
+      // Kept on purpose: same chat, same Claude session.
+      expect(await send({ text: 'One more', keepSession: true })).toBe(first);
+      expect(log.requests[1]?.resume).toBeTruthy();
+      expect(log.requests[1]?.prompt).toBe('One more');
+      // The next message: a new chat, no resume, the note before the user's text.
+      const second = await send({ text: 'Now the quiz' });
+      expect(second).not.toBe(first);
+      expect(log.requests[2]?.resume).toBeNull();
+      expect(log.requests[2]?.prompt).toMatch(
+        /^Fresh session, to keep the context small\. The last chat was about: "One more"\.[^]*\n\nNow the quiz$/,
+      );
+      expect(d.chat.history('core').map((c) => c.id)).toContain(first);
     } finally {
       d.cleanup();
     }
