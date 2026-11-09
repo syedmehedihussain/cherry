@@ -25,6 +25,7 @@ import { BUILD_FROM_HANDOFF } from './starters.ts';
 import { DocReader } from '../Workspace/plan/PlanStage.tsx';
 import { DevGate } from './DevGate.tsx';
 import { BugsTab, QuestionsTab, UatTab } from './StageExtras.tsx';
+import { CrewPanel } from './Crew.tsx';
 import { Usage } from './Usage.tsx';
 import { VersionControl } from './VersionControl.tsx';
 import styles from './StageRoom.module.css';
@@ -260,7 +261,7 @@ function DocsPanel({
   useEffect(() => {
     void refetch();
   }, [items, refetch]);
-  type Tab = 'gate' | 'client' | 'technical' | 'questions' | 'uat' | 'bugs';
+  type Tab = 'gate' | 'client' | 'technical' | 'questions' | 'uat' | 'bugs' | 'crew';
   const [tab, setTab] = useState<Tab>(stage === 'development' ? 'gate' : 'client');
   const isDocs = tab === 'client' || tab === 'technical';
   const list: StageDoc[] = isDocs ? (docs?.[tab] ?? []) : [];
@@ -276,6 +277,7 @@ function DocsPanel({
           ['bugs', 'Bugs', null],
         ] as [Tab, string, null][])
       : []),
+    ['crew', 'Crew', null],
   ];
   return (
     <aside className={styles.docs} aria-label="Documents">
@@ -308,6 +310,7 @@ function DocsPanel({
       {tab === 'questions' && <QuestionsTab projectId={projectId} />}
       {tab === 'uat' && <UatTab projectId={projectId} />}
       {tab === 'bugs' && <BugsTab projectId={projectId} />}
+      {tab === 'crew' && <CrewPanel projectId={projectId} stage={stage} />}
       {isDocs && list.length > 0 && (
         <ul className={styles.list}>
           {list.map((d) => (

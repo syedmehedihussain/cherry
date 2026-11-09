@@ -790,3 +790,18 @@ test('a room keeps unsent text across a reload and shows a new room model', asyn
   await page.getByRole('combobox', { name: 'Model' }).selectOption('haiku');
   await expect(page.getByRole('button', { name: 'Model: Haiku' })).toBeVisible();
 });
+
+// ADR-0062: the room's crew, with what fits the job; a click only fills the message box.
+test('the Crew tab lists the skills and puts one in the message box', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByRole('radio', { name: 'Personal project' }).click();
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app-36');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await page.getByRole('button', { name: 'Idea, On-going' }).click();
+  await page.getByRole('tab', { name: 'Crew' }).click();
+  const skills = page.getByRole('region', { name: 'Skills' });
+  await skills.getByRole('button', { name: 'product-lens' }).click();
+  await expect(page.getByLabel('Message Claude')).toHaveValue('/cherry-idea:product-lens ');
+});

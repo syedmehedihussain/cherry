@@ -12,6 +12,7 @@ import {
 import { projectCommands } from '../chat/commands.ts';
 import { contentTypeFor } from '../chat/uploads.ts';
 import type { ChatService } from '../chat/service.ts';
+import { requiredChecks } from '../stages/specialists.ts';
 import type { ApprovalBroker } from '../claude/approvals.ts';
 import type { DecisionBroker } from '../claude/decisions.ts';
 
@@ -29,6 +30,15 @@ export function chatRoutes(
     app.get('/api/projects/:id/chat', async (req) =>
       chat.state(IdParams.parse(req.params).id, stageOf(req.query)),
     );
+
+    // The room's crew panel (ADR-0062): specialist runs this cycle and the required checks.
+    app.get('/api/projects/:id/crew', async (req) => {
+      const id = IdParams.parse(req.params).id;
+      const stage = stageOf(req.query);
+      chat.dirOf(id);
+      const runs = chat.specialistRuns(id, stage);
+      return { runs, checks: requiredChecks(stage, runs) };
+    });
 
     // The project's own slash commands for the composer menu (V2.1 w7.1).
     app.get('/api/projects/:id/commands', async (req) => ({

@@ -7,6 +7,7 @@ import { approveDesign, exportUrl, useDesignScreens } from '../../../api/design.
 import { useProjectDetail } from '../../../api/workspace.ts';
 import { BriefPanel } from './BriefPanel.tsx';
 import { ChatTab, readMode } from '../ChatTab.tsx';
+import { CrewPanel } from '../../Office/Crew.tsx';
 import { Canvas, type CanvasComment } from './Canvas.tsx';
 import { BUILD_FROM_HANDOFF } from '../../Office/starters.ts';
 import styles from './DesignStage.module.css';
@@ -43,6 +44,8 @@ export function DesignStage({
   const data = useDesignScreens(projectId).data;
   const screens = useMemo(() => data ?? [], [data]);
   const [focus, setFocus] = useState<string | null>(null);
+  // The chat, or the crew panel in the same column (ADR-0062).
+  const [side, setSide] = useState<'chat' | 'crew'>('chat');
   const card = useProjectDetail(projectId).data?.card;
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -156,7 +159,29 @@ export function DesignStage({
         </div>
       )}
       <div className={styles.chat}>
-        <ChatTab projectId={projectId} stage="design" now={now} onOpenFile={openFile} />
+        <div className={styles.sideTabs} role="tablist" aria-label="Designer side">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={side === 'chat'}
+            onClick={() => setSide('chat')}
+          >
+            UI/UX Designer
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={side === 'crew'}
+            onClick={() => setSide('crew')}
+          >
+            Crew
+          </button>
+        </div>
+        {side === 'crew' ? (
+          <CrewPanel projectId={projectId} stage="design" onAsk={() => setSide('chat')} />
+        ) : (
+          <ChatTab projectId={projectId} stage="design" now={now} onOpenFile={openFile} />
+        )}
         {statusLine}
       </div>
     </div>

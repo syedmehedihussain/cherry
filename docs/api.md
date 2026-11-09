@@ -85,6 +85,7 @@ folder (see `security.md`).
 | POST | `/api/projects/:id/chat/plans/:itemId/approve` · `/dismiss` | Approve plan: Development tasks, phase, the Builder starts in Auto · Keep planning (ADR-0041) |
 | POST | `/api/projects/:id/chat/stop?stage=` | interrupts the stage's running turn |
 | GET | `/api/projects/:id/commands` | `{ commands: [{ name, description }] }` from `.claude/commands/*.md`; a chat message `/name args` is expanded for Claude (`$ARGUMENTS`) and kept as typed in the chat |
+| GET | `/api/projects/:id/crew?stage=` | `{ runs: { agent: count }, checks: [{ any, done }] }`: specialist runs in the stage this cycle and its required checks (ADR-0062) |
 | POST | `/api/projects/:id/chat/explain?stage=` | `{ turnId }` → `{ text }`: Haiku summary of what that turn changed (diff capped at 6 KB, no tools). Only on the user's click; cached per turn (ADR-0022) |
 | POST | `/api/projects/:id/chat/new?stage=` | starts a fresh session for that stage only |
 | GET | `/api/allow-rules` | `{ rules: [{ projectId, rule, createdAt }] }`: "Always allow here" rules, `run:<command>` or `tool:<name>` (ADR-0043) |

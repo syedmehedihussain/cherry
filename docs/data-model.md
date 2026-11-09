@@ -366,6 +366,12 @@ with cache writes), `output_tokens, cache_read_tokens, cost_usd` (the API value)
 and `first_row` (1 on a turn's first row, which carries the turn's time). The Claude usage and
 Invoice tabs add it up per project.
 
+### `specialist_runs` (ADR-0062, migration 011)
+
+One row per finished specialist (subagent) run: `id` (the tool use id, so a replay does not count
+twice), `at, project_id, stage, agent`. `stage_ready` and the Crew panel count the runs since the
+current cycle started to check the stage's required specialists.
+
 ## 8. Scan agents and reports (ADR-0012)
 
 Custom scan agent, `~/.cherry/agents/<id>.md` (the file name is the id):

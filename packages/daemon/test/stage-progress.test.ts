@@ -158,8 +158,9 @@ describe('Stage checklist and phase', () => {
     const pj = JSON.parse(readFileSync(path.join(dir(), '_project', 'project.json'), 'utf8'));
     expect(pj.phase).toBe('development');
     const start = log.requests.at(-1)!;
-    expect(start.prompt).toBe(
-      'Build the approved plan "Offline mode" in docs/specs/offline.md. Work through the Development checklist items t23 to t24 in order: build each one, test it, and mark it done with stage_checklist before the next. Ask me only for real choices.',
+    // Cherry's job hint (ADR-0062) may follow the message.
+    expect(start.prompt).toMatch(
+      /^Build the approved plan "Offline mode" in docs\/specs\/offline\.md\. Work through the Development checklist items t23 to t24 in order: build each one, test it, and mark it done with stage_checklist before the next\. Ask me only for real choices\./,
     );
     expect(start.appendSystemPrompt).toMatch(/auto mode/);
     // Approved once: a second click is refused.

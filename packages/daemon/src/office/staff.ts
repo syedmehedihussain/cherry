@@ -75,6 +75,8 @@ export function stageReadyTool(
   office: OfficeService,
   projectId: string,
   stage: OfficeStage,
+  /** The stage's required specialist checks still missing, or null (ADR-0062). */
+  missing?: () => string | null,
 ): CustomTool {
   return {
     name: STAGE_READY_TOOL,
@@ -83,6 +85,11 @@ export function stageReadyTool(
     handler: async (args) => {
       const ready = (args as { ready?: boolean }).ready !== false;
       try {
+        // The prototype is shown before the full build; the checks come before the stage is done.
+        const early =
+          stage === 'development' && office.get(projectId)?.cycles.at(-1)?.devGate !== 'approved';
+        const gap = ready && !early ? (missing?.() ?? null) : null;
+        if (gap) return { ok: false, text: gap };
         const o = office.setReady(projectId, stage, ready);
         const prototype =
           stage === 'development' && o.cycles[o.cycles.length - 1]!.devGate !== 'approved';

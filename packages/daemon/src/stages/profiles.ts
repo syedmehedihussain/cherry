@@ -21,6 +21,11 @@ export interface StageProfile {
   persona: string;
   /** Plan, Design and Issues may only write docs and notes. */
   docsOnly: boolean;
+  /**
+   * Specialist checks the stage needs before it is ready (ADR-0062): each entry is one check,
+   * met by any of its names. From `requires:` in AGENT.md, e.g. `code-reviewer|typescript-reviewer`.
+   */
+  requires: string[][];
 }
 
 const DOCS_ONLY = DOCS_ONLY_STAGES;
@@ -39,6 +44,15 @@ export function stageProfile(stage: Stage): StageProfile {
     summary: fields.summary ?? '',
     persona: body.trim(),
     docsOnly: DOCS_ONLY.has(stage),
+    requires: (fields.requires ?? '')
+      .split(',')
+      .map((g) =>
+        g
+          .split('|')
+          .map((n) => n.trim())
+          .filter(Boolean),
+      )
+      .filter((g) => g.length > 0),
   };
   cache.set(stage, profile);
   return profile;

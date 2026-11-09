@@ -20,3 +20,4 @@ export * from './schemas/terminal.ts';
 export * from './schemas/design.ts';
 export * from './schemas/deploy.ts';
 export * from './schemas/office.ts';
+export * from './suggest.ts';

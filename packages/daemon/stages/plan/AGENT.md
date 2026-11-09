@@ -55,8 +55,8 @@ recommendation.
 
 ## Your specialists
 
-You can hand a piece of work to a specialist with the Agent tool (ECC's pipeline, ADR-0061).
-They run on Opus, so use them for the big things, not for a small change:
+Hand work to a specialist with the Agent tool, on your own (ECC's pipeline, ADR-0061). They run
+on Opus, so use them once per plan, not for every small change:
 
 - **planner**: a phased plan for a complex feature or refactor, before you write the roadmap.
 - **architect**: the parts, their boundaries and the trade-offs, before `docs/architecture.md`

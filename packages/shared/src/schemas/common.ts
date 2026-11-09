@@ -90,6 +90,13 @@ export const StageInfoSchema = z.object({
 });
 export type StageInfo = z.infer<typeof StageInfoSchema>;
 
+/** GET /api/projects/:id/crew?stage=: specialist runs this cycle and the required checks (ADR-0062). */
+export const CrewSchema = z.object({
+  runs: z.record(z.string(), z.number()),
+  checks: z.array(z.object({ any: z.array(z.string()), done: z.boolean() })),
+});
+export type Crew = z.infer<typeof CrewSchema>;
+
 /** One line of the Preparation readiness check (ADR-0034). */
 export const ReadinessItemSchema = z.object({
   id: z.string(),

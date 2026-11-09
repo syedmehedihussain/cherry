@@ -5,6 +5,7 @@ import {
   FRESH_SESSION_AT,
   PHASES,
   STAGES,
+  suggest,
   freshSessionNote,
   STAGE_LABEL,
   type ChatMode,
@@ -33,11 +34,16 @@ import type { DecisionBroker } from '../claude/decisions.ts';
 import { READ_TOOLS, type RunHandle, type Runner } from '../claude/runner.ts';
 import { Transcript } from '../claude/transcript.ts';
 import { releaseGuard, releaseTool } from '../office/release.ts';
-import { stageSpecialists } from '../stages/specialists.ts';
+import {
+  missingChecks,
+  recordSpecialistRun,
+  specialistRuns,
+  stageSpecialists,
+} from '../stages/specialists.ts';
 import { projectDir } from '../projects/workspace.ts';
 import { recordTurn, recordUsage } from '../usage.ts';
 import { stageGuard, stageProfile } from '../stages/profiles.ts';
-import { buildStagePlugin } from '../stages/skills.ts';
+import { buildStagePlugin, stageSkills } from '../stages/skills.ts';
 import { CHECKLIST_TOOL, checklistTool, setPhase } from '../stages/checklist.ts';
 import {
   PROPOSE_PLAN_TOOL,
@@ -65,6 +71,26 @@ export function withAttachments(text: string, attachments: string[]): string {
 export const CHROME_PROMPT =
   "- You can use the user's Chrome through the mcp__claude-in-chrome__ tools: open the app you built on localhost, click through it, read the console and take screenshots to check your work. It is the user's real browser, signed in to their accounts: work in a new tab, do not read or touch their other tabs, never submit payments, passwords or messages, and say what you will do before you do it. The tools run without asking, so take care. Other apps of the user's run on localhost too: before you start a server, check the port is free (ss -ltn), and before you clear storage or change data in a page, check its title is this project's app.";
 
+/**
+ * The skills and specialists that fit this message, by shared words (ADR-0062, no model call).
+ * Goes after the user's text; empty for a slash command or when nothing fits.
+ */
+export function jobHint(home: string, stage: Stage, text: string): string {
+  if (text.trimStart().startsWith('/')) return '';
+  const skills = suggest(text, stageSkills(home, stage), 3, 2);
+  const crew = suggest(text, stageSpecialists(stage), 2, 3);
+  if (!skills.length && !crew.length) return '';
+  const parts = [
+    skills.length
+      ? `the skills ${skills.map((s) => `cherry-${stage}:${s.name}`).join(', ')} (open them with the Skill tool)`
+      : '',
+    crew.length
+      ? `the specialists ${crew.map((s) => s.name).join(', ')} (hand them work with the Agent tool)`
+      : '',
+  ].filter(Boolean);
+  return `\n\n[Cherry: for this job, look at ${parts.join(' and ')}. Use what fits; skip what does not.]`;
+}
+
 /** The common rules, then the stage agent's persona (ADR-0034). */
 export function chatSystemPrompt(
   stage: Stage,
@@ -83,6 +109,7 @@ export function chatSystemPrompt(
     '- Change files with Edit or Write, so the user sees a diff on the approval card. Do not change files with sed -i, here-docs, redirects or scripts in Bash; use Bash to run things (tests, builds, git), not to edit.',
     '- Keep .gitignore current: when you add something that makes build output, caches, dependencies, local env files or secrets, add it to .gitignore (create the file if it is missing).',
     "- Skills: follow a skill's steps, but where it differs from this project's conventions, the project wins: decisions go through propose_decision and the project's ADR template, issues are files in docs/issues/, specs go in docs/specs/, plans in docs/roadmap.md. When a skill wants the OS temp folder or a place outside the project, use _project/tmp/ instead (for the brainstorming visual companion pass --project-dir _project/tmp). When a skill hands off to a skill you do not have, stop there and say which Cherry tab continues the work.",
+    `- Your skills and specialists are your tools: use them on your own, without waiting for the user to ask. Open a skill with the Skill tool when a step matches it. Hand reviews and checks to your specialists with the Agent tool, in the foreground, and fix what they find.${profile.requires.length ? ` Before stage_ready, this stage needs ${profile.requires.map((g) => g.join(' or ')).join(' and ')} to have checked the work; Cherry checks this.` : ''}`,
     ...(stage !== 'issues'
       ? [
           `- Your ${STAGE_LABEL[stage]} checklist (the ${CHECKLIST_TOOL} tool) is the progress bar the user sees on the Overview. Read it before you start. As you work, add what is still left to decide or write in this stage, mark items done once the project files cover them, and drop items that do not apply. Keep items short. Never mark an item done that the files do not show. When every item is finished, say the stage is ready and what the next stage is.`,
@@ -164,8 +191,23 @@ export class ChatService {
       transcript: new Transcript(this.transcriptFile(conversationId)),
       approvals: this.approvals,
       decisions: this.decisions,
-      onItem: (item) =>
-        this.hub.publish(topic, 'chat.item', { projectId, stage, conversationId, item }),
+      onItem: (item) => {
+        // A specialist that finished counts toward the stage's required checks (ADR-0062).
+        if (
+          item.kind === 'tool' &&
+          (item.tool === 'Agent' || item.tool === 'Task') &&
+          item.status === 'ok' &&
+          item.sub
+        )
+          recordSpecialistRun(this.db, {
+            id: item.id,
+            at: item.at,
+            projectId,
+            stage,
+            agent: item.sub.type,
+          });
+        this.hub.publish(topic, 'chat.item', { projectId, stage, conversationId, item });
+      },
       onDelta: (itemId, turnId, text) =>
         this.hub.publish(topic, 'chat.delta', {
           projectId,
@@ -358,7 +400,8 @@ export class ChatService {
       // The user's message stays as typed; a project command is expanded for Claude.
       prompt:
         (fresh ? `${fresh}\n\n` : '') +
-        withAttachments(withMentions(dir, expandCommand(dir, body.text)), body.attachments),
+        withAttachments(withMentions(dir, expandCommand(dir, body.text)), body.attachments) +
+        jobHint(this.home, stage, body.text),
       resume: current.claudeSessionId,
       ...(current.resumeAt ? { resumeAt: current.resumeAt } : {}),
       checkpoints: true,
@@ -405,7 +448,11 @@ export class ChatService {
             ]
           : []),
         ...(officeStage && this.office
-          ? [stageReadyTool(this.office, projectId, officeStage)]
+          ? [
+              stageReadyTool(this.office, projectId, officeStage, () =>
+                missingChecks(stage, this.specialistRuns(projectId, stage, officeFile)),
+              ),
+            ]
           : []),
       ],
       onPermission: (tool, input, id) => current.conversation.permission(tool, input, id),
@@ -454,6 +501,24 @@ export class ChatService {
       this.publishState(projectId, stage, current);
     }
     return { turnId, conversationId: current.conversationId };
+  }
+
+  /** Specialist runs in the stage since the current cycle started (ADR-0062). */
+  specialistRuns(
+    projectId: string,
+    stage: Stage,
+    office?: OfficeFile | null,
+  ): Record<string, number> {
+    let file = office;
+    if (file === undefined) {
+      try {
+        file = this.office?.get(projectId) ?? null;
+      } catch {
+        file = null;
+      }
+    }
+    const since = Date.parse(file?.cycles.at(-1)?.startedAt ?? '') || 0;
+    return specialistRuns(this.db, projectId, stage, since);
   }
 
   /** Messages Cherry sends for the user while Claude is busy; sent when the turn ends. */

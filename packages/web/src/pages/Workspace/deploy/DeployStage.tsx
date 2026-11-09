@@ -32,6 +32,7 @@ import { startRun, stopRun, useRun } from '../../../api/run.ts';
 import { shortUrl } from '../../../lib/paths.ts';
 import { useStages } from '../../../state/stage.ts';
 import { ChatTab, readMode } from '../ChatTab.tsx';
+import { CrewPanel } from '../../Office/Crew.tsx';
 import styles from './DeployStage.module.css';
 
 const PHONE = { w: 375, h: 812 };
@@ -70,7 +71,7 @@ export function DeployStage({
   useLiveBrowserTest(projectId);
   const shipping = !!useChat(projectId, 'deployment').data?.running;
   const [device, setDevice] = useState<'phone' | 'desktop'>('desktop');
-  const [side, setSide] = useState<'cockpit' | 'shipper'>('cockpit');
+  const [side, setSide] = useState<'cockpit' | 'shipper' | 'crew'>('cockpit');
   const [open, setOpen] = useState<string | null>(null);
   const [confirm, setConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -260,8 +261,18 @@ export function DeployStage({
             DevOps Engineer
             {shipping && <span className={styles.live} aria-label="working" />}
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={side === 'crew'}
+            onClick={() => setSide('crew')}
+          >
+            Crew
+          </button>
         </div>
-        {side === 'shipper' ? (
+        {side === 'crew' ? (
+          <CrewPanel projectId={projectId} stage="deployment" onAsk={() => setSide('shipper')} />
+        ) : side === 'shipper' ? (
           <div className={styles.chat}>
             <ChatTab projectId={projectId} stage="deployment" now={now} />
             {statusLine}

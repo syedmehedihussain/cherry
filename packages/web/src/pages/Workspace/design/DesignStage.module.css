@@ -12,6 +12,29 @@
   flex-direction: column;
   border-left: 1px solid var(--b);
 }
+.sideTabs {
+  height: 40px;
+  flex: none;
+  display: flex;
+  gap: 4px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--b);
+}
+.sideTabs button {
+  padding: 0 8px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  color: var(--t3);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+.sideTabs button[aria-selected='true'] {
+  color: var(--t1);
+  border-bottom-color: var(--t1);
+}
 
 @media (max-width: 1280px) {
   .design {
