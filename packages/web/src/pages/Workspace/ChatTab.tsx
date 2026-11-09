@@ -558,6 +558,7 @@ export function ChatTab({ projectId, stage, now, onOpenFile }: ChatTabProps) {
           onMode={changeMode}
           draft={draft}
           onDraftUsed={() => setDraft(projectId, '')}
+          storageKey={`cherry.unsent.${projectId}.${stage}`}
           onAnswerKey={(key) => answerKey(scroller.current, key)}
           onSend={guardedSend}
           onStop={() => void stopChat(projectId, stage)}

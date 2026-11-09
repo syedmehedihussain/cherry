@@ -772,3 +772,21 @@ test('cost guard: fresh session for a big chat, a go-ahead when the 5-hour windo
   await held.getByRole('button', { name: 'Cancel' }).click();
   await expect(box).toHaveValue('Build the whole site');
 });
+
+// Demo run: unsent text survives a reload, and the room model shows in the composer at once.
+test('a room keeps unsent text across a reload and shows a new room model', async ({ page }) => {
+  await page.goto(`/#login=${await loginCode()}`);
+  await page.getByRole('link', { name: 'New project' }).click();
+  await page.getByRole('radio', { name: 'Personal project' }).click();
+  await page.getByRole('textbox', { name: 'Idea' }).fill('A members app');
+  await page.getByLabel('Folder name').fill('gym-app-35');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await page.getByRole('button', { name: 'Idea, On-going' }).click();
+  const box = page.getByLabel('Message Claude');
+  await expect(box).toHaveValue(/A members app/);
+  await page.reload();
+  await expect(box).toHaveValue(/A members app/);
+
+  await page.getByRole('combobox', { name: 'Model' }).selectOption('haiku');
+  await expect(page.getByRole('button', { name: 'Model: Haiku' })).toBeVisible();
+});

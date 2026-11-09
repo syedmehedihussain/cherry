@@ -59,8 +59,8 @@ describe('Stage checklist and phase', () => {
     ];
     await api('POST', '/api/projects/core/chat', { text: 'plan', stage: 'plan' });
     await idle('plan');
-    expect(log.calls?.[0]?.text).toMatch(/^Plan checklist, 0\/6 finished:\nt1 \[todo\] Problem/);
-    expect(log.calls?.[1]?.text).toMatch(/Plan checklist, 3\/7 finished/);
+    expect(log.calls?.[0]?.text).toMatch(/^Plan checklist, 0\/9 finished:\nt1 \[todo\] Problem/);
+    expect(log.calls?.[1]?.text).toMatch(/Plan checklist, 3\/10 finished/);
     expect(log.calls?.[1]?.text).toMatch(/Not in this checklist \(ignored\): t99/);
     const plan = tasks().tasks.filter((t) => t.phase === 'plan');
     expect(plan.map((t) => t.status)).toEqual([
@@ -71,6 +71,9 @@ describe('Stage checklist and phase', () => {
       'skipped',
       'todo',
       'todo',
+      'todo',
+      'todo',
+      'todo',
     ]);
     expect(plan.at(-1)?.title).toBe('Pricing model');
     expect(log.permissions).toEqual([]);
@@ -78,11 +81,11 @@ describe('Stage checklist and phase', () => {
   });
 
   it('only touches its own stage, and Issues has no checklist', async () => {
-    script = [{ call: { name: 'stage_checklist', input: { done: ['t7'] } } }];
+    script = [{ call: { name: 'stage_checklist', input: { done: ['t10'] } } }];
     await api('POST', '/api/projects/core/chat', { text: 'plan', stage: 'plan' });
     await idle('plan');
-    // t7 is a Design item.
-    expect(tasks().tasks.find((t) => t.id === 't7')?.status).toBe('todo');
+    // t10 is a Design item.
+    expect(tasks().tasks.find((t) => t.id === 't10')?.status).toBe('todo');
     script = [{ text: 'ok' }];
     await api('POST', '/api/projects/core/chat', { text: 'triage', stage: 'issues' });
     await idle('issues');
@@ -138,14 +141,14 @@ describe('Stage checklist and phase', () => {
 
     script = [{ text: 'Building.' }];
     const r = await api('POST', `/api/projects/core/chat/plans/${plan.id}/approve`);
-    expect(r.body.taskIds).toEqual(['t22', 't23']);
+    expect(r.body.taskIds).toEqual(['t23', 't24']);
     await idle('development');
     const dev = tasks()
       .tasks.filter((t) => t.phase === 'development')
       .slice(-2);
     expect(dev.map((t) => [t.id, t.title, t.status])).toEqual([
-      ['t22', 'Cache the data', 'todo'],
-      ['t23', 'Sync on reconnect', 'todo'],
+      ['t23', 'Cache the data', 'todo'],
+      ['t24', 'Sync on reconnect', 'todo'],
     ]);
     expect(
       tasks()
@@ -156,7 +159,7 @@ describe('Stage checklist and phase', () => {
     expect(pj.phase).toBe('development');
     const start = log.requests.at(-1)!;
     expect(start.prompt).toBe(
-      'Build the approved plan "Offline mode" in docs/specs/offline.md. Work through the Development checklist items t22 to t23 in order: build each one, test it, and mark it done with stage_checklist before the next. Ask me only for real choices.',
+      'Build the approved plan "Offline mode" in docs/specs/offline.md. Work through the Development checklist items t23 to t24 in order: build each one, test it, and mark it done with stage_checklist before the next. Ask me only for real choices.',
     );
     expect(start.appendSystemPrompt).toMatch(/auto mode/);
     // Approved once: a second click is refused.

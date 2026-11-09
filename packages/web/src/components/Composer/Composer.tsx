@@ -63,6 +63,16 @@ export interface SlashCommand {
 
 const SLASH = /^\/([\w:.-]*)$/;
 
+/** The unsent text kept for a room (a per-browser convenience; empty when storage fails). */
+function readUnsent(key: string | undefined): string {
+  if (!key) return '';
+  try {
+    return localStorage.getItem(key) ?? '';
+  } catch {
+    return '';
+  }
+}
+
 interface ComposerProps {
   running: boolean;
   /** Claude waits for an approval or decision above. */
@@ -73,6 +83,8 @@ interface ComposerProps {
   effort: Effort | null;
   draft?: string;
   onDraftUsed?: () => void;
+  /** Keeps unsent text in this browser under this key, so a reload does not lose it. */
+  storageKey?: string;
   mode: ChatMode;
   onMode(mode: ChatMode): void;
   onSend(text: string, mode: ChatMode, model: string, attachments: string[]): Promise<boolean>;
@@ -114,6 +126,7 @@ export function Composer({
   onMode,
   draft,
   onDraftUsed,
+  storageKey,
   onSend,
   onStop,
   onModel,
@@ -128,7 +141,22 @@ export function Composer({
   placeholder,
   onAnswerKey,
 }: ComposerProps) {
-  const [text, setText] = useState('');
+  const [text, setText] = useState(() => readUnsent(storageKey));
+  // Another room in the same composer: show that room's unsent text.
+  const [textKey, setTextKey] = useState(storageKey);
+  if (storageKey !== textKey) {
+    setTextKey(storageKey);
+    setText(readUnsent(storageKey));
+  }
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      if (text) localStorage.setItem(storageKey, text);
+      else localStorage.removeItem(storageKey);
+    } catch {
+      // Storage blocked: the text just is not kept across a reload.
+    }
+  }, [storageKey, text]);
   const [shortcuts, setShortcuts] = useState(false);
   // ↑ / ↓ through earlier messages, like the CLI: the index shown, and the draft to go back to.
   const [recall, setRecall] = useState<{ index: number; draft: string } | null>(null);

@@ -72,16 +72,14 @@ const PRESET: Record<Phase, string[]> = {
     'Scope of v1 and what is out',
     'Requirements with acceptance criteria',
     'Stack decision as an ADR',
-    'Risks and open questions',
-    'First roadmap milestone',
-  ],
-  design: [
-    'Main screens',
     'Architecture',
     'Data model',
     'API or interfaces',
-    'Design tokens and style',
+    'Risks and open questions',
+    'First roadmap milestone',
   ],
+  // V4: Plan writes the architecture, data model and API; Design draws (demo run).
+  design: ['Design tokens and style', 'Main screens', 'Accessibility check'],
   preparation: ['Repository and CI', 'Project skeleton that runs', 'A first passing test'],
   development: [
     'Build the first feature end to end',

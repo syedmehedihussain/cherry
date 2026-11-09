@@ -17,7 +17,7 @@ test('the Plan bar fills as the System Architect works, then Move to Design', as
   const aside = await openSide(page, 'Overview');
   const card = aside.getByRole('region', { name: 'Plan progress' });
   await expect(card).toContainText('0%');
-  await expect(card).toContainText('6 left');
+  await expect(card).toContainText('9 left');
   await expect(card).toContainText('Problem and who it is for');
 
   await page
@@ -26,9 +26,9 @@ test('the Plan bar fills as the System Architect works, then Move to Design', as
       'This is a new project. Here is the idea:\n\nA kite log for windy days\n\nHelp me plan it.',
     );
   await page.getByRole('button', { name: 'Send' }).click();
-  await expect(page.getByText('Two of six done.')).toBeVisible();
-  await expect(card).toContainText('33%');
-  await expect(card).toContainText('4 left');
+  await expect(page.getByText('Two of nine done.')).toBeVisible();
+  await expect(card).toContainText('22%');
+  await expect(card).toContainText('7 left');
   await expect(card).not.toContainText('Problem and who it is for');
 
   await page.getByPlaceholder(/^Reply to/).fill('Finish the plan');
@@ -45,7 +45,7 @@ test('the Plan bar fills as the System Architect works, then Move to Design', as
     'true',
   );
   await expect(page.getByLabel('Message Claude')).toHaveValue(/^Handoff from Plan:\n/);
-  await expect(aside.getByRole('region', { name: 'Design progress' })).toContainText('5 left');
+  await expect(aside.getByRole('region', { name: 'Design progress' })).toContainText('3 left');
 });
 
 // ADR-0041: plan the next piece in Plan, Approve plan, and the Development Team starts in Development.

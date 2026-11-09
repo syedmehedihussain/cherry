@@ -11,9 +11,9 @@ import {
   type StageModel,
   MODELS,
 } from '@cherry/shared';
-import { useChat, useChatDraft, useLiveChat } from '../../api/chat.ts';
+import { chatKey, useChat, useChatDraft, useLiveChat } from '../../api/chat.ts';
 import { officeSettings, useStageDocs } from '../../api/office.ts';
-import { useConfig, usePlanUsage } from '../../api/queries.ts';
+import { queryClient, useConfig, usePlanUsage } from '../../api/queries.ts';
 import { useLiveProject } from '../../api/workspace.ts';
 import { resetText } from '../../components/PlanUsage/PlanUsage.tsx';
 import { useNow } from '../../lib/useNow.ts';
@@ -163,7 +163,10 @@ export function StageRoom({
             onChange={(e) =>
               void officeSettings(projectId, {
                 models: { [stage]: (e.target.value || null) as StageModel | null },
-              })
+              }).then(() =>
+                // The composer shows the chat state's model: fetch it again (demo run).
+                queryClient.invalidateQueries({ queryKey: chatKey(projectId, stage) }),
+              )
             }
           >
             <option value="">Default</option>

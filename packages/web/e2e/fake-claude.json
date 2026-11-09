@@ -336,7 +336,7 @@
         "call": {
           "name": "stage_checklist",
           "input": {
-            "done": ["t22"]
+            "done": ["t23"]
           }
         }
       },
@@ -380,8 +380,8 @@
         "call": {
           "name": "stage_checklist",
           "input": {
-            "done": ["t3", "t4", "t5"],
-            "drop": ["t6"]
+            "done": ["t3", "t4", "t5", "t6", "t7", "t8"],
+            "drop": ["t9"]
           }
         }
       },
@@ -405,7 +405,7 @@
         }
       },
       {
-        "text": "Two of six done."
+        "text": "Two of nine done."
       }
     ]
   },
