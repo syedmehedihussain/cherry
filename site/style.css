@@ -212,7 +212,7 @@ p {
   padding-top: 88px;
 }
 .hero-copy {
-  max-width: 720px;
+  max-width: 900px;
 }
 h1 {
   margin: 0;
@@ -296,7 +296,7 @@ h2 {
   text-underline-offset: 3px;
 }
 
-/* Features: an asymmetric bento with exactly seven cells. */
+/* Business: a bento of four cells, wide and narrow. */
 .features {
   margin-top: 160px;
 }
@@ -352,88 +352,307 @@ h2 {
 .tile:hover img {
   transform: scale(1.015);
 }
-.t-approve,
-.t-changes {
-  grid-column: span 4;
-}
-.t-survey,
-.t-run,
-.t-scan,
-.t-magnet,
-.t-more {
-  grid-column: span 2;
-}
 .tile img {
   aspect-ratio: 16 / 10;
 }
-/* The one tinted cell: no image, a short list. */
-.t-more {
-  grid-column: span 2;
-  padding: 26px;
+
+/* Eyebrow over the hero heading */
+.eyebrow {
+  margin: 0 0 18px;
+  font: 500 14px var(--mono);
+  color: var(--accent-text);
+  letter-spacing: -0.01em;
+}
+.kicker {
+  margin: 0 0 10px;
+  font: 500 13px var(--mono);
+  color: var(--accent-text);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Why: two paragraphs under one heading. */
+.why {
+  margin-top: 160px;
+}
+.why-grid {
+  margin-top: 36px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 48px;
+  max-width: 1000px;
+}
+.why-grid p {
+  margin: 0;
+  color: var(--t2);
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+/* The office: eight stage cells in a 4 x 2 grid, then the board. */
+.office {
+  margin-top: 180px;
+}
+.stages {
+  list-style: none;
+  margin: 56px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.stage {
+  padding: 24px 22px 26px;
+  border-radius: var(--r-panel);
+  border: 1px solid var(--line);
+  background: var(--s1);
+  transition: border-color 0.3s var(--ease);
+}
+.stage:hover {
+  border-color: var(--line-strong);
+}
+.stage .num {
+  font: 500 13px var(--mono);
+  color: var(--t3);
+}
+.stage h3 {
+  margin: 28px 0 0;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+.stage .role {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: var(--accent-text);
+}
+.stage p:last-child {
+  margin: 12px 0 0;
+  color: var(--t2);
+  font-size: 15px;
+}
+.stage-live {
   background:
     radial-gradient(120% 90% at 100% 0%, rgba(59, 130, 246, 0.16), transparent 60%), var(--s2);
 }
-.t-more ul {
+.shot {
+  margin: 56px 0 0;
+}
+.shot img {
+  width: 100%;
+  border-radius: var(--r-panel);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 40px 80px -40px rgba(10, 20, 40, 0.9);
+}
+.shot figcaption {
+  margin-top: 14px;
+  font-size: 14px;
+  color: var(--t3);
+}
+
+/* Rooms: text and a screenshot side by side, alternating. */
+.rooms {
+  margin-top: 180px;
+}
+.feature-rows {
+  margin-top: 64px;
+  display: grid;
+  gap: 96px;
+}
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  gap: 56px;
+  align-items: center;
+}
+.row:nth-child(even) {
+  grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+}
+.row:nth-child(even) .row-text {
+  order: 2;
+}
+.row h3 {
+  margin: 0;
+  font-size: clamp(24px, 2.4vw, 30px);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-weight: 600;
+}
+.row-text p:last-child {
+  margin: 14px 0 0;
+  color: var(--t2);
+  font-size: 16px;
+}
+.row img {
+  width: 100%;
+  border-radius: var(--r-panel);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 30px 70px -40px rgba(10, 20, 40, 0.9);
+}
+
+/* The crew: copy and a real run on the left, two crew panels on the right. */
+.crew {
+  margin-top: 180px;
+  display: grid;
+  grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+  gap: 64px;
+  align-items: start;
+}
+.checks {
   list-style: none;
-  margin: 18px 0 0;
+  margin: 36px 0 0;
   padding: 0;
   display: grid;
-  gap: 12px;
+  gap: 18px;
 }
-.t-more li {
+.checks li {
+  color: var(--t2);
+  font-size: 16px;
+  padding-left: 18px;
+  position: relative;
+}
+.checks li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.8em;
+  width: 8px;
+  height: 1px;
+  background: var(--accent);
+}
+.checks b {
+  color: var(--t1);
+  font-weight: 600;
+}
+.run {
+  margin-top: 40px;
+  padding: 26px;
+  border-radius: var(--r-panel);
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(59, 130, 246, 0.14), transparent 60%), var(--s2);
+}
+.run > p:not(.kicker) {
+  margin: 0;
+  color: var(--t2);
+  font-size: 15px;
+}
+.run dl {
+  margin: 22px 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.run dt {
+  font: 500 22px var(--mono);
+  letter-spacing: -0.02em;
+}
+.run dd {
+  margin: 2px 0 0;
+  color: var(--t3);
+  font-size: 13px;
+}
+.crew-shots {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  position: sticky;
+  top: 110px;
+}
+.crew-shots img {
+  width: 100%;
+  border-radius: var(--r-panel);
+  border: 1px solid var(--line-strong);
+}
+.crew-shots img + img {
+  margin-top: 56px;
+}
+
+/* Business bento cells */
+.t-wide {
+  grid-column: span 4;
+}
+.t-narrow {
+  grid-column: span 2;
+}
+.tile .img-page {
+  aspect-ratio: auto;
+  margin: auto 26px 0;
+  width: calc(100% - 52px);
+  max-height: 330px;
+  border-radius: var(--r-img) var(--r-img) 0 0;
+  border-right: 1px solid var(--line);
+}
+
+/* Who it is for: four short columns. */
+.who {
+  margin-top: 180px;
+}
+.who-grid {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+.who-grid article {
+  padding: 28px 28px 8px 0;
+}
+.who-grid article + article {
+  padding-left: 28px;
+  border-left: 1px solid var(--line);
+}
+.who h3 {
+  margin: 0;
+  font-size: 19px;
+  letter-spacing: -0.015em;
+  font-weight: 600;
+}
+.who p {
+  margin: 10px 0 0;
+  color: var(--t2);
+  font-size: 15px;
+}
+
+/* Everything in the box: six lists. */
+.all {
+  margin-top: 180px;
+}
+.all-grid {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 48px 40px;
+}
+.all h3 {
+  margin: 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+.all ul {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.all li {
   color: var(--t2);
   font-size: 15px;
   padding-left: 18px;
   position: relative;
 }
-.t-more li::before {
+.all li::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 0.72em;
+  top: 0.75em;
   width: 8px;
   height: 1px;
   background: var(--accent);
-}
-
-/* How it works: the heading stays put while the four steps scroll past. */
-.how {
-  margin-top: 180px;
-  display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  gap: 64px;
-  align-items: start;
-}
-.how-head {
-  position: sticky;
-  top: 120px;
-}
-.how-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-top: 1px solid var(--line);
-}
-.how-list li {
-  display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
-  gap: 24px;
-  padding: 34px 0;
-}
-.how-list li + li {
-  border-top: 1px solid var(--line);
-}
-.how-list h3 {
-  margin: 0;
-  font-size: 22px;
-  letter-spacing: -0.02em;
-  font-weight: 600;
-}
-.how-list p {
-  margin: 0;
-  color: var(--t2);
-  font-size: 16px;
-  max-width: 50ch;
 }
 
 /* Gallery: one horizontal strip that bleeds past the container. */
@@ -631,26 +850,34 @@ h2 {
   .bento {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .t-approve,
-  .t-changes {
+  .t-wide {
     grid-column: span 2;
   }
-  .t-survey,
-  .t-run,
-  .t-scan,
-  .t-magnet {
+  .t-narrow {
     grid-column: span 1;
   }
-  .t-more {
-    grid-column: span 2;
-  }
-  .how,
-  .install {
+  .install,
+  .crew,
+  .row {
     grid-template-columns: minmax(0, 1fr);
-    gap: 40px;
+    gap: 32px;
   }
-  .how-head {
+  .row:nth-child(even) .row-text {
+    order: 0;
+  }
+  .crew-shots {
     position: static;
+  }
+  .stages,
+  .who-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .who-grid article:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .all-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .proof dl {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -679,34 +906,48 @@ h2 {
   }
   .proof dl,
   .bento,
-  .safety-grid {
+  .safety-grid,
+  .why-grid,
+  .stages,
+  .who-grid,
+  .all-grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 24px;
   }
-  .bento {
-    gap: 14px;
+  .bento,
+  .stages {
+    gap: 12px;
   }
-  .t-approve,
-  .t-magnet,
-  .t-survey,
-  .t-run,
-  .t-changes,
-  .t-scan,
-  .t-more {
+  .t-wide,
+  .t-narrow {
     grid-column: auto;
   }
+  .who-grid article,
+  .who-grid article + article {
+    padding: 22px 0 0;
+    border-left: 0;
+  }
+  .crew-shots img + img {
+    margin-top: 0;
+  }
+  .run dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .why,
+  .office,
+  .rooms,
+  .crew,
   .features,
-  .how,
+  .who,
+  .all,
   .gallery-sec,
   .safety,
   .install,
   .foot {
     margin-top: 112px;
   }
-  .how-list li {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
-    padding: 26px 0;
+  .feature-rows {
+    gap: 64px;
   }
   .gallery {
     grid-auto-columns: 86vw;

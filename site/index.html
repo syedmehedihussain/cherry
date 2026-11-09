@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Cherry: Claude Code, with a plan</title>
+    <title>Cherry: a software team, run by Claude Code</title>
     <meta
       name="description"
       content="Cherry is a free, open-source local workspace that runs your projects with Claude Code like a small software company: seven stages, a staff agent in each, and a crew that checks the work."
@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" href="assets/favicon.png" />
     <link rel="preload" href="assets/fonts/geist.woff2" as="font" type="font/woff2" crossorigin />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Cherry: Claude Code, with a plan" />
+    <meta property="og:title" content="Cherry: a software team, run by Claude Code" />
     <meta
       property="og:description"
       content="A local workspace that runs your projects with Claude Code like a small software company: seven stages, a staff agent in each, and a crew that checks the work."
@@ -54,8 +54,10 @@
           </svg>
         </a>
         <nav class="links" aria-label="Sections">
+          <a href="#office">The office</a>
+          <a href="#crew">The crew</a>
+          <a href="#who">Who it is for</a>
           <a href="#features">Features</a>
-          <a href="#how">How it works</a>
           <a href="#install">Install</a>
         </nav>
         <a
@@ -83,10 +85,12 @@
     <main id="main">
       <section class="hero wrap" aria-labelledby="hero-title">
         <div class="hero-copy">
-          <h1 id="hero-title" class="in-1">Claude Code,<br />with a plan.</h1>
+          <p class="eyebrow in-1">Claude Code, with a plan.</p>
+          <h1 id="hero-title" class="in-1">A software team,<br />run by Claude Code.</h1>
           <p class="hero-sub in-2">
-            A local workspace that runs your projects like a small software company: seven stages, a
-            staff agent in each, and a crew that checks the work. Nothing runs until you give a job.
+            Cherry turns Claude Code into an office that works the way real teams ship software. An
+            analyst, an architect, a designer, developers, QA and DevOps, each in their own room.
+            Every stage is signed off before the next one opens. On your machine, on your plan.
           </p>
           <div class="hero-cta in-3">
             <a class="btn btn-primary" href="#install">Install</a>
@@ -113,8 +117,8 @@
         </div>
         <figure class="demo in-4">
           <video
-            src="assets/cherry-demo.mp4"
-            poster="assets/cherry-demo-poster.webp"
+            src="assets/v4/office-demo.mp4"
+            poster="assets/v4/poster.webp"
             autoplay
             muted
             loop
@@ -122,11 +126,11 @@
             preload="metadata"
             width="1440"
             height="900"
-            aria-label="Demo: Claude adds a theme toggle, each edit is approved, then the app runs on localhost"
+            aria-label="Walkthrough: projects, a client stage waiting for approval, the Plan, Design, Development and Testing rooms, the crew, the invoice and the maintenance office"
           ></video>
           <figcaption>
-            From prompt to a running app: three approvals, a change summary, then Run. Recorded on a
-            demo project.
+            A real project, recorded as it is: projects, a client waiting on Design, the rooms, the
+            crew, the invoice, and the maintenance office after release.
           </figcaption>
         </figure>
       </section>
@@ -134,161 +138,437 @@
       <section class="proof wrap" aria-label="At a glance">
         <dl>
           <div class="reveal">
-            <dt>127.0.0.1</dt>
-            <dd>Runs on your machine. No telemetry.</dd>
+            <dt>7 stages</dt>
+            <dd>Idea to Deployment, a staff agent in each, signed off in order.</dd>
           </div>
           <div class="reveal">
-            <dt>Every edit</dt>
-            <dd>Shown as a diff and waits for your yes.</dd>
+            <dt>3 checks</dt>
+            <dd>Accessibility, code review and security run before a stage is ready.</dd>
           </div>
           <div class="reveal">
             <dt>Your click</dt>
             <dd>Starts every model call. No autopilot, no background runs.</dd>
           </div>
           <div class="reveal">
-            <dt>MIT</dt>
-            <dd>Free and open source.</dd>
+            <dt>127.0.0.1</dt>
+            <dd>Runs on your machine. No telemetry. MIT licence.</dd>
           </div>
         </dl>
       </section>
 
-      <section id="features" class="features wrap" aria-labelledby="features-title">
-        <h2 id="features-title" class="reveal">Everything between the idea and the commit.</h2>
-        <p class="section-sub reveal">You read and decide. Claude does the typing.</p>
+      <section id="why" class="why wrap" aria-labelledby="why-title">
+        <h2 id="why-title" class="reveal">Software is more than code.</h2>
+        <div class="why-grid">
+          <p class="reveal">
+            A chat with an AI goes straight to code. Real teams do not work that way. They write
+            down what the client needs, agree on a plan, draw the screens, build it in small tested
+            steps, check it, and ship it with a runbook. Each step is reviewed before the next one
+            starts.
+          </p>
+          <p class="reveal">
+            Cherry gives Claude Code that process. Each stage has its own agent with its own
+            persona, skills and documents. The documents are files in your repo, so the next agent,
+            a client, or you in six months can read them.
+          </p>
+        </div>
+      </section>
 
-        <div class="bento">
-          <article class="tile t-approve reveal">
-            <div class="tile-text">
-              <h3>Approve every change</h3>
+      <section id="office" class="office wrap" aria-labelledby="office-title">
+        <div class="office-head">
+          <h2 id="office-title" class="reveal">Seven rooms. One process.</h2>
+          <p class="section-sub reveal">
+            A stage opens when the one before it is signed off: by your client on a client project,
+            by you on a personal one.
+          </p>
+        </div>
+        <ol class="stages">
+          <li class="stage reveal">
+            <span class="num">01</span>
+            <h3>Idea</h3>
+            <p class="role">Business Analyst</p>
+            <p>A brief and a plain summary of what to build and for whom.</p>
+          </li>
+          <li class="stage reveal">
+            <span class="num">02</span>
+            <h3>Requirements</h3>
+            <p class="role">System Analyst</p>
+            <p>User stories, an SRS, feasibility, and questions for the client.</p>
+          </li>
+          <li class="stage reveal">
+            <span class="num">03</span>
+            <h3>Plan</h3>
+            <p class="role">System Architect</p>
+            <p>Architecture, data model, roadmap, test notes, and an ADR for every choice.</p>
+          </li>
+          <li class="stage reveal">
+            <span class="num">04</span>
+            <h3>Design</h3>
+            <p class="role">UI/UX Designer</p>
+            <p>Screens on a canvas, tokens, a handoff, and an accessibility check.</p>
+          </li>
+          <li class="stage reveal">
+            <span class="num">05</span>
+            <h3>Development</h3>
+            <p class="role">Development Team</p>
+            <p>A prototype for approval, then the build, test first, with a code review.</p>
+          </li>
+          <li class="stage reveal">
+            <span class="num">06</span>
+            <h3>Testing</h3>
+            <p class="role">QA Engineer</p>
+            <p>Test runs, bugs as issues, an acceptance list, and a security review.</p>
+          </li>
+          <li class="stage reveal">
+            <span class="num">07</span>
+            <h3>Deployment</h3>
+            <p class="role">DevOps Engineer</p>
+            <p>The release, the changelog, a tag and a runbook. Then the project is live.</p>
+          </li>
+          <li class="stage stage-live reveal">
+            <span class="num">Live</span>
+            <h3>Maintenance</h3>
+            <p class="role">The whole office</p>
+            <p>Support, issues, QA, bug fixes, upgrades, and New version for the next cycle.</p>
+          </li>
+        </ol>
+        <figure class="shot reveal">
+          <img
+            src="assets/v4/office-board.webp"
+            alt="A client project: Idea, Requirements and Plan signed off by the client, Design waiting for the client's approval, the later stages locked"
+            loading="lazy"
+            width="1600"
+            height="1000"
+          />
+          <figcaption>
+            A client project. Design waits for the client's approval; the later rooms stay locked
+            until it comes.
+          </figcaption>
+        </figure>
+      </section>
+
+      <section id="rooms" class="rooms wrap" aria-labelledby="rooms-title">
+        <h2 id="rooms-title" class="reveal">Every stage is a room.</h2>
+        <p class="section-sub reveal">
+          The agent's chat in the Claude Code look on one side, its documents on the other: a plain
+          version for the client, a technical one for the next agent.
+        </p>
+        <div class="feature-rows">
+          <article class="row reveal">
+            <div class="row-text">
+              <p class="kicker">Plan</p>
+              <h3>Decisions you can read later.</h3>
               <p>
-                Edits arrive as diffs, commands show what runs and where. Allow once, for the
-                session, or deny with a reason.
+                The architect writes the architecture, the data model and the roadmap. Every real
+                choice becomes an ADR card: the options, the trade-offs and a recommendation. You
+                approve, discuss or reject it.
               </p>
             </div>
             <img
-              src="assets/chat-approval-crop.webp"
-              alt="An approval card with the diff Claude wants to apply"
+              src="assets/v4/room-plan.webp"
+              alt="The Plan room: an ADR card with Approve, Discuss and Reject next to the plan summary"
               loading="lazy"
-              width="1400"
-              height="810"
+              width="1600"
+              height="1000"
             />
           </article>
-          <article class="tile t-survey reveal">
-            <div class="tile-text">
-              <h3>Seven stages, signed off</h3>
+          <article class="row reveal">
+            <div class="row-text">
+              <p class="kicker">Design</p>
+              <h3>Screens before code.</h3>
               <p>
-                Idea to Deployment, a staff agent each. A stage opens when you sign off the last.
+                The designer draws real HTML screens on a canvas: phone and desktop, light and dark,
+                every state. Add references, a design system, colours and fonts in the brief.
+                Sign-off writes the handoff for Development.
               </p>
             </div>
             <img
-              src="assets/survey-crop.webp"
-              alt="A survey question with a recommended answer"
+              src="assets/v4/room-design.webp"
+              alt="The Design room: the brief, the screen on a canvas and the designer's chat"
               loading="lazy"
-              width="1400"
-              height="807"
+              width="1600"
+              height="1000"
             />
           </article>
-          <article class="tile t-run reveal">
-            <div class="tile-text">
-              <h3>Run it on localhost</h3>
-              <p>One button starts the dev server and hands you the link.</p>
+          <article class="row reveal">
+            <div class="row-text">
+              <p class="kicker">Development</p>
+              <h3>A prototype first. Then the build.</h3>
+              <p>
+                The Development Team builds a clickable prototype and waits for your approval. Then
+                it builds the rest, tests first, checks it in the browser, and hands it to Testing.
+                Code, terminal and version control are one tab away.
+              </p>
             </div>
             <img
-              src="assets/run-crop.webp"
-              alt="The Run tab with a dev server running"
+              src="assets/v4/room-dev.webp"
+              alt="The Development room: the chat and the prototype gate, all three steps done"
               loading="lazy"
-              width="1400"
-              height="802"
+              width="1600"
+              height="1000"
             />
           </article>
-          <article class="tile t-changes reveal">
-            <div class="tile-text">
-              <h3>See what changed</h3>
-              <p>Files, lines and commands after every reply, at no token cost.</p>
+          <article class="row reveal">
+            <div class="row-text">
+              <p class="kicker">Testing</p>
+              <h3>Tested like someone else wrote it.</h3>
+              <p>
+                QA runs the test plan, opens the app in Chrome, logs bugs as issues and writes a
+                summary in plain words with an acceptance list for you to try. Client documents
+                export as a PDF.
+              </p>
             </div>
             <img
-              src="assets/chat-changes-crop.webp"
-              alt="A change summary under Claude's reply"
+              src="assets/v4/room-test.webp"
+              alt="The Testing room: the QA Engineer's report next to the testing summary for the client"
               loading="lazy"
-              width="1400"
-              height="802"
+              width="1600"
+              height="1000"
             />
-          </article>
-          <article class="tile t-scan reveal">
-            <div class="tile-text">
-              <h3>A crew in every room</h3>
-              <p>Accessibility, code and security checks run before a stage can be ready.</p>
-            </div>
-            <img
-              src="assets/scan-report-crop.webp"
-              alt="A security review report"
-              loading="lazy"
-              width="1400"
-              height="807"
-            />
-          </article>
-          <article class="tile t-magnet reveal">
-            <div class="tile-text">
-              <h3>Magnet, across every project</h3>
-              <p>Ask what is stuck this week. It answers and proposes actions you approve.</p>
-            </div>
-            <img
-              src="assets/magnet-crop.webp"
-              alt="Magnet answering what is stuck this week"
-              loading="lazy"
-              width="1400"
-              height="787"
-            />
-          </article>
-          <article class="tile t-more reveal">
-            <h3>Also in the box</h3>
-            <ul>
-              <li>Scan agents, read-only, one click each</li>
-              <li>Background agents on their own branch</li>
-              <li>Code editor, terminal and version control</li>
-              <li>Meeting, a docs vault, usage and invoice</li>
-              <li>Change requests and new versions</li>
-              <li>Four themes</li>
-            </ul>
           </article>
         </div>
       </section>
 
-      <section id="how" class="how wrap" aria-labelledby="how-title">
-        <div class="how-head">
-          <h2 id="how-title" class="reveal">Plan first. Then build.</h2>
-          <p class="section-sub reveal">Seven stages, in the order a software company works.</p>
+      <section id="crew" class="crew wrap" aria-labelledby="crew-title">
+        <div class="crew-copy">
+          <h2 id="crew-title" class="reveal">A crew in every room.</h2>
+          <p class="section-sub reveal">
+            Each room has specialist agents and skills of its own. The staff agent hands them the
+            work, the way a lead asks a reviewer.
+          </p>
+          <ul class="checks reveal">
+            <li>
+              <b>Required checks.</b> Design needs an accessibility check, Development a code
+              review, Testing a security review. A stage cannot be marked ready until they ran.
+            </li>
+            <li>
+              <b>Job hints.</b> After each message Cherry names the skills and specialists that fit
+              the job. Plain word matching, no model call.
+            </li>
+            <li>
+              <b>The Crew tab.</b> See who ran, on which model, and what fits the last message. A
+              click puts the request in the message box; you send it.
+            </li>
+          </ul>
+          <div class="run reveal">
+            <p class="kicker">From a real run</p>
+            <p>
+              A seven-day history for a small web app, through all seven rooms on Sonnet. The
+              accessibility specialist found five problems in the design. Development wrote the
+              tests first and ran two reviewers on its own. QA's security review cleared the
+              release.
+            </p>
+            <dl>
+              <div>
+                <dt>1.5M</dt>
+                <dd>tokens</dd>
+              </div>
+              <div>
+                <dt>$10.80</dt>
+                <dd>API value, covered by the plan</dd>
+              </div>
+              <div>
+                <dt>43</dt>
+                <dd>tests passing</dd>
+              </div>
+            </dl>
+          </div>
         </div>
-        <ol class="how-list">
-          <li class="reveal">
-            <h3>Idea and requirements</h3>
+        <div class="crew-shots">
+          <img
+            class="reveal"
+            src="assets/v4/crew-design.webp"
+            alt="The Design room's Crew tab: a11y-architect checked, the specialists and the skills that fit"
+            loading="lazy"
+            width="800"
+            height="978"
+          />
+          <img
+            class="reveal"
+            src="assets/v4/crew.webp"
+            alt="The Testing room's Crew tab: security-reviewer checked, e2e-runner, and the testing skills"
+            loading="lazy"
+            width="800"
+            height="957"
+          />
+        </div>
+      </section>
+
+      <section id="business" class="features wrap" aria-labelledby="business-title">
+        <h2 id="business-title" class="reveal">Run it like a business.</h2>
+        <p class="section-sub reveal">
+          Client projects get what clients expect: sign-offs, change requests, documents and an
+          invoice.
+        </p>
+        <div class="bento">
+          <article class="tile t-wide reveal">
+            <div class="tile-text">
+              <h3>Claude usage, per stage</h3>
+              <p>
+                Tokens, cache reads, API value and time for every room, a token budget per project,
+                and a run report as Markdown or CSV.
+              </p>
+            </div>
+            <img
+              src="assets/v4/usage.webp"
+              alt="Claude usage: the project budget and a table of tokens, API value and time per stage"
+              loading="lazy"
+              width="1600"
+              height="1000"
+            />
+          </article>
+          <article class="tile t-narrow reveal">
+            <div class="tile-text">
+              <h3>Client documents as PDF</h3>
+              <p>Every stage's plain summary, ready to send.</p>
+            </div>
+            <img
+              class="img-page"
+              src="assets/v4/print.webp"
+              alt="The requirements for a client as a printable page"
+              loading="lazy"
+              width="1000"
+              height="1200"
+            />
+          </article>
+          <article class="tile t-narrow reveal">
+            <div class="tile-text">
+              <h3>The Meeting</h3>
+              <p>Every agent's work at one table: done, now, needs. Built from files, free.</p>
+            </div>
+            <img
+              src="assets/v4/meeting.webp"
+              alt="The Meeting tab: each staff agent with what is done, what is now and what it needs"
+              loading="lazy"
+              width="1600"
+              height="1000"
+            />
+          </article>
+          <article class="tile t-wide reveal">
+            <div class="tile-text">
+              <h3>Time, costs and the invoice</h3>
+              <p>
+                Claude's working time and yours, services and accounts, billable or not, and the
+                invoice at your rate.
+              </p>
+            </div>
+            <img
+              src="assets/v4/invoice.webp"
+              alt="The invoice for Northwind Physio: hours, a domain cost and the total"
+              loading="lazy"
+              width="1600"
+              height="750"
+            />
+          </article>
+        </div>
+      </section>
+
+      <section id="who" class="who wrap" aria-labelledby="who-title">
+        <h2 id="who-title" class="reveal">Who it is for.</h2>
+        <div class="who-grid">
+          <article class="reveal">
+            <h3>Freelancers and small studios</h3>
             <p>
-              Describe the idea. The analysts ask short questions, each with a recommended option,
-              and write the brief and the requirements.
+              Client sign-offs with names and dates, questions for the client, change requests, PDF
+              documents, time and costs, and an invoice. The paperwork a client project needs,
+              written as you go.
             </p>
-          </li>
-          <li class="reveal">
-            <h3>Plan and design</h3>
+          </article>
+          <article class="reveal">
+            <h3>Solo builders</h3>
             <p>
-              The architect writes the plan and every real choice as an ADR. The designer draws the
-              screens, and an accessibility specialist checks them.
+              The same stages on your own ideas; you sign off yourself. Plans and decisions stay in
+              the repo, so a project you left for a month tells you where it stands.
             </p>
-          </li>
-          <li class="reveal">
-            <h3>Build and test</h3>
+          </article>
+          <article class="reveal">
+            <h3>People learning the craft</h3>
             <p>
-              A prototype for your approval, then the rest, test first, with a code review. QA tests
-              it and a security review runs.
+              See how software is really made: an SRS, ADRs, a test plan, a release runbook. Each
+              written by an agent in the role that writes it, and readable next to the code.
             </p>
-          </li>
-          <li class="reveal">
-            <h3>Ship and maintain</h3>
+          </article>
+          <article class="reveal">
+            <h3>Claude Code users who want control</h3>
             <p>
-              DevOps releases it and the project goes live. New version starts the next cycle next
-              to the live one.
+              Approval cards for edits and commands, every model call on your click, and a token
+              budget per project. Claude does the typing; you make the decisions.
             </p>
-          </li>
-        </ol>
+          </article>
+        </div>
+      </section>
+
+      <section id="features" class="all wrap" aria-labelledby="all-title">
+        <h2 id="all-title" class="reveal">Everything in the box.</h2>
+        <div class="all-grid">
+          <div class="reveal">
+            <h3>The office</h3>
+            <ul>
+              <li>Seven gated stages with a staff agent each</li>
+              <li>Client and personal projects</li>
+              <li>Sign-off by the client, internal, or sent and waiting</li>
+              <li>Change requests that reopen the stages they touch</li>
+              <li>Live maintenance: support, issues, QA, fixes, upgrades</li>
+              <li>New version next to the live one</li>
+              <li>Your own persona for any staff agent</li>
+            </ul>
+          </div>
+          <div class="reveal">
+            <h3>The rooms</h3>
+            <ul>
+              <li>Chat in the Claude Code look, with slash commands and @ files</li>
+              <li>Client and technical documents per stage</li>
+              <li>Decision cards and ADRs with Approve, Discuss, Reject</li>
+              <li>Design canvas: phone, desktop, light, dark, comments</li>
+              <li>Prototype gate in Development</li>
+              <li>Acceptance list and bugs in Testing</li>
+              <li>Claude in Chrome to check the app on localhost</li>
+            </ul>
+          </div>
+          <div class="reveal">
+            <h3>The crew</h3>
+            <ul>
+              <li>Specialist agents and skills bundled per room</li>
+              <li>Required checks before a stage is ready</li>
+              <li>Job hints after every message, no model call</li>
+              <li>Crew tab with runs, models and matches</li>
+              <li>Read-only scans: security, tests, code health, dependencies</li>
+              <li>Background agents on their own branch</li>
+            </ul>
+          </div>
+          <div class="reveal">
+            <h3>The workspace</h3>
+            <ul>
+              <li>Docs vault with links, backlinks and a graph</li>
+              <li>Code editor and terminal tabs</li>
+              <li>Version control: commit as you, or Auto commit</li>
+              <li>Pull, push and pull requests through gh</li>
+              <li>Magnet, the project manager across projects</li>
+              <li>Command palette and four themes</li>
+            </ul>
+          </div>
+          <div class="reveal">
+            <h3>The business</h3>
+            <ul>
+              <li>Claude usage per stage and per model</li>
+              <li>Token budget per project, with an alert</li>
+              <li>Run report as Markdown or CSV</li>
+              <li>Time, costs and an invoice at your rate</li>
+              <li>Client documents and the invoice as PDF</li>
+              <li>Meeting with agenda and action items</li>
+            </ul>
+          </div>
+          <div class="reveal">
+            <h3>Safety</h3>
+            <ul>
+              <li>Approval cards for every edit and command</li>
+              <li>Loopback only, one-time login links</li>
+              <li>Secrets never read; file tools stay in the project</li>
+              <li>Serious commands ask with a warning</li>
+              <li>Rewind code and chat to before a message</li>
+              <li>No telemetry</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="gallery-sec" aria-labelledby="gallery-title">
@@ -301,53 +581,67 @@
         >
           <figure>
             <img
-              src="assets/home.webp"
-              alt="Home with every project, its phase and next step"
+              src="assets/v4/home.webp"
+              alt="Projects: client and personal projects, each with its stage and status"
               loading="lazy"
               width="1600"
               height="1000"
             />
-            <figcaption>Home: every project, its phase and next step.</figcaption>
+            <figcaption>Projects: client and personal work, each with its stage.</figcaption>
           </figure>
           <figure>
             <img
-              src="assets/status.webp"
-              alt="The Status report of a project"
+              src="assets/v4/room-requirements.webp"
+              alt="The Requirements room: the System Analyst's chat next to the user stories"
               loading="lazy"
               width="1600"
               height="1000"
             />
-            <figcaption>Status: where you left off and what comes next.</figcaption>
+            <figcaption>
+              Requirements: user stories, an SRS and questions for the client.
+            </figcaption>
           </figure>
           <figure>
             <img
-              src="assets/diff.webp"
-              alt="A file with uncommitted changes"
+              src="assets/v4/code.webp"
+              alt="The Code tab with app.js open and a note that Claude changed the file"
               loading="lazy"
               width="1600"
               height="1000"
             />
-            <figcaption>Files with their changes and a built-in editor.</figcaption>
+            <figcaption>Code: an editor and terminals, with what Claude changed.</figcaption>
           </figure>
           <figure>
             <img
-              src="assets/markdown.webp"
-              alt="A PRD opened as a Markdown preview"
+              src="assets/v4/docs.webp"
+              alt="The Docs vault with the architecture document open"
               loading="lazy"
               width="1600"
               height="1000"
             />
-            <figcaption>Markdown opens as a readable page.</figcaption>
+            <figcaption>Docs: every document of every stage, in one vault.</figcaption>
           </figure>
           <figure>
             <img
-              src="assets/themes.webp"
-              alt="The theme picker in Settings"
+              src="assets/v4/version-control.webp"
+              alt="Version control: a sign-off commit for each stage and two release tags"
               loading="lazy"
               width="1600"
               height="1000"
             />
-            <figcaption>Four themes. Just black is the default.</figcaption>
+            <figcaption>
+              Version control: a commit for each sign-off, a tag for each release.
+            </figcaption>
+          </figure>
+          <figure>
+            <img
+              src="assets/v4/maintenance.webp"
+              alt="The maintenance office: new version, support, QA, issues, bug fixing, upgrades and the version history"
+              loading="lazy"
+              width="1600"
+              height="1000"
+            />
+            <figcaption>Live: the maintenance office and the version history.</figcaption>
           </figure>
         </div>
       </section>
@@ -363,7 +657,10 @@
           </div>
           <div class="reveal">
             <h3>Nothing without a yes</h3>
-            <p>sudo, force pushes to main and rm -rf outside the project are blocked outright.</p>
+            <p>
+              Edits and commands wait for your approval, or run in Auto mode when you choose it.
+              Serious commands always ask with a warning.
+            </p>
           </div>
           <div class="reveal">
             <h3>Secrets stay closed</h3>
@@ -374,7 +671,7 @@
           <div class="reveal">
             <h3>Easy on your plan</h3>
             <p>
-              Every model call starts from your click. Change summaries and job hints cost no
+              Every model call starts from your click. Meeting, hints and change summaries cost no
               tokens.
             </p>
           </div>

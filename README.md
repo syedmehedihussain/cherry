@@ -5,7 +5,7 @@
   </picture>
 </p>
 
-<p align="center"><b>Claude Code, with a plan.</b><br /><code>$ cherry-pick your workflow</code></p>
+<p align="center"><b>A software team, run by Claude Code.</b><br /><code>$ cherry-pick your workflow</code></p>
 
 <p align="center">
   <a href="https://github.com/syedmehedihussain/cherry/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/syedmehedihussain/cherry?color=2f7bff&label=release" /></a>
@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/cherry-demo.gif" width="900" alt="Cherry: Claude adds a theme toggle, each edit waits for approval, then the app runs on localhost" />
+  <img src="docs/images/v4/office-demo.gif" width="900" alt="Cherry: projects, a client stage waiting for approval, the Plan room with an ADR card, the Design room and its crew" />
 </p>
 
 Cherry is a local workspace that runs your projects with [Claude Code](https://claude.com/claude-code)
@@ -36,8 +36,20 @@ open in it, and nothing runs until you give a job.
 It is not a code editor and not a vibe-coding tool. You read code and docs here, you make the
 decisions here, and Claude does the typing, only after you say yes.
 
+## Who it is for
+
+- **Freelancers and small studios:** client sign-offs with names and dates, questions for the
+  client, change requests, PDF documents, time, costs and an invoice.
+- **Solo builders:** the same stages on your own ideas, signed off by you. Plans and decisions
+  stay in the repo, so a project you left for a month says where it stands.
+- **People learning the craft:** an SRS, ADRs, a test plan and a release runbook, each written
+  by an agent in the role that writes it, next to the code.
+- **Claude Code users who want control:** approval cards, every model call on your click, and a
+  token budget per project.
+
 ## Contents
 
+- [Who it is for](#who-it-is-for)
 - [Features](#features)
 - [How it works](#how-it-works)
 - [Install](#install)
@@ -54,38 +66,38 @@ decisions here, and Claude does the typing, only after you say yes.
 <table>
   <tr>
     <td width="50%" valign="top">
-      <img src="docs/images/chat-approval.png" alt="An approval card with the diff Claude wants to apply" /><br />
-      <b>Approve every change.</b> Edits arrive as diff cards, commands show what runs and where.
-      Allow once, allow for the session, or deny with a reason.
+      <img src="site/assets/v4/office-board.webp" alt="A client project: three stages signed off by the client, Design waiting for approval" /><br />
+      <b>Seven stages, signed off.</b> Idea to Deployment, a staff agent in each. A stage opens
+      when the one before it is signed off, by your client or by you.
     </td>
     <td width="50%" valign="top">
-      <img src="docs/images/survey.png" alt="A decision card with a recommended option" /><br />
-      <b>Plan before code.</b> Idea, Requirements and Plan come first. Each agent asks one
-      question at a time on a card, with a recommended option, and every real choice becomes an ADR.
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <img src="docs/images/run.png" alt="The Run tab with a running dev server" /><br />
-      <b>Run it on localhost.</b> One play button starts the website's dev server, streams the
-      output and gives you the link. It also finds servers Claude already started.
-    </td>
-    <td width="50%" valign="top">
-      <img src="docs/images/chat-changes.png" alt="A change summary under Claude's reply" /><br />
-      <b>See what changed.</b> After each reply: the files, the lines, the commands and how they
-      went, for free. A plain-words explanation only when you click.
+      <img src="site/assets/v4/room-plan.webp" alt="The Plan room with an ADR card: Approve, Discuss, Reject" /><br />
+      <b>Plan before code.</b> Each agent asks one question at a time on a card, with a
+      recommended option, and every real choice becomes an ADR you approve.
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <img src="docs/images/scan-report.png" alt="A security review report" /><br />
+      <img src="site/assets/v4/room-design.webp" alt="The Design room: the brief, the screen on a canvas and the chat" /><br />
+      <b>Screens before code.</b> Real HTML screens on a canvas, phone and desktop, light and
+      dark. Sign-off writes the handoff for Development.
+    </td>
+    <td width="50%" valign="top">
+      <img src="site/assets/v4/crew-design.webp" alt="The Design room's Crew tab with a11y-architect checked" /><br />
       <b>A crew in every room.</b> Specialists check the work: accessibility in Design, a code
       review in Development, a security review in Testing. A stage is not ready until they ran.
     </td>
+  </tr>
+  <tr>
     <td width="50%" valign="top">
-      <img src="docs/images/magnet.png" alt="Magnet answering what is stuck this week" /><br />
-      <b>Magnet.</b> An assistant across all your projects. Ask what is stuck; it answers and
-      proposes actions you approve.
+      <img src="site/assets/v4/room-test.webp" alt="The Testing room: the QA report and the testing summary for the client" /><br />
+      <b>Tested before release.</b> QA runs the plan in the browser, logs bugs as issues and
+      writes a plain summary with an acceptance list. Client documents export as a PDF.
+    </td>
+    <td width="50%" valign="top">
+      <img src="site/assets/v4/invoice.webp" alt="The invoice for a client: hours, costs and the total" /><br />
+      <b>Run it like a business.</b> Claude usage per stage, a token budget, time and costs,
+      and the invoice at your rate.
     </td>
   </tr>
 </table>
@@ -113,13 +125,13 @@ decisions here, and Claude does the typing, only after you say yes.
 <summary><b>More screenshots</b></summary>
 <br />
 
-| Home | Status report |
+| Projects | Requirements |
 | --- | --- |
-| <img src="docs/images/home.png" alt="Home" /> | <img src="docs/images/status.png" alt="Status report" /> |
-| **File viewer with changes** | **Markdown preview** |
-| <img src="docs/images/diff.png" alt="File viewer with a diff" /> | <img src="docs/images/markdown.png" alt="Markdown preview" /> |
-| **Themes** | **Welcome** |
-| <img src="docs/images/themes.png" alt="Theme picker" /> | <img src="docs/images/welcome.png" alt="Welcome screen" /> |
+| <img src="site/assets/v4/home.webp" alt="Projects" /> | <img src="site/assets/v4/room-requirements.webp" alt="The Requirements room" /> |
+| **Code** | **Docs vault** |
+| <img src="site/assets/v4/code.webp" alt="The Code tab" /> | <img src="site/assets/v4/docs.webp" alt="The Docs vault" /> |
+| **Claude usage** | **Maintenance office** |
+| <img src="site/assets/v4/usage.webp" alt="Claude usage per stage" /> | <img src="site/assets/v4/maintenance.webp" alt="The maintenance office" /> |
 
 </details>
 
