@@ -59,7 +59,9 @@ export function officeBrief(stage: OfficeStage, office: OfficeFile): string {
     `- When the stage's work is complete and the user agrees, say it in one line (for example "${OFFICE_STAGE_LABEL[stage]} is ready. We can start the next stage.") and call ${STAGE_READY_TOOL}. The user signs the stage off${personal ? '' : ' after the client approves it'}.`,
     ...(stage === 'development' && cycle.devGate !== 'approved'
       ? [
-          `- First build the prototype (project setup and a clickable prototype with sample data). When it is ready to try, say so and call ${STAGE_READY_TOOL}: before the ${personal ? 'user' : 'client'} approves the prototype, that marks the prototype ready, not the stage. After the approval, build the rest and call ${STAGE_READY_TOOL} again when the app is complete.`,
+          office.cycles.length > 1
+            ? `- The app exists from version ${office.cycles[office.cycles.length - 2]!.version}. The first working build of this version's change is the prototype: when it is ready to try, say so and call ${STAGE_READY_TOOL}; that marks the prototype ready, not the stage. After the ${personal ? 'user' : 'client'} approves it, finish the version, run the stage's required checks, and call ${STAGE_READY_TOOL} again.`
+            : `- First build the prototype (project setup and a clickable prototype with sample data). When it is ready to try, say so and call ${STAGE_READY_TOOL}: before the ${personal ? 'user' : 'client'} approves the prototype, that marks the prototype ready, not the stage. After the approval, build the rest and call ${STAGE_READY_TOOL} again when the app is complete.`,
         ]
       : []),
     ...(state === 'update'
@@ -98,7 +100,7 @@ export function stageReadyTool(
           text: !ready
             ? 'Taken back.'
             : prototype
-              ? 'Marked the prototype ready. The user shows it to the client; the full build starts after the approval.'
+              ? `Marked the prototype ready, not the stage. ${o.kind === 'personal' ? 'The user approves it' : 'The user shows it to the client'} in the Development room; after the approval, finish the work and call stage_ready again.`
               : 'Marked ready. The user can sign it off now.',
         };
       } catch (e) {

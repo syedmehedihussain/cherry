@@ -330,6 +330,8 @@ export const sdkRunner: Runner = (req) => {
     req.decisions || extra.length
       ? createSdkMcpServer({
           name: 'cherry',
+          // Cherry's tools stay in the prompt: deferred, the agents skipped ask_decision (ECC run 2).
+          alwaysLoad: true,
           tools: [
             ...extra,
             ...(req.decisions

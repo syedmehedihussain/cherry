@@ -4,7 +4,7 @@
  */
 
 const STOP = new Set(
-  'about add after again all also always and any are before being both but can cannot does done each for from get had has have her here his how into its just let like make may more most must need never new not now one only other our out over own put same see set should some such than that the their them then there these they this those through too two use used uses using very was way what when where which while who why will with without would yes yet you your'.split(
+  'about add after again all also always and any are before being both but can cannot does done each for from get had has have her here his how into its just let like make may more most must need never new not now one only other our out over own put same see set should some such than that the their them then there these they this those through too two use used uses using very was way what when where which while who why will with without would yes yet you your write tell ready'.split(
     ' ',
   ),
 );
@@ -24,7 +24,10 @@ export interface Suggestible {
   description: string;
 }
 
-/** The items that fit the text best: a word in the name counts twice. Best first. */
+/**
+ * The items that fit the text best: a word in the name counts twice. An item needs at least two
+ * shared words, so one word such as "write" or "handoff" does not make a match. Best first.
+ */
 export function suggest<T extends Suggestible>(text: string, items: T[], max = 3, min = 2): T[] {
   const job = keywords(text);
   if (!job.size) return [];
@@ -33,10 +36,15 @@ export function suggest<T extends Suggestible>(text: string, items: T[], max = 3
       const name = keywords(item.name.replace(/[-_:]/g, ' '));
       const desc = keywords(item.description);
       let score = 0;
-      for (const w of job) score += (name.has(w) ? 2 : 0) + (desc.has(w) ? 1 : 0);
-      return { item, score };
+      let words = 0;
+      for (const w of job) {
+        const s = (name.has(w) ? 2 : 0) + (desc.has(w) ? 1 : 0);
+        score += s;
+        if (s) words += 1;
+      }
+      return { item, score, words };
     })
-    .filter((s) => s.score >= min)
+    .filter((s) => s.score >= min && s.words >= 2)
     .sort((a, b) => b.score - a.score)
     .slice(0, max)
     .map((s) => s.item);

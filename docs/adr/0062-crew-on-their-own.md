@@ -49,3 +49,20 @@ We chose **option 2**:
   suggest a near miss (it is a hint, not a rule). Runs from before this change are not counted.
 - Follow-up: a real run to see how often the hints are followed and what the checks cost; tune
   the word lists or the `requires:` lines from that.
+
+## Tuning after the crew run (2026-11-09)
+
+The water-demo 1.1 run checked this. Changes from it:
+
+- The required checks worked: Design ran a11y-architect after `stage_ready` refused (5 fixes),
+  Development ran typescript-reviewer and security-reviewer on its own. The check came last, so
+  the system prompt now says to run it before the agent's own last browser check.
+- Hints: Design and Testing opened the skills named; Plan used none. A hint now needs two shared
+  words, and "write", "tell" and "ready" are stop words (one word gave "write-a-skill" and
+  "handoff" in Development).
+- Claude Code deferred Cherry's tools behind tool search, and no room called TaskCreate or
+  ask_decision. The `cherry` MCP server is now `alwaysLoad`; the prompt says to load TaskCreate
+  and TaskUpdate with ToolSearch first.
+- In a later version, Development's prototype step now says the app exists and the first build
+  of the change is the prototype.
+- `requires:` stays as it is.
