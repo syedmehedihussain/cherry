@@ -22,7 +22,9 @@ See ADR-0008.
 - `cherry` prints a link with a **login code** in the URL fragment (`#login=…`). The fragment is
   never sent to the server; the UI strips it on load and posts the code to `POST /api/session`.
 - The code is 32 random bytes, base64url, single-use, valid for 10 minutes.
-- The daemon replies with a session cookie: `HttpOnly; SameSite=Strict; Path=/`, 30 days.
+- The daemon replies with a session cookie: `HttpOnly; SameSite=Strict; Path=/`, 30 days. A
+  session in use is renewed to 30 days from now, at most once a day, with a fresh cookie
+  (ADR-0063); one not used for 30 days ends.
   Only a hash of the session id is stored, in `~/.cherry/sessions.json` (`0600`).
 - Every request and the WebSocket upgrade need a valid cookie plus the `Host`/`Origin` checks.
 - Codes and session ids are compared with a constant-time function.

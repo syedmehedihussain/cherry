@@ -41,7 +41,7 @@ Node 22 and pnpm 12 are pinned in `mise.toml`. Run commands through mise if your
 different Node (`mise exec -- pnpm test`).
 
 ```bash
-pnpm dev          # daemon (127.0.0.1:4317) + web (127.0.0.1:5173) with reload
+pnpm dev          # daemon (127.0.0.1:4317) + web (127.0.0.1:5173) with reload; pauses `cherry start`'s service
 pnpm test         # vitest, all packages
 pnpm test:e2e     # playwright, uses /usr/bin/chromium locally
 pnpm lint         # eslint + prettier check

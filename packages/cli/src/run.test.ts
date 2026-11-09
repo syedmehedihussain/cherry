@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { run } from './run.ts';
+import { run, serviceUnit } from './run.ts';
 
 describe('cherry cli', () => {
   it('prints the version', async () => {
@@ -28,5 +28,20 @@ describe('cherry cli', () => {
     });
     expect((await run(['down'])).out).toBe('Cherry is not running.');
     delete process.env.CHERRY_HOME;
+  });
+
+  it('lists the always-on commands in the help', async () => {
+    const help = (await run(['--help'])).out;
+    for (const cmd of ['start', 'stop', 'restart'])
+      expect(help).toMatch(new RegExp(`^  ${cmd} `, 'm'));
+  });
+
+  it('writes a service that finds claude, rebuilds the UI first and starts at login', () => {
+    const unit = serviceUnit({ PATH: '/home/u/.local/share/mise/shims:/usr/bin' });
+    expect(unit).toContain('Environment="PATH=/home/u/.local/share/mise/shims:/usr/bin"');
+    expect(unit).toMatch(/^ExecStartPre=.*cli\/src\/index\.ts build-ui$/m);
+    expect(unit).toMatch(/^ExecStart=.*daemon\/src\/main\.ts$/m);
+    expect(unit).toContain('Restart=on-failure');
+    expect(unit).toContain('WantedBy=default.target');
   });
 });

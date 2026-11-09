@@ -27,13 +27,15 @@ export const HELP = `cherry ${pkg.version} · cherry-pick your workflow
 Usage: cherry [command]
 
   (none), up         start Cherry and open it in the browser
-  down               stop Cherry
+  start              keep Cherry always on: runs in the background, starts at login
+  stop               stop Cherry and turn always-on off
+  restart            restart Cherry (after \`git pull\`; rebuilds the UI if needed)
+  down               stop Cherry until the next \`cherry\` or login
   status             show whether Cherry is running
   .                  open this folder in Cherry (like \`code .\`)
   open <folder>      open a folder from anywhere, or a project by name
   logout             end every browser session
   doctor             check Node, git, gh and claude
-  install-service    start Cherry when you log in (systemd user service)
 
   --no-open          print the link without opening the browser
   -v, --version      print the version
@@ -72,6 +74,10 @@ function ensureWebBuild(): void {
 async function ensureRunning(): Promise<{ info: RunInfo; started: boolean }> {
   const running = readRunInfo();
   if (running) return { info: running, started: false };
+  if (serviceEnabled()) {
+    systemctl('start', UNIT);
+    return { info: await waitForService(), started: true };
+  }
   ensureWebBuild();
   return { info: await startDaemon(), started: true };
 }
@@ -144,6 +150,11 @@ async function status(): Promise<RunResult> {
 async function down(): Promise<RunResult> {
   const info = readRunInfo();
   if (!info) return { code: 0, out: 'Cherry is not running.' };
+  // The service would start it again on failure; stop it through systemd.
+  if (process.platform === 'linux' && systemctl('is-active', UNIT).ok) {
+    systemctl('stop', UNIT);
+    return { code: 0, out: 'Cherry stopped. It starts again at login, or with `cherry`.' };
+  }
   return (await stopDaemon(info))
     ? { code: 0, out: 'Cherry stopped.' }
     : { code: 1, out: `Cherry (pid ${info.pid}) did not stop.` };
@@ -215,33 +226,116 @@ function doctor(): RunResult {
   return { code: bad ? 1 : 0, out: lines.join('\n') };
 }
 
-function installService(): RunResult {
-  if (process.platform !== 'linux')
-    return { code: 1, out: 'install-service supports Linux (systemd) for now.' };
-  const dir = path.join(homedir(), '.config', 'systemd', 'user');
-  mkdirSync(dir, { recursive: true });
-  const unit = `[Unit]
-Description=Cherry daemon
+// --- Always on (ADR-0063): a systemd user service that starts at login. ---
+
+const UNIT = 'cherry.service';
+const unitFile = () => path.join(homedir(), '.config', 'systemd', 'user', UNIT);
+const CLI_MAIN = path.join(REPO_ROOT, 'packages', 'cli', 'src', 'index.ts');
+
+function systemctl(...args: string[]): { ok: boolean; out: string } {
+  const r = spawnSync('systemctl', ['--user', ...args], { encoding: 'utf8' });
+  return { ok: r.status === 0, out: `${r.stdout ?? ''}${r.stderr ?? ''}`.trim() };
+}
+
+/** True when Cherry is set up as an always-on service (the unit is enabled). */
+export function serviceEnabled(): boolean {
+  return process.platform === 'linux' && existsSync(unitFile()) && systemctl('is-enabled', UNIT).ok;
+}
+
+/**
+ * The unit. PATH is the one `cherry start` ran with, so the daemon finds claude, git and gh
+ * (systemd gives services a bare PATH). Before each start it rebuilds the UI when the source is
+ * newer, so `git pull && cherry restart` is the whole update.
+ */
+export function serviceUnit(env: NodeJS.ProcessEnv = process.env): string {
+  const node = process.execPath;
+  return `[Unit]
+Description=Cherry daemon (127.0.0.1)
 After=default.target
 
 [Service]
 WorkingDirectory=${DAEMON_DIR}
-ExecStart=${process.execPath} --import ${TSX_LOADER} ${DAEMON_MAIN}
+Environment="PATH=${env.PATH ?? '/usr/bin:/bin'}"
+Environment=CHERRY_WEB_URL=
+ExecStartPre=${node} --import ${TSX_LOADER} ${CLI_MAIN} build-ui
+ExecStart=${node} --import ${TSX_LOADER} ${DAEMON_MAIN}
 Restart=on-failure
+RestartSec=3
+TimeoutStartSec=300
 
 [Install]
 WantedBy=default.target
 `;
-  writeFileSync(path.join(dir, 'cherry.service'), unit);
-  const reload = spawnSync('systemctl', ['--user', 'daemon-reload']);
-  const enable = spawnSync('systemctl', ['--user', 'enable', '--now', 'cherry.service']);
-  if (reload.status !== 0 || enable.status !== 0) {
+}
+
+async function waitForService(): Promise<RunInfo> {
+  // The first start can build the UI (about a minute).
+  for (let i = 0; i < 1500; i++) {
+    const info = readRunInfo();
+    if (info) {
+      try {
+        await cliRequest(info, 'GET', '/api/cli/status');
+        return info;
+      } catch {
+        // not listening yet
+      }
+    }
+    // activating while it builds or boots; failed or inactive means it gave up.
+    const state = systemctl('is-active', UNIT).out;
+    if (i > 25 && (state === 'failed' || state === 'inactive')) break;
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  throw new Error('Cherry did not start. See `journalctl --user -u cherry -n 50`.');
+}
+
+async function start(open: boolean): Promise<RunResult> {
+  if (process.platform !== 'linux')
+    return { code: 1, out: 'Always-on supports Linux (systemd) for now. Run `cherry` instead.' };
+  const running = readRunInfo();
+  if (running && running.webUrl !== `http://127.0.0.1:${running.port}`)
     return {
       code: 1,
-      out: `Wrote ${dir}/cherry.service, but systemctl failed: ${String(enable.stderr)}`,
+      out: 'pnpm dev is running Cherry from source. Quit it, then run `cherry start`.',
+    };
+  // A daemon started by `cherry` holds the port; the service takes over.
+  if (running && !systemctl('is-active', UNIT).ok) await stopDaemon(running);
+  mkdirSync(path.dirname(unitFile()), { recursive: true });
+  writeFileSync(unitFile(), serviceUnit());
+  for (const step of [['daemon-reload'], ['enable', UNIT], ['restart', UNIT]]) {
+    const r = systemctl(...step);
+    if (!r.ok) return { code: 1, out: `systemctl --user ${step.join(' ')} failed: ${r.out}` };
+  }
+  console.error('Starting Cherry in the background…');
+  const info = await waitForService();
+  const link = await loginLink(info);
+  if (open) openBrowser(link);
+  return {
+    code: 0,
+    out: `Cherry is always on: it runs in the background and starts when you log in.\n\n  ${link}\n\nOpen the link once, then bookmark ${info.webUrl}/. You stay logged in while you use it.\nUpdate: git pull && cherry restart.  Turn it off: cherry stop.`,
+  };
+}
+
+async function stop(): Promise<RunResult> {
+  if (process.platform === 'linux' && existsSync(unitFile())) {
+    systemctl('disable', '--now', UNIT);
+    return {
+      code: 0,
+      out: 'Cherry stopped, and it no longer starts at login. `cherry start` turns it on again.',
     };
   }
-  return { code: 0, out: 'Cherry now starts when you log in. Run `cherry` to get a login link.' };
+  return down();
+}
+
+async function restart(open: boolean): Promise<RunResult> {
+  if (!serviceEnabled()) {
+    await down();
+    return up(open);
+  }
+  const r = systemctl('restart', UNIT);
+  if (!r.ok) return { code: 1, out: `systemctl --user restart cherry failed: ${r.out}` };
+  console.error('Restarting Cherry…');
+  await waitForService();
+  return { code: 0, out: 'Cherry restarted.' };
 }
 
 export async function run(argv: readonly string[]): Promise<RunResult> {
@@ -268,14 +362,22 @@ export async function run(argv: readonly string[]): Promise<RunResult> {
         return await up(open, `/p/${encodeURIComponent(second)}`);
       case 'down':
         return await down();
+      case 'start':
+      case 'install-service': // the old name
+        return await start(open);
+      case 'stop':
+        return await stop();
+      case 'restart':
+        return await restart(open);
+      case 'build-ui': // the service runs this before each start
+        ensureWebBuild();
+        return { code: 0, out: 'The web UI is up to date.' };
       case 'status':
         return await status();
       case 'logout':
         return await logout();
       case 'doctor':
         return doctor();
-      case 'install-service':
-        return installService();
       default:
         return { code: 2, out: `Unknown command "${first}".\n\n${HELP}` };
     }

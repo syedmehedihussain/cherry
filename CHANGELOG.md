@@ -4,6 +4,16 @@ All notable changes to Cherry. Versions follow [Semantic Versioning](https://sem
 
 ## Unreleased
 
+### Always on (ADR-0063)
+
+- `cherry start` runs Cherry as a systemd user service that starts at login; bookmark
+  http://127.0.0.1:4317. `cherry stop` turns it off, `cherry restart` restarts it after an update.
+  The service keeps your PATH (so it finds `claude`) and rebuilds the UI before it starts when
+  the source changed.
+- A browser session in use renews itself, so you stay logged in while you use Cherry at least
+  once in 30 days.
+- `pnpm dev` pauses the service while it runs and starts it again when you quit.
+
 ### V4: the office (ADR-0052)
 
 - **Seven gated stages** with a staff agent each, from Idea to Deployment; a stage opens when the

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { AuthStore, LOGIN_CODE_TTL_MS } from '../src/auth.ts';
+import { AuthStore, LOGIN_CODE_TTL_MS, RENEW_EVERY_MS, SESSION_TTL_MS } from '../src/auth.ts';
 import { HOST, ORIGIN, tempDir, testDaemon, type TestDaemon } from './helpers.ts';
 
 // Must-pass safety test 5 (docs/testing.md).
@@ -113,5 +113,29 @@ describe('AuthStore', () => {
     const a = new AuthStore(home);
     const session = a.redeemLoginCode(a.issueLoginCode());
     expect(new AuthStore(home).isValidSession(session ?? undefined)).toBe(true);
+  });
+
+  it('renews a session in use, at most once a day (ADR-0063)', () => {
+    const home = tempDir();
+    let now = 1_000_000;
+    const auth = new AuthStore(home, () => now);
+    const id = auth.redeemLoginCode(auth.issueLoginCode())!;
+    expect(auth.renewSession(id)).toBe(false); // fresh
+    now += SESSION_TTL_MS - 1000; // used every day for a month
+    expect(auth.renewSession(id)).toBe(true);
+    expect(auth.renewSession(id)).toBe(false); // already renewed today
+    now += RENEW_EVERY_MS + 1;
+    expect(auth.renewSession(id)).toBe(true);
+    now += SESSION_TTL_MS - RENEW_EVERY_MS; // well past the first 30 days
+    expect(new AuthStore(home, () => now).isValidSession(id)).toBe(true); // kept on disk
+  });
+
+  it('lets an unused session expire after 30 days', () => {
+    let now = 1_000_000;
+    const auth = new AuthStore(tempDir(), () => now);
+    const id = auth.redeemLoginCode(auth.issueLoginCode())!;
+    now += SESSION_TTL_MS + 1;
+    expect(auth.renewSession(id)).toBe(false);
+    expect(auth.isValidSession(id)).toBe(false);
   });
 });

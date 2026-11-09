@@ -4,7 +4,7 @@ import path from 'node:path';
 import fastifyCookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';
 import fastifyWebsocket from '@fastify/websocket';
-import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
+import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
 import { ZodError, z } from 'zod';
 import {
   ClientMessageSchema,
@@ -44,6 +44,16 @@ export interface ServerDeps {
 }
 
 const PUBLIC_API = new Set(['POST /api/session']);
+
+/** The session cookie, valid as long as the session itself (ADR-0008, ADR-0063). */
+function setSessionCookie(reply: FastifyReply, id: string): void {
+  void reply.setCookie(SESSION_COOKIE, id, {
+    httpOnly: true,
+    sameSite: 'strict',
+    path: '/',
+    maxAge: Math.floor(SESSION_TTL_MS / 1000),
+  });
+}
 
 function withLocalhostAliases(origins: string[]): string[] {
   const out = new Set<string>();
@@ -103,6 +113,9 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
         },
       });
     }
+    // A session in use stays alive: renewed once a day, with a fresh cookie (ADR-0063).
+    if (needsSession && deps.auth.renewSession(sessionId(req)))
+      setSessionCookie(reply, sessionId(req)!);
   });
 
   app.setErrorHandler((err, _req, reply) => {
@@ -148,12 +161,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
         },
       });
     }
-    void reply.setCookie(SESSION_COOKIE, id, {
-      httpOnly: true,
-      sameSite: 'strict',
-      path: '/',
-      maxAge: Math.floor(SESSION_TTL_MS / 1000),
-    });
+    setSessionCookie(reply, id);
     return { ok: true };
   });
 

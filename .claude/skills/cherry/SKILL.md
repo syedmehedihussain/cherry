@@ -31,16 +31,16 @@ cherry                    # start, print a login link, open the browser
 | Command | Does |
 | --- | --- |
 | `cherry` / `cherry up` | start the daemon (builds the UI if stale) and open the login link; `--no-open` only prints it |
-| `cherry down` / `status` | stop it / say if it runs, how many projects, Claude status |
+| `cherry start` / `stop` / `restart` | always on: a systemd user service that starts at login / off / restart after an update (ADR-0063) |
+| `cherry down` / `status` | stop it until the next `cherry` or login / say if it runs, how many projects, Claude status |
 | `cherry .` / `cherry open <folder>` | add a folder from anywhere to Home and open it (ADR-0031) |
 | `cherry open <project>` | open that project's workspace |
 | `cherry doctor` | check Node, git, gh and claude |
 | `cherry logout` | end every browser (and api.sh) session |
-| `cherry install-service` | start at login (systemd user service) |
 
 Working on Cherry's own code: `pnpm dev` runs the daemon on 4317 and Vite on
 `http://127.0.0.1:5173` with live reload. It and `cherry` cannot run at the same time (same port,
-same `~/.cherry`); run `cherry down` first. The repo's `CLAUDE.md` has the dev rules.
+same `~/.cherry`); `pnpm dev` pauses the always-on service while it runs and starts it again after. The repo's `CLAUDE.md` has the dev rules.
 
 ## Where things live
 

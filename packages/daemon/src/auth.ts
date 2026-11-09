@@ -6,6 +6,8 @@ import { readJsonFile, writeFileAtomic } from './fsutil.ts';
 
 export const SESSION_COOKIE = 'cherry_session';
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+/** A session in use is renewed at most this often (ADR-0063). */
+export const RENEW_EVERY_MS = 24 * 60 * 60 * 1000;
 export const LOGIN_CODE_TTL_MS = 10 * 60 * 1000;
 
 const SessionsFileSchema = z.object({
@@ -75,6 +77,22 @@ export class AuthStore {
     const hash = sha256(sessionId);
     const t = this.now();
     return this.sessions.some((s) => s.expiresAt > t && sameHash(s.hash, hash));
+  }
+
+  /**
+   * Renews a valid session to a full SESSION_TTL_MS from now, so it ends only after 30 days
+   * without use (ADR-0063). At most once a day, to keep sessions.json writes rare. True when it
+   * renewed, so the caller sends the cookie again with the new lifetime.
+   */
+  renewSession(sessionId: string | undefined): boolean {
+    if (!sessionId) return false;
+    const hash = sha256(sessionId);
+    const t = this.now();
+    const found = this.sessions.find((s) => s.expiresAt > t && sameHash(s.hash, hash));
+    if (!found || found.expiresAt > t + SESSION_TTL_MS - RENEW_EVERY_MS) return false;
+    found.expiresAt = t + SESSION_TTL_MS;
+    this.save();
+    return true;
   }
 
   endSession(sessionId: string): void {

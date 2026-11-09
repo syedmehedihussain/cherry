@@ -7,7 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm --parallel --filter @cherry/daemon --filter @cherry/web dev",
+    "dev": "bash scripts/dev.sh",
     "cherry": "tsx packages/cli/src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",

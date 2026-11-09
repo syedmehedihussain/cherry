@@ -172,26 +172,31 @@ cd cherry
 mise install               # Node 22 + pnpm from mise.toml
 pnpm install
 ./scripts/install-cli.sh   # puts `cherry` in ~/.local/bin
-cherry                     # starts Cherry and opens it in your browser
+cherry start               # always on: runs in the background, starts at login
 ```
 
-`cherry` prints a one-time login link and opens it. On first start, Cherry asks where new
+`cherry start` sets Cherry up as a background service that starts every time you log in, then
+opens a one-time login link. Bookmark http://127.0.0.1:4317 after that: you stay logged in as
+long as you use Cherry at least once in 30 days. Prefer to start it by hand? Run `cherry`
+instead of `cherry start`. On first start, Cherry asks where new
 projects should go (default `~/Projects`), checks your tools and lets you pick a theme. Then open
 a project folder (**Open folder…** or `cherry .` in it) or start a new one.
 
-**Update:** `git pull && pnpm install`, then `cherry down && cherry`.
+**Update:** `git pull && pnpm install && cherry restart` (the UI is rebuilt when it changed).
 
 ## Usage
 
 | Command | Does |
 | --- | --- |
-| `cherry` | Start and open the browser (`--no-open` only prints the link) |
-| `cherry down` / `cherry status` | Stop / show whether it runs |
+| `cherry start` | Always on: run in the background and start at login (systemd user service) |
+| `cherry stop` | Stop it and turn always-on off |
+| `cherry restart` | Restart it, after an update |
+| `cherry` | Start if needed and open the browser with a login link (`--no-open` only prints it) |
+| `cherry down` / `cherry status` | Stop until the next `cherry` or login / show whether it runs |
 | `cherry .` | Open this folder in Cherry, like `code .` (it joins Home next to your projects) |
 | `cherry open <folder or project>` | Open a folder from anywhere, or a project by name |
 | `cherry doctor` | Check Node, git, gh and Claude Code |
 | `cherry logout` | End every browser session |
-| `cherry install-service` | Start at login (systemd user service) |
 
 Keyboard: <kbd>Enter</kbd> sends, <kbd>Shift</kbd>+<kbd>Enter</kbd> adds a line,
 <kbd>↑</kbd>/<kbd>↓</kbd> move between options on a decision card, <kbd>Ctrl</kbd>+<kbd>S</kbd>
@@ -250,7 +255,8 @@ site/             the landing page (GitHub Pages)
 scripts/media/    the demo used for screenshots and the video
 ```
 
-`pnpm dev` and `cherry` cannot run at the same time. Start with [`CLAUDE.md`](CLAUDE.md), then
+`pnpm dev` pauses the always-on Cherry while it runs (same port and `~/.cherry`) and starts it
+again when you quit. Start with [`CLAUDE.md`](CLAUDE.md), then
 [`docs/README.md`](docs/README.md) (a map of every document) and
 [`docs/roadmap.md`](docs/roadmap.md).
 
